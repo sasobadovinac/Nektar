@@ -45,19 +45,8 @@
 
 namespace Nektar
 {
-namespace SpatialDomains
-{
-class HexGeom;
-typedef std::shared_ptr<HexGeom> HexGeomSharedPtr;
-} // namespace SpatialDomains
-
 namespace LocalRegions
 {
-class HexExp;
-
-typedef std::shared_ptr<HexExp> HexExpSharedPtr;
-typedef std::vector<HexExpSharedPtr> HexExpVector;
-
 class HexExp : virtual public StdRegions::StdHexExp, virtual public Expansion3D
 {
 public:
@@ -89,7 +78,7 @@ protected:
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    LOCAL_REGIONS_EXPORT void v_PhysDirectionalDeriv(
+    LOCAL_REGIONS_EXPORT virtual void v_PhysDirectionalDeriv(
         const Array<OneD, const NekDouble> &inarray,
         const Array<OneD, const NekDouble> &direction,
         Array<OneD, NekDouble> &out) override;
@@ -117,15 +106,15 @@ protected:
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    LOCAL_REGIONS_EXPORT void IProductWRTDerivBase_SumFac(
+    LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_SumFac(
         const int dir, const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     LOCAL_REGIONS_EXPORT virtual void v_AlignVectorToCollapsedDir(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
-    LOCAL_REGIONS_EXPORT void v_IProductWRTDirectionalDerivBase(
+    LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDirectionalDerivBase(
         const Array<OneD, const NekDouble> &direction,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override
@@ -133,10 +122,10 @@ protected:
         IProductWRTDirectionalDerivBase_SumFac(direction, inarray, outarray);
     }
 
-    LOCAL_REGIONS_EXPORT void IProductWRTDirectionalDerivBase_SumFac(
+    LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDirectionalDerivBase_SumFac(
         const Array<OneD, const NekDouble> &direction,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     //---------------------------------------
     // Evaluation functions
@@ -148,6 +137,11 @@ protected:
     LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coords,
         const Array<OneD, const NekDouble> &physvals) override;
+
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
 
     LOCAL_REGIONS_EXPORT virtual void v_GetCoord(
         const Array<OneD, const NekDouble> &Lcoords,
@@ -237,6 +231,8 @@ protected:
     LOCAL_REGIONS_EXPORT virtual DNekScalMatSharedPtr v_GetLocMatrix(
         const MatrixKey &mkey) override;
 
+    LOCAL_REGIONS_EXPORT void v_DropLocMatrix(const MatrixKey &mkey) override;
+
     LOCAL_REGIONS_EXPORT virtual DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
         const MatrixKey &mkey) override;
 
@@ -251,8 +247,6 @@ private:
     LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess>
         m_staticCondMatrixManager;
 
-    HexExp();
-
     virtual void v_LaplacianMatrixOp_MatFree_Kernel(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, Array<OneD, NekDouble> &wsp) override;
@@ -263,6 +257,8 @@ private:
         Array<OneD, Array<OneD, NekDouble>> &d1factors) override;
 };
 
+typedef std::shared_ptr<HexExp> HexExpSharedPtr;
+typedef std::vector<HexExpSharedPtr> HexExpVector;
 } // namespace LocalRegions
 } // namespace Nektar
 

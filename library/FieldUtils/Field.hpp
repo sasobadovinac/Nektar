@@ -80,6 +80,7 @@ struct Field
     std::vector<LibUtilities::FieldDefinitionsSharedPtr> m_fielddef;
     std::vector<std::vector<double>> m_data;
     std::vector<MultiRegions::ExpListSharedPtr> m_exp;
+
     std::vector<std::string> m_variables;
 
     int m_numHomogeneousDir;
@@ -194,6 +195,7 @@ struct Field
             {
                 m_exp[0] =
                     MemoryManager<MultiRegions::ExpList>::AllocateSharedPtr();
+
                 return;
             }
 

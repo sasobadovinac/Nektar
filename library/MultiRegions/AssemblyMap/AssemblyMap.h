@@ -442,10 +442,6 @@ protected:
     void GlobalToLocalBndWithoutSign(const Array<OneD, const NekDouble> &global,
                                      Array<OneD, NekDouble> &loc);
 
-private:
-    /// Mapping information for previous level in MultiLevel Solver
-    PatchMapSharedPtr m_patchMapFromPrevLevel;
-
     virtual int v_GetLocalToGlobalMap(const int i) const;
 
     virtual int v_GetGlobalToUniversalMap(const int i) const;
@@ -510,6 +506,10 @@ private:
     /// Generate a linear space mapping from existing mapping
     virtual std::shared_ptr<AssemblyMap> v_LinearSpaceMap(
         const ExpList &locexp, GlobalSysSolnType solnType);
+
+private:
+    /// Mapping information for previous level in MultiLevel Solver
+    PatchMapSharedPtr m_patchMapFromPrevLevel;
 };
 
 } // namespace MultiRegions

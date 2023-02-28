@@ -106,39 +106,34 @@ protected:
         const StdMatrixKey &mkey) override;
 
 private:
-    virtual int v_GetNverts() const final override
+    virtual int v_GetNverts() const override final
     {
         return 1;
     }
 
-    virtual int v_GetNtraces() const final override
+    virtual int v_NumBndryCoeffs() const override final
     {
         return 0;
     }
 
-    virtual int v_NumBndryCoeffs() const final override
+    virtual int v_NumDGBndryCoeffs() const override final
     {
         return 0;
     }
 
-    virtual int v_NumDGBndryCoeffs() const final override
-    {
-        return 0;
-    }
-
-    virtual int v_GetTraceNcoeffs(const int i) const final override
+    virtual int v_GetTraceNcoeffs(const int i) const override final
     {
         boost::ignore_unused(i);
         return 0;
     }
 
-    virtual int v_GetTraceIntNcoeffs(const int i) const final override
+    virtual int v_GetTraceIntNcoeffs(const int i) const override final
     {
         boost::ignore_unused(i);
         return 0;
     }
 
-    virtual int v_GetTraceNumPoints(const int i) const final override
+    virtual int v_GetTraceNumPoints(const int i) const override final
     {
         boost::ignore_unused(i);
         return 0;

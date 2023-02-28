@@ -106,21 +106,6 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetFullName() const
-    {
-        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
-    }
-
-    LUE virtual std::string GetName() const
-    {
-        return std::string("IMEX");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     unsigned int order,
                                     std::vector<NekDouble> freeParams)
@@ -200,8 +185,9 @@ public:
                          "(2,2,2), (2,3,2), (2,3,3), (3,4,3), (4,4,3)");
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 0;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 0;
 
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
@@ -249,8 +235,9 @@ public:
         phase->m_V[0][0] = 1.0;
         phase->m_V[0][1] = 1.0;
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 1;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 1;
 
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
@@ -293,8 +280,8 @@ public:
     LUE static void SetupSchemeData_2_2_2(
         TimeIntegrationAlgorithmGLMSharedPtr &phase)
     {
-        NekDouble glambda = 0.2928932188134524756;
-        NekDouble gdelta  = -0.7071067811865475244;
+        NekDouble glambda = 1.0 - sqrt(2.0) / 2.0;
+        NekDouble gdelta  = -sqrt(2.0) / 2.0;
 
         phase->m_A[0][1][1] = glambda;
         phase->m_A[0][2][1] = 1.0 - glambda;
@@ -343,7 +330,7 @@ public:
     LUE static void SetupSchemeData_2_3_3(
         TimeIntegrationAlgorithmGLMSharedPtr &phase)
     {
-        NekDouble glambda = 0.788675134594813;
+        NekDouble glambda = (3.0 + sqrt(3.0)) / 6.0;
 
         phase->m_A[0][1][1] = glambda;
         phase->m_A[0][2][1] = 1.0 - 2.0 * glambda;
@@ -354,7 +341,7 @@ public:
 
         phase->m_A[1][1][0] = glambda;
         phase->m_A[1][2][0] = glambda - 1.0;
-        phase->m_A[1][2][1] = 2.0 * (1 - glambda);
+        phase->m_A[1][2][1] = 2.0 * (1.0 - glambda);
 
         phase->m_B[1][0][1] = 0.5;
         phase->m_B[1][0][2] = 0.5;
@@ -438,6 +425,22 @@ public:
         phase->m_B[1][0][3] = -7.0 / 4.0;
 
         // U and V set to 1 when allocated.
+    }
+
+protected:
+    LUE virtual std::string v_GetFullName() const override
+    {
+        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
+    }
+
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("IMEX");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
     }
 
 }; // end class IMEXdirkTimeIntegrationScheme

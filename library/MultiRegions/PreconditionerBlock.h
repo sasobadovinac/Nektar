@@ -78,14 +78,14 @@ protected:
     bool m_isFull;
     DNekBlkMatSharedPtr m_blkMat;
 
-private:
-    void BlockPreconditionerCG(void);
-    void BlockPreconditionerHDG(void);
-
     virtual void v_InitObject() override;
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
                                     Array<OneD, NekDouble> &pOutput) override;
     virtual void v_BuildPreconditioner() override;
+
+private:
+    void BlockPreconditionerCG(void);
+    void BlockPreconditionerHDG(void);
 };
 } // namespace MultiRegions
 } // namespace Nektar

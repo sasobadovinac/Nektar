@@ -75,25 +75,19 @@ public:
     // Distructor
     virtual ~NekFFTW();
 
-    virtual void v_FFTFwdTrans(Array<OneD, NekDouble> &inarray,
-                               Array<OneD, NekDouble> &outarray);
-
-    virtual void v_FFTBwdTrans(Array<OneD, NekDouble> &inarray,
-                               Array<OneD, NekDouble> &outarray);
-
 protected:
     Array<OneD, NekDouble>
         m_FFTW_w; // weights to convert arrays form Nektar++ to FFTW format
     Array<OneD, NekDouble>
         m_FFTW_w_inv; // weights to convert arrays from FFTW to Nektar++ format
 
-    Array<OneD, NekDouble> phys;
-    Array<OneD, NekDouble> coef;
+    Array<OneD, NekDouble> m_phys;
+    Array<OneD, NekDouble> m_coef;
 
     Array<OneD, NekDouble> m_wsp; // Workspace area for transforms
 
-    fftw_plan plan_backward; // plan to execute a backward FFT in FFTW
-    fftw_plan plan_forward;  // plan to execute a forward FFT in FFTW
+    fftw_plan m_plan_backward; // plan to execute a backward FFT in FFTW
+    fftw_plan m_plan_forward;  // plan to execute a forward FFT in FFTW
     /**
      * Reshuffling routines to put the coefficients in Nektar++/FFTW format.
      * The routines take as an input the number of points N, the vector of
@@ -103,6 +97,12 @@ protected:
     void Reshuffle_FFTW2Nek(Array<OneD, NekDouble> &coef);
 
     void Reshuffle_Nek2FFTW(Array<OneD, NekDouble> &coef);
+
+    virtual void v_FFTFwdTrans(Array<OneD, NekDouble> &inarray,
+                               Array<OneD, NekDouble> &outarray) override;
+
+    virtual void v_FFTBwdTrans(Array<OneD, NekDouble> &inarray,
+                               Array<OneD, NekDouble> &outarray) override;
 
 private:
 };

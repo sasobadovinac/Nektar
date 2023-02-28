@@ -138,16 +138,6 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetName() const
-    {
-        return std::string("AdamsBashforth");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     int order)
     {
@@ -214,8 +204,9 @@ public:
             phase->m_V[n][n - 1] = 1.0;
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = phase->m_order - 1;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = phase->m_order - 1;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
@@ -226,6 +217,17 @@ public:
         }
 
         phase->CheckAndVerify();
+    }
+
+protected:
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("AdamsBashforth");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
     }
 
 }; // end class AdamsBashforthTimeIntegrationScheme

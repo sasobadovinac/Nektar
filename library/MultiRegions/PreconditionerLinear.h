@@ -84,10 +84,6 @@ protected:
     GlobalLinSysSharedPtr m_vertLinsys;
     std::shared_ptr<AssemblyMap> m_vertLocToGloMap;
 
-private:
-    static std::string solveType;
-    static std::string solveTypeIds[];
-
     virtual void v_InitObject() override;
 
     virtual void v_DoPreconditionerWithNonVertOutput(
@@ -99,6 +95,10 @@ private:
                                     Array<OneD, NekDouble> &pOutput) override;
 
     virtual void v_BuildPreconditioner() override;
+
+private:
+    static std::string solveType;
+    static std::string solveTypeIds[];
 };
 } // namespace MultiRegions
 } // namespace Nektar

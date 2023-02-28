@@ -64,7 +64,7 @@ ProcessVelocityDivergence::~ProcessVelocityDivergence()
 {
 }
 
-void ProcessVelocityDivergence::Process(po::variables_map &vm)
+void ProcessVelocityDivergence::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -128,7 +128,8 @@ void ProcessVelocityDivergence::Process(po::variables_map &vm)
                 {
                     for (int i = 0; i < m_spacedim; ++i)
                     {
-                        m_f->m_exp[0]->HomogeneousBwdTrans(vel[i], vel[i]);
+                        m_f->m_exp[0]->HomogeneousBwdTrans(npoints, vel[i],
+                                                           vel[i]);
                     }
                 }
                 // Convert velocity to cartesian system
@@ -138,7 +139,8 @@ void ProcessVelocityDivergence::Process(po::variables_map &vm)
                 {
                     for (int i = 0; i < m_spacedim; ++i)
                     {
-                        m_f->m_exp[0]->HomogeneousFwdTrans(vel[i], vel[i]);
+                        m_f->m_exp[0]->HomogeneousFwdTrans(npoints, vel[i],
+                                                           vel[i]);
                     }
                 }
             }

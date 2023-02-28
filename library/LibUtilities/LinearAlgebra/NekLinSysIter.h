@@ -116,7 +116,7 @@ protected:
     void Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn);
     void setUniversalUniqueMap();
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
 private:
 };

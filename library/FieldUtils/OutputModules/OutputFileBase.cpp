@@ -58,7 +58,7 @@ OutputFileBase::~OutputFileBase()
 {
 }
 
-void OutputFileBase::Process(po::variables_map &vm)
+void OutputFileBase::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -69,7 +69,7 @@ void OutputFileBase::Process(po::variables_map &vm)
         ASSERTL0(!m_f->m_writeBndFld, "Boundary can't be obtained from pts.");
         if (WriteFile(filename, vm))
         {
-            OutputFromPts(vm);
+            v_OutputFromPts(vm);
 
             if (vm.count("error"))
             {
@@ -110,7 +110,6 @@ void OutputFileBase::Process(po::variables_map &vm)
             {
                 // Prepare for creating expansions for normals
                 m_f->m_exp.resize(nfields + normdim);
-                ;
 
                 // Include normal name in m_variables
                 string normstr[3] = {"Norm_x", "Norm_y", "Norm_z"};
@@ -176,6 +175,12 @@ void OutputFileBase::Process(po::variables_map &vm)
 
                     int Border = BndRegionMap[m_f->m_bndRegionsToWrite[i]];
 
+                    // set up m_exp to point to boundary expansion
+                    for (int j = 0; j < exp.size(); ++j)
+                    {
+                        m_f->m_exp[j] = BndExp[j][Border];
+                    }
+
                     for (int j = 0; j < exp.size(); ++j)
                     {
                         m_f->m_exp[j] = BndExp[j][Border];
@@ -203,7 +208,7 @@ void OutputFileBase::Process(po::variables_map &vm)
                                 m_f->m_exp[nfields + j]->UpdateCoeffs());
                         }
                     }
-                    OutputFromExp(vm);
+                    v_OutputFromExp(vm);
                     // output error for regression checking.
                     if (vm.count("error"))
                     {
@@ -224,7 +229,7 @@ void OutputFileBase::Process(po::variables_map &vm)
         {
             if (WriteFile(filename, vm))
             {
-                OutputFromExp(vm);
+                v_OutputFromExp(vm);
                 // output error for regression checking.
                 if (vm.count("error"))
                 {
@@ -238,7 +243,7 @@ void OutputFileBase::Process(po::variables_map &vm)
         ASSERTL0(!m_f->m_writeBndFld, "Boundary extraction requires xml file.");
         if (WriteFile(filename, vm))
         {
-            OutputFromData(vm);
+            v_OutputFromData(vm);
         }
     }
 }
@@ -314,12 +319,14 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
 
     // Save original expansion
     vector<MultiRegions::ExpListSharedPtr> expOld = m_f->m_exp;
+
     // Create new expansion
     m_f->m_exp[0] = m_f->SetUpFirstExpList(m_f->m_numHomogeneousDir, true);
     for (int i = 1; i < numFields; ++i)
     {
         m_f->m_exp[i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
     }
+
     // Extract result to new expansion
     for (int i = 0; i < numFields; ++i)
     {
@@ -333,13 +340,13 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
     {
         Array<OneD, const MultiRegions::ExpListSharedPtr> BndExpOld;
         MultiRegions::ExpListSharedPtr BndExp;
+
         for (int i = 0; i < numFields; ++i)
         {
             BndExpOld = expOld[i]->GetBndCondExpansions();
             for (int j = 0; j < BndExpOld.size(); ++j)
             {
                 BndExp = m_f->m_exp[i]->UpdateBndCondExpansion(j);
-
                 BndExp->ExtractCoeffsToCoeffs(BndExpOld[j],
                                               BndExpOld[j]->GetCoeffs(),
                                               BndExp->UpdateCoeffs());

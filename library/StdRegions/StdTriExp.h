@@ -64,7 +64,7 @@ protected:
     //----------------------------
     // Differentiation Methods
     //----------------------------
-    STD_REGIONS_EXPORT virtual void v_PhysDeriv(
+    STD_REGIONS_EXPORT void v_PhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
         Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override;
@@ -82,7 +82,7 @@ protected:
     //---------------------------------------
     // Transforms
     //---------------------------------------
-    STD_REGIONS_EXPORT virtual void v_BwdTrans(
+    STD_REGIONS_EXPORT void v_BwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
     STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFac(
@@ -104,7 +104,7 @@ protected:
     //---------------------------------------
     // Inner product functions
     //---------------------------------------
-    STD_REGIONS_EXPORT virtual void v_IProductWRTBase(
+    STD_REGIONS_EXPORT void v_IProductWRTBase(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
     STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFac(
@@ -137,6 +137,11 @@ protected:
         const int mode, Array<OneD, NekDouble> &outarray) override;
     STD_REGIONS_EXPORT NekDouble v_PhysEvaluateBasis(
         const Array<OneD, const NekDouble> &coords, int mode) final override;
+
+    STD_REGIONS_EXPORT NekDouble
+    v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                   const Array<OneD, const NekDouble> &inarray,
+                   std::array<NekDouble, 3> &firstOrderDerivs) override;
 
     //---------------------------
     // Helper functions
@@ -178,7 +183,7 @@ protected:
         const unsigned int traceid,
         Array<OneD, unsigned int> &maparray) override;
 
-    STD_REGIONS_EXPORT virtual void v_GetTraceInteriorToElementMap(
+    STD_REGIONS_EXPORT void v_GetTraceInteriorToElementMap(
         const int eid, Array<OneD, unsigned int> &maparray,
         Array<OneD, int> &signarray,
         const Orientation edgeOrient = eForwards) override;
@@ -194,7 +199,7 @@ protected:
     //---------------------------------------
     // Operator evaluation functions
     //---------------------------------------
-    STD_REGIONS_EXPORT virtual void v_MassMatrixOp(
+    STD_REGIONS_EXPORT void v_MassMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey) override;
     STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp(

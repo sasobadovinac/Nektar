@@ -131,6 +131,10 @@ public:
 
     // Return the number of entries in the solution vector that correspond to
     // (multi-step) derivatives.
+    inline unsigned int GetNimplicitderivs() const
+    {
+        return m_schemeAlgorithm->GetNmultiStepImplicitDerivs();
+    }
     inline unsigned int GetNderivs() const
     {
         return m_schemeAlgorithm->GetNmultiStepDerivs();
@@ -165,14 +169,37 @@ public:
 
     // returns the entry in the solution vector which corresponds to the
     // (multi-step) derivative at the time-level with specified offset
-    inline DoubleArray &GetDerivative(const unsigned int timeLevelOffset)
+    inline DoubleArray &GetImplicitDerivative(
+        const unsigned int timeLevelOffset)
     {
         int nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
-        int size           = m_schemeAlgorithm->m_numsteps;
+        int nMultiStepImplicitDerivs =
+            m_schemeAlgorithm->GetNmultiStepImplicitDerivs();
         const Array<OneD, const unsigned int> &offsetvec =
             m_schemeAlgorithm->GetTimeLevelOffset();
 
-        for (int i = nMultiStepVals; i < size; i++)
+        for (int i = nMultiStepVals;
+             i < nMultiStepVals + nMultiStepImplicitDerivs; i++)
+        {
+            if (timeLevelOffset == offsetvec[i])
+            {
+                return m_solVector[i];
+            }
+        }
+        ASSERTL1(false, "The solution vector of this scheme does not contain a "
+                        "derivative at the requested time-level");
+        return m_solVector[0];
+    }
+    inline DoubleArray &GetDerivative(const unsigned int timeLevelOffset)
+    {
+        int nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
+        int nMultiStepImplicitDerivs =
+            m_schemeAlgorithm->GetNmultiStepImplicitDerivs();
+        int size = m_schemeAlgorithm->m_numsteps;
+        const Array<OneD, const unsigned int> &offsetvec =
+            m_schemeAlgorithm->GetTimeLevelOffset();
+
+        for (int i = nMultiStepVals + nMultiStepImplicitDerivs; i < size; i++)
         {
             if (timeLevelOffset == offsetvec[i])
             {
@@ -228,15 +255,38 @@ public:
     // sets the (multi-step) derivative and time in the
     // solution vector which corresponds to
     // the derivative at the time-level with specified offset
+    inline void SetImplicitDerivative(const unsigned int timeLevelOffset,
+                                      const DoubleArray &y,
+                                      const NekDouble timestep)
+    {
+        int nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
+        int nMultiStepImplicitDerivs =
+            m_schemeAlgorithm->GetNmultiStepImplicitDerivs();
+        const Array<OneD, const unsigned int> &offsetvec =
+            m_schemeAlgorithm->GetTimeLevelOffset();
+
+        for (int i = nMultiStepVals;
+             i < nMultiStepVals + nMultiStepImplicitDerivs; i++)
+        {
+            if (timeLevelOffset == offsetvec[i])
+            {
+                m_solVector[i] = y;
+                m_t[i]         = timestep;
+                return;
+            }
+        }
+    }
     inline void SetDerivative(const unsigned int timeLevelOffset,
                               const DoubleArray &y, const NekDouble timestep)
     {
         int nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
-        int size           = m_schemeAlgorithm->m_numsteps;
+        int nMultiStepImplicitDerivs =
+            m_schemeAlgorithm->GetNmultiStepImplicitDerivs();
+        int size = m_schemeAlgorithm->m_numsteps;
         const Array<OneD, const unsigned int> &offsetvec =
             m_schemeAlgorithm->GetTimeLevelOffset();
 
-        for (int i = nMultiStepVals; i < size; i++)
+        for (int i = nMultiStepVals + nMultiStepImplicitDerivs; i < size; i++)
         {
             if (timeLevelOffset == offsetvec[i])
             {
@@ -252,13 +302,21 @@ public:
     inline void RotateSolutionVector()
     {
         int nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
-        int size           = m_schemeAlgorithm->m_numsteps;
+        int nMultiStepImpDerivs =
+            m_schemeAlgorithm->GetNmultiStepImplicitDerivs();
+        int size = m_schemeAlgorithm->m_numsteps;
         for (int i = (nMultiStepVals - 1); i > 0; i--)
         {
             m_solVector[i] = m_solVector[i - 1];
         }
 
-        for (int i = (size - 1); i > nMultiStepVals; i--)
+        for (int i = (nMultiStepVals + nMultiStepImpDerivs - 1);
+             i > nMultiStepVals; i--)
+        {
+            m_solVector[i] = m_solVector[i - 1];
+        }
+
+        for (int i = (size - 1); i > nMultiStepVals + nMultiStepImpDerivs; i--)
         {
             m_solVector[i] = m_solVector[i - 1];
         }

@@ -120,13 +120,14 @@ protected:
     /// Set up all DG member variables and maps
     MULTI_REGIONS_EXPORT void SetUpDG();
 
-    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::ConstFactorMap &factors,
-                             const StdRegions::VarCoeffMap &varcoeff,
-                             const MultiRegions::VarFactorsMap &varfactors,
-                             const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing) override;
+    virtual GlobalLinSysKey v_HelmSolve(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing) override;
 
     /// @todo Fix in another way considering all the planes
     virtual ExpListSharedPtr &v_GetTrace() override;
@@ -195,7 +196,6 @@ protected:
      * \param time The time at which the boundary conditions should be
      * evaluated
      */
-
     virtual void v_EvaluateBoundaryConditions(
         const NekDouble time = 0.0, const std::string varName = "",
         const NekDouble x2_in = NekConstants::kNekUnsetDouble,
@@ -215,11 +215,8 @@ protected:
     virtual void v_SetBndCondBwdWeight(const int index,
                                        const NekDouble value) override;
 };
-
 typedef std::shared_ptr<DisContField3DHomogeneous1D>
     DisContField3DHomogeneous1DSharedPtr;
-
 } // namespace MultiRegions
 } // namespace Nektar
-
-#endif // MULTIERGIONS_DISCONTFIELD3DHOMO1D_H
+#endif

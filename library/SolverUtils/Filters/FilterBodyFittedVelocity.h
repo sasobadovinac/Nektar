@@ -28,7 +28,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Transform velocities into the body-fitted coordinates.
+// Description: Read the body-fitted coordinate system from the file output by
+//              FieldConvert module bodyFittedVelocity and compute local max/
+//              min/original body-fitted velocity compinents.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -49,24 +51,23 @@ public:
     /// Creates an instance of this class
     static FilterSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>        &pEquation,
-        const std::map<std::string, std::string>   &pParams)
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const std::map<std::string, std::string> &pParams)
     {
-        FilterSharedPtr p = MemoryManager<FilterBodyFittedVelocity>
-                            ::AllocateSharedPtr(pSession, pEquation, pParams);
+        FilterSharedPtr p =
+            MemoryManager<FilterBodyFittedVelocity>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
     SOLVER_UTILS_EXPORT FilterBodyFittedVelocity(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
+        const std::weak_ptr<EquationSystem> &pEquation,
         const ParamMap &pParams);
     SOLVER_UTILS_EXPORT virtual ~FilterBodyFittedVelocity();
-
-
 
 protected:
     // Enumerate types as flags
@@ -83,30 +84,30 @@ protected:
         eOthers
     };
 
-    std::string  m_bodyFittedCooriateFile;
+    std::string m_bodyFittedCooriateFile;
 
-    FilterType   m_filterType;
-    ProblemType  m_problemType;
+    FilterType m_filterType;
+    ProblemType m_problemType;
     unsigned int m_spaceDim;
     unsigned int m_nFields;
     unsigned int m_nAddFields;
     unsigned int m_nVars;
 
     std::vector<std::string> m_bfsVars;
-    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_bfcsDir;
-    
-    std::vector<Array<OneD, NekDouble> > m_curFieldsVels_Car;
-    std::vector<Array<OneD, NekDouble> > m_curFieldsVels;
-    std::vector<Array<OneD, NekDouble> > m_outFieldsVels;
-    
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_bfcsDir;
+
+    std::vector<Array<OneD, NekDouble>> m_curFieldsVels_Car;
+    std::vector<Array<OneD, NekDouble>> m_curFieldsVels;
+    std::vector<Array<OneD, NekDouble>> m_outFieldsVels;
+
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
     virtual void v_FillVariablesName(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr>& pFields);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
     virtual void v_ProcessSample(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
         const NekDouble &time);
     virtual void v_PrepareOutput(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -129,10 +130,9 @@ protected:
     }
 
 private:
-    bool m_initialized; 
-    
+    bool m_initialized;
 };
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERCHECKPOINT_H */

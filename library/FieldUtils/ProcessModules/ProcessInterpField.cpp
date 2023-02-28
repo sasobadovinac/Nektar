@@ -82,7 +82,7 @@ ProcessInterpField::~ProcessInterpField()
 {
 }
 
-void ProcessInterpField::Process(po::variables_map &vm)
+void ProcessInterpField::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -261,7 +261,9 @@ void ProcessInterpField::Process(po::variables_map &vm)
     {
         interp.SetProgressCallback(&ProcessInterpField::PrintProgressbar, this);
     }
+
     interp.Interpolate(fromField->m_exp, m_f->m_exp);
+
     if (m_f->m_verbose && m_f->m_comm->TreatAsRankZero())
     {
         cout << endl;

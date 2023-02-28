@@ -97,7 +97,8 @@ EquationSystem::EquationSystem(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : m_comm(pSession->GetComm()), m_session(pSession), m_graph(pGraph),
-      m_lambda(0), m_fieldMetaDataMap(LibUtilities::NullFieldMetaDataMap)
+      m_lambda(0), m_infosteps(10),
+      m_fieldMetaDataMap(LibUtilities::NullFieldMetaDataMap)
 {
     // set up session names in fieldMetaDataMap
     const vector<std::string> filenames = m_session->GetFilenames();
@@ -141,7 +142,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
 
     m_verbose = m_session->DefinesCmdLineArgument("verbose");
     m_root    = false;
-    if (0 == m_comm->GetRank())
+    if (m_comm->GetRank() == 0)
     {
         m_root = true;
     }
@@ -594,13 +595,32 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                     }
                     else
                     {
-                        for (i = 0; i < m_fields.size(); i++)
+                        i = 0;
+                        MultiRegions::DisContFieldSharedPtr firstfield;
+                        firstfield = MemoryManager<MultiRegions::DisContField>::
+                            AllocateSharedPtr(m_session, m_graph,
+                                              m_session->GetVariable(i));
+                        m_fields[0] = firstfield;
+                        for (i = 1; i < m_fields.size(); i++)
                         {
-                            m_fields[i] =
-                                MemoryManager<MultiRegions::DisContField>::
-                                    AllocateSharedPtr(
-                                        m_session, m_graph,
-                                        m_session->GetVariable(i));
+                            if (m_graph->SameExpansionInfo(
+                                    m_session->GetVariable(0),
+                                    m_session->GetVariable(i)))
+                            {
+                                m_fields[i] =
+                                    MemoryManager<MultiRegions::DisContField>::
+                                        AllocateSharedPtr(
+                                            *firstfield, m_graph,
+                                            m_session->GetVariable(i));
+                            }
+                            else
+                            {
+                                m_fields[i] =
+                                    MemoryManager<MultiRegions::DisContField>::
+                                        AllocateSharedPtr(
+                                            m_session, m_graph,
+                                            m_session->GetVariable(i));
+                            }
                         }
                     }
 
@@ -616,13 +636,32 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                     }
                     else
                     {
-                        for (i = 0; i < m_fields.size(); i++)
+                        i = 0;
+                        MultiRegions::DisContFieldSharedPtr firstfield =
+                            MemoryManager<MultiRegions::DisContField>::
+                                AllocateSharedPtr(m_session, m_graph,
+                                                  m_session->GetVariable(i));
+                        m_fields[0] = firstfield;
+                        for (i = 1; i < m_fields.size(); i++)
                         {
-                            m_fields[i] =
-                                MemoryManager<MultiRegions::DisContField>::
-                                    AllocateSharedPtr(
-                                        m_session, m_graph,
-                                        m_session->GetVariable(i));
+                            if (m_graph->SameExpansionInfo(
+                                    m_session->GetVariable(0),
+                                    m_session->GetVariable(i)))
+                            {
+                                m_fields[i] =
+                                    MemoryManager<MultiRegions::DisContField>::
+                                        AllocateSharedPtr(
+                                            *firstfield, m_graph,
+                                            m_session->GetVariable(i));
+                            }
+                            else
+                            {
+                                m_fields[i] =
+                                    MemoryManager<MultiRegions::DisContField>::
+                                        AllocateSharedPtr(
+                                            m_session, m_graph,
+                                            m_session->GetVariable(i));
+                            }
                         }
                     }
                     break;
@@ -664,7 +703,8 @@ void EquationSystem::v_InitObject(bool DeclareFields)
              "should be set!");
     m_session->LoadParameter("TimeIncrementFactor", m_TimeIncrementFactor, 1.0);
 
-    m_nchk = 0;
+    m_nchk         = 0;
+    m_pararealIter = 0;
 }
 
 /**
@@ -983,7 +1023,30 @@ void EquationSystem::v_SetInitialConditions(NekDouble initialtime,
 
     if (dumpInitialConditions && m_checksteps && m_nchk == 0)
     {
-        Checkpoint_Output(m_nchk);
+        if (!ParallelInTime())
+        {
+            Checkpoint_Output(m_nchk);
+        }
+        else // FIXME: Parareal (not optimal)
+        {
+            std::string newdir = m_sessionName + ".pit";
+            if (!fs::is_directory(newdir))
+            {
+                fs::create_directory(newdir);
+            }
+            WriteFld(newdir + "/" + m_sessionName + "_" +
+                     boost::lexical_cast<std::string>(
+                         m_comm->GetTimeComm()->GetRank()) +
+                     ".fld");
+            // Remove duplicated IC files
+            if (m_comm->GetTimeComm()->GetRank() != 0)
+            {
+                fs::remove_all(newdir + "/" + m_sessionName + "_" +
+                               boost::lexical_cast<std::string>(
+                                   m_comm->GetTimeComm()->GetRank()) +
+                               ".fld");
+            }
+        }
     }
     ++m_nchk;
 }
@@ -1052,7 +1115,24 @@ void EquationSystem::v_GenerateSummary(SummaryList &l)
  */
 void EquationSystem::v_Output(void)
 {
-    WriteFld(m_sessionName + ".fld");
+    if (!ParallelInTime())
+    {
+        // Serial-in-time
+        WriteFld(m_sessionName + ".fld");
+    }
+    else
+    {
+        // Parareal-in-time
+        std::string newdir = m_sessionName + ".pit";
+        if (!fs::is_directory(newdir))
+        {
+            fs::create_directory(newdir);
+        }
+        WriteFld(newdir + "/" + m_sessionName + "_" +
+                 boost::lexical_cast<std::string>(
+                     m_comm->GetTimeComm()->GetRank() + 1) +
+                 ".fld");
+    }
 }
 
 /**
@@ -1085,9 +1165,29 @@ void EquationSystem::FwdTransFields(void)
  */
 void EquationSystem::Checkpoint_Output(const int n)
 {
-    std::string outname =
-        m_sessionName + "_" + boost::lexical_cast<std::string>(n);
-    WriteFld(outname + ".chk");
+    if (!ParallelInTime())
+    {
+        // Serial-in-time
+        std::string outname =
+            m_sessionName + "_" + boost::lexical_cast<std::string>(n);
+        WriteFld(outname + ".chk");
+    }
+    else
+    {
+        // Parareal-in-time
+        // std::string paradir = "parareal_iteration_" +
+        //    boost::lexical_cast<std::string>(m_pararealIter);
+        std::string paradir = m_sessionName + "_" +
+                              boost::lexical_cast<std::string>(m_pararealIter) +
+                              ".pit";
+        if (!fs::is_directory(paradir))
+        {
+            fs::create_directory(paradir);
+        }
+        std::string outname = paradir + "/" + m_sessionName + "_" +
+                              boost::lexical_cast<std::string>(n);
+        WriteFld(outname + ".chk");
+    }
 }
 
 /**
@@ -1099,9 +1199,29 @@ void EquationSystem::Checkpoint_Output(
     std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
     std::vector<std::string> &variables)
 {
-    std::string outname =
-        m_sessionName + "_" + boost::lexical_cast<std::string>(n);
-    WriteFld(outname, field, fieldcoeffs, variables);
+    if (!ParallelInTime())
+    {
+        // Serial-in-time
+        std::string outname =
+            m_sessionName + "_" + boost::lexical_cast<std::string>(n);
+        WriteFld(outname, field, fieldcoeffs, variables);
+    }
+    else
+    {
+        // Parareal-in-time
+        // std::string paradir = "parareal_iteration_" +
+        //    boost::lexical_cast<std::string>(m_pararealIter);
+        std::string paradir = m_sessionName + "_" +
+                              boost::lexical_cast<std::string>(m_pararealIter) +
+                              ".pit";
+        if (!fs::is_directory(paradir))
+        {
+            fs::create_directory(paradir);
+        }
+        std::string outname = paradir + "/" + m_sessionName + "_" +
+                              boost::lexical_cast<std::string>(n);
+        WriteFld(outname, field, fieldcoeffs, variables);
+    }
 }
 
 /**

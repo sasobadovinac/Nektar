@@ -72,8 +72,6 @@ public:
     static std::string cmdSetStartChkNum;
 
 protected:
-    /// Number of time steps between outputting status information.
-    int m_infosteps;
     /// Number of steps between checks for abort conditions.
     int m_abortSteps;
     /// Number of time steps between outputting filters information.

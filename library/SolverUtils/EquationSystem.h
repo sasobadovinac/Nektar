@@ -268,7 +268,7 @@ public:
         const int i, Array<OneD, NekDouble> &output);
 
     SOLVER_UTILS_EXPORT inline void CopyToPhysField(
-        const int i, Array<OneD, NekDouble> &output);
+        const int i, const Array<OneD, const NekDouble> &input);
 
     SOLVER_UTILS_EXPORT inline void SetSteps(const int steps);
 
@@ -298,6 +298,26 @@ public:
         m_checksteps = num;
     }
 
+    SOLVER_UTILS_EXPORT int GetInfoSteps()
+    {
+        return m_infosteps;
+    }
+
+    SOLVER_UTILS_EXPORT void SetInfoSteps(int num)
+    {
+        m_infosteps = num;
+    }
+
+    SOLVER_UTILS_EXPORT int GetPararealIterationNumber()
+    {
+        return m_pararealIter;
+    }
+
+    SOLVER_UTILS_EXPORT void SetPararealIterationNumber(int num)
+    {
+        m_pararealIter = num;
+    }
+
     SOLVER_UTILS_EXPORT Array<OneD, const Array<OneD, NekDouble>> GetTraceNormals()
     {
         return m_traceNormals;
@@ -306,6 +326,11 @@ public:
     SOLVER_UTILS_EXPORT void SetTime(const NekDouble time)
     {
         m_time = time;
+    }
+
+    SOLVER_UTILS_EXPORT void SetTimeStep(const NekDouble timestep)
+    {
+        m_timestep = timestep;
     }
 
     SOLVER_UTILS_EXPORT void SetInitialStep(const int step)
@@ -318,6 +343,12 @@ public:
 
     /// Virtual function to identify if operator is negated in DoSolve
     SOLVER_UTILS_EXPORT virtual bool v_NegatedOp();
+
+    /// Check if solver use Parallel-in-Time
+    SOLVER_UTILS_EXPORT bool ParallelInTime()
+    {
+        return m_comm->GetSize() != m_comm->GetSpaceComm()->GetSize();
+    }
 
 protected:
     /// Communicator
@@ -364,6 +395,10 @@ protected:
     int m_steps;
     /// Number of steps between checkpoints.
     int m_checksteps;
+    /// Number of time steps between outputting status information.
+    int m_infosteps;
+    /// Number of parareal time iteration.
+    int m_pararealIter;
     /// Spatial dimension (>= expansion dim).
     int m_spacedim;
     /// Expansion dimension.
@@ -615,16 +650,18 @@ inline void EquationSystem::PrintSummary(std::ostream &out)
 
         out << "==============================================================="
                "========"
-            << std::endl;
+            << std::endl
+            << std::flush;
         for (auto &x : vSummary)
         {
             out << "\t";
             out.width(20);
-            out << x.first << ": " << x.second << std::endl;
+            out << x.first << ": " << x.second << std::endl << std::flush;
         }
         out << "==============================================================="
                "========"
-            << std::endl;
+            << std::endl
+            << std::flush;
     }
 }
 
@@ -753,10 +790,10 @@ inline void EquationSystem::CopyFromPhysField(const int i,
     Vmath::Vcopy(output.size(), m_fields[i]->GetPhys(), 1, output, 1);
 }
 
-inline void EquationSystem::CopyToPhysField(const int i,
-                                            Array<OneD, NekDouble> &output)
+inline void EquationSystem::CopyToPhysField(
+    const int i, const Array<OneD, const NekDouble> &input)
 {
-    Vmath::Vcopy(output.size(), output, 1, m_fields[i]->UpdatePhys(), 1);
+    Vmath::Vcopy(input.size(), input, 1, m_fields[i]->UpdatePhys(), 1);
 }
 } // namespace SolverUtils
 } // namespace Nektar

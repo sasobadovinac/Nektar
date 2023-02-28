@@ -98,23 +98,6 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetName() const
-    {
-        return std::string("RungeKutta");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        if (GetOrder() == 4 || GetOrder() == 5)
-        {
-            return 2.784;
-        }
-        else
-        {
-            return 2.0;
-        }
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     std::string variant, unsigned int order,
                                     std::vector<NekDouble> freeParams)
@@ -159,11 +142,15 @@ public:
                       0.,      0.,      0.,      0.,
                       0.,      0.,      0.,      0.,      0. },
                 // 5th Order - 6 stages
+                // Rabiei, Faranak, and Fudziah Ismail. "Fifth order improved
+                // Runge-Kutta method for solving ordinary differential
+                // equations." In Proceedings of the 11th WSEAS international
+                // conference on Applied computer science, pp. 129-133. 2011.
                 {  1./4.,
                    1./8.,   1./8.,
-                      0.,      0.,    1./2.,
-                  3./16.,  -3./8.,    3./8.,  9./16.,
-                  -3./7.,   8./7.,    6./7., -12./7.,   8./7. } },
+                      0.,  -1./2.,      1.,
+                  3./16.,      0.,      0.,  9./16.,
+                  -3./7.,   2./7.,  12./7., -12./7.,   8./7. } },
               // Strong Stability Preserving
               { {     0.,      0.,      0.,      0.,      0.,
                       0.,      0.,      0.,      0.,      0.,
@@ -190,40 +177,52 @@ public:
                       0.,      0.,      0.,      0.,
                       0.,      0.,      0.,      0.,      0. },
                 // 5th Order - 6 stages - not used
+                // Rabiei, Faranak, and Fudziah Ismail. "Fifth order improved
+                // Runge-Kutta method for solving ordinary differential
+                // equations." In Proceedings of the 11th WSEAS international
+                // conference on Applied computer science, pp. 129-133. 2011.
                 {  1./4.,
                    1./8.,   1./8.,
-                      0.,      0.,    1./2.,
-                  3./16.,  -3./8.,    3./8.,  9./16.,
-                  -3./7.,   8./7.,    6./7., -12./7.,   8./7. } } };
+                      0.,  -1./2.,      1.,
+                  3./16.,      0.,      0.,  9./16.,
+                  -3./7.,   2./7.,   12./7., -12./7.,   8./7. } } };
         // clang-format on
 
         // B Coefficients for the final summing.
 
         // clang-format off
-        const NekDouble Bcoefficients[2][6][5] =
-            { { {    0.,       0.,    0.,       0.,      0. },
+        const NekDouble Bcoefficients[2][6][6] =
+            { { {    0.,       0.,    0.,       0.,      0.,      0. },
                 // 1st Order
-                {    1.,       0.,    0.,       0.,      0. },
+                {    1.,       0.,    0.,       0.,      0.,      0. },
                 // 2nd Order - midpoint
-                {    0.,       1.,     0.,      0.,      0. },
+                {    0.,       1.,     0.,      0.,      0.,      0. },
                 // 3rd Order - Ralston's
-                { 2./9.,    3./9.,  4./9.,      0.,      0. },
+                { 2./9.,    3./9.,  4./9.,      0.,      0.,      0. },
                 // 4th Order - Classic
-                { 1./6.,    2./6.,  2./6.,   1./6.,      0. },
+                { 1./6.,    2./6.,  2./6.,   1./6.,      0.,      0. },
                 // 5th Order - 6 stages
-                { 7./90., 32./90., 12./90., 32./90., 7./90. } },
+                // Rabiei, Faranak, and Fudziah Ismail. "Fifth order improved
+                // Runge-Kutta method for solving ordinary differential
+                // equations." In Proceedings of the 11th WSEAS international
+                // conference on Applied computer science, pp. 129-133. 2011.
+                { 7./90.,      0., 32./90., 12./90., 32./90., 7./90.} },
               // Strong Stability Preserving
-              { {    0.,       0.,     0.,      0.,      0. },
+              { {    0.,       0.,     0.,      0.,      0.,      0. },
                 // 1st Order
-                {    1.,       0.,     0.,      0.,      0. },
+                {    1.,       0.,     0.,      0.,      0.,      0. },
                 // 2nd Order - improved
-                { 1./2.,    1./2.,     0.,      0.,      0. },
+                { 1./2.,    1./2.,     0.,      0.,      0.,      0. },
                 // 3rd Order - strong scaling
-                { 1./6.,    1./6.,  4./6.,      0.,      0. },
-                // 4th Order - Classic
-                { 1./6.,    2./6.,  2./6.,   1./6.,      0. },
-                // 5th Order - 6 stages
-                { 7./90., 32./90., 12./90., 32./90., 7./90. } } };
+                { 1./6.,    1./6.,  4./6.,      0.,      0.,      0. },
+                // 4th Order - Classic - not used
+                { 1./6.,    2./6.,  2./6.,   1./6.,      0.,      0. },
+                // 5th Order - 6 stages - not used
+                // Rabiei, Faranak, and Fudziah Ismail. "Fifth order improved
+                // Runge-Kutta method for solving ordinary differential
+                // equations." In Proceedings of the 11th WSEAS international
+                // conference on Applied computer science, pp. 129-133. 2011.
+                { 7./90.,      0., 32./90., 12./90., 32./90., 7./90. } } };
         // clang-format on
 
         unsigned int index = (variant == "SSP" || variant == "ImprovedEuler");
@@ -264,23 +263,70 @@ public:
         }
 
         // B Coefficients for the finial summing.
-        for (int n = 0; n < phase->m_order; ++n)
+        for (int n = 0; n < phase->m_numstages; ++n)
         {
             phase->m_B[0][0][n] = Bcoefficients[index][phase->m_order][n];
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 0;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 0;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         phase->CheckAndVerify();
     }
 
+protected:
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("RungeKutta");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        if (GetOrder() == 4 || GetOrder() == 5)
+        {
+            return 2.784;
+        }
+        else
+        {
+            return 2.0;
+        }
+    }
+
 }; // end class RungeKuttaTimeIntegrator
 
 ////////////////////////////////////////////////////////////////////////////////
 // Backwards compatibility
+class RungeKutta1TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
+{
+public:
+    RungeKutta1TimeIntegrationScheme(std::string variant, unsigned int order,
+                                     std::vector<NekDouble> freeParams)
+        : RungeKuttaTimeIntegrationScheme("", 1, freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+    }
+
+    static TimeIntegrationSchemeSharedPtr create(
+        std::string variant, unsigned int order,
+        std::vector<NekDouble> freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+
+        TimeIntegrationSchemeSharedPtr p =
+            MemoryManager<RungeKuttaTimeIntegrationScheme>::AllocateSharedPtr(
+                "", 1, freeParams);
+        return p;
+    }
+
+    static std::string className;
+
+}; // end class RungeKutta1TimeIntegrationScheme
+
 class RungeKutta2TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
 {
 public:
@@ -308,6 +354,34 @@ public:
     static std::string className;
 
 }; // end class RungeKutta2TimeIntegrationScheme
+
+class RungeKutta3TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
+{
+public:
+    RungeKutta3TimeIntegrationScheme(std::string variant, unsigned int order,
+                                     std::vector<NekDouble> freeParams)
+        : RungeKuttaTimeIntegrationScheme("", 3, freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+    }
+
+    static TimeIntegrationSchemeSharedPtr create(
+        std::string variant, unsigned int order,
+        std::vector<NekDouble> freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+
+        TimeIntegrationSchemeSharedPtr p =
+            MemoryManager<RungeKuttaTimeIntegrationScheme>::AllocateSharedPtr(
+                "", 3, freeParams);
+        return p;
+    }
+
+    static std::string className;
+
+}; // end class RungeKutta3TimeIntegrationScheme
 
 class ClassicalRungeKutta4TimeIntegrationScheme
     : public RungeKuttaTimeIntegrationScheme
@@ -337,7 +411,7 @@ public:
 
     static std::string className;
 
-}; // end class RungeKutta2TimeIntegrationScheme
+}; // end class ClassicalRungeKutta4TimeIntegrationScheme
 
 class RungeKutta4TimeIntegrationScheme
     : public ClassicalRungeKutta4TimeIntegrationScheme
@@ -351,7 +425,7 @@ public:
 
     static std::string className;
 
-}; // end class RungeKutta2TimeIntegrationScheme
+}; // end class RungeKutta4TimeIntegrationScheme
 
 class RungeKutta5TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
 {
@@ -379,7 +453,7 @@ public:
 
     static std::string className;
 
-}; // end class RungeKutta2TimeIntegrationScheme
+}; // end class RungeKutta5TimeIntegrationScheme
 
 class RungeKutta2_ImprovedEulerTimeIntegrationScheme
     : public RungeKuttaTimeIntegrationScheme

@@ -113,9 +113,9 @@ ProcessWallNormalData::~ProcessWallNormalData()
  *    should be in the range (0,inf). d in range (0,0.95] for controlled array.
  *    d>0.95 gives evenly spaced array.
  */
-void ProcessWallNormalData::Process(po::variables_map &vm)
+void ProcessWallNormalData::v_Process(po::variables_map &vm)
 {
-    ProcessBoundaryExtract::Process(vm);
+    ProcessBoundaryExtract::v_Process(vm);
 
     // Get dim to store data
     const int nfields       = m_f->m_variables.size();

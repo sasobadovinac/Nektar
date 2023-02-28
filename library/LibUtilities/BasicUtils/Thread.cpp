@@ -92,7 +92,7 @@ unsigned int ThreadJob::GetWorkerNum()
  *
  * @returns True if this ThreadManager has been initialised.
  */
-bool ThreadManager::IsInitialised()
+bool ThreadManager::v_IsInitialised()
 {
     return true;
 }
@@ -209,7 +209,7 @@ ThreadStartupManager::~ThreadStartupManager()
 /**
  *
  */
-void ThreadStartupManager::QueueJobs(std::vector<ThreadJob *> &joblist)
+void ThreadStartupManager::v_QueueJobs(std::vector<ThreadJob *> &joblist)
 {
     boost::ignore_unused(joblist);
     NEKERROR(ErrorUtil::efatal,
@@ -219,7 +219,7 @@ void ThreadStartupManager::QueueJobs(std::vector<ThreadJob *> &joblist)
 /**
  *
  */
-void ThreadStartupManager::QueueJob(ThreadJob *job)
+void ThreadStartupManager::v_QueueJob(ThreadJob *job)
 {
     boost::ignore_unused(job);
     NEKERROR(ErrorUtil::efatal,
@@ -229,7 +229,7 @@ void ThreadStartupManager::QueueJob(ThreadJob *job)
 /**
  *
  */
-unsigned int ThreadStartupManager::GetNumWorkers()
+unsigned int ThreadStartupManager::v_GetNumWorkers()
 {
     return 1;
 }
@@ -237,7 +237,7 @@ unsigned int ThreadStartupManager::GetNumWorkers()
 /**
  *
  */
-unsigned int ThreadStartupManager::GetWorkerNum()
+unsigned int ThreadStartupManager::v_GetWorkerNum()
 {
     return 0;
 }
@@ -245,7 +245,7 @@ unsigned int ThreadStartupManager::GetWorkerNum()
 /**
  *
  */
-void ThreadStartupManager::SetNumWorkers(const unsigned int num)
+void ThreadStartupManager::v_SetNumWorkers(const unsigned int num)
 {
     ASSERTL0(num == 1,
              "Attempted to SetNumWorkers to != 1 in ThreadDefaultManager");
@@ -254,7 +254,7 @@ void ThreadStartupManager::SetNumWorkers(const unsigned int num)
 /**
  *
  */
-void ThreadStartupManager::SetNumWorkers()
+void ThreadStartupManager::v_SetNumWorkers()
 {
     return;
 }
@@ -262,7 +262,7 @@ void ThreadStartupManager::SetNumWorkers()
 /**
  *
  */
-unsigned int ThreadStartupManager::GetMaxNumWorkers()
+unsigned int ThreadStartupManager::v_GetMaxNumWorkers()
 {
     return 1;
 }
@@ -270,7 +270,7 @@ unsigned int ThreadStartupManager::GetMaxNumWorkers()
 /**
  *
  */
-void ThreadStartupManager::Wait()
+void ThreadStartupManager::v_Wait()
 {
     return;
 }
@@ -278,7 +278,7 @@ void ThreadStartupManager::Wait()
 /**
  *
  */
-void ThreadStartupManager::SetChunkSize(unsigned int chnk)
+void ThreadStartupManager::v_SetChunkSize(unsigned int chnk)
 {
     boost::ignore_unused(chnk);
     NEKERROR(ErrorUtil::efatal,
@@ -288,7 +288,7 @@ void ThreadStartupManager::SetChunkSize(unsigned int chnk)
 /**
  *
  */
-void ThreadStartupManager::SetSchedType(SchedType s)
+void ThreadStartupManager::v_SetSchedType(SchedType s)
 {
     boost::ignore_unused(s);
     NEKERROR(ErrorUtil::efatal,
@@ -298,7 +298,7 @@ void ThreadStartupManager::SetSchedType(SchedType s)
 /**
  *
  */
-bool ThreadStartupManager::InThread()
+bool ThreadStartupManager::v_InThread()
 {
     return false;
 }
@@ -306,7 +306,7 @@ bool ThreadStartupManager::InThread()
 /**
  *
  */
-void ThreadStartupManager::Hold()
+void ThreadStartupManager::v_Hold()
 {
     return;
 }
@@ -314,7 +314,7 @@ void ThreadStartupManager::Hold()
 /**
  *
  */
-bool ThreadStartupManager::IsInitialised()
+bool ThreadStartupManager::v_IsInitialised()
 {
     return false;
 }
@@ -322,7 +322,7 @@ bool ThreadStartupManager::IsInitialised()
 /**
  *
  */
-const std::string &ThreadStartupManager::GetType() const
+const std::string &ThreadStartupManager::v_GetType() const
 {
     return m_type;
 }

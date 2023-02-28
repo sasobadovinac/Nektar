@@ -266,10 +266,6 @@ public:
         return v_ConvergenceCheck(nIteration, Residual, tol);
     }
 
-    LIB_UTILITIES_EXPORT virtual void v_NekSysInitialGuess(
-        const Array<OneD, const NekDouble> &pInput,
-        Array<OneD, NekDouble> &pguess);
-
     LIB_UTILITIES_EXPORT void SetFlagWarnings(bool in)
     {
         m_FlagWarnings = in;
@@ -311,6 +307,10 @@ protected:
     virtual bool v_ConvergenceCheck(
         const int nIteration, const Array<OneD, const NekDouble> &Residual,
         const NekDouble tol);
+
+    LIB_UTILITIES_EXPORT virtual void v_NekSysInitialGuess(
+        const Array<OneD, const NekDouble> &pInput,
+        Array<OneD, NekDouble> &pguess);
 };
 } // namespace LibUtilities
 } // namespace Nektar

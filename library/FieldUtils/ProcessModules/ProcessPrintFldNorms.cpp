@@ -60,7 +60,7 @@ ProcessPrintFldNorms::~ProcessPrintFldNorms()
 {
 }
 
-void ProcessPrintFldNorms::Process(po::variables_map &vm)
+void ProcessPrintFldNorms::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

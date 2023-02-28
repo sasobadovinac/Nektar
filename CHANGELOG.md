@@ -4,6 +4,10 @@ Changelog
 v5.3.0
 ------
 **Library**
+- Fixed avx512 back-end for SimdLib (!1333)
+- Remove unnecessary IterPerExp methods (!1366)
+- Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
+- Updated the library to use m_phys and m_coeff as function arguments (!1412)
 - Added float and restored SVE back-end for SimdLib (!1373)
 - Fix VmathSIMD by adding optional mapping with # of lanes (!1388)
 - Added float and restore avx512 back-end for SimdLib (!1387)
@@ -13,10 +17,14 @@ v5.3.0
 - Fix boost 1.77 compatibility errors (!1420)
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 - Add compatiblity patch to solve conflict between flex 2.6.3 and scotch 6.0.4 (!1410)
+- Add Parareal Driver module (!1317)
 - Maintenance for C++-17 compatibility: removed std::unaray_function base class due to removal from the std (!1419)
 - Fixed the comment of function Vvtvvtp in VmathArray (!1408)
 - Add a FieldConvert utility to compute the divergence of the velocity (!1413)
 - Added new filter to calculate variables integral on composite mesh (!1409)
+- Overload PhysEvaluate to give first derivatives using barycentric
+  interpolation (!1323)
+- Non-conformal interface support (!1323)
 - Fix a I/O issue related to the IO_InfoSteps parameter (!1422)
 - Fix a I/O issue related to the IO_CheckSteps parameter (!1423)
 - Fix boost 1.77 compatibility errors (!1402)
@@ -25,13 +33,31 @@ v5.3.0
 - Templating FieldUtils::Interpolator class (!1420)
 - Fix virtual function overrides in StdRegions and LocalRegions classes (!1435)
 - Disable -Werror by default (!1443)
+- Add missing override keyword to virtual functions in FieldUtils (!1452)
 - Add override keyword to virtual functions in GlobalMapping and MultiRegions (!1450)
 - Add fmod and modulus operator to interpreter (!1089)
 - Add command line option and environment variable to disable backup field files (!1154)
 - Add override keyword to virtual functions in SpatialDomains (!1448)
 - Add missing override keyword to virtual functions in Collections (!1453)
 - Add missing override keyword to virtual functions in SolverUtils (!1451)
+- Add missing override keyword to virtual functions in LibUtilities (!1459)
 - Enable ARM macOS runner, fixes for SCOTCH allocation and PETSc detection on macOS (!1462)
+- Add FieldConvert module and filter to project velocity into body-fitted coordinate system (!1467)
+- Fix typos in Vmath and VDmath (!1480)
+- Fix minor typo and removed unused functions in LibUtilities/TimeIntegration (!1476) 
+- Fix RK5 time integration scheme (!1482)
+- Fix ESDIRK time integration scheme (!1484)
+- Fix IMXGear time-integration scheme for consistent second-order accuracy (!1489)
+- Fix TimeIntegrationDemo.cpp and add ESDIRK tst files to the CI (!1485)
+- Add DIRKOrder1, BDFImplicitOrder3, BDFImplicitOrder4, RungeKutta1, and RungeKutta3 schemes to the register (!1485)
+- Use DIRK (instead of IMEXdirk) schemes for the start-up phase of high-order BDF and AM schemes (!1485).
+- Slightly tidy-up time integration algorithms (!1496)
+- Reduced memory usage in the FilterHistoryPoint (!1458)
+- Remove redundant functor typedef (!1498)
+- Fix CNAB/MCNAB time-integration schemes (!1493)
+- Add missing m_ prefix to member variables in FFTW (!1504)
+- Make some virtual functions protected (!1506)
+- Disable problematic Movement_fixed_3D_stacked_cylinders_curved_hdf5_par test (!1507)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -41,6 +67,7 @@ v5.3.0
 - Added Physical AV to the implicit Navier Stokes solver (!1372)
 - Fixed Segmentation Fault when using C0 Smoother with Shock Capturing (!1394)
 - The Incomplete IP method was made the default method for the IP method (!1377).
+- Add additional parameters for the Isentropic Vortex equation system (!1323)
 - Improve performance of the perconditioner and diffusion operator (!1393)
 - Re-add the SFD test with an updated restart file (!1399)
 - Improve performance of the block diagonal operator of the preconditioner (!1404)
@@ -54,9 +81,15 @@ v5.3.0
 **IncNavierStokesSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 - Extended Reynolds Stresses filter to passive scalars (!1430)
+- Fixed Taylor-Hood expansion for VCSWeakPressure (!1444)
+- Fix filename in LinearisedAdvection (!1479)
+- Added scalar advection terms to AdjointSolver (!1466)
 
 **VortexWaveInteractionSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
+
+**DummySolver**
+- Fix CWIPI test to use DirectFull for projection of received data (!1502)
 
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
@@ -66,9 +99,15 @@ exporting in .vtu format (!1386)
 - Add option to refine curves in the same manner as the line refinement functionality (!1298)
 - Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
 - Fix a segmentation fault with WriteOctree due to missing 'order' parameter (!1418)
+- Multi domain input/output for Nekpp and HDF5 file formats (!1323)
 - Fix CADSurfOCE curvature bug where negative curvature values could be returned causing incorrect mesh spacing (!1442)
 - Fix ProjectCAD bug with findAndProject where the projection was missing and variable was passed without reference (!1442)
 - Fix 3d_bl_wing test case for STEP files where the wrong surfaces were selected for the BL (!1442)
+- Fix error when setting BL progression to 1.0 due a division by 0 (!1455)
+- Changed the BOOLPARAMETERS tag in InputMCF to allow disabling the high order
+  surface optimisation with "DisableSurfaceOptimiser" (surface optimisation is
+  still enabled by default) (!1455)
+- Fix 3d_bl_wing test case for STEP files - updated to use an improved CAD definition for the NACA aerofoil (!1486)
 
 **FieldConvert**
 - Add vars and dirs options in the gradient module to specify fields and partial derivative directions (!1415)
@@ -86,6 +125,9 @@ exporting in .vtu format (!1386)
 - Fix a Wreorder warning (!1445)
 - Fix some Wimplicit-fallthrough warnings (!1446)
 - Switch to using pkg-config for finding PETSc (!1454)
+- Use Nektar::LibUtilities::Timer for better accuracy (!1468)
+- Make some virtual functions protected (!1469)
+- Extend clang-format checks to solvers, utilities, tests and templates (!1434)
 
 **CI**
 - Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)
@@ -95,6 +137,9 @@ exporting in .vtu format (!1386)
 - Update solvers CMakeList.txt to fix some warnings detection issue (!1447)
 - Remove -fpermissive from NektarCommon.cmake (!1460)
 - Remove old distribution versions, added Fedora 35/36 testing to CI (!1461)
+- Kill orphan Tester-g processes on Windows and remove source tree after build
+(!1471)
+- Fixed path issue and warning in the nektar-workbook image (!1470)
 
 
 v5.2.0
@@ -215,6 +260,14 @@ v5.1.0
 - Refactored time integration code using factory pattern (!1034, !1103)
 - Fix WriteStream with empty Array/vector (!1233)
 - Add interpolation at arbitrary point in 3DH1 (!1233)
+  level. Removed GlobalCoeffs functionality (!963, !1159)
+- Add interior penalty method to DG framework (!1101)
+- Add an error filter for the time-evolution of the L2 and Linf errors (!1147)
+- Enable global systems to be generated when using different values of variable
+  coefficients (!1159)
+
+**FieldConvert**
+- Refactored time integration code using factory pattern (!1034)
 - Fix to preprocessor logic for boost with Visual Studio >= 2015 (!1115)
 - Fix type consistency and real comparison in SharedArray.hpp, replaced
   num_elements with size() (!1127, !1137, !1141)

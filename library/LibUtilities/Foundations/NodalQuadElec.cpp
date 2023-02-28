@@ -47,7 +47,7 @@ namespace LibUtilities
 bool NodalQuadElec::initPointsManager[] = {PointsManager().RegisterCreator(
     PointsKey(0, eNodalQuadElec), NodalQuadElec::Create)};
 
-void NodalQuadElec::CalculatePoints()
+void NodalQuadElec::v_CalculatePoints()
 {
     // Allocate the storage for points
     unsigned int numPoints = GetNumPoints();
@@ -71,7 +71,7 @@ void NodalQuadElec::CalculatePoints()
     }
 }
 
-void NodalQuadElec::CalculateWeights()
+void NodalQuadElec::v_CalculateWeights()
 {
     unsigned int numPoints = GetNumPoints();
 
@@ -86,7 +86,7 @@ void NodalQuadElec::CalculateWeights()
     }
 }
 
-void NodalQuadElec::CalculateDerivMatrix()
+void NodalQuadElec::v_CalculateDerivMatrix()
 {
 }
 

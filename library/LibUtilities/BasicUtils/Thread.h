@@ -176,8 +176,10 @@ public:
      *
      * @see SchedType
      */
-    LIB_UTILITIES_EXPORT virtual void QueueJobs(
-        std::vector<ThreadJob *> &joblist) = 0;
+    LIB_UTILITIES_EXPORT void QueueJobs(std::vector<ThreadJob *> &joblist)
+    {
+        v_QueueJobs(joblist);
+    }
     /**
      * @brief Pass a single job to the master queue.
      * @param job A pointer to a ThreadJob subclass.
@@ -186,14 +188,20 @@ public:
      * issue then suspend the workers with SetNumWorkers(0) until the jobs
      * are queued.
      */
-    LIB_UTILITIES_EXPORT virtual void QueueJob(ThreadJob *job) = 0;
+    LIB_UTILITIES_EXPORT void QueueJob(ThreadJob *job)
+    {
+        v_QueueJob(job);
+    }
     /**
      * @brief Return the number of active workers.
      *
      * Active workers are threads that are either running jobs
      * or are waiting for jobs to be queued.
      */
-    LIB_UTILITIES_EXPORT virtual unsigned int GetNumWorkers() = 0;
+    LIB_UTILITIES_EXPORT unsigned int GetNumWorkers()
+    {
+        return v_GetNumWorkers();
+    }
     /**
      * @brief Returns the worker number of the executing thread.
      *
@@ -212,7 +220,10 @@ public:
      *
      * Returns 0 if called by non-thread.
      */
-    LIB_UTILITIES_EXPORT virtual unsigned int GetWorkerNum() = 0;
+    LIB_UTILITIES_EXPORT unsigned int GetWorkerNum()
+    {
+        return v_GetWorkerNum();
+    }
     /**
      * @brief Sets the number of active workers.
      * @param num The number of active workers.
@@ -223,18 +234,27 @@ public:
      * If num is greater than the maximum allowed number of active workers,
      * then the maximum value will be used instead.
      */
-    LIB_UTILITIES_EXPORT virtual void SetNumWorkers(const unsigned int num) = 0;
+    LIB_UTILITIES_EXPORT void SetNumWorkers(const unsigned int num)
+    {
+        v_SetNumWorkers(num);
+    }
     /**
      * @brief Sets the number of active workers to the maximum.
      *
      * Sets the number of active workers to the maximum available.
      */
-    LIB_UTILITIES_EXPORT virtual void SetNumWorkers() = 0;
+    LIB_UTILITIES_EXPORT void SetNumWorkers()
+    {
+        v_SetNumWorkers();
+    }
     /**
      * @brief Gets the maximum available number of threads.
      * @return The maximum number of workers.
      */
-    LIB_UTILITIES_EXPORT virtual unsigned int GetMaxNumWorkers() = 0;
+    LIB_UTILITIES_EXPORT unsigned int GetMaxNumWorkers()
+    {
+        return v_GetMaxNumWorkers();
+    }
     /**
      * @brief Waits until all queued jobs are finished.
      *
@@ -257,7 +277,10 @@ public:
      * number of worker threads, implementations should increase the number
      * of active workers by 1 on entering Wait().
      */
-    LIB_UTILITIES_EXPORT virtual void Wait() = 0;
+    LIB_UTILITIES_EXPORT void Wait()
+    {
+        v_Wait();
+    }
     /**
      * @brief Controls how many jobs are sent to each worker at a time.
      *
@@ -267,17 +290,26 @@ public:
      * @see SchedType
      * @see SetSchedType()
      */
-    LIB_UTILITIES_EXPORT virtual void SetChunkSize(unsigned int chnk) = 0;
+    LIB_UTILITIES_EXPORT void SetChunkSize(unsigned int chnk)
+    {
+        v_SetChunkSize(chnk);
+    }
     /**
      * @brief Sets the current scheduling algorithm.
      * @see SetChunkSize()
      */
-    LIB_UTILITIES_EXPORT virtual void SetSchedType(SchedType s) = 0;
+    LIB_UTILITIES_EXPORT void SetSchedType(SchedType s)
+    {
+        v_SetSchedType(s);
+    }
     /**
      * @brief Indicates whether the code is in a worker thread or not.
      * @return True if the caller is in a worker thread.
      */
-    LIB_UTILITIES_EXPORT virtual bool InThread() = 0;
+    LIB_UTILITIES_EXPORT bool InThread()
+    {
+        return v_InThread();
+    }
     /**
      * @brief A calling threads holds until all active threads call this
      * method.
@@ -290,16 +322,25 @@ public:
      * is altered after a thread has called this method.  It is only safe to
      * call SetNumWorkers() when no threads are holding.
      */
-    LIB_UTILITIES_EXPORT virtual void Hold() = 0;
+    LIB_UTILITIES_EXPORT void Hold()
+    {
+        v_Hold();
+    }
     /**
      * @brief Returns a description of the type of threading.
      *
      * E.g. "Threading with Boost"
      */
-    LIB_UTILITIES_EXPORT virtual const std::string &GetType() const = 0;
+    LIB_UTILITIES_EXPORT const std::string &GetType()
+    {
+        return v_GetType();
+    }
 
     /// ThreadManager implementation.
-    LIB_UTILITIES_EXPORT virtual bool IsInitialised();
+    LIB_UTILITIES_EXPORT bool IsInitialised()
+    {
+        return v_IsInitialised();
+    }
 
     inline int GetThrFromPartition(int pPartition)
     {
@@ -315,6 +356,24 @@ public:
     {
         return pRank * GetMaxNumWorkers() + pThr;
     }
+
+protected:
+    LIB_UTILITIES_EXPORT virtual void v_QueueJobs(
+        std::vector<ThreadJob *> &joblist)                       = 0;
+    LIB_UTILITIES_EXPORT virtual void v_QueueJob(ThreadJob *job) = 0;
+    LIB_UTILITIES_EXPORT virtual unsigned int v_GetNumWorkers()  = 0;
+    LIB_UTILITIES_EXPORT virtual unsigned int v_GetWorkerNum()   = 0;
+    LIB_UTILITIES_EXPORT virtual void v_SetNumWorkers(
+        const unsigned int num)                                         = 0;
+    LIB_UTILITIES_EXPORT virtual void v_SetNumWorkers()                 = 0;
+    LIB_UTILITIES_EXPORT virtual unsigned int v_GetMaxNumWorkers()      = 0;
+    LIB_UTILITIES_EXPORT virtual void v_Wait()                          = 0;
+    LIB_UTILITIES_EXPORT virtual void v_SetChunkSize(unsigned int chnk) = 0;
+    LIB_UTILITIES_EXPORT virtual void v_SetSchedType(SchedType s)       = 0;
+    LIB_UTILITIES_EXPORT virtual bool v_InThread()                      = 0;
+    LIB_UTILITIES_EXPORT virtual void v_Hold()                          = 0;
+    LIB_UTILITIES_EXPORT virtual const std::string &v_GetType() const   = 0;
+    LIB_UTILITIES_EXPORT virtual bool v_IsInitialised();
 };
 
 typedef boost::unique_lock<boost::shared_mutex> WriteLock;
@@ -382,20 +441,22 @@ public:
     ThreadStartupManager();
     ThreadStartupManager(const ThreadStartupManager &src) = default;
     virtual ~ThreadStartupManager();
-    virtual void QueueJobs(std::vector<ThreadJob *> &joblist);
-    virtual void QueueJob(ThreadJob *job);
-    virtual unsigned int GetNumWorkers();
-    virtual unsigned int GetWorkerNum();
-    virtual void SetNumWorkers(const unsigned int num);
-    virtual void SetNumWorkers();
-    virtual unsigned int GetMaxNumWorkers();
-    virtual void Wait();
-    virtual void SetChunkSize(unsigned int chnk);
-    virtual void SetSchedType(SchedType s);
-    virtual bool InThread();
-    virtual void Hold();
-    virtual bool IsInitialised();
-    virtual const std::string &GetType() const;
+
+protected:
+    virtual void v_QueueJobs(std::vector<ThreadJob *> &joblist) override;
+    virtual void v_QueueJob(ThreadJob *job) override;
+    virtual unsigned int v_GetNumWorkers() override;
+    virtual unsigned int v_GetWorkerNum() override;
+    virtual void v_SetNumWorkers(const unsigned int num) override;
+    virtual void v_SetNumWorkers() override;
+    virtual unsigned int v_GetMaxNumWorkers() override;
+    virtual void v_Wait() override;
+    virtual void v_SetChunkSize(unsigned int chnk) override;
+    virtual void v_SetSchedType(SchedType s) override;
+    virtual bool v_InThread() override;
+    virtual void v_Hold() override;
+    virtual bool v_IsInitialised() override;
+    virtual const std::string &v_GetType() const override;
 
 private:
     // Do not allow assignment as m_type is const

@@ -57,9 +57,9 @@ ProcessSurfDistance::~ProcessSurfDistance()
 {
 }
 
-void ProcessSurfDistance::Process(po::variables_map &vm)
+void ProcessSurfDistance::v_Process(po::variables_map &vm)
 {
-    ProcessBoundaryExtract::Process(vm);
+    ProcessBoundaryExtract::v_Process(vm);
     ASSERTL0(!boost::iequals(m_config["bnd"].as<string>(), "All"),
              "ProcessSurfDistance needs bnd parameter with a single id.");
 

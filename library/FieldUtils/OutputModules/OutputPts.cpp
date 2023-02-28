@@ -67,7 +67,7 @@ OutputPts::~OutputPts()
 {
 }
 
-void OutputPts::OutputFromPts(po::variables_map &vm)
+void OutputPts::v_OutputFromPts(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
@@ -86,7 +86,7 @@ void OutputPts::OutputFromPts(po::variables_map &vm)
     }
 }
 
-void OutputPts::OutputFromExp(po::variables_map &vm)
+void OutputPts::v_OutputFromExp(po::variables_map &vm)
 {
     Array<OneD, Array<OneD, NekDouble>> tmp(m_f->m_exp[0]->GetCoordim(0) +
                                             m_f->m_variables.size());
@@ -119,22 +119,23 @@ void OutputPts::OutputFromExp(po::variables_map &vm)
     m_f->m_fieldPts = MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
         m_f->m_exp[0]->GetCoordim(0), m_f->m_variables, tmp);
 
-    OutputFromPts(vm);
+    v_OutputFromPts(vm);
 }
 
-void OutputPts::OutputFromData(po::variables_map &vm)
+void OutputPts::v_OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
     NEKERROR(ErrorUtil::efatal, "OutputPts can't write using only FieldData.");
 }
 
-fs::path OutputPts::GetPath(std::string &filename, po::variables_map &vm)
+fs::path OutputPts::v_GetPath(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
     return fs::path(filename);
 }
 
-fs::path OutputPts::GetFullOutName(std::string &filename, po::variables_map &vm)
+fs::path OutputPts::v_GetFullOutName(std::string &filename,
+                                     po::variables_map &vm)
 {
     boost::ignore_unused(vm);
     return fs::path(filename);

@@ -101,7 +101,10 @@ typedef std::shared_ptr<PList> PListSharedPtr;
 class Object : public std::enable_shared_from_this<Object>
 {
 public:
-    virtual void Close() = 0;
+    void Close()
+    {
+        v_Close();
+    }
     inline hid_t GetId() const
     {
         return m_Id;
@@ -118,6 +121,7 @@ protected:
     Object(hid_t id);
     virtual ~Object();
     hid_t m_Id;
+    virtual void v_Close() = 0;
 };
 
 // PropertyList objects
@@ -161,12 +165,14 @@ public:
 
     PList();
     ~PList();
-    void Close();
     void SetChunk(const std::vector<hsize_t> &dims);
     void SetDeflate(const unsigned level = 1);
     void SetMpio(CommSharedPtr comm);
     void SetDxMpioCollective();
     void SetDxMpioIndependent();
+
+protected:
+    virtual void v_Close() override;
 
 private:
     PList(hid_t cls);
@@ -242,7 +248,13 @@ public:
 
     bool ContainsDataSet(std::string nm);
 
-    virtual hsize_t GetNumElements() = 0;
+    hsize_t GetNumElements()
+    {
+        return v_GetNumElements();
+    }
+
+protected:
+    virtual hsize_t v_GetNumElements() = 0;
     LinkIterator begin();
     LinkIterator end();
 
@@ -313,8 +325,6 @@ public:
               const std::vector<hsize_t> &max_dims);
     ~DataSpace();
 
-    void Close();
-
     void SelectRange(const hsize_t start, const hsize_t count);
     void AppendRange(const hsize_t start, const hsize_t count);
 
@@ -330,6 +340,9 @@ public:
 
     hsize_t GetSize();
     std::vector<hsize_t> GetDims();
+
+protected:
+    virtual void v_Close() override;
 
 private:
     DataSpace(hid_t id);
@@ -391,10 +404,10 @@ public:
         boost::ignore_unused(obj);
         return DataTypeTraits<T>::GetType();
     }
-    virtual void Close();
     DataTypeSharedPtr Copy() const;
 
 protected:
+    virtual void v_Close() override;
     DataType(hid_t id);
 };
 
@@ -413,7 +426,9 @@ public:
         H5Tset_size(strtype, size);
         H5Tinsert(m_Id, name.c_str(), offset, strtype);
     }
-    void Close();
+
+protected:
+    virtual void v_Close() override;
 
 private:
     CompoundDataType(hid_t);
@@ -425,7 +440,9 @@ class PredefinedDataType : public DataType
 public:
     template <class T> static DataTypeSharedPtr Native();
     static DataTypeSharedPtr CS1();
-    void Close();
+
+protected:
+    virtual void v_Close() override;
 
 private:
     PredefinedDataType(hid_t);
@@ -436,8 +453,10 @@ class Attribute : public Object
 {
 public:
     ~Attribute();
-    void Close();
     DataSpaceSharedPtr GetSpace() const;
+
+protected:
+    virtual void v_Close() override;
 
 private:
     Attribute(hid_t id) : Object(id)
@@ -460,8 +479,10 @@ public:
     static FileSharedPtr Open(const std::string &filename, unsigned mode,
                               PListSharedPtr accessPL = PList::Default());
     ~File();
-    void Close();
-    virtual hsize_t GetNumElements();
+
+protected:
+    virtual void v_Close() override;
+    virtual hsize_t v_GetNumElements() override;
 
 private:
     File(hid_t id);
@@ -472,11 +493,13 @@ class Group : public CanHaveAttributes, public CanHaveGroupsDataSets
 {
 public:
     ~Group();
-    void Close();
-    virtual hsize_t GetNumElements();
     std::vector<std::string> GetElementNames();
     CanHaveAttributesSharedPtr operator[](hsize_t idx);
     CanHaveAttributesSharedPtr operator[](const std::string &key);
+
+protected:
+    virtual void v_Close() override;
+    virtual hsize_t v_GetNumElements() override;
 
 private:
     Group(hid_t id);
@@ -487,7 +510,6 @@ class DataSet : public CanHaveAttributes
 {
 public:
     ~DataSet();
-    void Close();
     DataSpaceSharedPtr GetSpace() const;
 
     template <class T> void Write(const std::vector<T> &data)
@@ -619,6 +641,9 @@ public:
             data.push_back(std::string(rdata[i]));
         }
     }
+
+protected:
+    virtual void v_Close() override;
 
 private:
     DataSet(hid_t id);

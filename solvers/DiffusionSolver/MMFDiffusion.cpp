@@ -148,26 +148,23 @@ void MMFDiffusion::v_InitObject(bool DeclareFields)
 
         for (int j = 0; j < m_spacedim; ++j)
         {
-            m_varcoeff[MMFCoeffs[indx + j]] = Array<OneD, NekDouble>(nq, 0.0);
-            Vmath::Vcopy(nq, &m_movingframes[k][j * nq], 1,
-                         &m_varcoeff[MMFCoeffs[indx + j]][0], 1);
+            Vmath::Vcopy(nq, &m_movingframes[k][j * nq], 1, &tmp[0], 1);
+            m_varcoeff[MMFCoeffs[indx + j]] = tmp;
         }
 
         // m_DivMF
-        m_varcoeff[MMFCoeffs[indx + 3]] = Array<OneD, NekDouble>(nq, 0.0);
-        Vmath::Vcopy(nq, &m_DivMF[k][0], 1, &m_varcoeff[MMFCoeffs[indx + 3]][0],
-                     1);
+        Vmath::Vcopy(nq, &m_DivMF[k][0], 1, &tmp[0], 1);
+        m_varcoeff[MMFCoeffs[indx + 3]] = tmp;
 
         // \| e^k \|
-        m_varcoeff[MMFCoeffs[indx + 4]] = Array<OneD, NekDouble>(nq, 0.0);
-        tmp                             = Array<OneD, NekDouble>(nq, 0.0);
+        tmp = Array<OneD, NekDouble>(nq, 0.0);
         for (int i = 0; i < m_spacedim; ++i)
         {
             Vmath::Vvtvp(nq, &m_movingframes[k][i * nq], 1,
                          &m_movingframes[k][i * nq], 1, &tmp[0], 1, &tmp[0], 1);
         }
 
-        Vmath::Vcopy(nq, &tmp[0], 1, &m_varcoeff[MMFCoeffs[indx + 4]][0], 1);
+        m_varcoeff[MMFCoeffs[indx + 4]] = tmp;
     }
 
     if (!m_explicitDiffusion)

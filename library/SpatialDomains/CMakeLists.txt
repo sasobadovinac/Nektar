@@ -18,6 +18,8 @@ SegGeom.cpp
 PointGeom.cpp
 TetGeom.cpp
 TriGeom.cpp
+Movement/Zones.cpp
+Movement/Movement.cpp
 )
 
 SET(SPATIAL_DOMAINS_HEADERS
@@ -44,6 +46,9 @@ SpatialDomainsDeclspec.h
 TetGeom.h
 TriGeom.h
 SpatialDomains.hpp
+Movement/Zones.h
+        Movement/InterfaceInterpolation.h
+Movement/Movement.h
 )
 
 IF(NEKTAR_USE_HDF5)

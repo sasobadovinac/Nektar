@@ -134,10 +134,10 @@ bool isFace(int x, int y, int z, int npts)
 } // namespace
 
 // Calculate evenly spaced number of points
-void NodalTetEvenlySpaced::CalculatePoints()
+void NodalTetEvenlySpaced::v_CalculatePoints()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculatePoints();
+    PointsBaseType::v_CalculatePoints();
 
     // Populate m_points
     unsigned int npts = GetNumPoints();
@@ -357,10 +357,10 @@ void NodalTetEvenlySpaced::NodalPointReorder3d()
     }
 }
 
-void NodalTetEvenlySpaced::CalculateWeights()
+void NodalTetEvenlySpaced::v_CalculateWeights()
 {
     // Allocate storage for points
-    PointsBaseType::CalculateWeights();
+    PointsBaseType::v_CalculateWeights();
 
     typedef DataType T;
 
@@ -389,10 +389,10 @@ void NodalTetEvenlySpaced::CalculateInterpMatrix(
 
 // ////////////////////////////////////////
 //        CalculateDerivMatrix()
-void NodalTetEvenlySpaced::CalculateDerivMatrix()
+void NodalTetEvenlySpaced::v_CalculateDerivMatrix()
 {
     // Allocate the derivative matrix.
-    PointsBaseType::CalculateDerivMatrix();
+    PointsBaseType::v_CalculateDerivMatrix();
 
     m_derivmatrix[0] = m_util->GetDerivMatrix(0);
     m_derivmatrix[1] = m_util->GetDerivMatrix(1);

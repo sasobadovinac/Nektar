@@ -112,6 +112,7 @@ DisContField3DHomogeneous1D::DisContField3DHomogeneous1D(
     {
         m_planes[n] = MemoryManager<DisContField>::AllocateSharedPtr(
             *plane_zero, graph2D, variable, true, false);
+
         for (i = 0; i < nel; ++i)
         {
             (*m_exp).push_back((*m_exp)[i]);
@@ -162,19 +163,21 @@ void DisContField3DHomogeneous1D::SetupBoundaryConditions(
     const SpatialDomains::BoundaryConditionCollection &bconditions =
         bcs.GetBoundaryConditions();
 
+    int nplanes = m_planes.size();
+
     m_bndCondExpansions =
         Array<OneD, MultiRegions::ExpListSharedPtr>(bregions.size());
     m_bndConditions = m_planes[0]->UpdateBndConditions();
 
     m_bndCondBndWeight = Array<OneD, NekDouble>{bregions.size(), 0.0};
 
-    int nplanes = m_planes.size();
     Array<OneD, MultiRegions::ExpListSharedPtr> PlanesBndCondExp(nplanes);
 
     for (auto &it : bregions)
     {
         SpatialDomains::BoundaryConditionShPtr boundaryCondition =
             GetBoundaryCondition(bconditions, it.first, variable);
+
         for (n = 0; n < nplanes; ++n)
         {
             PlanesBndCondExp[n] = m_planes[n]->UpdateBndCondExpansion(cnt);
@@ -243,7 +246,7 @@ void DisContField3DHomogeneous1D::SetUpDG()
     }
 }
 
-void DisContField3DHomogeneous1D::v_HelmSolve(
+GlobalLinSysKey DisContField3DHomogeneous1D::v_HelmSolve(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
     const StdRegions::VarCoeffMap &varcoeff,
@@ -256,8 +259,9 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
     NekDouble beta;
     StdRegions::ConstFactorMap new_factors;
 
+    int npts_fce = PhysSpaceForcing ? m_npoints : m_ncoeffs;
     Array<OneD, NekDouble> e_out;
-    Array<OneD, NekDouble> fce(inarray.size());
+    Array<OneD, NekDouble> fce(npts_fce);
     Array<OneD, const NekDouble> wfce;
 
     // Transform forcing function in half-physical space if required
@@ -267,7 +271,7 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
     }
     else
     {
-        HomogeneousFwdTrans(inarray, fce);
+        HomogeneousFwdTrans(npts_fce, inarray, fce);
     }
 
     for (n = 0; n < m_planes.size(); ++n)
@@ -289,6 +293,7 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }
+    return NullGlobalLinSysKey;
 }
 
 /// @todo Fix in another way considering all the planes
@@ -628,13 +633,16 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     std::static_pointer_cast<
                         SpatialDomains::DirichletBoundaryCondition>(
                         m_bndConditions[i]);
-                std::string filebcs = bcPtr->m_filename;
-                std::string exprbcs = bcPtr->m_expr;
+                std::string bcfilename = bcPtr->m_filename;
+                std::string exprbcs    = bcPtr->m_expr;
 
-                if (filebcs != "")
+                if (bcfilename != "")
                 {
-                    ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                   locExpList);
+                    locExpList->ExtractCoeffsFromFile(
+                        bcfilename, bcPtr->GetComm(), varName,
+                        locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
                     valuesFile = locExpList->GetPhys();
                 }
 
@@ -651,10 +659,8 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
 
                 Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
                             locExpList->UpdatePhys(), 1);
-
                 // set wave space to false since have set up phys values
                 locExpList->SetWaveSpace(false);
-
                 locExpList->FwdTransBndConstrained(locExpList->GetPhys(),
                                                    locExpList->UpdateCoeffs());
             }
@@ -665,12 +671,15 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     SpatialDomains::NeumannBoundaryCondition>(
                     m_bndConditions[i]);
 
-                std::string filebcs = bcPtr->m_filename;
+                std::string bcfilename = bcPtr->m_filename;
 
-                if (filebcs != "")
+                if (bcfilename != "")
                 {
-                    ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                   locExpList);
+                    locExpList->ExtractCoeffsFromFile(
+                        bcfilename, bcPtr->GetComm(), varName,
+                        locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
                 }
                 else
                 {
@@ -682,22 +691,26 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
 
                     condition.Evaluate(x0, x1, x2, time,
                                        locExpList->UpdatePhys());
-
-                    locExpList->IProductWRTBase(locExpList->GetPhys(),
-                                                locExpList->UpdateCoeffs());
                 }
+
+                locExpList->IProductWRTBase(locExpList->GetPhys(),
+                                            locExpList->UpdateCoeffs());
             }
             else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                      SpatialDomains::eRobin)
             {
                 SpatialDomains::RobinBCShPtr bcPtr = std::static_pointer_cast<
                     SpatialDomains::RobinBoundaryCondition>(m_bndConditions[i]);
-                std::string filebcs = bcPtr->m_filename;
 
-                if (filebcs != "")
+                std::string bcfilename = bcPtr->m_filename;
+
+                if (bcfilename != "")
                 {
-                    ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                   locExpList);
+                    locExpList->ExtractCoeffsFromFile(
+                        bcfilename, bcPtr->GetComm(), varName,
+                        locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
                 }
                 else
                 {

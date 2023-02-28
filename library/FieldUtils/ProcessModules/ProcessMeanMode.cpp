@@ -58,13 +58,13 @@ ProcessMeanMode::~ProcessMeanMode()
 {
 }
 
-void ProcessMeanMode::Process(po::variables_map &vm)
+void ProcessMeanMode::v_Process(po::variables_map &vm)
 {
     // Set parameters for mean mode
     RegisterConfig("planeid", "0");
     RegisterConfig("wavespace", "1");
 
-    ProcessHomogeneousPlane::Process(vm);
+    ProcessHomogeneousPlane::v_Process(vm);
 }
 } // namespace FieldUtils
 } // namespace Nektar

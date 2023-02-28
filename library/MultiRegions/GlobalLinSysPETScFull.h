@@ -73,10 +73,7 @@ public:
 
     MULTI_REGIONS_EXPORT virtual ~GlobalLinSysPETScFull();
 
-private:
-    // Local to global map.
-    std::shared_ptr<AssemblyMap> m_locToGloMap;
-
+protected:
     /// Solve the linear system for given input and output vectors
     /// using a specified local to global map.
     virtual void v_Solve(const Array<OneD, const NekDouble> &in,
@@ -86,6 +83,10 @@ private:
                              NullNekDouble1DArray) override;
     virtual void v_DoMatrixMultiply(const Array<OneD, const NekDouble> &input,
                                     Array<OneD, NekDouble> &output) override;
+
+private:
+    // Local to global map.
+    std::shared_ptr<AssemblyMap> m_locToGloMap;
 };
 } // namespace MultiRegions
 } // namespace Nektar

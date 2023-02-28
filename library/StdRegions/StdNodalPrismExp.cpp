@@ -41,6 +41,11 @@ namespace Nektar
 {
 namespace StdRegions
 {
+
+StdNodalPrismExp::StdNodalPrismExp()
+{
+}
+
 StdNodalPrismExp::StdNodalPrismExp(const LibUtilities::BasisKey &Ba,
                                    const LibUtilities::BasisKey &Bb,
                                    const LibUtilities::BasisKey &Bc,
@@ -64,6 +69,7 @@ StdNodalPrismExp::StdNodalPrismExp(const StdNodalPrismExp &T)
 {
 }
 
+// Destructor
 StdNodalPrismExp::~StdNodalPrismExp()
 {
 }
@@ -152,7 +158,7 @@ DNekMatSharedPtr StdNodalPrismExp::GenNBasisTransMatrix()
             c[0]         = r[j];
             c[1]         = s[j];
             c[2]         = t[j];
-            (*Mat)(j, i) = StdPrismExp::v_PhysEvaluate(c, tmp_phys);
+            (*Mat)(j, i) = StdExpansion3D::v_PhysEvaluate(c, tmp_phys);
         }
     }
 

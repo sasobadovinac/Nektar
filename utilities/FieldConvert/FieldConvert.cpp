@@ -183,7 +183,8 @@ int main(int argc, char *argv[])
 
     if (vm.count("help") || vm.count("input-file") != 1)
     {
-        cerr << "Usage: FieldConvert [options] inputfile.ext1 outputfile.ext2"
+        cerr << "Usage: FieldConvert [options] "
+                "[inputfile.xml] inputfile.ext1 outputfile.ext2"
              << endl;
         cout << desc;
         cout << endl;
@@ -191,12 +192,14 @@ int main(int argc, char *argv[])
         cout << "\t FieldConvert -m vorticity file.xml file.fld file_vort.fld "
              << endl;
         cout << "(This will add vorticity to file file.fld and put it in a "
-                "new file file_vort.fld) "
+                "new file file_vort.fld. \n file.xml is a Nektar XML input "
+                "file containing the geometry.) "
              << endl;
         cout << endl;
         cout << "\t FieldConvert file.xml file_vort.fld file_vort.dat " << endl;
         cout << "(process file_vort.fld and make a tecplot output "
-                "file_vort.dat) "
+                "file_vort.dat. file.xml is a\n Nektar XML input file "
+                "containing the geometry.) "
              << endl;
 
         return 1;

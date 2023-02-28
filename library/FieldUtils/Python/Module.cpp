@@ -59,19 +59,19 @@ struct ModuleWrap : public MODTYPE, public py::wrapper<MODTYPE>
     /**
      * @brief Concrete implementation of the Module::Process function.
      */
-    void Process(po::variables_map &vm) override
+    void v_Process(po::variables_map &vm) override
     {
         boost::ignore_unused(vm);
         this->get_override("Process")();
     }
 
-    std::string GetModuleName() override
+    std::string v_GetModuleName() override
     {
         py::override f = this->get_override("GetModuleName");
         return py::call<std::string>(f.ptr());
     }
 
-    ModulePriority GetModulePriority() override
+    ModulePriority v_GetModulePriority() override
     {
         py::override f = this->get_override("GetModulePriority");
         return py::call<ModulePriority>(f.ptr());

@@ -517,7 +517,7 @@ NekDouble PrismExp::v_StdPhysEvaluate(
     const Array<OneD, const NekDouble> &physvals)
 {
     // Evaluate point in local (eta) coordinates.
-    return StdPrismExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
 }
 
 NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
@@ -529,7 +529,17 @@ NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
 
     m_geom->GetLocCoords(coord, Lcoord);
 
-    return StdPrismExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
+}
+
+NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                   const Array<OneD, const NekDouble> &inarray,
+                                   std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    Array<OneD, NekDouble> Lcoord(3);
+    ASSERTL0(m_geom, "m_geom not defined");
+    m_geom->GetLocCoords(coord, Lcoord);
+    return StdPrismExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
 }
 
 //---------------------------------------
@@ -1076,6 +1086,11 @@ DNekMatSharedPtr PrismExp::v_CreateStdMatrix(
 DNekScalMatSharedPtr PrismExp::v_GetLocMatrix(const MatrixKey &mkey)
 {
     return m_matrixManager[mkey];
+}
+
+void PrismExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
 }
 
 DNekScalBlkMatSharedPtr PrismExp::v_GetLocStaticCondMatrix(

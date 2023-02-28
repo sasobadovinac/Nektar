@@ -57,7 +57,7 @@ ProcessDOF::~ProcessDOF()
 {
 }
 
-void ProcessDOF::Process(po::variables_map &vm)
+void ProcessDOF::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

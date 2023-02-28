@@ -59,14 +59,23 @@ class TagWriter
 {
 public:
     /// Create a child node.
-    virtual std::shared_ptr<TagWriter> AddChild(const std::string &name) = 0;
+    std::shared_ptr<TagWriter> AddChild(const std::string &name)
+    {
+        return v_AddChild(name);
+    }
     /// Set an attribute on the node.
-    virtual void SetAttr(const std::string &key, const std::string &val) = 0;
+    void SetAttr(const std::string &key, const std::string &val)
+    {
+        v_SetAttr(key, val);
+    }
 
 protected:
     virtual ~TagWriter()
     {
     }
+
+    virtual std::shared_ptr<TagWriter> v_AddChild(const std::string &name) = 0;
+    virtual void v_SetAttr(const std::string &key, const std::string &val) = 0;
 };
 typedef std::shared_ptr<TagWriter> TagWriterSharedPtr;
 
@@ -246,7 +255,11 @@ public:
 
     LIB_UTILITIES_EXPORT static const std::string GetFileType(
         const std::string &filename, CommSharedPtr comm);
-    LIB_UTILITIES_EXPORT virtual const std::string &GetClassName() const = 0;
+
+    LIB_UTILITIES_EXPORT const std::string &GetClassName() const
+    {
+        return v_GetClassName();
+    }
 
     LIB_UTILITIES_EXPORT static std::shared_ptr<FieldIO> CreateDefault(
         const LibUtilities::SessionReaderSharedPtr session);
@@ -256,6 +269,14 @@ public:
     LIB_UTILITIES_EXPORT static void AddInfoTag(
         TagWriterSharedPtr root, const FieldMetaDataMap &fieldmetadatamap);
 
+    /**
+     * @brief Helper function that determines default file extension.
+     */
+    LIB_UTILITIES_EXPORT std::string GetFileEnding() const
+    {
+        return v_GetFileEnding();
+    };
+
 protected:
     /// Communicator to use when writing parallel format
     LibUtilities::CommSharedPtr m_comm;
@@ -264,14 +285,6 @@ protected:
 
     LIB_UTILITIES_EXPORT int CheckFieldDefinition(
         const FieldDefinitionsSharedPtr &fielddefs);
-
-    /**
-     * @brief Helper function that determines default file extension.
-     */
-    LIB_UTILITIES_EXPORT virtual std::string GetFileEnding() const
-    {
-        return "fld";
-    }
 
     LIB_UTILITIES_EXPORT std::string SetUpOutput(const std::string outname,
                                                  bool perRank,
@@ -296,6 +309,19 @@ protected:
     /// @copydoc FieldIO::ImportFieldMetaData
     LIB_UTILITIES_EXPORT virtual DataSourceSharedPtr v_ImportFieldMetaData(
         const std::string &filename, FieldMetaDataMap &fieldmetadatamap) = 0;
+
+    LIB_UTILITIES_EXPORT virtual std::string v_GetFileEnding() const
+    {
+        return "fld";
+    }
+
+    LIB_UTILITIES_EXPORT virtual const std::string &v_GetClassName() const = 0;
+
+    /// Check if solver use Parallel-in-Time
+    LIB_UTILITIES_EXPORT bool ParallelInTime()
+    {
+        return m_comm->GetSize() != m_comm->GetSpaceComm()->GetSize();
+    }
 };
 
 typedef std::shared_ptr<FieldIO> FieldIOSharedPtr;

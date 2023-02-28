@@ -59,9 +59,9 @@ ProcessScalGrad::~ProcessScalGrad()
 {
 }
 
-void ProcessScalGrad::Process(po::variables_map &vm)
+void ProcessScalGrad::v_Process(po::variables_map &vm)
 {
-    ProcessBoundaryExtract::Process(vm);
+    ProcessBoundaryExtract::v_Process(vm);
 
     int i, j, k;
 
@@ -131,10 +131,10 @@ void ProcessScalGrad::Process(po::variables_map &vm)
                     nq     = elmt->GetTotPoints();
                     offset = m_f->m_exp[0]->GetPhys_Offset(elmtid);
 
-                    // Initialise local arrays for the velocity gradients, and
-                    // stress components
-                    // size of total number of quadrature points for each
-                    // element (hence local).
+                    // Initialise local arrays for the velocity
+                    // gradients, and stress components size of total
+                    // number of quadrature points for each element
+                    // (hence local).
                     for (j = 0; j < ngrad; ++j)
                     {
                         grad[j] = Array<OneD, NekDouble>(nq);

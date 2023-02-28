@@ -77,7 +77,6 @@ protected:
     PreconditionerSharedPtr m_linSpacePrecon;
     PreconditionerSharedPtr m_blockPrecon;
 
-private:
     virtual void v_InitObject() override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,

@@ -118,12 +118,13 @@ protected:
         return m_transpose;
     }
 
-private:
     virtual typename boost::call_traits<DataType>::value_type v_GetValue(
         unsigned int row, unsigned int column) const = 0;
     virtual unsigned int v_GetStorageSize() const    = 0;
     LIB_UTILITIES_EXPORT virtual void v_Transpose();
     LIB_UTILITIES_EXPORT virtual char v_GetTransposeFlag() const;
+
+private:
     unsigned int m_size[2];
     char m_transpose;
     MatrixStorage m_storageType;

@@ -1531,7 +1531,7 @@ void OutputVtk::WritePVtu(po::variables_map &vm)
 
     int nprocs = m_f->m_comm->GetSize();
     std::string path =
-        LibUtilities::PortablePath(OutputVtkBase::GetPath(filename, vm));
+        LibUtilities::PortablePath(OutputVtkBase::v_GetPath(filename, vm));
 
     outfile << "<?xml version=\"1.0\"?>" << endl;
     outfile << "<VTKFile type=\"PUnstructuredGrid\" version=\"0.1\" "
@@ -1592,18 +1592,20 @@ void OutputVtk::WritePVtu(po::variables_map &vm)
     cout << "Written file: " << filename << endl;
 }
 
-void OutputVtk::OutputFromData(po::variables_map &vm)
+void OutputVtk::v_OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal, "OutputVtk can't write using only FieldData.");
+    NEKERROR(ErrorUtil::efatal,
+             "OutputVtk can't write using only FieldData. You may need "
+             "to add a mesh XML file to your input files.");
 }
 
-void OutputVtk::OutputFromPts(po::variables_map &vm)
+void OutputVtk::v_OutputFromPts(po::variables_map &vm)
 {
-    OutputVtkBase::OutputFromPts(vm);
+    OutputVtkBase::v_OutputFromPts(vm);
 }
 
-void OutputVtk::OutputFromExp(po::variables_map &vm)
+void OutputVtk::v_OutputFromExp(po::variables_map &vm)
 {
     if (m_config["legacy"].m_beenSet)
     {
@@ -1614,7 +1616,7 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
                  "High order VTK is not implemented for legacy output.")
 
         // No caching of mesh data in legacy output
-        OutputVtkBase::OutputFromExp(vm);
+        OutputVtkBase::v_OutputFromExp(vm);
         return;
     }
 

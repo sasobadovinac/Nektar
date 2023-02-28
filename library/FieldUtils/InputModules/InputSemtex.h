@@ -50,7 +50,6 @@ class InputSemtex : public InputModule
 public:
     InputSemtex(FieldSharedPtr f);
     virtual ~InputSemtex();
-    virtual void Process(po::variables_map &vm);
 
     /// Creates an instance of this class
     static ModuleSharedPtr create(FieldSharedPtr f)
@@ -60,17 +59,20 @@ public:
     /// %ModuleKey for class.
     static ModuleKey m_className[];
 
-    virtual std::string GetModuleName()
+protected:
+    virtual void v_Process(po::variables_map &vm) override;
+
+    virtual std::string v_GetModuleName() override
     {
         return "InputSemtex";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Processing Semtex field file";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eCreateFieldData;
     }

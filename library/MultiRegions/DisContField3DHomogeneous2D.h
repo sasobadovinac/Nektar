@@ -77,10 +77,8 @@ public:
     MULTI_REGIONS_EXPORT void SetupBoundaryConditions(
         const LibUtilities::BasisKey &HomoBasis_y,
         const LibUtilities::BasisKey &HomoBasis_z, const NekDouble lhom_y,
-        const NekDouble lhom_z, SpatialDomains::BoundaryConditions &bcs);
-
-    MULTI_REGIONS_EXPORT void EvaluateBoundaryConditions(
-        const NekDouble time = 0.0, const std::string varName = "");
+        const NekDouble lhom_z, SpatialDomains::BoundaryConditions &bcs,
+        const std::string variable);
 
     /// Storage space for the boundary to element and boundary to trace map.
     /// This member variable is really allocated just in case a boundary
@@ -97,13 +95,14 @@ protected:
 
     Array<OneD, SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
-    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::ConstFactorMap &factors,
-                             const StdRegions::VarCoeffMap &varcoeff,
-                             const MultiRegions::VarFactorsMap &varfactors,
-                             const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing) override;
+    virtual GlobalLinSysKey v_HelmSolve(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing) override;
 
     virtual void v_GetBndElmtExpansion(
         int i, std::shared_ptr<ExpList> &result,

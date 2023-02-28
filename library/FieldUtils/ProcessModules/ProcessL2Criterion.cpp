@@ -127,7 +127,7 @@ void MatSymEVals(NekDouble d1, NekDouble d2, NekDouble d3, NekDouble a,
     }
 }
 
-void ProcessL2Criterion::Process(po::variables_map &vm)
+void ProcessL2Criterion::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -167,6 +167,13 @@ void ProcessL2Criterion::Process(po::variables_map &vm)
     }
 
     MultiRegions::ExpListSharedPtr Exp;
+
+    for (s = 0; s < nstrips; ++s) // homogeneous strip varient
+    {
+        Exp     = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
+        m_f->m_exp.insert(it, Exp);
+    }
 
     for (s = 0; s < nstrips; ++s) // homogeneous strip varient
     {
@@ -231,11 +238,10 @@ void ProcessL2Criterion::Process(po::variables_map &vm)
                         outfield3);
         }
 
-        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        Vmath::Vcopy(npoints, outfield2, 1, Exp->UpdatePhys(), 1);
-        Exp->FwdTransLocalElmt(outfield2, Exp->UpdateCoeffs());
-        auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
-        m_f->m_exp.insert(it, Exp);
+        int fid = s * (nfields + 1) + nfields;
+        Vmath::Vcopy(npoints, outfield2, 1, m_f->m_exp[fid]->UpdatePhys(), 1);
+        m_f->m_exp[fid]->FwdTransLocalElmt(outfield2,
+                                           m_f->m_exp[fid]->UpdateCoeffs());
     }
 }
 } // namespace FieldUtils

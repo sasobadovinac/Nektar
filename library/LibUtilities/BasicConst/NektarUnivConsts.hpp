@@ -45,23 +45,27 @@ namespace NekConstants
 {
 static const int kNekLargeInt               = std::numeric_limits<int>::max();
 static const NekDouble kNekUnsetDouble      = -9999;
-static const NekDouble kNekMinResidInit     = 1e16;
-static const NekDouble kVertexTheSameDouble = 1.0e-8;
-static const NekDouble kGeomFactorsTol      = 1.0e-8;
+static const NekDouble kNekMinResidInit     = 1.0e+16;
+static const NekDouble kVertexTheSameDouble = 1.0e-08;
+static const NekDouble kGeomFactorsTol      = 1.0e-08;
 static const NekDouble kNekZeroTol          = 1.0e-12;
-static const NekDouble kGeomRightAngleTol   = 1e-14;
+static const NekDouble kGeomRightAngleTol   = 1.0e-14;
 static const NekDouble kNekSqrtTol          = 1.0e-16;
-static const NekDouble kNekIterativeTol     = 1e-09;
-static const NekDouble kNekSparseNonZeroTol = 1e-16;
+static const NekDouble kNekIterativeTol     = 1.0e-09;
+static const NekDouble kNekSparseNonZeroTol = 1.0e-16;
 static const NekDouble kNekMachineEpsilon =
     std::numeric_limits<NekDouble>::epsilon();
 
 // Tolerances for mesh generation and CAD handling
-static const NekDouble GeomTol = 1E-2;
-static const NekDouble CoinTol = 1E-6;
+static const NekDouble GeomTol = 1.0e-02;
+static const NekDouble CoinTol = 1.0e-06;
 
 // Factor for tolerance for floating point comparison
 static const unsigned int kNekFloatCompFact = 4;
+
+// Constants for minimisation functions
+static const NekDouble kFindDistanceMin     = 5e-05;
+static const unsigned int kNewtonIterations = 51;
 } // namespace NekConstants
 } // namespace Nektar
 

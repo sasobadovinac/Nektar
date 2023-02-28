@@ -60,22 +60,23 @@ public:
     ProcessInterpPoints(FieldSharedPtr f);
     virtual ~ProcessInterpPoints();
 
+protected:
     /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
+    virtual void v_Process(po::variables_map &vm) override;
 
     void PrintProgressbar(const int position, const int goal) const;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessInterpPoints";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Interpolating to points";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eCreatePts;
     }

@@ -116,9 +116,9 @@ void VCSWeakPressure::v_SetUpPressureForcing(
     const Array<OneD, const Array<OneD, NekDouble>> &fields,
     Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt)
 {
-    int ncoeffs = m_fields[0]->GetNcoeffs();
+    int ncoeffs = m_pressure->GetNcoeffs();
 
-    m_fields[0]->IProductWRTDerivBase(fields, Forcing[0]);
+    m_pressure->IProductWRTDerivBase(fields, Forcing[0]);
 
     // aii required since time integration scheme normalises against aii
     Vmath::Smul(ncoeffs, -1.0 / aii_Dt, Forcing[0], 1, Forcing[0], 1);

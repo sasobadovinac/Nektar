@@ -200,10 +200,11 @@ protected:
     MULTI_REGIONS_EXPORT virtual void v_ImposeDirichletConditions(
         Array<OneD, NekDouble> &outarray) override;
 
-    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField() override;
+    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(
+        const Array<OneD, NekDouble> coeffs) override;
 
     MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(
-        const int nreg) override;
+        const int nreg, const Array<OneD, NekDouble> coeffs) override;
 
     /// Gathers the global coefficients \f$\boldsymbol{\hat{u}}_g\f$
     /// from the local coefficients \f$\boldsymbol{\hat{u}}_l\f$.
@@ -243,7 +244,7 @@ protected:
 
     /// Solves the two-dimensional Helmholtz equation, subject to the
     /// boundary conditions specified.
-    MULTI_REGIONS_EXPORT virtual void v_HelmSolve(
+    MULTI_REGIONS_EXPORT virtual GlobalLinSysKey v_HelmSolve(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         const StdRegions::ConstFactorMap &factors,
@@ -254,7 +255,8 @@ protected:
 
     // Solve the linear advection problem assuming that m_coeffs
     // vector contains an intial estimate for solution
-    MULTI_REGIONS_EXPORT virtual void v_LinearAdvectionDiffusionReactionSolve(
+    MULTI_REGIONS_EXPORT virtual GlobalLinSysKey
+    v_LinearAdvectionDiffusionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
@@ -275,6 +277,13 @@ protected:
         OneD, const SpatialDomains ::BoundaryConditionShPtr>
         &v_GetBndConditions() override;
     MULTI_REGIONS_EXPORT virtual void v_ClearGlobalLinSysManager(void) override;
+
+    // Get manager pool count; intended for unit tests
+    MULTI_REGIONS_EXPORT int v_GetPoolCount(std::string) override;
+
+    // Remove GlobalLinSys, StaticCond Blocks and LocalMatrix Blocks
+    MULTI_REGIONS_EXPORT void v_UnsetGlobalLinSys(GlobalLinSysKey,
+                                                  bool) override;
 };
 
 typedef std::shared_ptr<ContField> ContFieldSharedPtr;

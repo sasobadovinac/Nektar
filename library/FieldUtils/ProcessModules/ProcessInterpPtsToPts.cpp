@@ -96,7 +96,7 @@ ProcessInterpPtsToPts::~ProcessInterpPtsToPts()
 {
 }
 
-void ProcessInterpPtsToPts::Process(po::variables_map &vm)
+void ProcessInterpPtsToPts::v_Process(po::variables_map &vm)
 {
     ASSERTL0(m_f->m_fieldPts != LibUtilities::NullPtsField,
              "Should have a PtsField for ProcessInterpPtsToPts.");

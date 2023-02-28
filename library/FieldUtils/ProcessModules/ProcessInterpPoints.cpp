@@ -106,7 +106,7 @@ ProcessInterpPoints::~ProcessInterpPoints()
 {
 }
 
-void ProcessInterpPoints::Process(po::variables_map &vm)
+void ProcessInterpPoints::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -219,6 +219,7 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
     {
         fromField->m_exp[i] = fromField->AppendExpList(NumHomogeneousDir);
     }
+
     // load field into expansion in fromfield.
     set<int> sinmode;
     if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
@@ -257,6 +258,7 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
         }
         fromField->m_exp[j]->BwdTrans(fromField->m_exp[j]->GetCoeffs(),
                                       fromField->m_exp[j]->UpdatePhys());
+
         Array<OneD, NekDouble> newPts(m_f->m_fieldPts->GetNpoints());
         m_f->m_fieldPts->AddField(newPts,
                                   fromField->m_fielddef[0]->m_fields[j]);
@@ -519,6 +521,7 @@ void ProcessInterpPoints::InterpolateFieldToPts(
                                    this);
     }
     interp.Interpolate(field0, pts);
+
     if (m_f->m_comm->GetRank() == 0)
     {
         cout << endl;

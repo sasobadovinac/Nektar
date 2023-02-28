@@ -72,7 +72,7 @@ ProcessPhiFromFile::~ProcessPhiFromFile()
 /**
  *
  */
-void ProcessPhiFromFile::Process(po::variables_map &vm)
+void ProcessPhiFromFile::v_Process(po::variables_map &vm)
 {
     // Ignore warnings due to 'vm'
     boost::ignore_unused(vm);
@@ -232,6 +232,14 @@ void ProcessPhiFromFile::GetPhifromSession()
     // Add new variable
     m_f->m_variables.push_back("phi");
 
+    for (int s = 0; s < nStrips; ++s) // homogeneous strip varient
+    {
+        MultiRegions::ExpListSharedPtr Exp =
+            m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
+        m_f->m_exp.insert(it, Exp);
+    }
+
     for (int s = 0; s < nStrips; ++s)
     {
         // Get current coords of the point
@@ -243,14 +251,12 @@ void ProcessPhiFromFile::GetPhifromSession()
         m_f->m_exp[s * nVars]->GetCoords(coords[0], coords[1], coords[2]);
 
         // Append Phi expansion to 'm_f'
-        MultiRegions::ExpListSharedPtr Exp;
-        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        phiFunction->Evaluate(coords[0], coords[1], coords[2],
-                              Exp->UpdatePhys());
-        Exp->FwdTrans(Exp->GetPhys(), Exp->UpdateCoeffs());
+        int fid = s * (nVars + 1) + nVars;
 
-        auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
-        m_f->m_exp.insert(it, Exp);
+        phiFunction->Evaluate(coords[0], coords[1], coords[2],
+                              m_f->m_exp[fid]->UpdatePhys());
+        m_f->m_exp[fid]->FwdTrans(m_f->m_exp[fid]->GetPhys(),
+                                  m_f->m_exp[fid]->UpdateCoeffs());
     }
 }
 
@@ -314,12 +320,20 @@ void ProcessPhiFromFile::GetPhifromSTL(
     // Initialise octree
     m_tree = Octree(centroids, 10, bounds);
 
+    for (int s = 0; s < nStrips; ++s) // homogeneous strip varient
+    {
+        MultiRegions::ExpListSharedPtr Exp =
+            m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
+        m_f->m_exp.insert(it, Exp);
+    }
+
     // For each strip...
     for (int s = 0; s < nStrips; ++s)
     {
-        // Append Phi expansion to 'm_f'
-        MultiRegions::ExpListSharedPtr phi;
-        phi = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        int fid = s * (nVars + 1) + nVars;
+
+        Array<OneD, NekDouble> phys = m_f->m_exp[fid]->UpdatePhys();
 
         // Parallelisation is highly recommended here
         for (int i = 0; i < nPts; ++i)
@@ -335,14 +349,11 @@ void ProcessPhiFromFile::GetPhifromSTL(
             FindShortestDist(file, tmpCoords, dist);
 
             // Get corresponding value of Phi
-            phi->UpdatePhys()[i] =
-                PhiFunction(dist, m_config["scale"].as<double>());
+            phys[i] = PhiFunction(dist, m_config["scale"].as<double>());
         }
 
         // Update vector of expansions
-        phi->FwdTrans(phi->GetPhys(), phi->UpdateCoeffs());
-        auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
-        m_f->m_exp.insert(it, phi);
+        m_f->m_exp[fid]->FwdTrans(phys, m_f->m_exp[fid]->UpdateCoeffs());
     }
 }
 

@@ -238,12 +238,8 @@ ContField::~ContField()
  *
  * The values of the function \f$f(\boldsymbol{x})\f$ evaluated at the
  * quadrature points \f$\boldsymbol{x}_i\f$ should be contained in the
- * variable #m_phys of the ExpList object \a Sin. The resulting global
- * coefficients \f$\hat{u}_g\f$ are stored in the array #m_coeffs.
- *
- * @param   Sin         An ExpList, containing the discrete evaluation
- *                      of \f$f(\boldsymbol{x})\f$ at the quadrature
- *                      points in its array #m_phys.
+ * variable #inarray of the ExpList object \a Sin. The resulting global
+ * coefficients \f$\hat{u}_g\f$ are stored in the array #outarray.
  */
 void ContField::FwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray)
@@ -312,13 +308,16 @@ void ContField::MultiplyByInvMassMatrix(
  *
  * The values of the function \f$f(\boldsymbol{x})\f$ evaluated at the
  * quadrature points \f$\boldsymbol{x}_i\f$ should be contained in the
- * variable #m_phys of the ExpList object \a Sin. The resulting global
- * coefficients \f$\boldsymbol{\hat{u}}_g\f$ are stored in the array
- * #m_coeffs.
+ * variable #inarray
  *
- * @param   Sin         An ExpList, containing the discrete evaluation
- *                      of the forcing function \f$f(\boldsymbol{x})\f$
- *                      at the quadrature points in its array #m_phys.
+ * @param inarray An Array<OneD, NekDouble> containing the discrete
+ *                      evaluation of the forcing function
+ *                      \f$f(\boldsymbol{x})\f$ at the quadrature
+ *                      points.
+ *
+ * @param outarray An Array<OneD, NekDouble> containing the
+ *                      coefficients of the solution
+ *
  * @param   variablecoeffs The (optional) parameter containing the
  *                      coefficients evaluated at the quadrature
  *                      points. It is an Array of (three) arrays which
@@ -367,7 +366,8 @@ void ContField::LaplaceSolve(
             m_bndConditions[i]->GetBoundaryConditionType() ==
                 SpatialDomains::eRobin)
         {
-            const Array<OneD, NekDouble> bndcoeff =
+
+            const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
 
             if (m_locToGloMap->GetSignChange())
@@ -580,7 +580,8 @@ void ContField::v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
         if (m_bndConditions[i]->GetBoundaryConditionType() ==
             SpatialDomains::eDirichlet)
         {
-            const Array<OneD, NekDouble> bndcoeff =
+
+            const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
 
             if (m_locToGloMap->GetSignChange())
@@ -624,7 +625,7 @@ void ContField::v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
     }
 }
 
-void ContField::v_FillBndCondFromField(void)
+void ContField::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
 {
     int bndcnt = 0;
 
@@ -635,20 +636,21 @@ void ContField::v_FillBndCondFromField(void)
 
     for (int i = 0; i < m_bndCondExpansions.size(); ++i)
     {
-        Array<OneD, NekDouble> &coeffs = m_bndCondExpansions[i]->UpdateCoeffs();
+        Array<OneD, NekDouble> &bcoeffs =
+            m_bndCondExpansions[i]->UpdateCoeffs();
 
         if (m_locToGloMap->GetSignChange())
         {
             for (int j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); ++j)
             {
-                coeffs[j] = sign[bndcnt + j] * m_coeffs[bndmap[bndcnt + j]];
+                bcoeffs[j] = sign[bndcnt + j] * coeffs[bndmap[bndcnt + j]];
             }
         }
         else
         {
             for (int j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); ++j)
             {
-                coeffs[j] = m_coeffs[bndmap[bndcnt + j]];
+                bcoeffs[j] = coeffs[bndmap[bndcnt + j]];
             }
         }
 
@@ -656,7 +658,8 @@ void ContField::v_FillBndCondFromField(void)
     }
 }
 
-void ContField::v_FillBndCondFromField(const int nreg)
+void ContField::v_FillBndCondFromField(const int nreg,
+                                       const Array<OneD, NekDouble> coeffs)
 {
     int bndcnt = 0;
 
@@ -670,7 +673,7 @@ void ContField::v_FillBndCondFromField(const int nreg)
         m_locToGloMap->GetBndCondCoeffsToLocalCoeffsMap();
 
     // Now fill in all other Dirichlet coefficients.
-    Array<OneD, NekDouble> &coeffs = m_bndCondExpansions[nreg]->UpdateCoeffs();
+    Array<OneD, NekDouble> &bcoeffs = m_bndCondExpansions[nreg]->UpdateCoeffs();
 
     for (int j = 0; j < nreg; ++j)
     {
@@ -681,14 +684,14 @@ void ContField::v_FillBndCondFromField(const int nreg)
     {
         for (int j = 0; j < (m_bndCondExpansions[nreg])->GetNcoeffs(); ++j)
         {
-            coeffs[j] = sign[bndcnt + j] * m_coeffs[bndmap[bndcnt + j]];
+            bcoeffs[j] = sign[bndcnt + j] * coeffs[bndmap[bndcnt + j]];
         }
     }
     else
     {
         for (int j = 0; j < (m_bndCondExpansions[nreg])->GetNcoeffs(); ++j)
         {
-            coeffs[j] = m_coeffs[bndmap[bndcnt + j]];
+            bcoeffs[j] = coeffs[bndmap[bndcnt + j]];
         }
     }
 }
@@ -712,10 +715,6 @@ void ContField::v_FillBndCondFromField(const int nreg)
  * where \f$\mathcal{A}\f$ is the
  * \f$N_{\mathrm{eof}}\times N_{\mathrm{dof}}\f$ permutation matrix.
  *
- * @note The array #m_coeffs should be filled with the global
- * coefficients \f$\boldsymbol{\hat{u}}_g\f$ and that the resulting
- * local coefficients \f$\boldsymbol{\hat{u}}_l\f$ will be stored in
- * #m_coeffs.
  */
 void ContField::v_GlobalToLocal(const Array<OneD, const NekDouble> &inarray,
                                 Array<OneD, NekDouble> &outarray)
@@ -747,13 +746,6 @@ void ContField::v_GlobalToLocal(void)
  * where \f$\mathcal{A}\f$ is the
  * \f$N_{\mathrm{eof}}\times N_{\mathrm{dof}}\f$ permutation matrix.
  *
- * @note The array #m_coeffs should be filled with the local
- *          coefficients \f$\boldsymbol{\hat{u}}_l\f$ and that
- *          the resulting global coefficients
- *          \f$\boldsymbol{\hat{u}}_g\f$ will be stored in
- *          #m_coeffs. Also if useComm is set to false then no
- *          communication call will be made to check if all
- *          values are consistent over processors
  */
 
 void ContField::v_LocalToGlobal(const Array<OneD, const NekDouble> &inarray,
@@ -790,28 +782,21 @@ void ContField::v_MultiplyByInvMassMatrix(
  * \f$\boldsymbol{L}\f$ and \f$\boldsymbol{M}\f$ are the Laplacian and
  * mass matrix respectively. This function solves the system above for
  * the global coefficients \f$\boldsymbol{\hat{u}}\f$ by a call to the
- * function #GlobalSolve. It is assumed #m_coeff contains an
- * initial estimate for the solution.
+ * function #GlobalSolve.
  *
- * The values of the function \f$f(\boldsymbol{x})\f$
- * evaluated at the quadrature points \f$\boldsymbol{x}_i\f$
- * should be contained in the variable #m_phys of the ExpList
- * object \a inarray.
- *
- * @param   inarray     An ExpList, containing the discrete evaluation
- *                      of the forcing function \f$f(\boldsymbol{x})\f$
- *                      at the quadrature points in its array #m_phys.
+ * @param inarray An Array<OneD, NekDouble> , containing the discrete
+ *                      evaluation of the forcing function
+ *                      \f$f(\boldsymbol{x})\f$ at the quadrature
+ *                      points
  * @param   factors    The parameter \f$\lambda\f$ of the Helmholtz
  *                      equation is specified through the factors map
  */
-void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                            Array<OneD, NekDouble> &outarray,
-                            const StdRegions::ConstFactorMap &factors,
-                            const StdRegions::VarCoeffMap &pvarcoeff,
-                            const MultiRegions::VarFactorsMap &varfactors,
-                            const Array<OneD, const NekDouble> &dirForcing,
-                            const bool PhysSpaceForcing)
-
+GlobalLinSysKey ContField::v_HelmSolve(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &pvarcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
     int i, j;
 
@@ -845,7 +830,8 @@ void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
             m_bndConditions[i]->GetBoundaryConditionType() ==
                 SpatialDomains::eRobin)
         {
-            const Array<OneD, NekDouble> bndcoeff =
+
+            const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
 
             if (m_locToGloMap->GetSignChange())
@@ -888,12 +874,12 @@ void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
         BwdTrans(outarray, phys);
         NekDouble scale = -1.0 * factors.find(StdRegions::eFactorGJP)->second;
 
-        m_GJPData->Apply(
-            phys, wsp,
-            pvarcoeff.count(StdRegions::eVarCoeffGJPNormVel)
-                ? pvarcoeff.find(StdRegions::eVarCoeffGJPNormVel)->second
-                : NullNekDouble1DArray,
-            scale);
+        m_GJPData->Apply(phys, wsp,
+                         pvarcoeff.count(StdRegions::eVarCoeffGJPNormVel)
+                             ? pvarcoeff.find(StdRegions::eVarCoeffGJPNormVel)
+                                   ->second.GetValue()
+                             : NullNekDouble1DArray,
+                         scale);
 
         varcoeff.erase(StdRegions::eVarCoeffGJPNormVel);
     }
@@ -901,6 +887,8 @@ void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
     GlobalLinSysKey key(mtype, m_locToGloMap, factors, varcoeff, varfactors);
 
     GlobalSolve(key, wsp, outarray, dirForcing);
+
+    return key;
 }
 
 /**
@@ -914,7 +902,7 @@ void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
  */
 
 // could combine this with HelmholtzCG.
-void ContField::v_LinearAdvectionDiffusionReactionSolve(
+GlobalLinSysKey ContField::v_LinearAdvectionDiffusionReactionSolve(
     const Array<OneD, Array<OneD, NekDouble>> &velocity,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const NekDouble lambda,
@@ -943,7 +931,8 @@ void ContField::v_LinearAdvectionDiffusionReactionSolve(
             m_bndConditions[i]->GetBoundaryConditionType() ==
                 SpatialDomains::eRobin)
         {
-            const Array<OneD, NekDouble> bndcoeff =
+
+            const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
 
             if (m_locToGloMap->GetSignChange())
@@ -980,6 +969,8 @@ void ContField::v_LinearAdvectionDiffusionReactionSolve(
                         m_locToGloMap, factors, varcoeffs);
 
     GlobalSolve(key, wsp, outarray, dirForcing);
+
+    return key;
 }
 
 /**
@@ -1028,6 +1019,39 @@ const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
 void ContField::v_ClearGlobalLinSysManager(void)
 {
     m_globalLinSysManager.ClearManager("GlobalLinSys");
+}
+
+/**
+ * Get the pool count for the specified poolName
+ */
+int ContField::v_GetPoolCount(std::string poolName)
+{
+    return m_globalLinSysManager.PoolCount(poolName);
+}
+
+/**
+ * Clear all memory for GlobalLinSys
+ * including StaticCond Blocks and LocalMatrix Blocks.
+ * Avoids memory leakage if matrices are updated in time
+ */
+void ContField::v_UnsetGlobalLinSys(GlobalLinSysKey key,
+                                    bool clearLocalMatrices)
+{
+    // Get GlobalLinSys from key
+    GlobalLinSysSharedPtr LinSys = GetGlobalLinSys(key);
+
+    // Loop all expansions
+    for (int n = 0; n < m_exp->size(); ++n)
+    {
+        LinSys->DropStaticCondBlock(n);
+
+        if (clearLocalMatrices)
+        {
+            LinSys->DropBlock(n);
+        }
+    }
+
+    m_globalLinSysManager.DeleteObject(key);
 }
 
 } // namespace MultiRegions

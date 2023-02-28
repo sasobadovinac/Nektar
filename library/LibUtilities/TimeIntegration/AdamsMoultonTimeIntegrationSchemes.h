@@ -46,8 +46,8 @@
 #include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
+#include <LibUtilities/TimeIntegration/DIRKTimeIntegrationSchemes.h>
 #include <LibUtilities/TimeIntegration/EulerTimeIntegrationSchemes.h>
-#include <LibUtilities/TimeIntegration/IMEXdirkTimeIntegrationSchemes.h>
 
 namespace Nektar
 {
@@ -101,18 +101,18 @@ public:
 
             case 3:
                 // The first and second phases needed to be set correctly
-                EulerTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[0], "Forward");
-                IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[1], 3, std::vector<NekDouble>{3, 4});
+                DIRKTimeIntegrationScheme::SetupSchemeData(
+                    m_integration_phases[0], 2);
+                DIRKTimeIntegrationScheme::SetupSchemeData(
+                    m_integration_phases[1], 3);
                 break;
 
             case 4:
                 // The first and second phases needed to be set correctly
-                IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[0], 3, std::vector<NekDouble>{2, 3});
-                IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[1], 3, std::vector<NekDouble>{2, 3});
+                DIRKTimeIntegrationScheme::SetupSchemeData(
+                    m_integration_phases[0], 3);
+                DIRKTimeIntegrationScheme::SetupSchemeData(
+                    m_integration_phases[1], 3);
                 break;
 
             default:
@@ -138,16 +138,6 @@ public:
     }
 
     static std::string className;
-
-    LUE virtual std::string GetName() const
-    {
-        return std::string("AdamsMoulton");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
 
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     int order)
@@ -231,6 +221,17 @@ public:
         }
 
         phase->CheckAndVerify();
+    }
+
+protected:
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("AdamsMoulton");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
     }
 
 }; // end class AdamsMoultonTimeIntegrationScheme

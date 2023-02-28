@@ -73,6 +73,10 @@ public:
     SPATIAL_DOMAINS_EXPORT virtual ~Geometry2D();
 
     SPATIAL_DOMAINS_EXPORT static const int kDim = 2;
+    SPATIAL_DOMAINS_EXPORT CurveSharedPtr GetCurve()
+    {
+        return m_curve;
+    }
 
 protected:
     PointGeomVector m_verts;
@@ -90,7 +94,6 @@ protected:
                                     Array<OneD, NekDouble> &Lcoords,
                                     NekDouble &dist);
 
-private:
     //---------------------------------------
     // Helper functions
     //---------------------------------------
@@ -100,6 +103,8 @@ private:
     virtual int v_GetNumVerts() const override;
     virtual int v_GetNumEdges() const override;
     virtual StdRegions::Orientation v_GetEorient(const int i) const override;
+    virtual NekDouble v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                     Array<OneD, NekDouble> &xi) override;
 };
 
 } // namespace SpatialDomains

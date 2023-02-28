@@ -274,7 +274,8 @@ int main(int argc, char *argv[])
 
     PostProc->BwdTrans(PostProc->GetCoeffs(), PostProc->UpdatePhys());
 
-    PostProc->EvaluateHDGPostProcessing(PostProc->UpdateCoeffs());
+    PostProc->EvaluateHDGPostProcessing(PostProc->GetCoeffs(),
+                                        PostProc->UpdateCoeffs());
     PostProc->BwdTrans(PostProc->GetCoeffs(), PostProc->UpdatePhys());
 
     NekDouble vLinfError        = Exp->Linf(Exp->GetPhys(), fce);

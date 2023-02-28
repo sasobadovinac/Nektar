@@ -572,7 +572,7 @@ NekDouble QuadExp::v_StdPhysEvaluate(
     const Array<OneD, const NekDouble> &physvals)
 {
     // Evaluate point in local (eta) coordinates.
-    return StdQuadExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
 }
 
 NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
@@ -583,7 +583,17 @@ NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     ASSERTL0(m_geom, "m_geom not defined");
     m_geom->GetLocCoords(coord, Lcoord);
 
-    return StdQuadExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
+}
+
+NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                  const Array<OneD, const NekDouble> &inarray,
+                                  std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    Array<OneD, NekDouble> Lcoord(2);
+    ASSERTL0(m_geom, "m_geom not defined");
+    m_geom->GetLocCoords(coord, Lcoord);
+    return StdQuadExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
 }
 
 void QuadExp::v_GetTracePhysVals(
@@ -1379,6 +1389,11 @@ DNekMatSharedPtr QuadExp::v_CreateStdMatrix(
 DNekScalMatSharedPtr QuadExp::v_GetLocMatrix(const MatrixKey &mkey)
 {
     return m_matrixManager[mkey];
+}
+
+void QuadExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
 }
 
 DNekScalBlkMatSharedPtr QuadExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)

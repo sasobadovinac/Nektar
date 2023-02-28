@@ -201,13 +201,14 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
 
     size_t nFields    = fielddefs.size();
     size_t nMaxFields = nFields;
-    m_comm->AllReduce(nMaxFields, LibUtilities::ReduceMax);
+    m_comm->GetSpaceComm()->AllReduce(nMaxFields, LibUtilities::ReduceMax);
 
-    int root_rank = -1;
-    bool amRoot   = false;
+    int root_rank  = -1;
+    bool amRoot    = false;
+    bool amRootPIT = false;
     LibUtilities::CommSharedPtr max_fields_comm;
 
-    if (m_comm->GetSize() > 1)
+    if (m_comm->GetSpaceComm()->GetSize() > 1)
     {
         max_fields_comm = m_comm->CommCreateIf((nFields == nMaxFields) ? 1 : 0);
     }
@@ -221,7 +222,8 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         int rank  = m_comm->GetRank();
         root_rank = rank;
         max_fields_comm->AllReduce(root_rank, LibUtilities::ReduceMin);
-        amRoot = (rank == root_rank);
+        amRoot    = (rank == root_rank);
+        amRootPIT = m_comm->GetSpaceComm()->TreatAsRankZero();
         if (!amRoot)
         {
             root_rank = -1;
@@ -229,11 +231,12 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
     }
 
     m_comm->AllReduce(root_rank, LibUtilities::ReduceMax);
-    ASSERTL1(root_rank >= 0 && root_rank < m_comm->GetSize(),
+    ASSERTL1(root_rank >= 0 && root_rank < m_comm->GetSpaceComm()->GetSize(),
              prfx.str() + "invalid root rank.");
 
     std::vector<uint64_t> decomps(nMaxFields * MAX_DCMPS, 0);
-    std::vector<uint64_t> all_hashes(nMaxFields * m_comm->GetSize(), 0);
+    std::vector<uint64_t> all_hashes(
+        nMaxFields * m_comm->GetSpaceComm()->GetSize(), 0);
     std::vector<uint64_t> cnts(MAX_CNTS, 0);
     std::vector<std::string> fieldNames(nFields);
     std::vector<std::string> shapeStrings(nFields);
@@ -255,7 +258,7 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         }
     }
 
-    m_comm->AllReduce(varOrder, LibUtilities::ReduceMax);
+    m_comm->GetSpaceComm()->AllReduce(varOrder, LibUtilities::ReduceMax);
 
     // Calculate the total number of elements handled by this MPI process and
     // the total number of bytes required to store the elements. Base the name
@@ -419,21 +422,25 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         std::stringstream fieldNameStream;
         uint64_t fieldDefHash = string_hasher(hashStream.str());
 
-        decomps[f * MAX_DCMPS + HASH_DCMP_IDX]         = fieldDefHash;
-        all_hashes[m_comm->GetRank() * nMaxFields + f] = fieldDefHash;
+        decomps[f * MAX_DCMPS + HASH_DCMP_IDX] = fieldDefHash;
+        all_hashes[m_comm->GetSpaceComm()->GetRank() * nMaxFields + f] =
+            fieldDefHash;
 
         fieldNameStream << fieldDefHash;
         fieldNames[f] = fieldNameStream.str();
     }
 
     // Gather information from all MPI processes
-    std::vector<uint64_t> all_cnts = m_comm->Gather(root_rank, cnts);
-    std::vector<uint64_t> all_idxs(m_comm->GetSize() * MAX_IDXS, 0);
-    std::vector<uint64_t> all_decomps = m_comm->Gather(root_rank, decomps);
+    std::vector<uint64_t> all_cnts =
+        m_comm->GetSpaceComm()->Gather(root_rank, cnts);
+    std::vector<uint64_t> all_idxs(m_comm->GetSpaceComm()->GetSize() * MAX_IDXS,
+                                   0);
+    std::vector<uint64_t> all_decomps =
+        m_comm->GetSpaceComm()->Gather(root_rank, decomps);
     std::vector<uint64_t> all_dsetsize(MAX_CNTS, 0);
 
     // The root rank creates the file layout from scratch
-    if (amRoot)
+    if (amRootPIT)
     {
         H5::FileSharedPtr outfile = H5::File::Create(outFile, H5F_ACC_TRUNC);
         ASSERTL1(outfile, prfx.str() + "cannot create HDF5 file.");
@@ -449,7 +456,7 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         // IDS and DATA datasets
         std::size_t nTotElems = 0, nTotVals = 0, nTotOrder = 0;
         std::size_t nTotHomY = 0, nTotHomZ = 0, nTotHomS = 0;
-        int nRanks = m_comm->GetSize();
+        int nRanks = m_comm->GetSpaceComm()->GetSize();
         for (int r = 0; r < nRanks; ++r)
         {
             all_idxs[r * MAX_IDXS + IDS_IDX_IDX]   = nTotElems;
@@ -549,7 +556,7 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         }
     }
 
-    m_comm->Bcast(all_dsetsize, root_rank);
+    m_comm->GetSpaceComm()->Bcast(all_dsetsize, root_rank);
 
     // Datasets, root group and HDF5 file are all closed automatically since
     // they are now out of scope. Now we need to determine which process will
@@ -561,13 +568,14 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
 
     // This set stores the unique hashes.
     std::set<uint64_t> hashToProc;
+
     // This map takes ranks to hashes this process will write.
     std::map<int, std::vector<uint64_t>> writingProcs;
 
     // Gather all field hashes to every processor.
-    m_comm->AllReduce(all_hashes, LibUtilities::ReduceMax);
+    m_comm->GetSpaceComm()->AllReduce(all_hashes, LibUtilities::ReduceMax);
 
-    for (int n = 0; n < m_comm->GetSize(); ++n)
+    for (int n = 0; n < m_comm->GetSpaceComm()->GetSize(); ++n)
     {
         for (int i = 0; i < nMaxFields; ++i)
         {
@@ -589,7 +597,7 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         int rank = sIt.first;
 
         // Write out this rank's groups.
-        if (m_comm->GetRank() == rank)
+        if (m_comm->GetSpaceComm()->GetRank() == rank)
         {
             H5::PListSharedPtr serialProps = H5::PList::Default();
             H5::PListSharedPtr writeSR     = H5::PList::Default();
@@ -608,7 +616,9 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
                 for (int f = 0; f < nFields; ++f)
                 {
                     if (sIt.second[i] !=
-                            all_hashes[m_comm->GetRank() * nMaxFields + f] ||
+                            all_hashes[m_comm->GetSpaceComm()->GetRank() *
+                                           nMaxFields +
+                                       f] ||
                         hashToProc.find(sIt.second[i]) != hashToProc.end())
                     {
                         continue;
@@ -651,11 +661,11 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         }
 
         // We block to avoid more than one processor opening the file at a time.
-        m_comm->Block();
+        m_comm->GetSpaceComm()->Block();
     }
 
     // Write the DECOMPOSITION dataset
-    if (amRoot)
+    if (amRootPIT)
     {
         H5::PListSharedPtr serialProps = H5::PList::Default();
         H5::PListSharedPtr writeSR     = H5::PList::Default();
@@ -681,22 +691,23 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
     }
 
     // Initialise the dataset indexes for all MPI processes
-    std::vector<uint64_t> idx = m_comm->Scatter(root_rank, all_idxs);
-    uint64_t ids_i            = idx[IDS_IDX_IDX];
-    uint64_t data_i           = idx[DATA_IDX_IDX];
-    uint64_t order_i          = idx[ORDER_IDX_IDX];
-    uint64_t homy_i           = idx[HOMY_IDX_IDX];
-    uint64_t homz_i           = idx[HOMZ_IDX_IDX];
-    uint64_t homs_i           = idx[HOMS_IDX_IDX];
+    std::vector<uint64_t> idx =
+        m_comm->GetSpaceComm()->Scatter(root_rank, all_idxs);
+    uint64_t ids_i   = idx[IDS_IDX_IDX];
+    uint64_t data_i  = idx[DATA_IDX_IDX];
+    uint64_t order_i = idx[ORDER_IDX_IDX];
+    uint64_t homy_i  = idx[HOMY_IDX_IDX];
+    uint64_t homz_i  = idx[HOMZ_IDX_IDX];
+    uint64_t homs_i  = idx[HOMS_IDX_IDX];
 
     // Set properties for parallel file access (if we're in parallel)
     H5::PListSharedPtr parallelProps = H5::PList::Default();
     H5::PListSharedPtr writePL       = H5::PList::Default();
-    if (m_comm->GetSize() > 1)
+    if (m_comm->GetSpaceComm()->GetSize() > 1)
     {
         // Use MPI/O to access the file
         parallelProps = H5::PList::FileAccess();
-        parallelProps->SetMpio(m_comm);
+        parallelProps->SetMpio(m_comm->GetSpaceComm());
         // Use collective IO
         writePL = H5::PList::DatasetXfer();
         writePL->SetDxMpioCollective();
@@ -709,7 +720,7 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
     H5::GroupSharedPtr root = outfile->OpenGroup("NEKTAR");
     ASSERTL1(root, prfx.str() + "cannot open root group.");
 
-    m_comm->Block();
+    m_comm->GetSpaceComm()->Block();
 
     // all HDF5 groups have now been created. Open the IDS dataset and
     // associated data space
@@ -858,7 +869,7 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         }
     }
 
-    m_comm->Block();
+    m_comm->GetSpaceComm()->Block();
 
     // all data has been written
     if (m_comm->GetRank() == 0)
@@ -887,7 +898,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                            const Array<OneD, int> &ElementIDs)
 {
     std::stringstream prfx;
-    int nRanks = m_comm->GetSize();
+    int nRanks = m_comm->GetSpaceComm()->GetSize();
 
     // Set properties for parallel file access (if we're in parallel)
     H5::PListSharedPtr parallelProps = H5::PList::Default();
@@ -898,7 +909,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
     {
         // Use MPI/O to access the file
         parallelProps = H5::PList::FileAccess();
-        parallelProps->SetMpio(m_comm);
+        parallelProps->SetMpio(m_comm->GetSpaceComm());
         // Use collective IO
         readPL = H5::PList::DatasetXfer();
         readPL->SetDxMpioCollective();
@@ -1069,7 +1080,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
     }
 
     ImportHDF5FieldMetaData(dataSource, fieldinfomap);
-    m_comm->Block();
+    m_comm->GetSpaceComm()->Block();
 }
 
 /**
@@ -1318,6 +1329,12 @@ DataSourceSharedPtr FieldIOHdf5::v_ImportFieldMetaData(
     DataSourceSharedPtr ans = H5DataSource::create(filename, parallelProps);
     ImportHDF5FieldMetaData(ans, fieldmetadatamap);
     return ans;
+}
+
+/// Get class name
+const std::string &FieldIOHdf5::v_GetClassName() const
+{
+    return className;
 }
 
 /**

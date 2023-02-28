@@ -163,7 +163,7 @@ inline const Array<OneD, const NekDouble> &GlobalMatrixKey::GetVarCoeff(
     const StdRegions::VarCoeffType &coeff) const
 {
     auto found = m_varCoeffs.find(coeff);
-    return (*found).second;
+    return (*found).second.GetValue();
 }
 
 inline const StdRegions::VarCoeffMap &GlobalMatrixKey::GetVarCoeffs() const

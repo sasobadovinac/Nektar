@@ -411,28 +411,34 @@ std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
     po::options_description desc("Allowed options");
 
     // clang-format off
-    desc.add_options()
-        ("verbose,v", "be verbose")
-        ("version,V", "print version information")
-        ("help,h", "print this help message")
-        ("solverinfo,I", po::value<vector<std::string>>(),
-         "override a SOLVERINFO property")
-        ("parameter,P", po::value<vector<std::string>>(),
-         "override a parameter")
-        ("npx", po::value<int>(), "number of procs in X-dir")
-        ("npy", po::value<int>(), "number of procs in Y-dir")
-        ("npz", po::value<int>(), "number of procs in Z-dir")
-        ("nsz", po::value<int>(), "number of slices in Z-dir")
-        ("part-only", po::value<int>(),
-         "only partition mesh into N partitions.")
-        ("part-only-overlapping", po::value<int>(),
-         "only partition mesh into N overlapping partitions.")
-        ("part-info", "Output partition information")
-        ("forceoutput,f",  "Disables backups files and forces output to be "
-         "written without any checks")
-        ("writeoptfile", "write an optimisation file")
-        ("useoptfile", po::value<std::string>(),
-         "use an optimisation file");
+            desc.add_options()
+                ("verbose,v",    "be verbose")
+                ("version,V",    "print version information")
+                ("help,h",       "print this help message")
+                ("solverinfo,I", po::value<vector<std::string> >(),
+                                 "override a SOLVERINFO property")
+                ("parameter,P",  po::value<vector<std::string> >(),
+                                 "override a parameter")
+                ("npx",          po::value<int>(),
+                                 "number of procs in X-dir")
+                ("npy",          po::value<int>(),
+                                 "number of procs in Y-dir")
+                ("npz",          po::value<int>(),
+                                 "number of procs in Z-dir")
+                ("nsz",          po::value<int>(),
+                                 "number of slices in Z-dir")
+                ("npt",          po::value<int>(),
+                                 "number of procs in T-dir (parareal)")
+                ("part-only",    po::value<int>(),
+                                 "only partition mesh into N partitions.")
+                ("part-only-overlapping",    po::value<int>(),
+                                 "only partition mesh into N overlapping partitions.")
+                ("part-info",    "Output partition information")
+                ("forceoutput,f",  "Disables backups files and forces output to be "
+                                 "written without any checks")
+                ("writeoptfile", "write an optimisation file")
+                ("useoptfile",   po::value<std::string>(),
+                                 "use an optimisation file");
     // clang-format on
 #ifdef NEKTAR_USE_CWIPI
     desc.add_options()("cwipi", po::value<std::string>(), "set CWIPI name");
@@ -1495,7 +1501,7 @@ void SessionReader::LoadDoc(const std::string &pFilename,
     {
         fs::path pdirname(pFilename);
         boost::format pad("P%1$07d.xml");
-        pad % m_comm->GetRank();
+        pad % m_comm->GetSpaceComm()->GetRank();
         fs::path pRankFilename(pad.str());
         fs::path fullpath = pdirname / pRankFilename;
 
@@ -1652,6 +1658,7 @@ void SessionReader::PartitionComm()
         int nProcY  = 1;
         int nProcX  = 1;
         int nStripZ = 1;
+        int nTime   = 1;
         if (DefinesCmdLineArgument("npx"))
         {
             nProcX = GetCmdLineArgument<int>("npx");
@@ -1668,7 +1675,13 @@ void SessionReader::PartitionComm()
         {
             nStripZ = GetCmdLineArgument<int>("nsz");
         }
-        ASSERTL0(m_comm->GetSize() % (nProcZ * nProcY * nProcX) == 0,
+        if (DefinesCmdLineArgument("npt"))
+        {
+            nTime = GetCmdLineArgument<int>("npt");
+        }
+        ASSERTL0(m_comm->GetSize() % nTime == 0,
+                 "Cannot exactly partition time using npt value.");
+        ASSERTL0((m_comm->GetSize() / nTime) % (nProcZ * nProcY * nProcX) == 0,
                  "Cannot exactly partition using PROC_Z value.");
         ASSERTL0(nProcZ % nProcY == 0,
                  "Cannot exactly partition using PROC_Y value.");
@@ -1680,9 +1693,9 @@ void SessionReader::PartitionComm()
 
         // Number of processes associated with the spectral element
         // method.
-        int nProcSem = m_comm->GetSize() / nProcSm;
+        int nProcSem = m_comm->GetSize() / nTime / nProcSm;
 
-        m_comm->SplitComm(nProcSm, nProcSem);
+        m_comm->SplitComm(nProcSm, nProcSem, nTime);
         m_comm->GetColumnComm()->SplitComm(nProcZ / nStripZ, nStripZ);
         m_comm->GetColumnComm()->GetColumnComm()->SplitComm((nProcY * nProcX),
                                                             nProcZ / nStripZ);

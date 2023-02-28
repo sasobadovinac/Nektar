@@ -34,6 +34,7 @@
 
 #include <IncNavierStokesSolver/AdvectionTerms/LinearisedAdvection.h>
 #include <StdRegions/StdSegExp.h>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -290,7 +291,7 @@ void LinearisedAdvection::v_Advect(
         if (fields[i]->GetWaveSpace() && !m_singleMode && !m_halfMode)
         {
             velocity[i] = Array<OneD, NekDouble>(nPointsTot, 0.0);
-            fields[i]->HomogeneousBwdTrans(advVel[i], velocity[i]);
+            fields[i]->HomogeneousBwdTrans(nPointsTot, advVel[i], velocity[i]);
         }
         else
         {
@@ -336,9 +337,12 @@ void LinearisedAdvection::v_Advect(
                 if (m_multipleModes)
                 {
                     // transform gradients into physical Fourier space
-                    fields[i]->HomogeneousBwdTrans(grad[0], grad[0]);
-                    fields[i]->HomogeneousBwdTrans(grad[1], grad[1]);
-                    fields[i]->HomogeneousBwdTrans(grad[2], grad[2]);
+                    fields[i]->HomogeneousBwdTrans(nPointsTot, grad[0],
+                                                   grad[0]);
+                    fields[i]->HomogeneousBwdTrans(nPointsTot, grad[1],
+                                                   grad[1]);
+                    fields[i]->HomogeneousBwdTrans(nPointsTot, grad[2],
+                                                   grad[2]);
                 }
             }
             break;
@@ -366,7 +370,8 @@ void LinearisedAdvection::v_Advect(
 
         if (m_multipleModes)
         {
-            fields[i]->HomogeneousFwdTrans(outarray[i], outarray[i]);
+            fields[i]->HomogeneousFwdTrans(nPointsTot, outarray[i],
+                                           outarray[i]);
         }
         Vmath::Neg(nPointsTot, outarray[i], 1);
     }
@@ -687,10 +692,12 @@ void LinearisedAdvection::DFT(
     size_t nstart = m_start;
     for (size_t i = nstart; i < nstart + m_slices * m_skip; i += m_skip)
     {
-        ImportFldBase(file + std::to_string(i), pFields, (i - nstart) / m_skip);
+        boost::format filename(file);
+        filename % i;
+        ImportFldBase(filename.str(), pFields, (i - nstart) / m_skip);
         if (m_session->GetComm()->GetRank() == 0)
         {
-            cout << "read base flow file " << file + std::to_string(i) << endl;
+            cout << "read base flow file " << filename.str() << endl;
         }
     }
     if (!m_isperiodic)

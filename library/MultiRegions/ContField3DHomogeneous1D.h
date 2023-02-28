@@ -73,12 +73,14 @@ public:
         Array<OneD, NekDouble> &field) override;
 
 protected:
-private:
     virtual void v_ImposeDirichletConditions(
         Array<OneD, NekDouble> &outarray) override;
 
-    virtual void v_FillBndCondFromField() override;
-    virtual void v_FillBndCondFromField(const int nreg) override;
+    virtual void v_FillBndCondFromField(
+        const Array<OneD, NekDouble> coeffs) override;
+    virtual void v_FillBndCondFromField(
+        const int nreg, const Array<OneD, NekDouble> coeffs) override;
+
     /// Template method virtual forwarded for LocalToGlobal()
     virtual void v_LocalToGlobal(bool useComm) override;
 
@@ -87,13 +89,14 @@ private:
 
     /// Solves the three-dimensional Helmholtz equation, subject to the
     /// boundary conditions specified.
-    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::ConstFactorMap &factors,
-                             const StdRegions::VarCoeffMap &varcoeff,
-                             const MultiRegions::VarFactorsMap &varfactors,
-                             const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing) override;
+    virtual GlobalLinSysKey v_HelmSolve(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing) override;
 
     virtual void v_ClearGlobalLinSysManager(void) override;
 };

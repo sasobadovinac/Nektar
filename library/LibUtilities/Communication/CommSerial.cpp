@@ -255,6 +255,12 @@ void CommSerial::v_Irsend(void *buf, int count, CommDataType dt, int dest,
     boost::ignore_unused(buf, count, dt, dest, request, loc);
 }
 
+void CommSerial::v_Isend(void *buf, int count, CommDataType dt, int dest,
+                         CommRequestSharedPtr request, int loc)
+{
+    boost::ignore_unused(buf, count, dt, dest, request, loc);
+}
+
 void CommSerial::v_SendInit(void *buf, int count, CommDataType dt, int dest,
                             CommRequestSharedPtr request, int loc)
 {
@@ -292,9 +298,9 @@ CommRequestSharedPtr CommSerial::v_CreateRequest(int num)
 /**
  *
  */
-void CommSerial::v_SplitComm(int pRows, int pColumns)
+void CommSerial::v_SplitComm(int pRows, int pColumns, int pTime)
 {
-    boost::ignore_unused(pRows, pColumns);
+    boost::ignore_unused(pRows, pColumns, pTime);
     ASSERTL0(false, "Cannot split a serial process.");
 }
 

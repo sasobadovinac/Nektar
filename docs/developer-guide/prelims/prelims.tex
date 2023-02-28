@@ -352,14 +352,14 @@ Weak pointers are used mostly for short-term access to shared data.
 
 Another modern code utility used by {\nek} to support shared
 pointers can be seen in {\nek} classes which inherit from
-\lstinline|std::enable_shared_from_this|. This allows a class member function to return a shared pointer to itself. Specifically, it makes available the function \lstinline|shared_from_this()| which returns a shard pointer to the object in the given context.
+\lstinline|std::enable_shared_from_this|. This allows a class member function to return a shared pointer to itself. Specifically, it makes available the function \lstinline|shared_from_this()| which returns a shared pointer to the object in the given context.
 
 While C++ shared pointers are a powerful resource, there are a
 number of intricacies that must be understood and followed when
 creating classes and using objects that will be managed by them.
 For those not familiar with the C++11 (or previously Boost)
 implementation, it is highly recommended that you study them in more
-detail then presented here.
+detail than presented here.
   
 \subsection{typedefs}
 Like most other large codes, {\nek} uses
@@ -634,10 +634,10 @@ typedef boost::shared_ptr<MyConcept> MyConceptShPtr;
 
 
 \subsubsection{Creating a specific implementation (derived class)}
-A new class, derived from the base class above, is defined for each specific implementations of a concept. It is these
+A new class, derived from the base class above, is defined for each specific implementation of a concept. It is these
 specific implementations which are instantiated by the factory.
 
-In our example we will have an implementations called \lstinline{MyConceptImpl1}
+In our example we will have an implementation called \lstinline{MyConceptImpl1}
 defined in \inlsh{MyConceptImpl1.h} and \inlsh{MyConceptImpl1.cpp}. In the
 header file we include the base class header file
 \begin{lstlisting}
@@ -668,7 +668,7 @@ static MyConceptSharedPtr create(
     return MemoryManager<MyConceptImpl1>::AllocateSharedPtr(p1, p2);
 }
 \end{lstlisting}
-The example above the \lstinline{create} function simply creates an instance of \inlsh{MyConceptImpl1} using the {\nek} memory manager and the
+In the example above the \lstinline{create} function simply creates an instance of \inlsh{MyConceptImpl1} using the {\nek} memory manager and the
 supplied parameters. It must be a \lstinline{static} function because we are not operating on any existing instance and it should return a shared pointer to a base class object (rather than a \lstinline{MyConceptImpl1} shared pointer), since the point of the factory is that the calling code does not know about specific implementations. An advantage of having each class providing a creator function is that it allows for \emph{two-stage initialisation} -- for example, initialising base-class variables based on the derived type.
 
 The final task is to register each of our implementations with the factory. This is done 

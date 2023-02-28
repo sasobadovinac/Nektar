@@ -51,12 +51,14 @@
 #include <MultiRegions/MultiRegions.hpp>
 #include <MultiRegions/MultiRegionsDeclspec.h>
 #include <SpatialDomains/MeshGraph.h>
+#include <SpatialDomains/Movement/Movement.h>
 #include <tinyxml.h>
 
 namespace Nektar
 {
 namespace MultiRegions
 {
+
 // Forward declarations
 class ExpList;
 class GlobalLinSys;
@@ -225,25 +227,21 @@ public:
     /// Set Modified Basis for the stability analysis
     inline void SetModifiedBasis(const bool modbasis);
 
-    /// Set the \a i th value of \a m_phys to value \a val
-    inline void SetPhys(int i, NekDouble val);
-
     /// This function returns the third direction expansion condition,
     /// which can be in wave space (coefficient) or not
     /// It is stored in the variable m_WaveSpace.
     inline bool GetWaveSpace(void) const;
 
+    /// Set the \a i th value of \a m_phys to value \a val
+    inline void SetPhys(int i, NekDouble val);
     /// Fills the array #m_phys
     inline void SetPhys(const Array<OneD, const NekDouble> &inarray);
-
     /// Sets the array #m_phys
     inline void SetPhysArray(Array<OneD, NekDouble> &inarray);
-
     /// This function manually sets whether the array of physical
     /// values \f$\boldsymbol{u}_l\f$ (implemented as #m_phys) is
     /// filled or not.
     inline void SetPhysState(const bool physState);
-
     /// This function indicates whether the array of physical values
     /// \f$\boldsymbol{u}_l\f$ (implemented as #m_phys) is filled or
     /// not.
@@ -253,18 +251,15 @@ public:
     MULTI_REGIONS_EXPORT void MultiplyByQuadratureMetric(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     /// Divided by the metric jacobi and quadrature weights
     MULTI_REGIONS_EXPORT void DivideByQuadratureMetric(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     /// This function calculates the inner product of a function
     /// \f$f(\boldsymbol{x})\f$ with respect to all \em local
     /// expansion modes \f$\phi_n^e(\boldsymbol{x})\f$.
     inline void IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                 Array<OneD, NekDouble> &outarray);
-
     /// This function calculates the inner product of a function
     /// \f$f(\boldsymbol{x})\f$ with respect to the derivative (in
     /// direction \param dir) of all \em local expansion modes
@@ -272,12 +267,10 @@ public:
     MULTI_REGIONS_EXPORT void IProductWRTDerivBase(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     MULTI_REGIONS_EXPORT void IProductWRTDirectionalDerivBase(
         const Array<OneD, const NekDouble> &direction,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     /// This function calculates the inner product of a
     /// function \f$f(\boldsymbol{x})\f$ with respect to the
     /// derivative of all \em local expansion modes
@@ -285,32 +278,26 @@ public:
     MULTI_REGIONS_EXPORT void IProductWRTDerivBase(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     /// This function elementally evaluates the forward transformation
     /// of a function \f$u(\boldsymbol{x})\f$ onto the global
     /// spectral/hp expansion.
     inline void FwdTransLocalElmt(const Array<OneD, const NekDouble> &inarray,
                                   Array<OneD, NekDouble> &outarray);
-
     ///
     inline void FwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray);
-
     MULTI_REGIONS_EXPORT void ExponentialFilter(Array<OneD, NekDouble> &array,
                                                 const NekDouble alpha,
                                                 const NekDouble exponent,
                                                 const NekDouble cutoff);
-
     /// This function elementally mulplies the coefficient space of
     /// Sin my the elemental inverse of the mass matrix.
     MULTI_REGIONS_EXPORT void MultiplyByElmtInvMass(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     inline void MultiplyByInvMassMatrix(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     inline void MultiplyByMassMatrix(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray)
@@ -319,12 +306,11 @@ public:
         BwdTrans(inarray, tmp);
         IProductWRTBase(tmp, outarray);
     }
-
     /// Smooth a field across elements
     inline void SmoothField(Array<OneD, NekDouble> &field);
 
     /// Solve helmholtz problem
-    inline void HelmSolve(
+    inline GlobalLinSysKey HelmSolve(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         const StdRegions::ConstFactorMap &factors,
@@ -333,31 +319,26 @@ public:
             MultiRegions::NullVarFactorsMap,
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray,
         const bool PhysSpaceForcing                    = true);
-
     /// Solve Advection Diffusion Reaction
-    inline void LinearAdvectionDiffusionReactionSolve(
+    inline GlobalLinSysKey LinearAdvectionDiffusionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
-
     /// Solve Advection Diffusion Reaction
     inline void LinearAdvectionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
-
     ///
     MULTI_REGIONS_EXPORT void FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     /// This function elementally evaluates the backward transformation
     /// of the global spectral/hp element expansion.
     inline void BwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray);
-
     /// This function calculates the coordinates of all the elemental
     /// quadrature points \f$\boldsymbol{x}_i\f$.
     inline void GetCoords(
@@ -371,76 +352,64 @@ public:
         Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
     // Homogeneous transforms
-    inline void HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
+    inline void HomogeneousFwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff = true, bool UnShuff = true);
-
-    inline void HomogeneousBwdTrans(const Array<OneD, const NekDouble> &inarray,
+    inline void HomogeneousBwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff = true, bool UnShuff = true);
-
-    inline void DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+    inline void DealiasedProd(const int num_dofs,
+                              const Array<OneD, NekDouble> &inarray1,
                               const Array<OneD, NekDouble> &inarray2,
                               Array<OneD, NekDouble> &outarray);
-
     inline void DealiasedDotProd(
-        const Array<OneD, Array<OneD, NekDouble>> &inarray1,
+        const int num_dofs, const Array<OneD, Array<OneD, NekDouble>> &inarray1,
         const Array<OneD, Array<OneD, NekDouble>> &inarray2,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
-
     inline void GetBCValues(Array<OneD, NekDouble> &BndVals,
                             const Array<OneD, NekDouble> &TotField, int BndID);
-
     inline void NormVectorIProductWRTBase(Array<OneD, const NekDouble> &V1,
                                           Array<OneD, const NekDouble> &V2,
                                           Array<OneD, NekDouble> &outarray,
                                           int BndID);
-
     inline void NormVectorIProductWRTBase(
         Array<OneD, Array<OneD, NekDouble>> &V,
         Array<OneD, NekDouble> &outarray);
-
     /// Apply geometry information to each expansion.
     MULTI_REGIONS_EXPORT void ApplyGeomInfo();
-
     /// Reset geometry information and reset matrices
     MULTI_REGIONS_EXPORT void Reset()
     {
         v_Reset();
     }
-
+    // not sure we really need these in ExpList
     void WriteTecplotHeader(std::ostream &outfile, std::string var = "")
     {
         v_WriteTecplotHeader(outfile, var);
     }
-
     void WriteTecplotZone(std::ostream &outfile, int expansion = -1)
     {
         v_WriteTecplotZone(outfile, expansion);
     }
-
     void WriteTecplotField(std::ostream &outfile, int expansion = -1)
     {
         v_WriteTecplotField(outfile, expansion);
     }
-
     void WriteTecplotConnectivity(std::ostream &outfile, int expansion = -1)
     {
         v_WriteTecplotConnectivity(outfile, expansion);
     }
-
     MULTI_REGIONS_EXPORT void WriteVtkHeader(std::ostream &outfile);
     MULTI_REGIONS_EXPORT void WriteVtkFooter(std::ostream &outfile);
-
     void WriteVtkPieceHeader(std::ostream &outfile, int expansion,
                              int istrip = 0)
     {
         v_WriteVtkPieceHeader(outfile, expansion, istrip);
     }
-
     MULTI_REGIONS_EXPORT void WriteVtkPieceFooter(std::ostream &outfile,
                                                   int expansion);
-
     void WriteVtkPieceData(std::ostream &outfile, int expansion,
                            std::string var = "v")
     {
@@ -454,48 +423,38 @@ public:
 
     /// Set the \a i th coefficiient in \a m_coeffs to value \a val
     inline void SetCoeff(int i, NekDouble val);
-
     /// Set the \a i th coefficiient in  #m_coeffs to value \a val
     inline void SetCoeffs(int i, NekDouble val);
-
     /// Set the  #m_coeffs array to inarray
     inline void SetCoeffsArray(Array<OneD, NekDouble> &inarray);
-
     /// This function returns the dimension of the shape of the
     /// element \a eid.
     // inline
     MULTI_REGIONS_EXPORT int GetShapeDimension();
-
     /// This function returns (a reference to) the array
     /// \f$\boldsymbol{\hat{u}}_l\f$ (implemented as #m_coeffs)
     /// containing all local expansion coefficients.
     inline const Array<OneD, const NekDouble> &GetCoeffs() const;
-
     /// Impose Dirichlet Boundary Conditions onto Array
     inline void ImposeDirichletConditions(Array<OneD, NekDouble> &outarray);
-
     /// Fill Bnd Condition expansion from the values stored in expansion
-    inline void FillBndCondFromField(void);
-
+    inline void FillBndCondFromField(const Array<OneD, NekDouble> coeffs);
     /// Fill Bnd Condition expansion in nreg from the values
     /// stored in expansion
-    inline void FillBndCondFromField(const int nreg);
-
+    inline void FillBndCondFromField(const int nreg,
+                                     const Array<OneD, NekDouble> coeffs);
     /// Gathers the global coefficients \f$\boldsymbol{\hat{u}}_g\f$
     /// from the local coefficients \f$\boldsymbol{\hat{u}}_l\f$.
     // inline
     MULTI_REGIONS_EXPORT inline void LocalToGlobal(bool useComm = true);
-
     MULTI_REGIONS_EXPORT inline void LocalToGlobal(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool useComm = true);
-
     /// Scatters from the global coefficients
     /// \f$\boldsymbol{\hat{u}}_g\f$ to the local coefficients
     /// \f$\boldsymbol{\hat{u}}_l\f$.
     // inline
     MULTI_REGIONS_EXPORT inline void GlobalToLocal(void);
-
     /**
      * This operation is evaluated as:
      * \f{tabbing}
@@ -525,26 +484,22 @@ public:
     MULTI_REGIONS_EXPORT inline void GlobalToLocal(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     /// Get the \a i th value  (coefficient) of #m_coeffs
     inline NekDouble GetCoeff(int i);
-
     /// Get the \a i th value  (coefficient) of #m_coeffs
     inline NekDouble GetCoeffs(int i);
-
     /// This function returns (a reference to) the array
     /// \f$\boldsymbol{u}_l\f$ (implemented as #m_phys) containing the
     /// function \f$u^{\delta}(\boldsymbol{x})\f$ evaluated at the
     /// quadrature points.
     // inline
     MULTI_REGIONS_EXPORT const Array<OneD, const NekDouble> &GetPhys() const;
-
     /// This function calculates the \f$L_\infty\f$ error of the global
     /// spectral/hp element approximation.
     MULTI_REGIONS_EXPORT NekDouble
     Linf(const Array<OneD, const NekDouble> &inarray,
          const Array<OneD, const NekDouble> &soln = NullNekDouble1DArray);
-
+    /// This function calculates the \f$L_\infty\f$ error of the global
     /// This function calculates the \f$L_2\f$ error with
     /// respect to soln of the global
     /// spectral/hp element approximation.
@@ -554,13 +509,13 @@ public:
     {
         return v_L2(inarray, soln);
     }
-
     /// Calculates the \f$H^1\f$ error of the global spectral/hp
     /// element approximation.
     MULTI_REGIONS_EXPORT NekDouble
     H1(const Array<OneD, const NekDouble> &inarray,
        const Array<OneD, const NekDouble> &soln = NullNekDouble1DArray);
-
+    /// Calculates the \f$H^1\f$ error of the global spectral/hp
+    /// element approximation.
     /**
      * The integration is evaluated locally, that is
      * \f[\int
@@ -580,10 +535,8 @@ public:
     NekDouble Integral()
     {
         ASSERTL1(m_physState == true, "local physical space is not true ");
-
         return Integral(m_phys);
     }
-
     /**
      * The integration is evaluated locally, that is
      * \f[\int
@@ -604,12 +557,10 @@ public:
     {
         return v_Integral(inarray);
     }
-
     NekDouble VectorFlux(const Array<OneD, Array<OneD, NekDouble>> &inarray)
     {
         return v_VectorFlux(inarray);
     }
-
     /// This function calculates the energy associated with
     /// each one of the modesof a 3D homogeneous nD expansion
     Array<OneD, const NekDouble> HomogeneousEnergy(void)
@@ -704,6 +655,11 @@ public:
     inline LocalRegions::ExpansionSharedPtr &GetExp(int n) const;
 
     /// This function returns (a shared pointer to) the local elemental
+    /// expansion of the \f$n^{\mathrm{th}}\f$ element given a global
+    /// geometry ID.
+    inline LocalRegions::ExpansionSharedPtr &GetExpFromGeomId(int n);
+
+    /// This function returns (a shared pointer to) the local elemental
     /// expansion containing the arbitrary point given by \a gloCoord.
     MULTI_REGIONS_EXPORT LocalRegions::ExpansionSharedPtr &GetExp(
         const Array<OneD, const NekDouble> &gloCoord);
@@ -755,29 +711,26 @@ public:
     PhysEvaluate(const Array<OneD, const NekDouble> &coords,
                  const Array<OneD, const NekDouble> &phys);
 
-    /// Get the start offset position for a global list of #m_coeffs
-    /// correspoinding to element n.
+    /// Get the start offset position for a local contiguous list of
+    /// coeffs correspoinding to element n.
     inline int GetCoeff_Offset(int n) const;
 
-    /// Get the start offset position for a global list of m_phys
-    /// correspoinding to element n.
+    /// Get the start offset position for a local contiguous list of
+    /// quadrature points in a full array correspoinding to element n.
     inline int GetPhys_Offset(int n) const;
 
     /// This function returns (a reference to) the array
     /// \f$\boldsymbol{\hat{u}}_l\f$ (implemented as #m_coeffs)
     /// containing all local expansion coefficients.
     inline Array<OneD, NekDouble> &UpdateCoeffs();
-
     /// This function returns (a reference to) the array
     /// \f$\boldsymbol{u}_l\f$ (implemented as #m_phys) containing the
     /// function \f$u^{\delta}(\boldsymbol{x})\f$ evaluated at the
     /// quadrature points.
     inline Array<OneD, NekDouble> &UpdatePhys();
-
     inline void PhysDeriv(Direction edir,
                           const Array<OneD, const NekDouble> &inarray,
                           Array<OneD, NekDouble> &out_d);
-
     /// This function discretely evaluates the derivative of a function
     /// \f$f(\boldsymbol{x})\f$ on the domain consisting of all
     /// elements of the expansion.
@@ -786,135 +739,101 @@ public:
         Array<OneD, NekDouble> &out_d0,
         Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
         Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
-
     inline void PhysDeriv(const int dir,
                           const Array<OneD, const NekDouble> &inarray,
                           Array<OneD, NekDouble> &out_d);
-
     inline void CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
                          Array<OneD, Array<OneD, NekDouble>> &Q);
-
     inline void PhysDirectionalDeriv(
         const Array<OneD, const NekDouble> &direction,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     inline void GetMovingFrames(const SpatialDomains::GeomMMF MMFdir,
                                 const Array<OneD, const NekDouble> &CircCentre,
                                 Array<OneD, Array<OneD, NekDouble>> &outarray);
-
     // functions associated with DisContField
     inline const Array<OneD, const std::shared_ptr<ExpList>>
         &GetBndCondExpansions();
-
     /// Get the weight value for boundary conditions
     inline const Array<OneD, const NekDouble> &GetBndCondBwdWeight();
-
     /// Set the weight value for boundary conditions
     inline void SetBndCondBwdWeight(const int index, const NekDouble value);
-
     inline std::shared_ptr<ExpList> &UpdateBndCondExpansion(int i);
-
     inline void Upwind(const Array<OneD, const NekDouble> &Vn,
                        const Array<OneD, const NekDouble> &Fwd,
                        const Array<OneD, const NekDouble> &Bwd,
                        Array<OneD, NekDouble> &Upwind);
-
     inline void Upwind(const Array<OneD, const Array<OneD, NekDouble>> &Vec,
                        const Array<OneD, const NekDouble> &Fwd,
                        const Array<OneD, const NekDouble> &Bwd,
                        Array<OneD, NekDouble> &Upwind);
-
     /**
      * Return a reference to the trace space associated with this
      * expansion list.
      */
     inline std::shared_ptr<ExpList> &GetTrace();
-
     inline std::shared_ptr<AssemblyMapDG> &GetTraceMap(void);
-
     inline const Array<OneD, const int> &GetTraceBndMap(void);
-
     inline void GetNormals(Array<OneD, Array<OneD, NekDouble>> &normals);
-
     /// Get the length of elements in boundary normal direction
     MULTI_REGIONS_EXPORT void GetElmtNormalLength(
         Array<OneD, NekDouble> &lengthsFwd, Array<OneD, NekDouble> &lengthsBwd);
-
     /// Get the weight value for boundary conditions
     /// for boundary average and jump calculations
     MULTI_REGIONS_EXPORT void GetBwdWeight(Array<OneD, NekDouble> &weightAver,
                                            Array<OneD, NekDouble> &weightJump);
-
     inline void AddTraceIntegral(const Array<OneD, const NekDouble> &Fx,
                                  const Array<OneD, const NekDouble> &Fy,
                                  Array<OneD, NekDouble> &outarray);
-
     inline void AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                                  Array<OneD, NekDouble> &outarray);
-
     inline void AddFwdBwdTraceIntegral(const Array<OneD, const NekDouble> &Fwd,
                                        const Array<OneD, const NekDouble> &Bwd,
                                        Array<OneD, NekDouble> &outarray);
-
     inline void GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
                                    Array<OneD, NekDouble> &Bwd);
-
     inline void GetFwdBwdTracePhys(const Array<OneD, const NekDouble> &field,
                                    Array<OneD, NekDouble> &Fwd,
                                    Array<OneD, NekDouble> &Bwd,
                                    bool FillBnd          = true,
                                    bool PutFwdInBwdOnBCs = false,
                                    bool DoExchange       = true);
-
     inline void FillBwdWithBoundCond(const Array<OneD, NekDouble> &Fwd,
                                      Array<OneD, NekDouble> &Bwd,
                                      bool PutFwdInBwdOnBCs = false);
-
     /// Add Fwd and Bwd value to field,
     /// a reverse procedure of GetFwdBwdTracePhys
     inline void AddTraceQuadPhysToField(const Array<OneD, const NekDouble> &Fwd,
                                         const Array<OneD, const NekDouble> &Bwd,
                                         Array<OneD, NekDouble> &field);
-
     inline void AddTraceQuadPhysToOffDiag(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd, Array<OneD, NekDouble> &field)
     {
         v_AddTraceQuadPhysToOffDiag(Fwd, Bwd, field);
     }
-
     inline void GetLocTraceFromTracePts(const Array<OneD, const NekDouble> &Fwd,
                                         const Array<OneD, const NekDouble> &Bwd,
                                         Array<OneD, NekDouble> &locTraceFwd,
                                         Array<OneD, NekDouble> &locTraceBwd);
-
     /// Fill Bwd with boundary conditions
     inline void FillBwdWithBwdWeight(Array<OneD, NekDouble> &weightave,
                                      Array<OneD, NekDouble> &weightjmp);
-
     /// Copy and fill the Periodic boundaries
     inline void PeriodicBwdCopy(const Array<OneD, const NekDouble> &Fwd,
                                 Array<OneD, NekDouble> &Bwd);
-
     inline const std::vector<bool> &GetLeftAdjacentFaces(void) const;
-
     inline void ExtractTracePhys(Array<OneD, NekDouble> &outarray);
-
     inline void ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                  Array<OneD, NekDouble> &outarray);
-
     inline const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
         &GetBndConditions();
-
     inline Array<OneD, SpatialDomains::BoundaryConditionShPtr>
         &UpdateBndConditions();
-
     inline void EvaluateBoundaryConditions(
         const NekDouble time = 0.0, const std::string varName = "",
         const NekDouble = NekConstants::kNekUnsetDouble,
         const NekDouble = NekConstants::kNekUnsetDouble);
-
     // Routines for continous matrix solution
     /// This function calculates the result of the multiplication of a
     /// matrix of type specified by \a mkey with a vector given by \a
@@ -923,14 +842,11 @@ public:
         const GlobalMatrixKey &gkey,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     inline void SetUpPhysNormals();
-
     inline void GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                      Array<OneD, int> &EdgeID);
-
-    inline void GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
-                                    const bool DeclareCoeffPhysArrays = true);
+    virtual void GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
+                                     const bool DeclareCoeffPhysArrays = true);
 
     inline void ExtractElmtToBndPhys(int i, const Array<OneD, NekDouble> &elmt,
                                      Array<OneD, NekDouble> &boundary);
@@ -990,7 +906,6 @@ public:
     {
         v_AppendFieldData(fielddef, fielddata);
     }
-
     /// Append the data in coeffs listed in elements
     /// fielddef->m_ElementIDs onto fielddata
     void AppendFieldData(LibUtilities::FieldDefinitionsSharedPtr &fielddef,
@@ -999,7 +914,6 @@ public:
     {
         v_AppendFieldData(fielddef, fielddata, coeffs);
     }
-
     /** \brief Extract the data in fielddata into the coeffs
      * using the basic ExpList Elemental expansions rather
      * than planes in homogeneous case
@@ -1008,7 +922,6 @@ public:
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
         Array<OneD, NekDouble> &coeffs);
-
     /** \brief Extract the data from fromField using
      * fromExpList the coeffs using the basic ExpList
      * Elemental expansions rather than planes in homogeneous
@@ -1018,78 +931,74 @@ public:
         const std::shared_ptr<ExpList> &fromExpList,
         const Array<OneD, const NekDouble> &fromCoeffs,
         Array<OneD, NekDouble> &toCoeffs);
-
     // Extract data in fielddata into the m_coeffs_list for the 3D stability
     // analysis (base flow is 2D)
     MULTI_REGIONS_EXPORT void ExtractDataToCoeffs(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
         Array<OneD, NekDouble> &coeffs);
-
+    // Extract data from file fileName and put coefficents into array coefffs
+    MULTI_REGIONS_EXPORT void ExtractCoeffsFromFile(
+        const std::string &fileName, LibUtilities::CommSharedPtr comm,
+        const std::string &varName, Array<OneD, NekDouble> &coeffs);
     MULTI_REGIONS_EXPORT void GenerateElementVector(
         const int ElementID, const NekDouble scalar1, const NekDouble scalar2,
         Array<OneD, NekDouble> &outarray);
-
     /// Returns a shared pointer to the current object.
     std::shared_ptr<ExpList> GetSharedThisPtr()
     {
         return shared_from_this();
     }
-
     /// Returns the session object
     std::shared_ptr<LibUtilities::SessionReader> GetSession() const
     {
         return m_session;
     }
-
     /// Returns the comm object
     std::shared_ptr<LibUtilities::Comm> GetComm() const
     {
         return m_comm;
     }
-
     SpatialDomains::MeshGraphSharedPtr GetGraph()
     {
         return m_graph;
     }
-
     // Wrapper functions for Homogeneous Expansions
     inline LibUtilities::BasisSharedPtr GetHomogeneousBasis(void)
     {
         return v_GetHomogeneousBasis();
     }
-
     std::shared_ptr<ExpList> &GetPlane(int n)
     {
         return v_GetPlane(n);
     }
-
     MULTI_REGIONS_EXPORT void CreateCollections(
         Collections::ImplementationType ImpType = Collections::eNoImpType);
-
     MULTI_REGIONS_EXPORT void ClearGlobalLinSysManager(void);
+
+    MULTI_REGIONS_EXPORT int GetPoolCount(std::string);
+
+    MULTI_REGIONS_EXPORT void UnsetGlobalLinSys(GlobalLinSysKey, bool);
+
+    MULTI_REGIONS_EXPORT LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+        &GetGlobalLinSysManager(void);
 
     /// Get m_coeffs to elemental value map
     MULTI_REGIONS_EXPORT inline const Array<OneD, const std::pair<int, int>>
         &GetCoeffsToElmt() const;
-
     MULTI_REGIONS_EXPORT void AddTraceJacToElmtJac(
         const Array<OneD, const DNekMatSharedPtr> &FwdMat,
         const Array<OneD, const DNekMatSharedPtr> &BwdMat,
         Array<OneD, DNekMatSharedPtr> &fieldMat);
-
     MULTI_REGIONS_EXPORT void GetMatIpwrtDeriveBase(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         const int nDirctn, Array<OneD, DNekMatSharedPtr> &mtxPerVar);
-
     MULTI_REGIONS_EXPORT void GetMatIpwrtDeriveBase(
         const TensorOfArray3D<NekDouble> &inarray,
         Array<OneD, DNekMatSharedPtr> &mtxPerVar);
-
     MULTI_REGIONS_EXPORT void GetDiagMatIpwrtBase(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, DNekMatSharedPtr> &mtxPerVar);
-
     inline void AddTraceIntegralToOffDiag(
         const Array<OneD, const NekDouble> &FwdFlux,
         const Array<OneD, const NekDouble> &BwdFlux,
@@ -1097,49 +1006,56 @@ public:
     {
         v_AddTraceIntegralToOffDiag(FwdFlux, BwdFlux, outarray);
     }
-
     MULTI_REGIONS_EXPORT void AddRightIPTPhysDerivBase(
         const int dir, const Array<OneD, const DNekMatSharedPtr> ElmtJacQuad,
         Array<OneD, DNekMatSharedPtr> ElmtJacCoef);
-
     MULTI_REGIONS_EXPORT void AddRightIPTBaseMatrix(
         const Array<OneD, const DNekMatSharedPtr> ElmtJacQuad,
         Array<OneD, DNekMatSharedPtr> ElmtJacCoef);
-
     MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr &
     GetLocTraceToTraceMap() const;
-
     // Return the internal vector which identifieds if trace
     // is left adjacent definiing which trace the normal
     // points otwards from
     MULTI_REGIONS_EXPORT std::vector<bool> &GetLeftAdjacentTraces(void);
 
+    /// This function returns the map of index inside m_exp to geom id
+    MULTI_REGIONS_EXPORT inline const std::unordered_map<int, int>
+        &GetElmtToExpId(void)
+    {
+        return m_elmtToExpId;
+    }
+
+    /// This function returns the index inside m_exp for a given geom id
+    MULTI_REGIONS_EXPORT inline int GetElmtToExpId(int elmtId)
+    {
+        auto it = m_elmtToExpId.find(elmtId);
+        ASSERTL0(it != m_elmtToExpId.end(), "Global geometry ID " +
+                                                std::to_string(elmtId) +
+                                                " not found in element ID to "
+                                                "expansion ID map.")
+        return it->second;
+    }
+
 protected:
     /// Exapnsion type
     ExpansionType m_expType;
-
     std::shared_ptr<DNekMat> GenGlobalMatrixFull(
         const GlobalLinSysKey &mkey,
         const std::shared_ptr<AssemblyMapCG> &locToGloMap);
-
     /// Communicator
     LibUtilities::CommSharedPtr m_comm;
-
     /// Session
     LibUtilities::SessionReaderSharedPtr m_session;
-
     /// Mesh associated with this expansion list.
     SpatialDomains::MeshGraphSharedPtr m_graph;
-
     /// The total number of local degrees of freedom. #m_ncoeffs
     /// \f$=N_{\mathrm{eof}}=\sum_{e=1}^{{N_{\mathrm{el}}}}N^{e}_l\f$
     int m_ncoeffs;
-
     /** The total number of quadrature points. #m_npoints
      *\f$=Q_{\mathrm{tot}}=\sum_{e=1}^{{N_{\mathrm{el}}}}N^{e}_Q\f$
      **/
     int m_npoints;
-
     /**
      * \brief Concatenation of all local expansion coefficients.
      *
@@ -1156,7 +1072,6 @@ protected:
      * \mathrm{where}\quad \boldsymbol{\hat{u}}^{e}[n]=\hat{u}_n^{e}\f]
      */
     Array<OneD, NekDouble> m_coeffs;
-
     /**
      * \brief The global expansion evaluated at the quadrature points
      *
@@ -1173,7 +1088,6 @@ protected:
      * \boldsymbol{u}^{e}[i]=u^{\delta}(\boldsymbol{x}_i)\f]
      */
     Array<OneD, NekDouble> m_phys;
-
     /**
      * \brief The state of the array #m_phys.
      *
@@ -1182,7 +1096,6 @@ protected:
      * points \f$\boldsymbol{x}_i\f$, is filled with these values.
      */
     bool m_physState;
-
     /**
      * \brief The list of local expansions.
      *
@@ -1194,228 +1107,169 @@ protected:
      * in the #ExpList base class.
      */
     std::shared_ptr<LocalRegions::ExpansionVector> m_exp;
-
     Collections::CollectionVector m_collections;
-
     /// Vector of bools to act as an initialise on first call flag
     std::vector<bool> m_collectionsDoInit;
-
     /// Offset of elemental data into the array #m_coeffs
     std::vector<int> m_coll_coeff_offset;
-
     /// Offset of elemental data into the array #m_phys
     std::vector<int> m_coll_phys_offset;
-
     /// Offset of elemental data into the array #m_coeffs
     Array<OneD, int> m_coeff_offset;
-
     /// Offset of elemental data into the array #m_phys
     Array<OneD, int> m_phys_offset;
-
     /// m_coeffs to elemental value map
     Array<OneD, std::pair<int, int>> m_coeffsToElmt;
-
     BlockMatrixMapShPtr m_blockMat;
-
     //@todo should this be in ExpList or
     // ExpListHomogeneous1D.cpp it's a bool which determine if
     // the expansion is in the wave space (coefficient space)
     // or not
     bool m_WaveSpace;
-
     /// Mapping from geometry ID of element to index inside #m_exp
     std::unordered_map<int, int> m_elmtToExpId;
-
     /// This function assembles the block diagonal matrix of local
     /// matrices of the type \a mtype.
     const DNekScalBlkMatSharedPtr GenBlockMatrix(const GlobalMatrixKey &gkey);
-
     const DNekScalBlkMatSharedPtr &GetBlockMatrix(const GlobalMatrixKey &gkey);
-
     void MultiplyByBlockMatrix(const GlobalMatrixKey &gkey,
                                const Array<OneD, const NekDouble> &inarray,
                                Array<OneD, NekDouble> &outarray);
-
     /// Generates a global matrix from the given key and map.
     std::shared_ptr<GlobalMatrix> GenGlobalMatrix(
         const GlobalMatrixKey &mkey,
         const std::shared_ptr<AssemblyMapCG> &locToGloMap);
-
     void GlobalEigenSystem(
         const std::shared_ptr<DNekMat> &Gmat,
         Array<OneD, NekDouble> &EigValsReal,
         Array<OneD, NekDouble> &EigValsImag,
         Array<OneD, NekDouble> &EigVecs = NullNekDouble1DArray);
-
     /// This operation constructs the global linear system of type \a
     /// mkey.
     std::shared_ptr<GlobalLinSys> GenGlobalLinSys(
         const GlobalLinSysKey &mkey,
         const std::shared_ptr<AssemblyMapCG> &locToGloMap);
-
     /// Generate a GlobalLinSys from information provided by the key
     /// "mkey" and the mapping provided in LocToGloBaseMap.
     std::shared_ptr<GlobalLinSys> GenGlobalBndLinSys(
         const GlobalLinSysKey &mkey, const AssemblyMapSharedPtr &locToGloMap);
-
     // Virtual prototypes
-
     virtual size_t v_GetNumElmts(void)
     {
         return (*m_exp).size();
     }
-
     virtual const Array<OneD, const std::shared_ptr<ExpList>>
         &v_GetBndCondExpansions(void);
-
     virtual const Array<OneD, const NekDouble> &v_GetBndCondBwdWeight();
-
     virtual void v_SetBndCondBwdWeight(const int index, const NekDouble value);
-
     virtual std::shared_ptr<ExpList> &v_UpdateBndCondExpansion(int i);
-
     virtual void v_Upwind(const Array<OneD, const Array<OneD, NekDouble>> &Vec,
                           const Array<OneD, const NekDouble> &Fwd,
                           const Array<OneD, const NekDouble> &Bwd,
                           Array<OneD, NekDouble> &Upwind);
-
     virtual void v_Upwind(const Array<OneD, const NekDouble> &Vn,
                           const Array<OneD, const NekDouble> &Fwd,
                           const Array<OneD, const NekDouble> &Bwd,
                           Array<OneD, NekDouble> &Upwind);
-
     virtual std::shared_ptr<ExpList> &v_GetTrace();
-
     virtual std::shared_ptr<AssemblyMapDG> &v_GetTraceMap();
-
     virtual const Array<OneD, const int> &v_GetTraceBndMap();
-
     virtual const std::shared_ptr<LocTraceToTraceMap> &v_GetLocTraceToTraceMap(
         void) const;
-
     virtual std::vector<bool> &v_GetLeftAdjacentTraces(void);
-
     /// Populate \a normals with the normals of all expansions.
     virtual void v_GetNormals(Array<OneD, Array<OneD, NekDouble>> &normals);
-
     virtual void v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fx,
                                     const Array<OneD, const NekDouble> &Fy,
                                     Array<OneD, NekDouble> &outarray);
-
     virtual void v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                                     Array<OneD, NekDouble> &outarray);
-
     virtual void v_AddFwdBwdTraceIntegral(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd,
         Array<OneD, NekDouble> &outarray);
-
     virtual void v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
                                       Array<OneD, NekDouble> &Bwd);
-
     virtual void v_GetFwdBwdTracePhys(const Array<OneD, const NekDouble> &field,
                                       Array<OneD, NekDouble> &Fwd,
                                       Array<OneD, NekDouble> &Bwd,
                                       bool FillBnd          = true,
                                       bool PutFwdInBwdOnBCs = false,
                                       bool DoExchange       = true);
-
     virtual void v_FillBwdWithBoundCond(const Array<OneD, NekDouble> &Fwd,
                                         Array<OneD, NekDouble> &Bwd,
                                         bool PutFwdInBwdOnBCs);
-
     virtual void v_AddTraceQuadPhysToField(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd, Array<OneD, NekDouble> &field);
-
     virtual void v_AddTraceQuadPhysToOffDiag(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd, Array<OneD, NekDouble> &field);
-
     virtual void v_GetLocTraceFromTracePts(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd,
         Array<OneD, NekDouble> &locTraceFwd,
         Array<OneD, NekDouble> &locTraceBwd);
-
     virtual void v_FillBwdWithBwdWeight(Array<OneD, NekDouble> &weightave,
                                         Array<OneD, NekDouble> &weightjmp);
-
     virtual void v_PeriodicBwdCopy(const Array<OneD, const NekDouble> &Fwd,
                                    Array<OneD, NekDouble> &Bwd);
-
     virtual const std::vector<bool> &v_GetLeftAdjacentFaces(void) const;
-
     virtual void v_ExtractTracePhys(Array<OneD, NekDouble> &outarray);
-
     virtual void v_ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray);
-
     virtual void v_MultiplyByInvMassMatrix(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::ConstFactorMap &factors,
-                             const StdRegions::VarCoeffMap &varcoeff,
-                             const MultiRegions::VarFactorsMap &varfactors,
-                             const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing);
+    virtual GlobalLinSysKey v_HelmSolve(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing);
 
-    virtual void v_LinearAdvectionDiffusionReactionSolve(
+    virtual GlobalLinSysKey v_LinearAdvectionDiffusionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
-
     virtual void v_LinearAdvectionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
-
     // wrapper functions about virtual functions
     virtual void v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray);
-
-    virtual void v_FillBndCondFromField();
-
-    virtual void v_FillBndCondFromField(const int nreg);
-
+    virtual void v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs);
+    virtual void v_FillBndCondFromField(const int nreg,
+                                        const Array<OneD, NekDouble> coeffs);
     virtual void v_Reset();
-
     virtual void v_LocalToGlobal(bool UseComm);
-
     virtual void v_LocalToGlobal(const Array<OneD, const NekDouble> &inarray,
                                  Array<OneD, NekDouble> &outarray,
                                  bool UseComm);
-
     virtual void v_GlobalToLocal(void);
-
     virtual void v_GlobalToLocal(const Array<OneD, const NekDouble> &inarray,
                                  Array<OneD, NekDouble> &outarray);
-
     virtual void v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray);
-
     virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray);
-
     virtual void v_FwdTransLocalElmt(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     virtual void v_FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     virtual void v_SmoothField(Array<OneD, NekDouble> &field);
-
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray);
-
     virtual void v_GetCoords(
-        Array<OneD, NekDouble> &coord_0, Array<OneD, NekDouble> &coord_1,
+        Array<OneD, NekDouble> &coord_0,
+        Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
         Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
     virtual void v_GetCoords(const int eid, Array<OneD, NekDouble> &xc0,
@@ -1426,65 +1280,51 @@ protected:
                              Array<OneD, NekDouble> &out_d0,
                              Array<OneD, NekDouble> &out_d1,
                              Array<OneD, NekDouble> &out_d2);
-
     virtual void v_PhysDeriv(const int dir,
                              const Array<OneD, const NekDouble> &inarray,
                              Array<OneD, NekDouble> &out_d);
-
     virtual void v_PhysDeriv(Direction edir,
                              const Array<OneD, const NekDouble> &inarray,
                              Array<OneD, NekDouble> &out_d);
-
     virtual void v_CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
                             Array<OneD, Array<OneD, NekDouble>> &Q);
-
     virtual void v_PhysDirectionalDeriv(
         const Array<OneD, const NekDouble> &direction,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
     virtual void v_GetMovingFrames(
         const SpatialDomains::GeomMMF MMFdir,
         const Array<OneD, const NekDouble> &CircCentre,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
-
     virtual void v_HomogeneousFwdTrans(
-        const Array<OneD, const NekDouble> &inarray,
+        const int npts, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
         bool UnShuff = true);
-
     virtual void v_HomogeneousBwdTrans(
-        const Array<OneD, const NekDouble> &inarray,
+        const int npts, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
         bool UnShuff = true);
-
-    virtual void v_DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+    virtual void v_DealiasedProd(const int num_dofs,
+                                 const Array<OneD, NekDouble> &inarray1,
                                  const Array<OneD, NekDouble> &inarray2,
                                  Array<OneD, NekDouble> &outarray);
-
     virtual void v_DealiasedDotProd(
-        const Array<OneD, Array<OneD, NekDouble>> &inarray1,
+        const int num_dofs, const Array<OneD, Array<OneD, NekDouble>> &inarray1,
         const Array<OneD, Array<OneD, NekDouble>> &inarray2,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
-
     virtual void v_GetBCValues(Array<OneD, NekDouble> &BndVals,
                                const Array<OneD, NekDouble> &TotField,
                                int BndID);
-
     virtual void v_NormVectorIProductWRTBase(Array<OneD, const NekDouble> &V1,
                                              Array<OneD, const NekDouble> &V2,
                                              Array<OneD, NekDouble> &outarray,
                                              int BndID);
-
     virtual void v_NormVectorIProductWRTBase(
         Array<OneD, Array<OneD, NekDouble>> &V,
         Array<OneD, NekDouble> &outarray);
-
     virtual void v_SetUpPhysNormals();
-
     virtual void v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                         Array<OneD, int> &EdgeID);
-
     virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                        const bool DeclareCoeffPhysArrays);
 
@@ -1512,32 +1352,27 @@ protected:
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata);
-
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, Array<OneD, NekDouble> &coeffs);
-
     virtual void v_ExtractDataToCoeffs(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
         Array<OneD, NekDouble> &coeffs);
-
     virtual void v_ExtractCoeffsToCoeffs(
         const std::shared_ptr<ExpList> &fromExpList,
         const Array<OneD, const NekDouble> &fromCoeffs,
         Array<OneD, NekDouble> &toCoeffs);
-
     virtual void v_WriteTecplotHeader(std::ostream &outfile,
                                       std::string var = "");
     virtual void v_WriteTecplotZone(std::ostream &outfile, int expansion);
     virtual void v_WriteTecplotField(std::ostream &outfile, int expansion);
     virtual void v_WriteTecplotConnectivity(std::ostream &outfile,
                                             int expansion);
-    virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
-                                       int istrip);
-
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
                                      std::string var);
+    virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
+                                       int istrip);
 
     virtual NekDouble v_L2(
         const Array<OneD, const NekDouble> &phys,
@@ -1548,6 +1383,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &inarray);
 
     virtual Array<OneD, const NekDouble> v_HomogeneousEnergy(void);
+
     virtual LibUtilities::TranspositionSharedPtr v_GetTransposition(void);
     virtual NekDouble v_GetHomoLen(void);
     virtual void v_SetHomoLen(const NekDouble lhom);
@@ -1565,6 +1401,13 @@ protected:
 
     virtual void v_ClearGlobalLinSysManager(void);
 
+    virtual int v_GetPoolCount(std::string);
+
+    virtual void v_UnsetGlobalLinSys(GlobalLinSysKey, bool);
+
+    virtual LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+        &v_GetGlobalLinSysManager(void);
+
     void ExtractFileBCs(const std::string &fileName,
                         LibUtilities::CommSharedPtr comm,
                         const std::string &varName,
@@ -1576,16 +1419,6 @@ protected:
     static SpatialDomains::BoundaryConditionShPtr GetBoundaryCondition(
         const SpatialDomains::BoundaryConditionCollection &collection,
         unsigned int index, const std::string &variable);
-
-private:
-    /// Definition of the total number of degrees of freedom and
-    /// quadrature points and offsets to access data
-    void SetupCoeffPhys(bool DeclareCoeffPhysArrays = true,
-                        bool SetupOffsets           = true);
-
-    /// Define a list of elements using the geometry and basis
-    /// key information in expmap;
-    void InitialiseExpVector(const SpatialDomains::ExpansionInfoMap &expmap);
 
     virtual const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
         &v_GetBndConditions();
@@ -1626,11 +1459,26 @@ private:
         const Array<OneD, const NekDouble> &FwdFlux,
         const Array<OneD, const NekDouble> &BwdFlux,
         Array<OneD, NekDouble> &outarray);
+
+private:
+    /// Definition of the total number of degrees of freedom and
+    /// quadrature points and offsets to access data
+    void SetupCoeffPhys(bool DeclareCoeffPhysArrays = true,
+                        bool SetupOffsets           = true);
+
+    /// Define a list of elements using the geometry and basis
+    /// key information in expmap;
+    void InitialiseExpVector(const SpatialDomains::ExpansionInfoMap &expmap);
 };
 
 /// An empty ExpList object.
 static ExpList NullExpList;
 static ExpListSharedPtr NullExpListSharedPtr;
+
+// An empty GlobaLinSysManager object
+static LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+    NullGlobalLinSysManager;
+static GlobalLinSysKey NullGlobalLinSysKey(StdRegions::eNoMatrixType);
 
 // Inline routines follow.
 
@@ -1740,7 +1588,6 @@ inline void ExpList::SetPhys(int i, NekDouble val)
 {
     m_phys[i] = val;
 }
-
 /**
  * This function fills the array \f$\boldsymbol{u}_l\f$, the evaluation
  * of the expansion at the quadrature points (implemented as #m_phys),
@@ -1753,16 +1600,13 @@ inline void ExpList::SetPhys(const Array<OneD, const NekDouble> &inarray)
 {
     ASSERTL0((int)inarray.size() == m_npoints,
              "Input array does not have correct number of elements.");
-
     Vmath::Vcopy(m_npoints, &inarray[0], 1, &m_phys[0], 1);
     m_physState = true;
 }
-
 inline void ExpList::SetPhysArray(Array<OneD, NekDouble> &inarray)
 {
     m_phys = inarray;
 }
-
 /**
  * @param   physState       \a true (=filled) or \a false (=not filled).
  */
@@ -1770,7 +1614,6 @@ inline void ExpList::SetPhysState(const bool physState)
 {
     m_physState = physState;
 }
-
 /**
  * @return  physState       \a true (=filled) or \a false (=not filled).
  */
@@ -1778,7 +1621,6 @@ inline bool ExpList::GetPhysState() const
 {
     return m_physState;
 }
-
 /**
  *
  */
@@ -1788,7 +1630,6 @@ inline void ExpList::IProductWRTBase(
 {
     v_IProductWRTBase(inarray, outarray);
 }
-
 /**
  *
  */
@@ -1797,7 +1638,6 @@ inline void ExpList::FwdTrans(const Array<OneD, const NekDouble> &inarray,
 {
     v_FwdTrans(inarray, outarray);
 }
-
 /**
  *
  */
@@ -1807,7 +1647,6 @@ inline void ExpList::FwdTransLocalElmt(
 {
     v_FwdTransLocalElmt(inarray, outarray);
 }
-
 /**
  *
  */
@@ -1817,7 +1656,6 @@ inline void ExpList::FwdTransBndConstrained(
 {
     v_FwdTransBndConstrained(inarray, outarray);
 }
-
 /**
  *
  */
@@ -1825,31 +1663,19 @@ inline void ExpList::SmoothField(Array<OneD, NekDouble> &field)
 {
     v_SmoothField(field);
 }
-
 /**
  *
  */
-
 /**
  * Given the coefficients of an expansion, this function evaluates the
  * spectral/hp expansion \f$u^{\delta}(\boldsymbol{x})\f$ at the
- * quadrature points \f$\boldsymbol{x}_i\f$. This operation is
- * evaluated locally by the function ExpList#BwdTrans.
- *
- * The coefficients of the expansion should be contained in the variable
- * #m_coeffs of the ExpList object \a In. The resulting physical values
- * at the quadrature points \f$u^{\delta}(\boldsymbol{x}_i)\f$ are
- * stored in the array #m_phys.
- *
- * @param   In          An ExpList, containing the local coefficients
- *                      \f$\hat{u}_n^e\f$ in its array #m_coeffs.
+ * quadrature points \f$\boldsymbol{x}_i\f$.
  */
 inline void ExpList::BwdTrans(const Array<OneD, const NekDouble> &inarray,
                               Array<OneD, NekDouble> &outarray)
 {
     v_BwdTrans(inarray, outarray);
 }
-
 /**
  *
  */
@@ -1859,36 +1685,31 @@ inline void ExpList::MultiplyByInvMassMatrix(
 {
     v_MultiplyByInvMassMatrix(inarray, outarray);
 }
-
 /**
  *
  */
-inline void ExpList::HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                               Array<OneD, NekDouble> &outarray,
-                               const StdRegions::ConstFactorMap &factors,
-                               const StdRegions::VarCoeffMap &varcoeff,
-                               const MultiRegions::VarFactorsMap &varfactors,
-                               const Array<OneD, const NekDouble> &dirForcing,
-                               const bool PhysSpaceForcing)
-
+inline GlobalLinSysKey ExpList::HelmSolve(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &varcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
-    v_HelmSolve(inarray, outarray, factors, varcoeff, varfactors, dirForcing,
-                PhysSpaceForcing);
+    return v_HelmSolve(inarray, outarray, factors, varcoeff, varfactors,
+                       dirForcing, PhysSpaceForcing);
 }
-
 /**
  *
  */
-inline void ExpList::LinearAdvectionDiffusionReactionSolve(
+inline GlobalLinSysKey ExpList::LinearAdvectionDiffusionReactionSolve(
     const Array<OneD, Array<OneD, NekDouble>> &velocity,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const NekDouble lambda,
     const Array<OneD, const NekDouble> &dirForcing)
 {
-    v_LinearAdvectionDiffusionReactionSolve(velocity, inarray, outarray, lambda,
-                                            dirForcing);
+    return v_LinearAdvectionDiffusionReactionSolve(velocity, inarray, outarray,
+                                                   lambda, dirForcing);
 }
-
 inline void ExpList::LinearAdvectionReactionSolve(
     const Array<OneD, Array<OneD, NekDouble>> &velocity,
     const Array<OneD, const NekDouble> &inarray,
@@ -1898,14 +1719,12 @@ inline void ExpList::LinearAdvectionReactionSolve(
     v_LinearAdvectionReactionSolve(velocity, inarray, outarray, lambda,
                                    dirForcing);
 }
-
 /**
  *
  */
 inline void ExpList::GetCoords(Array<OneD, NekDouble> &coord_0,
                                Array<OneD, NekDouble> &coord_1,
                                Array<OneD, NekDouble> &coord_2)
-
 {
     v_GetCoords(coord_0, coord_1, coord_2);
 }
@@ -1927,7 +1746,6 @@ inline void ExpList::GetMovingFrames(
 {
     v_GetMovingFrames(MMFdir, CircCentre, outarray);
 }
-
 /**
  *
  */
@@ -1938,7 +1756,6 @@ inline void ExpList::PhysDeriv(const Array<OneD, const NekDouble> &inarray,
 {
     v_PhysDeriv(inarray, out_d0, out_d1, out_d2);
 }
-
 /**
  *
  */
@@ -1948,14 +1765,12 @@ inline void ExpList::PhysDeriv(const int dir,
 {
     v_PhysDeriv(dir, inarray, out_d);
 }
-
 inline void ExpList::PhysDeriv(Direction edir,
                                const Array<OneD, const NekDouble> &inarray,
                                Array<OneD, NekDouble> &out_d)
 {
     v_PhysDeriv(edir, inarray, out_d);
 }
-
 /**
  *
  */
@@ -1966,58 +1781,52 @@ inline void ExpList::PhysDirectionalDeriv(
 {
     v_PhysDirectionalDeriv(direction, inarray, outarray);
 }
-
 /**
  *
  */
-
 inline void ExpList::CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
                               Array<OneD, Array<OneD, NekDouble>> &Q)
 {
     v_CurlCurl(Vel, Q);
 }
-
 /**
  *
  */
 inline void ExpList::HomogeneousFwdTrans(
-    const Array<OneD, const NekDouble> &inarray,
+    const int npts, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
-    v_HomogeneousFwdTrans(inarray, outarray, Shuff, UnShuff);
+    v_HomogeneousFwdTrans(npts, inarray, outarray, Shuff, UnShuff);
 }
-
 /**
  *
  */
 inline void ExpList::HomogeneousBwdTrans(
-    const Array<OneD, const NekDouble> &inarray,
+    const int npts, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
-    v_HomogeneousBwdTrans(inarray, outarray, Shuff, UnShuff);
+    v_HomogeneousBwdTrans(npts, inarray, outarray, Shuff, UnShuff);
 }
-
 /**
  *
  */
-inline void ExpList::DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+inline void ExpList::DealiasedProd(const int num_dofs,
+                                   const Array<OneD, NekDouble> &inarray1,
                                    const Array<OneD, NekDouble> &inarray2,
                                    Array<OneD, NekDouble> &outarray)
 {
-    v_DealiasedProd(inarray1, inarray2, outarray);
+    v_DealiasedProd(num_dofs, inarray1, inarray2, outarray);
 }
-
 /**
  *
  */
 inline void ExpList::DealiasedDotProd(
-    const Array<OneD, Array<OneD, NekDouble>> &inarray1,
+    const int num_dofs, const Array<OneD, Array<OneD, NekDouble>> &inarray1,
     const Array<OneD, Array<OneD, NekDouble>> &inarray2,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    v_DealiasedDotProd(inarray1, inarray2, outarray);
+    v_DealiasedDotProd(num_dofs, inarray1, inarray2, outarray);
 }
-
 /**
  *
  */
@@ -2027,7 +1836,6 @@ inline void ExpList::GetBCValues(Array<OneD, NekDouble> &BndVals,
 {
     v_GetBCValues(BndVals, TotField, BndID);
 }
-
 /**
  *
  */
@@ -2038,13 +1846,11 @@ inline void ExpList::NormVectorIProductWRTBase(Array<OneD, const NekDouble> &V1,
 {
     v_NormVectorIProductWRTBase(V1, V2, outarray, BndID);
 }
-
 inline void ExpList::NormVectorIProductWRTBase(
     Array<OneD, Array<OneD, NekDouble>> &V, Array<OneD, NekDouble> &outarray)
 {
     v_NormVectorIProductWRTBase(V, outarray);
 }
-
 /**
  * @param   eid         The index of the element to be checked.
  * @return  The dimension of the coordinates of the specific element.
@@ -2054,7 +1860,6 @@ inline int ExpList::GetCoordim(int eid)
     ASSERTL2(eid <= (*m_exp).size(), "eid is larger than number of elements");
     return (*m_exp)[eid]->GetCoordim();
 }
-
 /**
  * @param   eid         The index of the element to be checked.
  * @return  The dimension of the shape of the specific element.
@@ -2063,7 +1868,6 @@ inline int ExpList::GetShapeDimension()
 {
     return (*m_exp)[0]->GetShapeDimension();
 }
-
 /**
  * @param   i           The index of m_coeffs to be set
  * @param   val         The value which m_coeffs[i] is to be set to.
@@ -2072,7 +1876,6 @@ inline void ExpList::SetCoeff(int i, NekDouble val)
 {
     m_coeffs[i] = val;
 }
-
 /**
  * @param   i           The index of #m_coeffs to be set.
  * @param   val         The value which #m_coeffs[i] is to be set to.
@@ -2081,12 +1884,10 @@ inline void ExpList::SetCoeffs(int i, NekDouble val)
 {
     m_coeffs[i] = val;
 }
-
 inline void ExpList::SetCoeffsArray(Array<OneD, NekDouble> &inarray)
 {
     m_coeffs = inarray;
 }
-
 /**
  * As the function returns a constant reference to a
  * <em>const Array</em>, it is not possible to modify the
@@ -2099,39 +1900,33 @@ inline const Array<OneD, const NekDouble> &ExpList::GetCoeffs() const
 {
     return m_coeffs;
 }
-
 inline void ExpList::ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
 {
     v_ImposeDirichletConditions(outarray);
 }
-
-inline void ExpList::FillBndCondFromField(void)
+inline void ExpList::FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
 {
-    v_FillBndCondFromField();
+    v_FillBndCondFromField(coeffs);
 }
-
-inline void ExpList::FillBndCondFromField(const int nreg)
+inline void ExpList::FillBndCondFromField(const int nreg,
+                                          const Array<OneD, NekDouble> coeffs)
 {
-    v_FillBndCondFromField(nreg);
+    v_FillBndCondFromField(nreg, coeffs);
 }
-
 inline void ExpList::LocalToGlobal(bool useComm)
 {
     v_LocalToGlobal(useComm);
 }
-
 inline void ExpList::LocalToGlobal(const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray,
                                    bool useComm)
 {
     v_LocalToGlobal(inarray, outarray, useComm);
 }
-
 inline void ExpList::GlobalToLocal(void)
 {
     v_GlobalToLocal();
 }
-
 /**
  * This operation is evaluated as:
  * \f{tabbing}
@@ -2163,7 +1958,6 @@ inline void ExpList::GlobalToLocal(const Array<OneD, const NekDouble> &inarray,
 {
     v_GlobalToLocal(inarray, outarray);
 }
-
 /**
  * @param   i               The index of #m_coeffs to be returned
  * @return  The NekDouble held in #m_coeffs[i].
@@ -2172,7 +1966,6 @@ inline NekDouble ExpList::GetCoeff(int i)
 {
     return m_coeffs[i];
 }
-
 /**
  * @param   i               The index of #m_coeffs to be returned
  * @return  The NekDouble held in #m_coeffs[i].
@@ -2181,7 +1974,6 @@ inline NekDouble ExpList::GetCoeffs(int i)
 {
     return m_coeffs[i];
 }
-
 /**
  * As the function returns a constant reference to a
  * <em>const Array</em> it is not possible to modify the
@@ -2194,7 +1986,6 @@ inline const Array<OneD, const NekDouble> &ExpList::GetPhys() const
 {
     return m_phys;
 }
-
 /**
  * @return  \f$N_{\mathrm{el}}\f$, the number of elements in the
  *          expansion.
@@ -2203,7 +1994,6 @@ inline int ExpList::GetExpSize(void)
 {
     return (*m_exp).size();
 }
-
 /**
  * @param   n               The index of the element concerned.
  *
@@ -2214,6 +2004,21 @@ inline LocalRegions::ExpansionSharedPtr &ExpList::GetExp(int n) const
 {
     return (*m_exp)[n];
 }
+/**
+ * @param   n               The global id of the element concerned.
+ *
+ * @return  (A shared pointer to) the local expansion of the
+ *          \f$n^{\mathrm{th}}\f$ element.
+ */
+inline LocalRegions::ExpansionSharedPtr &ExpList::GetExpFromGeomId(int n)
+{
+    auto it = m_elmtToExpId.find(n);
+    ASSERTL0(it != m_elmtToExpId.end(), "Global geometry ID " +
+                                            std::to_string(n) +
+                                            " not found in element ID to "
+                                            "expansion ID map.")
+    return (*m_exp)[it->second];
+}
 
 /**
  * @return  (A const shared pointer to) the local expansion vector #m_exp
@@ -2223,7 +2028,6 @@ inline const std::shared_ptr<LocalRegions::ExpansionVector> ExpList::GetExp(
 {
     return m_exp;
 }
-
 /**
  *
  */
@@ -2231,7 +2035,6 @@ inline int ExpList::GetCoeff_Offset(int n) const
 {
     return m_coeff_offset[n];
 }
-
 /**
  *
  */
@@ -2239,7 +2042,6 @@ inline int ExpList::GetPhys_Offset(int n) const
 {
     return m_phys_offset[n];
 }
-
 /**
  * If one wants to get hold of the underlying data without modifying
  * them, rather use the function #GetCoeffs instead.
@@ -2250,7 +2052,6 @@ inline Array<OneD, NekDouble> &ExpList::UpdateCoeffs()
 {
     return m_coeffs;
 }
-
 /**
  * If one wants to get hold of the underlying data without modifying
  * them,  rather use the function #GetPhys instead.
@@ -2262,42 +2063,35 @@ inline Array<OneD, NekDouble> &ExpList::UpdatePhys()
     m_physState = true;
     return m_phys;
 }
-
 // functions associated with DisContField
 inline const Array<OneD, const std::shared_ptr<ExpList>>
     &ExpList::GetBndCondExpansions()
 {
     return v_GetBndCondExpansions();
 }
-
 /// Get m_coeffs to elemental value map
 MULTI_REGIONS_EXPORT inline const Array<OneD, const std::pair<int, int>>
     &ExpList::GetCoeffsToElmt() const
 {
     return m_coeffsToElmt;
 }
-
 MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr &ExpList::
     GetLocTraceToTraceMap() const
 {
     return v_GetLocTraceToTraceMap();
 }
-
 inline const Array<OneD, const NekDouble> &ExpList::GetBndCondBwdWeight()
 {
     return v_GetBndCondBwdWeight();
 }
-
 inline void ExpList::SetBndCondBwdWeight(const int index, const NekDouble value)
 {
     v_SetBndCondBwdWeight(index, value);
 }
-
 inline std::shared_ptr<ExpList> &ExpList::UpdateBndCondExpansion(int i)
 {
     return v_UpdateBndCondExpansion(i);
 }
-
 inline void ExpList::Upwind(
     const Array<OneD, const Array<OneD, NekDouble>> &Vec,
     const Array<OneD, const NekDouble> &Fwd,
@@ -2305,7 +2099,6 @@ inline void ExpList::Upwind(
 {
     v_Upwind(Vec, Fwd, Bwd, Upwind);
 }
-
 inline void ExpList::Upwind(const Array<OneD, const NekDouble> &Vn,
                             const Array<OneD, const NekDouble> &Fwd,
                             const Array<OneD, const NekDouble> &Bwd,
@@ -2313,53 +2106,44 @@ inline void ExpList::Upwind(const Array<OneD, const NekDouble> &Vn,
 {
     v_Upwind(Vn, Fwd, Bwd, Upwind);
 }
-
 inline std::shared_ptr<ExpList> &ExpList::GetTrace()
 {
     return v_GetTrace();
 }
-
 inline std::shared_ptr<AssemblyMapDG> &ExpList::GetTraceMap()
 {
     return v_GetTraceMap();
 }
-
 inline const Array<OneD, const int> &ExpList::GetTraceBndMap()
 {
     return v_GetTraceBndMap();
 }
-
 inline void ExpList::GetNormals(Array<OneD, Array<OneD, NekDouble>> &normals)
 {
     v_GetNormals(normals);
 }
-
 inline void ExpList::AddTraceIntegral(const Array<OneD, const NekDouble> &Fx,
                                       const Array<OneD, const NekDouble> &Fy,
                                       Array<OneD, NekDouble> &outarray)
 {
     v_AddTraceIntegral(Fx, Fy, outarray);
 }
-
 inline void ExpList::AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
                                       Array<OneD, NekDouble> &outarray)
 {
     v_AddTraceIntegral(Fn, outarray);
 }
-
 inline void ExpList::AddFwdBwdTraceIntegral(
     const Array<OneD, const NekDouble> &Fwd,
     const Array<OneD, const NekDouble> &Bwd, Array<OneD, NekDouble> &outarray)
 {
     v_AddFwdBwdTraceIntegral(Fwd, Bwd, outarray);
 }
-
 inline void ExpList::GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
                                         Array<OneD, NekDouble> &Bwd)
 {
     v_GetFwdBwdTracePhys(Fwd, Bwd);
 }
-
 inline void ExpList::GetFwdBwdTracePhys(
     const Array<OneD, const NekDouble> &field, Array<OneD, NekDouble> &Fwd,
     Array<OneD, NekDouble> &Bwd, bool FillBnd, bool PutFwdInBwdOnBCs,
@@ -2368,21 +2152,18 @@ inline void ExpList::GetFwdBwdTracePhys(
     v_GetFwdBwdTracePhys(field, Fwd, Bwd, FillBnd, PutFwdInBwdOnBCs,
                          DoExchange);
 }
-
 inline void ExpList::FillBwdWithBoundCond(const Array<OneD, NekDouble> &Fwd,
                                           Array<OneD, NekDouble> &Bwd,
                                           bool PutFwdInBwdOnBCs)
 {
     v_FillBwdWithBoundCond(Fwd, Bwd, PutFwdInBwdOnBCs);
 }
-
 inline void ExpList::AddTraceQuadPhysToField(
     const Array<OneD, const NekDouble> &Fwd,
     const Array<OneD, const NekDouble> &Bwd, Array<OneD, NekDouble> &field)
 {
     v_AddTraceQuadPhysToField(Fwd, Bwd, field);
 }
-
 inline void ExpList::GetLocTraceFromTracePts(
     const Array<OneD, const NekDouble> &Fwd,
     const Array<OneD, const NekDouble> &Bwd,
@@ -2390,48 +2171,40 @@ inline void ExpList::GetLocTraceFromTracePts(
 {
     v_GetLocTraceFromTracePts(Fwd, Bwd, locTraceFwd, locTraceBwd);
 }
-
 inline void ExpList::FillBwdWithBwdWeight(Array<OneD, NekDouble> &weightave,
                                           Array<OneD, NekDouble> &weightjmp)
 {
     v_FillBwdWithBwdWeight(weightave, weightjmp);
 }
-
 inline void ExpList::PeriodicBwdCopy(const Array<OneD, const NekDouble> &Fwd,
                                      Array<OneD, NekDouble> &Bwd)
 {
     v_PeriodicBwdCopy(Fwd, Bwd);
 }
-
 inline const std::vector<bool> &ExpList::GetLeftAdjacentFaces(void) const
 {
     return v_GetLeftAdjacentFaces();
 }
-
 inline void ExpList::ExtractTracePhys(Array<OneD, NekDouble> &outarray)
 {
     v_ExtractTracePhys(outarray);
 }
-
 inline void ExpList::ExtractTracePhys(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
     v_ExtractTracePhys(inarray, outarray);
 }
-
 inline const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
     &ExpList::GetBndConditions()
 {
     return v_GetBndConditions();
 }
-
 inline Array<OneD, SpatialDomains::BoundaryConditionShPtr>
     &ExpList::UpdateBndConditions()
 {
     return v_UpdateBndConditions();
 }
-
 inline void ExpList::EvaluateBoundaryConditions(const NekDouble time,
                                                 const std::string varName,
                                                 const NekDouble x2_in,
@@ -2439,18 +2212,15 @@ inline void ExpList::EvaluateBoundaryConditions(const NekDouble time,
 {
     v_EvaluateBoundaryConditions(time, varName, x2_in, x3_in);
 }
-
 inline void ExpList::SetUpPhysNormals()
 {
     v_SetUpPhysNormals();
 }
-
 inline void ExpList::GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                           Array<OneD, int> &EdgeID)
 {
     v_GetBoundaryToElmtMap(ElmtID, EdgeID);
 }
-
 inline void ExpList::GetBndElmtExpansion(int i,
                                          std::shared_ptr<ExpList> &result,
                                          const bool DeclareCoeffPhysArrays)
@@ -2491,6 +2261,7 @@ inline std::vector<bool> &ExpList::GetLeftAdjacentTraces(void)
 }
 
 const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;
+
 } // namespace MultiRegions
 } // namespace Nektar
 

@@ -44,8 +44,7 @@ namespace Nektar
 namespace StdRegions
 {
 
-StdPrismExp::StdPrismExp() // Deafult construct of standard expansion directly
-                           // called.
+StdPrismExp::StdPrismExp()
 {
 }
 
@@ -556,7 +555,6 @@ void StdPrismExp::v_IProductWRTDerivBase_SumFac(
                 m_base[2]->GetBdata(), tmp0, outarray, wsp, true, true, true);
             break;
         }
-
         case 1:
         {
             MultiplyByQuadratureMetric(inarray, tmp0);
@@ -650,6 +648,52 @@ void StdPrismExp::v_GetCoords(Array<OneD, NekDouble> &xi_x,
             }
         }
     }
+}
+
+NekDouble StdPrismExp::v_PhysEvaluate(
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    // Collapse coordinates
+    Array<OneD, NekDouble> coll(3, 0.0);
+    LocCoordToLocCollapsed(coord, coll);
+
+    // If near singularity do the old interpolation matrix method
+    if ((1 - coll[2]) < 1e-5)
+    {
+        int totPoints = GetTotPoints();
+        Array<OneD, NekDouble> EphysDeriv0(totPoints), EphysDeriv1(totPoints),
+            EphysDeriv2(totPoints);
+        PhysDeriv(inarray, EphysDeriv0, EphysDeriv1, EphysDeriv2);
+
+        Array<OneD, DNekMatSharedPtr> I(3);
+        I[0] = GetBase()[0]->GetI(coll);
+        I[1] = GetBase()[1]->GetI(coll + 1);
+        I[2] = GetBase()[2]->GetI(coll + 2);
+
+        firstOrderDerivs[0] = PhysEvaluate(I, EphysDeriv0);
+        firstOrderDerivs[1] = PhysEvaluate(I, EphysDeriv1);
+        firstOrderDerivs[2] = PhysEvaluate(I, EphysDeriv2);
+        return PhysEvaluate(I, inarray);
+    }
+
+    NekDouble val = BaryTensorDeriv(coll, inarray, firstOrderDerivs);
+
+    NekDouble dEta_bar1 = firstOrderDerivs[0];
+
+    NekDouble fac       = 2.0 / (1.0 - coll[2]);
+    firstOrderDerivs[0] = fac * dEta_bar1;
+
+    // divide dEta_Bar1 by (1-eta_z)
+    fac       = 1.0 / (1.0 - coll[2]);
+    dEta_bar1 = fac * dEta_bar1;
+
+    // Multiply dEta_Bar1 by (1+eta_x) and add ot out_dxi3
+    fac = 1.0 + coll[0];
+    firstOrderDerivs[2] += fac * dEta_bar1;
+
+    return val;
 }
 
 void StdPrismExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)

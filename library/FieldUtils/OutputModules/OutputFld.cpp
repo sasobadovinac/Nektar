@@ -67,13 +67,13 @@ OutputFld::~OutputFld()
 {
 }
 
-void OutputFld::OutputFromPts(po::variables_map &vm)
+void OutputFld::v_OutputFromPts(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
     NEKERROR(ErrorUtil::efatal, "OutputFld can't write using Pts information.");
 }
 
-void OutputFld::OutputFromExp(po::variables_map &vm)
+void OutputFld::v_OutputFromExp(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
     ASSERTL0(m_f->m_variables.size(), "OutputFld: need input data.")
@@ -105,8 +105,9 @@ void OutputFld::OutputFromExp(po::variables_map &vm)
                     int n = s * FieldDef.size() / nstrips + i;
 
                     FieldDef[n]->m_fields.push_back(m_f->m_variables[j]);
-                    m_f->m_exp[s * nfields + j]->AppendFieldData(FieldDef[n],
-                                                                 FieldData[n]);
+                    m_f->m_exp[s * nfields + j]->AppendFieldData(
+                        FieldDef[n], FieldData[n],
+                        m_f->m_exp[s * nfields + j]->UpdateCoeffs());
                 }
             }
         }
@@ -123,7 +124,7 @@ void OutputFld::OutputFromExp(po::variables_map &vm)
     }
 }
 
-void OutputFld::OutputFromData(po::variables_map &vm)
+void OutputFld::v_OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
@@ -137,13 +138,14 @@ void OutputFld::OutputFromData(po::variables_map &vm)
     fld->Write(filename, m_f->m_fielddef, m_f->m_data, m_f->m_fieldMetaDataMap);
 }
 
-fs::path OutputFld::GetPath(std::string &filename, po::variables_map &vm)
+fs::path OutputFld::v_GetPath(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
     return fs::path(filename);
 }
 
-fs::path OutputFld::GetFullOutName(std::string &filename, po::variables_map &vm)
+fs::path OutputFld::v_GetFullOutName(std::string &filename,
+                                     po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

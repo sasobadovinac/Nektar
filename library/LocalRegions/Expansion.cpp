@@ -91,6 +91,11 @@ DNekScalMatSharedPtr Expansion::GetLocMatrix(
     return v_GetLocMatrix(mkey);
 }
 
+void Expansion::DropLocMatrix(const LocalRegions::MatrixKey &mkey)
+{
+    return v_DropLocMatrix(mkey);
+}
+
 DNekMatSharedPtr Expansion::BuildTransformationMatrix(
     const DNekScalMatSharedPtr &r_bnd, const StdRegions::MatrixType matrixType)
 {
@@ -410,6 +415,12 @@ DNekScalBlkMatSharedPtr Expansion::CreateStaticCondMatrix(const MatrixKey &mkey)
     return returnval;
 }
 
+void Expansion::v_DropLocMatrix(const LocalRegions::MatrixKey &mkey)
+{
+    boost::ignore_unused(mkey);
+    NEKERROR(ErrorUtil::efatal, "This function is only valid for LocalRegions");
+}
+
 void Expansion::v_MultiplyByQuadratureMetric(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
@@ -668,7 +679,7 @@ Array<OneD, NekDouble> Expansion::GetMF(
     {
         StdRegions::VarCoeffMap::const_iterator MFdir =
             varcoeffs.find(MMFCoeffs[5 * dir + k]);
-        tmp = MFdir->second;
+        tmp = MFdir->second.GetValue();
 
         Vmath::Vcopy(nqtot, &tmp[0], 1, &MF[k * nqtot], 1);
     }
@@ -694,7 +705,7 @@ Array<OneD, NekDouble> Expansion::GetMFDiv(
 
     StdRegions::VarCoeffMap::const_iterator MFdir =
         varcoeffs.find(MMFCoeffs[5 * dir + indxDiv]);
-    Array<OneD, NekDouble> MFDiv = MFdir->second;
+    Array<OneD, NekDouble> MFDiv = MFdir->second.GetValue();
 
     return MFDiv;
 }
@@ -717,7 +728,7 @@ Array<OneD, NekDouble> Expansion::GetMFMag(
 
     StdRegions::VarCoeffMap::const_iterator MFdir =
         varcoeffs.find(MMFCoeffs[5 * dir + indxMag]);
-    Array<OneD, NekDouble> MFmag = MFdir->second;
+    Array<OneD, NekDouble> MFmag = MFdir->second.GetValue();
 
     return MFmag;
 }

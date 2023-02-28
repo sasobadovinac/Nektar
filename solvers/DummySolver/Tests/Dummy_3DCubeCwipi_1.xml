@@ -22,7 +22,7 @@
         </SOLVERINFO>
         <GLOBALSYSSOLNINFO>
             <V VAR="DefaultVar">
-                <I PROPERTY="GlobalSysSoln"   VALUE="PETScStaticCond" />
+                <I PROPERTY="GlobalSysSoln"   VALUE="DirectFull" />
             </V>
         </GLOBALSYSSOLNINFO>
         <PARAMETERS>

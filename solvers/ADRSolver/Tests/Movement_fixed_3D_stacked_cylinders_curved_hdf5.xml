@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <GEOMETRY DIM="3" SPACE="3" HDF5FILE="Movement_fixed_3D_stacked_cylinders_curved_hdf5.nekg" />
+    <EXPANSIONS>
+        <E COMPOSITE="C[105]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[106]" NUMMODES="7" TYPE="MODIFIED" FIELDS="u" />
+    </EXPANSIONS>
+
+    <MOVEMENT>
+        <ZONES>
+            <FIXED ID="0" DOMAIN="D[0]" />
+            <FIXED ID="1" DOMAIN="D[1]" />
+        </ZONES>
+        <INTERFACES>
+            <INTERFACE NAME="Fixed">
+                <LEFT ID="0" BOUNDARY="C[100]" />
+                <RIGHT ID="1" BOUNDARY="C[101]" />
+            </INTERFACE>
+        </INTERFACES>
+    </MOVEMENT>
+
+    <CONDITIONS>
+        <PARAMETERS>
+            <P>FinTime = 0.1</P>
+            <P>TimeStep = 0.001</P>
+            <P>NumSteps = FinTime/TimeStep</P>
+            <P>IO_CheckSteps = 999</P>
+            <P>IO_InfoSteps = 10</P>
+            <P>advx = 1</P>
+            <P>advy = 1</P>
+            <P>advz = 1</P>
+            <P>k = PI/2</P>
+        </PARAMETERS>
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE" VALUE="UnsteadyAdvection" />
+            <I PROPERTY="Projection" VALUE="DisContinuous" />
+            <I PROPERTY="AdvectionType" VALUE="WeakDG" />
+            <I PROPERTY="UpwindType" VALUE="Upwind" />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
+            <I PROPERTY="WEIGHTPARTITIONS" VALUE="DOF" />
+        </SOLVERINFO>
+
+        <VARIABLES>
+            <V ID="0">u</V>
+        </VARIABLES>
+        <BOUNDARYREGIONS>
+            <B ID="0">C[102,103,104]</B>
+            <!--- sides -->
+        </BOUNDARYREGIONS>
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))*cos(k*(z-advz*t))" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))*cos(k*(z-advz*t))" />
+        </FUNCTION>
+        <FUNCTION NAME="AdvectionVelocity">
+            <E VAR="Vx" VALUE="advx" />
+            <E VAR="Vy" VALUE="advy" />
+            <E VAR="Vz" VALUE="advz" />
+        </FUNCTION>
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))*cos(k*(z-advz*t))" />
+        </FUNCTION>
+    </CONDITIONS>
+</NEKTAR>

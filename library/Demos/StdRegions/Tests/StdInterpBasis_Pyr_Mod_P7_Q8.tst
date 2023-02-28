@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <test>
-    <description>StdInterpBasis Triangle Modified basis P=7 Q=8</description>
+    <description>StdInterpBasis Pyramid Modified basis P=7 Q=8</description>
     <executable>StdInterpBasis</executable>
     <parameters>-s pyramid -b Modified_A Modified_A ModifiedPyr_C -o 7 7 7 -p 8 8 8</parameters>
     <metrics>

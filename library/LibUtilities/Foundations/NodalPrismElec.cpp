@@ -153,10 +153,10 @@ bool isFace(int t, int y, int npts)
 } // namespace
 
 // Calculate evenly spaced number of points
-void NodalPrismElec::CalculatePoints()
+void NodalPrismElec::v_CalculatePoints()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculatePoints();
+    PointsBaseType::v_CalculatePoints();
 
     // Populate m_points
     unsigned int npts = GetNumPoints();
@@ -414,10 +414,10 @@ void NodalPrismElec::NodalPointReorder3d()
     }
 }
 
-void NodalPrismElec::CalculateWeights()
+void NodalPrismElec::v_CalculateWeights()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculateWeights();
+    PointsBaseType::v_CalculateWeights();
 
     typedef DataType T;
 
@@ -447,10 +447,10 @@ void NodalPrismElec::CalculateInterpMatrix(
 
 // ////////////////////////////////////////
 //        CalculateDerivMatrix()
-void NodalPrismElec::CalculateDerivMatrix()
+void NodalPrismElec::v_CalculateDerivMatrix()
 {
     // Allocate the derivative matrix.
-    PointsBaseType::CalculateDerivMatrix();
+    PointsBaseType::v_CalculateDerivMatrix();
 
     m_derivmatrix[0] = m_util->GetDerivMatrix(0);
     m_derivmatrix[1] = m_util->GetDerivMatrix(1);

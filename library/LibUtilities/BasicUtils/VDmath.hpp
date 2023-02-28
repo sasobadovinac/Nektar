@@ -40,7 +40,7 @@
 
 namespace VDmath
 {
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot2 (vector times vector times vector): z = w*x*y
 template <class T>
 T Ddot2(Nektar::LibUtilities::CommSharedPtr &pComm, int n, const T *w,
         const T *x, const int *y)
@@ -58,7 +58,7 @@ T Ddot2(Nektar::LibUtilities::CommSharedPtr &pComm, int n, const T *w,
     return sum;
 }
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot2 (vector times vector times vector): z = w*x*y
 template <class T>
 T Ddot2(Nektar::LibUtilities::CommSharedPtr &pComm, int n, const T *w,
         const int incw, const T *x, const int incx, const int *y,

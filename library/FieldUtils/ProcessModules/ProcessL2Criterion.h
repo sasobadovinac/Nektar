@@ -59,19 +59,20 @@ public:
     ProcessL2Criterion(FieldSharedPtr f);
     virtual ~ProcessL2Criterion();
 
-    virtual void Process(po::variables_map &vm);
+protected:
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessL2Criterion";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Calculating Lambda 2 Criterion";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eModifyExp;
     }

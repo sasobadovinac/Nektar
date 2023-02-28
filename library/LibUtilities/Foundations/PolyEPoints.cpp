@@ -45,10 +45,10 @@ namespace LibUtilities
 bool PolyEPoints::initPointsManager[] = {PointsManager().RegisterCreator(
     PointsKey(0, ePolyEvenlySpaced), PolyEPoints::Create)};
 
-void PolyEPoints::CalculatePoints()
+void PolyEPoints::v_CalculatePoints()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculatePoints();
+    PointsBaseType::v_CalculatePoints();
 
     unsigned int npts = m_pointsKey.GetNumPoints();
     if (npts == 1)
@@ -65,10 +65,10 @@ void PolyEPoints::CalculatePoints()
     }
 }
 
-void PolyEPoints::CalculateWeights()
+void PolyEPoints::v_CalculateWeights()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculateWeights();
+    PointsBaseType::v_CalculateWeights();
 
     unsigned int npts = m_pointsKey.GetNumPoints();
     if (npts == 1)
@@ -94,10 +94,10 @@ void PolyEPoints::CalculateWeights()
     }
 }
 
-void PolyEPoints::CalculateDerivMatrix()
+void PolyEPoints::v_CalculateDerivMatrix()
 {
     // Allocate the derivative matrix.
-    PointsBaseType::CalculateDerivMatrix();
+    PointsBaseType::v_CalculateDerivMatrix();
 
     for (unsigned int i = 0; i < m_pointsKey.GetNumPoints(); ++i)
     {
@@ -134,7 +134,7 @@ std::shared_ptr<PolyEPoints::PointsBaseType> PolyEPoints::Create(
     return returnval;
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::v_GetI(
     const PointsKey &pkey)
 {
     ASSERTL0(pkey.GetPointsDim() == 1,
@@ -148,7 +148,7 @@ const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::GetI(
     return GetI(numpoints, xpoints);
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::v_GetI(
     const Array<OneD, const NekDouble> &x)
 {
     int numpoints = 1;
@@ -157,7 +157,7 @@ const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::GetI(
     return GetI(numpoints, x);
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::v_GetI(
     unsigned int numpoints, const Array<OneD, const NekDouble> &x)
 {
     Array<OneD, NekDouble> interp(GetNumPoints() * numpoints);

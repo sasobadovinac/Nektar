@@ -78,7 +78,7 @@ ProcessInterpPointDataToFld::~ProcessInterpPointDataToFld()
 {
 }
 
-void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
+void ProcessInterpPointDataToFld::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -192,7 +192,6 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
             m_f->m_exp[j]->SetPhys(i, outPts->GetPointVal(3 + j, i));
         }
     }
-
     // forward transform fields
     for (i = 0; i < nFields; ++i)
     {

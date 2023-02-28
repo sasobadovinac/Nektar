@@ -68,7 +68,7 @@ namespace SolverUtils
 UnsteadySystem::UnsteadySystem(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const SpatialDomains::MeshGraphSharedPtr &pGraph)
-    : EquationSystem(pSession, pGraph), m_infosteps(10)
+    : EquationSystem(pSession, pGraph)
 
 {
 }
@@ -215,7 +215,8 @@ void UnsteadySystem::v_DoSolve()
     {
         for (i = 0; i < nfields; ++i)
         {
-            m_fields[i]->HomogeneousFwdTrans(m_fields[i]->GetPhys(),
+            m_fields[i]->HomogeneousFwdTrans(m_fields[i]->GetTotPoints(),
+                                             m_fields[i]->GetPhys(),
                                              m_fields[i]->UpdatePhys());
             m_fields[i]->SetWaveSpace(true);
             m_fields[i]->SetPhysState(false);
@@ -284,27 +285,30 @@ void UnsteadySystem::v_DoSolve()
         // Flag to update AV
         m_CalcPhysicalAV = true;
         // Frozen preconditioner checks
-        if (v_UpdateTimeStepCheck())
+        if (!ParallelInTime())
         {
-            m_cflSafetyFactor = tmp_cflSafetyFactor;
+            if (v_UpdateTimeStepCheck())
+            {
+                m_cflSafetyFactor = tmp_cflSafetyFactor;
 
-            if (m_cflSafetyFactor)
-            {
-                m_timestep = GetTimeStep(fields);
-            }
+                if (m_cflSafetyFactor)
+                {
+                    m_timestep = GetTimeStep(fields);
+                }
 
-            // Ensure that the final timestep finishes at the final
-            // time, or at a prescribed IO_CheckTime.
-            if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
-            {
-                m_timestep = m_fintime - m_time;
-            }
-            else if (m_checktime &&
-                     m_time + m_timestep - m_lastCheckTime >= m_checktime)
-            {
-                m_lastCheckTime += m_checktime;
-                m_timestep  = m_lastCheckTime - m_time;
-                doCheckTime = true;
+                // Ensure that the final timestep finishes at the final
+                // time, or at a prescribed IO_CheckTime.
+                if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
+                {
+                    m_timestep = m_fintime - m_time;
+                }
+                else if (m_checktime &&
+                         m_time + m_timestep - m_lastCheckTime >= m_checktime)
+                {
+                    m_lastCheckTime += m_checktime;
+                    m_timestep  = m_lastCheckTime - m_time;
+                    doCheckTime = true;
+                }
             }
         }
 
@@ -340,11 +344,21 @@ void UnsteadySystem::v_DoSolve()
         cpuTime += elapsed;
 
         // Write out status information
-        if (m_infosteps && m_session->GetComm()->GetRank() == 0 &&
+        if (m_infosteps &&
+            (m_session->GetComm()->GetRank() == 0 || ParallelInTime()) &&
             !((step + 1) % m_infosteps))
         {
-            cout << "Steps: " << setw(8) << left << step + 1 << " "
-                 << "Time: " << setw(12) << left << m_time;
+            if (ParallelInTime())
+            {
+                cout << "RANK " << m_session->GetComm()->GetRank()
+                     << " Steps: " << setw(8) << left << step + 1 << " "
+                     << "Time: " << setw(12) << left << m_time;
+            }
+            else
+            {
+                cout << "Steps: " << setw(8) << left << step + 1 << " "
+                     << "Time: " << setw(12) << left << m_time;
+            }
 
             if (m_cflSafetyFactor)
             {
@@ -413,7 +427,7 @@ void UnsteadySystem::v_DoSolve()
                 }
             }
 
-            // rank zero looks for abort file and deltes it
+            // rank zero looks for abort file and deletes it
             // if it exists. The communicates the abort
             if (m_session->GetComm()->GetRank() == 0)
             {
@@ -424,8 +438,11 @@ void UnsteadySystem::v_DoSolve()
                 }
             }
 
-            m_session->GetComm()->AllReduce(abortFlags,
-                                            LibUtilities::ReduceMax);
+            if (!ParallelInTime())
+            {
+                m_session->GetComm()->AllReduce(abortFlags,
+                                                LibUtilities::ReduceMax);
+            }
 
             ASSERTL0(!abortFlags[0], "NaN found during time integration.");
         }
@@ -493,7 +510,8 @@ void UnsteadySystem::v_DoSolve()
                     {
                         m_fields[i]->SetWaveSpace(true);
                         m_fields[i]->HomogeneousFwdTrans(
-                            m_fields[i]->GetPhys(), m_fields[i]->UpdatePhys());
+                            m_fields[i]->GetTotPoints(), m_fields[i]->GetPhys(),
+                            m_fields[i]->UpdatePhys());
                         m_fields[i]->SetPhysState(false);
                     }
                 }

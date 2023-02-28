@@ -59,24 +59,26 @@ public:
     ProcessWSS(FieldSharedPtr f);
     virtual ~ProcessWSS();
 
+protected:
     /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessWSS";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Calculating wall shear stress";
     }
 
-protected:
     void GetViscosity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+                      const Array<OneD, Array<OneD, NekDouble>> &BndElmtdPhys,
                       Array<OneD, NekDouble> &mu, NekDouble &lambda);
 
     void GetVelocity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+                     const Array<OneD, Array<OneD, NekDouble>> &BndElmtdPhys,
                      Array<OneD, Array<OneD, NekDouble>> &vel);
 
 private:

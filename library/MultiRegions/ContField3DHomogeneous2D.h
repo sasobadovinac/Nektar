@@ -66,9 +66,6 @@ public:
     MULTI_REGIONS_EXPORT virtual ~ContField3DHomogeneous2D();
 
 protected:
-private:
-    Array<OneD, NekDouble> m_contCoeffs;
-
     // virtual functions
 
     virtual void v_ImposeDirichletConditions(
@@ -82,15 +79,19 @@ private:
 
     /// Solves the three-dimensional Helmholtz equation, subject to the
     /// boundary conditions specified.
-    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::ConstFactorMap &factors,
-                             const StdRegions::VarCoeffMap &varcoeff,
-                             const MultiRegions::VarFactorsMap &varfactors,
-                             const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing) override;
+    virtual GlobalLinSysKey v_HelmSolve(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing) override;
 
     virtual void v_ClearGlobalLinSysManager(void) override;
+
+private:
+    Array<OneD, NekDouble> m_contCoeffs;
 };
 
 typedef std::shared_ptr<ContField3DHomogeneous2D>

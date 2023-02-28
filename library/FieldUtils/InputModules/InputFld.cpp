@@ -81,7 +81,7 @@ InputFld::~InputFld()
 /**
  *
  */
-void InputFld::Process(po::variables_map &vm)
+void InputFld::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

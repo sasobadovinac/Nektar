@@ -363,7 +363,7 @@ void CFSImplicit::DoImplicitSolveCoeff(
     NekDouble tol2 =
         m_inArrayNorm * m_newtonAbsoluteIteTol * m_newtonAbsoluteIteTol;
 
-    m_nonlinsol->v_SetupNekNonlinSystem(ntotal, inarray, inarray, 0);
+    m_nonlinsol->SetupNekNonlinSystem(ntotal, inarray, inarray, 0);
 
     m_TotNewtonIts += m_nonlinsol->SolveSystem(ntotal, inarray, out, 0, tol2);
 

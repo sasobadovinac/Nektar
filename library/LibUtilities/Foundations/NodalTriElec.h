@@ -59,7 +59,12 @@ public:
     LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
         const PointsKey &key);
 
-    const MatrixSharedPtrType GetI(const PointsKey &pkey)
+    NodalTriElec(const PointsKey &key) : PointsBaseType(key)
+    {
+    }
+
+protected:
+    virtual const MatrixSharedPtrType v_GetI(const PointsKey &pkey) override
     {
         ASSERTL0(pkey.GetPointsDim() == 2,
                  "NodalTriElec Points can only interpolate to other 2d "
@@ -69,8 +74,9 @@ public:
         return GetI(x, y);
     }
 
-    const MatrixSharedPtrType GetI(const Array<OneD, const NekDouble> &x,
-                                   const Array<OneD, const NekDouble> &y)
+    virtual const MatrixSharedPtrType v_GetI(
+        const Array<OneD, const NekDouble> &x,
+        const Array<OneD, const NekDouble> &y) override
     {
         size_t numpoints = x.size();
         Array<OneD, NekDouble> interp(GetTotNumPoints() * numpoints);
@@ -82,10 +88,6 @@ public:
                                                                       np, d);
     }
 
-    NodalTriElec(const PointsKey &key) : PointsBaseType(key)
-    {
-    }
-
 private:
     static bool initPointsManager[];
 
@@ -95,10 +97,11 @@ private:
     {
     }
 
-    void CalculatePoints();
-    void CalculateWeights();
-    void CalculateDerivMatrix();
     void NodalPointReorder2d();
+
+    virtual void v_CalculatePoints() override;
+    virtual void v_CalculateWeights() override;
+    virtual void v_CalculateDerivMatrix() override;
 
     void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xia,
                                const Array<OneD, const NekDouble> &yia,

@@ -141,7 +141,7 @@ ThreadManagerBoost::~ThreadManagerBoost()
 /**
  *
  */
-void ThreadManagerBoost::QueueJobs(std::vector<ThreadJob *> &joblist)
+void ThreadManagerBoost::v_QueueJobs(std::vector<ThreadJob *> &joblist)
 {
     std::vector<ThreadJob *>::iterator it;
     for (it = joblist.begin(); it < joblist.end(); ++it)
@@ -153,7 +153,7 @@ void ThreadManagerBoost::QueueJobs(std::vector<ThreadJob *> &joblist)
 /*
  *
  */
-void ThreadManagerBoost::QueueJob(ThreadJob *job)
+void ThreadManagerBoost::v_QueueJob(ThreadJob *job)
 {
     Lock masterQueueLock(m_masterQueueMutex); // locks the queue
     m_masterQueue.push(job);
@@ -177,7 +177,7 @@ bool ThreadManagerBoost::IsWorking()
 /**
  *
  */
-void ThreadManagerBoost::SetChunkSize(unsigned int chnk)
+void ThreadManagerBoost::v_SetChunkSize(unsigned int chnk)
 {
     Lock masterQueueLock(m_masterQueueMutex); // locks the queue
     m_chunkSize = std::max(chnk, 1U);
@@ -186,7 +186,7 @@ void ThreadManagerBoost::SetChunkSize(unsigned int chnk)
 /**
  *
  */
-void ThreadManagerBoost::SetSchedType(SchedType s)
+void ThreadManagerBoost::v_SetSchedType(SchedType s)
 {
     Lock masterQueueLock(m_masterQueueMutex); // locks the queue
     m_schedType = s;
@@ -195,7 +195,7 @@ void ThreadManagerBoost::SetSchedType(SchedType s)
 /**
  *
  */
-bool ThreadManagerBoost::InThread()
+bool ThreadManagerBoost::v_InThread()
 {
     boost::thread::id id = boost::this_thread::get_id();
     return (id != m_masterThreadId);
@@ -204,7 +204,7 @@ bool ThreadManagerBoost::InThread()
 /**
  *
  */
-void ThreadManagerBoost::Wait()
+void ThreadManagerBoost::v_Wait()
 {
     bool working;
     Lock masterQueueLock(m_masterQueueMutex); // locks the queue
@@ -223,7 +223,7 @@ void ThreadManagerBoost::Wait()
 /**
  *
  */
-unsigned int ThreadManagerBoost::GetNumWorkers()
+unsigned int ThreadManagerBoost::v_GetNumWorkers()
 {
     return m_numWorkers;
 }
@@ -231,7 +231,7 @@ unsigned int ThreadManagerBoost::GetNumWorkers()
 /**
  *
  */
-unsigned int ThreadManagerBoost::GetWorkerNum()
+unsigned int ThreadManagerBoost::v_GetWorkerNum()
 {
     boost::thread::id id = boost::this_thread::get_id();
     return m_threadMap[id];
@@ -263,7 +263,7 @@ void ThreadManagerBoost::SetNumWorkersImpl(const unsigned int num)
 /**
  *
  */
-void ThreadManagerBoost::SetNumWorkers(const unsigned int num)
+void ThreadManagerBoost::v_SetNumWorkers(const unsigned int num)
 {
     unsigned int n;
     n = std::min(num, m_numThreads);
@@ -274,7 +274,7 @@ void ThreadManagerBoost::SetNumWorkers(const unsigned int num)
 /**
  *
  */
-void ThreadManagerBoost::SetNumWorkers()
+void ThreadManagerBoost::v_SetNumWorkers()
 {
     SetNumWorkersImpl(m_numThreads);
 }
@@ -282,7 +282,7 @@ void ThreadManagerBoost::SetNumWorkers()
 /**
  *
  */
-unsigned int ThreadManagerBoost::GetMaxNumWorkers()
+unsigned int ThreadManagerBoost::v_GetMaxNumWorkers()
 {
     return m_numThreads;
 }
@@ -290,7 +290,7 @@ unsigned int ThreadManagerBoost::GetMaxNumWorkers()
 /**
  *
  */
-void ThreadManagerBoost::Hold()
+void ThreadManagerBoost::v_Hold()
 {
     m_barrier->wait();
 }
@@ -298,7 +298,7 @@ void ThreadManagerBoost::Hold()
 /**
  *
  */
-const std::string &ThreadManagerBoost::GetType() const
+const std::string &ThreadManagerBoost::v_GetType() const
 {
     return m_type;
 }

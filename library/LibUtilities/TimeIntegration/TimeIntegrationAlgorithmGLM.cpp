@@ -77,7 +77,7 @@ TimeIntegrationSolutionGLMSharedPtr TimeIntegrationAlgorithmGLM::InitializeData(
     {
         const Array<OneD, const unsigned int> offsets = GetTimeLevelOffset();
 
-        if (offsets[GetNmultiStepValues()] == 0)
+        if (offsets[GetNmultiStepValues() + GetNmultiStepImplicitDerivs()] == 0)
         {
             int i;
             int nvar    = y_0.size();
@@ -112,8 +112,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
     int nvar    = solvector->GetFirstDim();
     int npoints = solvector->GetSecondDim();
 
-    if (solvector->GetIntegrationSchemeData() !=
-        this) // FIMXE ... verify that this is correct...
+    if (solvector->GetIntegrationSchemeData() != this)
     {
         // This branch will be taken when the solution vector
         // (solvector) is set up for a different scheme than
@@ -142,7 +141,6 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
 
         // 1.1 Determine which information is required for the
         // current scheme
-
         DoubleArray y_n;
         NekDouble t_n = 0;
         DoubleArray dtFy_n;
@@ -150,16 +148,20 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
         unsigned int nCurSchemeVals =
             GetNmultiStepValues(); // number of required values of the current
                                    // scheme
+        unsigned int nCurSchemeImpDers =
+            GetNmultiStepImplicitDerivs(); // number of required implicit derivs
+                                           // of the current scheme
         unsigned int nCurSchemeDers =
             GetNmultiStepDerivs(); // number of required derivs of the current
                                    // scheme
         unsigned int nCurSchemeSteps =
-            GetNsteps(); // number of steps in the current scheme    // FIMXE...
-                         // what does it mean by "current scheme"... is this now
-                         // a SchemeData issue?
+            GetNsteps(); // number of steps in the current scheme
 
         unsigned int nMasterSchemeVals =
             solvector->GetNvalues(); // number of values of the master scheme
+        unsigned int nMasterSchemeImpDers =
+            solvector->GetNimplicitderivs(); // number of implicit derivs of the
+                                             // master scheme
         unsigned int nMasterSchemeDers =
             solvector->GetNderivs(); // number of derivs of the master scheme
 
@@ -191,7 +193,23 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
             solvector_in->SetValue(curTimeLevels[n], y_n, t_n);
         }
 
-        for (int n = nCurSchemeVals; n < nCurSchemeSteps; n++)
+        for (int n = nCurSchemeVals; n < nCurSchemeVals + nCurSchemeImpDers;
+             n++)
+        {
+            // Get the required derivative out of the master
+            // solution vector
+            // DoubleArray& dtFy_n = solvector->GetDerivative    (
+            // curTimeLevels[n] );
+            dtFy_n = solvector->GetImplicitDerivative(curTimeLevels[n]);
+
+            // Set the required derivative in the input
+            // solution vector of the current scheme
+            solvector_in->SetImplicitDerivative(curTimeLevels[n], dtFy_n,
+                                                deltaT);
+        }
+
+        for (int n = nCurSchemeVals + nCurSchemeImpDers; n < nCurSchemeSteps;
+             n++)
         {
             // Get the required derivative out of the master
             // solution vector
@@ -227,11 +245,32 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
         //     calculate the derivative. This can be done
         //     based upon the corresponding value and the
         //     DoOdeRhs operator.
-        bool CalcNewDeriv = false; // This flag inidicates whether
-                                   // the new derivative is availble
-                                   // in the output of the current
-                                   // scheme or whether it should be
-                                   // calculated.
+        bool CalcNewImpDeriv = false; // This flag inidicates whether
+                                      // the new implicit derivative is availble
+                                      // in the output of the current
+                                      // scheme or whether it should be
+                                      // calculated.
+        bool CalcNewDeriv = false;    // This flag inidicates whether
+                                      // the new derivative is availble
+                                      // in the output of the current
+                                      // scheme or whether it should be
+                                      // calculated.
+
+        if (nMasterSchemeImpDers > 0)
+        {
+            if (nCurSchemeImpDers == 0)
+            {
+                CalcNewImpDeriv = true;
+            }
+            else
+            {
+                if (masterTimeLevels[nMasterSchemeVals] <
+                    curTimeLevels[nCurSchemeVals])
+                {
+                    CalcNewImpDeriv = true;
+                }
+            }
+        }
 
         if (nMasterSchemeDers > 0)
         {
@@ -241,24 +280,64 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
             }
             else
             {
-                if (masterTimeLevels[nMasterSchemeVals] <
-                    curTimeLevels[nCurSchemeVals])
+                if (masterTimeLevels[nMasterSchemeVals + nMasterSchemeImpDers] <
+                    curTimeLevels[nCurSchemeVals + nCurSchemeImpDers])
                 {
                     CalcNewDeriv = true;
                 }
             }
         }
 
+        DoubleArray f_impn(nvar);
+        int newImpDerivTimeLevel = (masterTimeLevels.size() > nMasterSchemeVals)
+                                       ? masterTimeLevels[nMasterSchemeVals]
+                                       : -1; // Contains the
+                                             // time level at
+                                             // which the
+                                             // derivative of
+                                             // the master
+                                             // scheme is
+                                             // known.
+        if (CalcNewImpDeriv)
+        {
+            if (newImpDerivTimeLevel == 0 || newImpDerivTimeLevel == 1)
+            {
+                y_n = solvector->GetValue(newImpDerivTimeLevel);
+                t_n = solvector->GetValueTime(newImpDerivTimeLevel);
+            }
+            else
+            {
+                ASSERTL1(false, "Problems with initialising scheme");
+            }
+
+            for (int j = 0; j < nvar; j++)
+            {
+                f_impn[j] = Array<OneD, NekDouble>(npoints);
+            }
+
+            // calculate the derivative of the initial value
+            op.DoImplicitSolve(y_n, f_impn, t_n + deltaT, deltaT);
+
+            // multiply by the step size
+            for (int j = 0; j < nvar; j++)
+            {
+                Vmath::Vsub(m_npoints, f_impn[j], 1, y_n[j], 1, f_impn[j], 1);
+            }
+        }
+
+        DoubleArray f_n(nvar);
+        int newDerivTimeLevel =
+            (masterTimeLevels.size() > nMasterSchemeVals)
+                ? masterTimeLevels[nMasterSchemeVals + nMasterSchemeImpDers]
+                : -1; // Contains the
+                      // time level at
+                      // which the
+                      // derivative of
+                      // the master
+                      // scheme is
+                      // known.
         if (CalcNewDeriv)
         {
-            int newDerivTimeLevel =
-                masterTimeLevels[nMasterSchemeVals]; // Contains the
-                                                     // time level at
-                                                     // which the
-                                                     // derivative of
-                                                     // the master
-                                                     // scheme is
-                                                     // known.
             // DoubleArray  y_n;
             // NekDouble    t_n;
             // If the time level corresponds to 0, calculate the
@@ -270,8 +349,8 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
                 t_n = solvector_out->GetValueTime(0);
             }
             // If the time level corresponds to 1, calculate the
-            // derivative based upon the solution value at the new
-            // old-level.
+            // derivative based upon the solution value at the old
+            // time-level.
             else if (newDerivTimeLevel == 1)
             {
                 y_n = solvector->GetValue(0);
@@ -282,7 +361,6 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
                 ASSERTL1(false, "Problems with initialising scheme");
             }
 
-            DoubleArray f_n(nvar);
             for (int j = 0; j < nvar; j++)
             {
                 f_n[j] = Array<OneD, NekDouble>(npoints);
@@ -297,51 +375,54 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
             {
                 Vmath::Smul(npoints, deltaT, f_n[j], 1, f_n[j], 1);
             }
+        }
 
-            // Rotate the solution vector (i.e. updating without
-            // calculating/inserting new values).
-            solvector->RotateSolutionVector();
+        // Rotate the solution vector (i.e. updating without
+        // calculating/inserting new values).
+        solvector->RotateSolutionVector();
 
+        // 3.2 Copy the information calculated using the
+        //     current scheme from the output solution vector
+        //     to the master solution vector
+        y_n = solvector_out->GetValue(0);
+        t_n = solvector_out->GetValueTime(0);
+
+        solvector->SetValue(0, y_n, t_n);
+
+        if (CalcNewImpDeriv)
+        {
+            // Set the calculated derivative in the master solution
+            // vector.
+            solvector->SetImplicitDerivative(newImpDerivTimeLevel, f_impn,
+                                             deltaT);
+        }
+        else if (nCurSchemeImpDers > 0 && nMasterSchemeImpDers > 0)
+        {
+            // Get the calculated derivative out of the output
+            // solution vector of the current scheme.
+            dtFy_n = solvector_out->GetImplicitDerivative(newImpDerivTimeLevel);
+
+            // Set the calculated derivative in the master
+            // solution vector.
+            solvector->SetImplicitDerivative(newImpDerivTimeLevel, dtFy_n,
+                                             deltaT);
+        }
+
+        if (CalcNewDeriv)
+        {
             // Set the calculated derivative in the master solution
             // vector.
             solvector->SetDerivative(newDerivTimeLevel, f_n, deltaT);
         }
-        else
-        {
-            // Rotate the solution vector (i.e. updating without
-            // calculating/inserting new values).
-            solvector->RotateSolutionVector();
-        }
-
-        // 1.2 Copy the information calculated using the
-        //     current scheme from the output solution vector
-        //     to the master solution vector
-        for (int n = 0; n < nCurSchemeVals; n++)
-        {
-            // Get the calculated value out of the output
-            // solution vector of the current scheme
-            // DoubleArray& y_n = solvector_out->GetValue    ( curTimeLevels[n]
-            // );
-            // NekDouble    t_n = solvector_out->GetValueTime( curTimeLevels[n]
-            // );
-            y_n = solvector_out->GetValue(curTimeLevels[n]);
-            t_n = solvector_out->GetValueTime(curTimeLevels[n]);
-
-            // Set the calculated value in the master solution vector
-            solvector->SetValue(curTimeLevels[n], y_n, t_n);
-        }
-
-        for (int n = nCurSchemeVals; n < nCurSchemeSteps; n++)
+        else if (nCurSchemeDers > 0 && nMasterSchemeDers > 0)
         {
             // Get the calculated derivative out of the output
             // solution vector of the current scheme.
-            // DoubleArray& dtFy_n =
-            // solvector_out->GetDerivative (curTimeLevels[n]);
-            dtFy_n = solvector_out->GetDerivative(curTimeLevels[n]);
+            dtFy_n = solvector_out->GetDerivative(newDerivTimeLevel);
 
             // Set the calculated derivative in the master
             // solution vector.
-            solvector->SetDerivative(curTimeLevels[n], dtFy_n, deltaT);
+            solvector->SetDerivative(newDerivTimeLevel, dtFy_n, deltaT);
         }
     }
     else
@@ -486,16 +567,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             {
                 for (int k = 0; k < m_nvars; k++)
                 {
-                    if (type == eExponential)
-                    {
-                        Vmath::Smul(m_npoints, deltaT * m_A_phi[k][stage][0],
-                                    m_F[0][k], 1, m_tmp[k], 1);
-                    }
-                    else
-                    {
-                        Vmath::Smul(m_npoints, deltaT * A(stage, 0), m_F[0][k],
-                                    1, m_tmp[k], 1);
-                    }
+                    Vmath::Smul(m_npoints, deltaT * A(k, stage, 0), m_F[0][k],
+                                1, m_tmp[k], 1);
 
                     if (type == eIMEX)
                     {
@@ -512,16 +585,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             {
                 for (int k = 0; k < m_nvars; k++)
                 {
-                    if (type == eExponential)
-                    {
-                        Vmath::Svtvp(m_npoints, deltaT * m_A_phi[k][stage][j],
-                                     m_F[j][k], 1, m_tmp[k], 1, m_tmp[k], 1);
-                    }
-                    else
-                    {
-                        Vmath::Svtvp(m_npoints, deltaT * A(stage, j), m_F[j][k],
-                                     1, m_tmp[k], 1, m_tmp[k], 1);
-                    }
+                    Vmath::Svtvp(m_npoints, deltaT * A(k, stage, j), m_F[j][k],
+                                 1, m_tmp[k], 1, m_tmp[k], 1);
 
                     if (type == eIMEX)
                     {
@@ -539,16 +604,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             {
                 for (int k = 0; k < m_nvars; k++)
                 {
-                    if (type == eExponential)
-                    {
-                        Vmath::Svtvp(m_npoints, m_U_phi[k][stage][j],
-                                     y_old[j][k], 1, m_tmp[k], 1, m_tmp[k], 1);
-                    }
-                    else
-                    {
-                        Vmath::Svtvp(m_npoints, U(stage, j), y_old[j][k], 1,
-                                     m_tmp[k], 1, m_tmp[k], 1);
-                    }
+                    Vmath::Svtvp(m_npoints, U(k, stage, j), y_old[j][k], 1,
+                                 m_tmp[k], 1, m_tmp[k], 1);
                 }
 
                 m_T += U(stage, j) * t_old[j];
@@ -558,8 +615,11 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         // Calculate the stage derivative based upon the stage value
         if (type == eDiagonallyImplicit)
         {
-            if ((stage == 0) && m_firstStageEqualsOldSolution)
+            // Explicit first-stage when first diagonal coefficient is equal to
+            // zero (EDIRK/ESDIRK schemes)
+            if ((stage == 0) && fabs(A(0, 0)) < NekConstants::kNekZeroTol)
             {
+                // Compute explicit residual
                 op.DoOdeRhs(m_Y, m_F[stage], m_T);
             }
             else
@@ -679,16 +739,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         // 1: the stage derivatives
         for (int k = 0; k < m_nvars; k++)
         {
-            if (type == eExponential)
-            {
-                Vmath::Smul(m_npoints, deltaT * m_B_phi[k][i][0], m_F[0][k], 1,
-                            y_new[i][k], 1);
-            }
-            else
-            {
-                Vmath::Smul(m_npoints, deltaT * B(i, 0), m_F[0][k], 1,
-                            y_new[i][k], 1);
-            }
+            Vmath::Smul(m_npoints, deltaT * B(k, i, 0), m_F[0][k], 1,
+                        y_new[i][k], 1);
 
             if (type == eIMEX)
             {
@@ -706,16 +758,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         {
             for (int k = 0; k < m_nvars; k++)
             {
-                if (type == eExponential)
-                {
-                    Vmath::Svtvp(m_npoints, deltaT * m_B_phi[k][i][j],
-                                 m_F[j][k], 1, y_new[i][k], 1, y_new[i][k], 1);
-                }
-                else
-                {
-                    Vmath::Svtvp(m_npoints, deltaT * B(i, j), m_F[j][k], 1,
-                                 y_new[i][k], 1, y_new[i][k], 1);
-                }
+                Vmath::Svtvp(m_npoints, deltaT * B(k, i, j), m_F[j][k], 1,
+                             y_new[i][k], 1, y_new[i][k], 1);
 
                 if (type == eIMEX)
                 {
@@ -737,16 +781,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         {
             for (int k = 0; k < m_nvars; k++)
             {
-                if (type == eExponential)
-                {
-                    Vmath::Svtvp(m_npoints, m_V_phi[k][i][j], y_old[j][k], 1,
-                                 y_new[i][k], 1, y_new[i][k], 1);
-                }
-                else
-                {
-                    Vmath::Svtvp(m_npoints, V(i, j), y_old[j][k], 1,
-                                 y_new[i][k], 1, y_new[i][k], 1);
-                }
+                Vmath::Svtvp(m_npoints, V(k, i, j), y_old[j][k], 1, y_new[i][k],
+                             1, y_new[i][k], 1);
             }
 
             if (m_numstages != 1 || type != eIMEX)
@@ -840,7 +876,7 @@ void TimeIntegrationAlgorithmGLM::CheckIfLastStageEqualsNewSolution()
 
 void TimeIntegrationAlgorithmGLM::VerifyIntegrationSchemeType()
 {
-#ifdef DEBUG
+#ifdef NEKTAR_DEBUG
     int IMEXdim = m_A.size();
     int dim     = m_A[0].GetRows();
 
@@ -898,7 +934,7 @@ bool TimeIntegrationAlgorithmGLM::CheckTimeIntegrateArguments(
     ConstTripleArray &y_old, ConstSingleArray &t_old, TripleArray &y_new,
     SingleArray &t_new, const TimeIntegrationSchemeOperators &op) const
 {
-#ifdef DEBUG
+#ifdef NEKTAR_DEBUG
     boost::ignore_unused(op);
 #else
     boost::ignore_unused(y_old, t_old, y_new, t_new, op);
@@ -1042,7 +1078,7 @@ std::ostream &operator<<(std::ostream &os,
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
-                    os << std::right << rhs.m_A_phi[k][i][j] << " ";
+                    os << std::right << rhs.A(k, i, j) << " ";
                 }
 
                 os << " |";
@@ -1051,7 +1087,7 @@ std::ostream &operator<<(std::ostream &os,
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
-                    os << std::right << rhs.m_U_phi[k][i][j];
+                    os << std::right << rhs.B(k, i, j);
                 }
                 os << std::endl;
             }
@@ -1070,7 +1106,7 @@ std::ostream &operator<<(std::ostream &os,
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
-                    os << std::right << rhs.m_B_phi[k][i][j] << " ";
+                    os << std::right << rhs.B(k, i, j) << " ";
                 }
 
                 os << " |";
@@ -1079,7 +1115,7 @@ std::ostream &operator<<(std::ostream &os,
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
-                    os << std::right << rhs.m_V_phi[k][i][j];
+                    os << std::right << rhs.V(k, i, j);
                 }
                 os << std::endl;
             }

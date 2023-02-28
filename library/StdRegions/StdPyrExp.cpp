@@ -44,11 +44,6 @@ namespace Nektar
 {
 namespace StdRegions
 {
-StdPyrExp::StdPyrExp() // Deafult construct of standard expansion directly
-                       // called.
-{
-}
-
 StdPyrExp::StdPyrExp(const LibUtilities::BasisKey &Ba,
                      const LibUtilities::BasisKey &Bb,
                      const LibUtilities::BasisKey &Bc)
@@ -73,11 +68,6 @@ StdPyrExp::StdPyrExp(const LibUtilities::BasisKey &Ba,
 }
 
 StdPyrExp::StdPyrExp(const StdPyrExp &T) : StdExpansion(T), StdExpansion3D(T)
-{
-}
-
-// Destructor
-StdPyrExp::~StdPyrExp()
 {
 }
 
@@ -724,6 +714,47 @@ void StdPyrExp::v_GetCoords(Array<OneD, NekDouble> &xi_x,
             }
         }
     }
+}
+
+NekDouble StdPyrExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                    const Array<OneD, const NekDouble> &inarray,
+                                    std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    // Collapse coordinates
+    Array<OneD, NekDouble> coll(3, 0.0);
+    LocCoordToLocCollapsed(coord, coll);
+
+    // If near singularity do the old interpolation matrix method
+    if ((1 - coll[2]) < 1e-5)
+    {
+        int totPoints = GetTotPoints();
+        Array<OneD, NekDouble> EphysDeriv0(totPoints), EphysDeriv1(totPoints),
+            EphysDeriv2(totPoints);
+        PhysDeriv(inarray, EphysDeriv0, EphysDeriv1, EphysDeriv2);
+
+        Array<OneD, DNekMatSharedPtr> I(3);
+        I[0] = GetBase()[0]->GetI(coll);
+        I[1] = GetBase()[1]->GetI(coll + 1);
+        I[2] = GetBase()[2]->GetI(coll + 2);
+
+        firstOrderDerivs[0] = PhysEvaluate(I, EphysDeriv0);
+        firstOrderDerivs[1] = PhysEvaluate(I, EphysDeriv1);
+        firstOrderDerivs[2] = PhysEvaluate(I, EphysDeriv2);
+        return PhysEvaluate(I, inarray);
+    }
+
+    std::array<NekDouble, 3> interDeriv;
+    NekDouble val = StdExpansion3D::BaryTensorDeriv(coll, inarray, interDeriv);
+
+    NekDouble fac = 2.0 / (1.0 - coll[2]);
+
+    firstOrderDerivs[0] = fac * interDeriv[0];
+    firstOrderDerivs[1] = fac * interDeriv[1];
+    firstOrderDerivs[2] = ((1.0 + coll[0]) / (1.0 - coll[2])) * interDeriv[0] +
+                          ((1.0 + coll[1]) / (1.0 - coll[2])) * interDeriv[1] +
+                          interDeriv[2];
+
+    return val;
 }
 
 void StdPyrExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)

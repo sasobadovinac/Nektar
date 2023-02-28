@@ -109,6 +109,10 @@ protected:
     LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coords,
         const Array<OneD, const NekDouble> &physvals) override;
+    LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
 
     LOCAL_REGIONS_EXPORT virtual void v_GetCoord(
         const Array<OneD, const NekDouble> &Lcoords,
@@ -173,6 +177,8 @@ protected:
     LOCAL_REGIONS_EXPORT virtual DNekScalMatSharedPtr v_GetLocMatrix(
         const MatrixKey &mkey) override;
 
+    LOCAL_REGIONS_EXPORT void v_DropLocMatrix(const MatrixKey &mkey) override;
+
     LOCAL_REGIONS_EXPORT virtual DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
         const MatrixKey &mkey) override;
 
@@ -197,12 +203,10 @@ private:
     LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess>
         m_staticCondMatrixManager;
 
-    TetExp();
-
     LOCAL_REGIONS_EXPORT void GeneralMatrixOp_MatOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey);
-    virtual void v_LaplacianMatrixOp_MatFree_Kernel(
+    LOCAL_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree_Kernel(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, Array<OneD, NekDouble> &wsp) override;
 };

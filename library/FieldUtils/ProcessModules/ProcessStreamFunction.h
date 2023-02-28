@@ -58,20 +58,21 @@ public:
     ProcessStreamFunction(FieldSharedPtr f);
     virtual ~ProcessStreamFunction();
 
+protected:
     /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessStreamFunction";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Calculating stream-function";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eModifyExp;
     }

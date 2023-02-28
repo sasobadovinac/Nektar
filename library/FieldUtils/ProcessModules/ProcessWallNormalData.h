@@ -59,19 +59,6 @@ public:
     ProcessWallNormalData(FieldSharedPtr f);
     virtual ~ProcessWallNormalData();
 
-    /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
-
-    virtual std::string GetModuleName()
-    {
-        return "ProcessWallNormalData";
-    }
-
-    virtual std::string GetModuleDescription()
-    {
-        return "Get the wall-normal data at a given origin.";
-    }
-
     /**
      * @brief Get the normals for a given locCoord
      * @param bndGeom      Pointer to the geometry of the boundary element.
@@ -83,6 +70,19 @@ public:
                     Array<OneD, NekDouble> &normals);
 
 protected:
+    /// Write mesh to output file.
+    virtual void v_Process(po::variables_map &vm) override;
+
+    virtual std::string v_GetModuleName() override
+    {
+        return "ProcessWallNormalData";
+    }
+
+    virtual std::string v_GetModuleDescription() override
+    {
+        return "Get the wall-normal data at a given origin.";
+    }
+
 private:
     int m_spacedim;
 
@@ -192,7 +192,6 @@ private:
                               NekDouble &projDist,
                               const NekDouble maxDist = 1.0,
                               const NekDouble iterTol = 1.0e-8);
-
 };
 } // namespace FieldUtils
 } // namespace Nektar

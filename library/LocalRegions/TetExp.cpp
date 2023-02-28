@@ -463,7 +463,7 @@ NekDouble TetExp::v_StdPhysEvaluate(
     const Array<OneD, const NekDouble> &physvals)
 {
     // Evaluate point in local (eta) coordinates.
-    return StdTetExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
 }
 
 /**
@@ -481,7 +481,17 @@ NekDouble TetExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     m_geom->GetLocCoords(coord, Lcoord);
 
     // Evaluate point in local (eta) coordinates.
-    return StdTetExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
+}
+
+NekDouble TetExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                 const Array<OneD, const NekDouble> &inarray,
+                                 std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    Array<OneD, NekDouble> Lcoord(3);
+    ASSERTL0(m_geom, "m_geom not defined");
+    m_geom->GetLocCoords(coord, Lcoord);
+    return StdTetExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
 }
 
 /**
@@ -1041,6 +1051,11 @@ DNekMatSharedPtr TetExp::v_CreateStdMatrix(const StdRegions::StdMatrixKey &mkey)
 DNekScalMatSharedPtr TetExp::v_GetLocMatrix(const MatrixKey &mkey)
 {
     return m_matrixManager[mkey];
+}
+
+void TetExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
 }
 
 DNekScalBlkMatSharedPtr TetExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)

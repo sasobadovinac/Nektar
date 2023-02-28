@@ -81,7 +81,7 @@ ContField3DHomogeneous2D::ContField3DHomogeneous2D(
     SpatialDomains::BoundaryConditions bcs(pSession, graph1D);
 
     m_lines[0] = line_zero = MemoryManager<ContField>::AllocateSharedPtr(
-        pSession, graph1D, variable, ImpType);
+        pSession, graph1D, variable, false, false, ImpType);
 
     m_exp = MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr();
     nel   = m_lines[0]->GetExpSize();
@@ -97,7 +97,7 @@ ContField3DHomogeneous2D::ContField3DHomogeneous2D(
     for (n = 1; n < nylines * nzlines; ++n)
     {
         m_lines[n] = MemoryManager<ContField>::AllocateSharedPtr(
-            pSession, graph1D, variable, ImpType);
+            pSession, graph1D, variable, false, false, ImpType);
 
         for (i = 0; i < nel; ++i)
         {
@@ -110,7 +110,8 @@ ContField3DHomogeneous2D::ContField3DHomogeneous2D(
 
     SetCoeffPhys();
 
-    SetupBoundaryConditions(HomoBasis_y, HomoBasis_z, lhom_y, lhom_z, bcs);
+    SetupBoundaryConditions(HomoBasis_y, HomoBasis_z, lhom_y, lhom_z, bcs,
+                            variable);
 }
 
 void ContField3DHomogeneous2D::v_ImposeDirichletConditions(
@@ -147,7 +148,7 @@ void ContField3DHomogeneous2D::v_GlobalToLocal(void)
     }
 }
 
-void ContField3DHomogeneous2D::v_HelmSolve(
+GlobalLinSysKey ContField3DHomogeneous2D::v_HelmSolve(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
     const StdRegions::VarCoeffMap &varcoeff,
@@ -164,9 +165,12 @@ void ContField3DHomogeneous2D::v_HelmSolve(
     NekDouble beta;
     StdRegions::ConstFactorMap new_factors;
 
+    int npts_fce = PhysSpaceForcing ? m_npoints : m_ncoeffs;
     Array<OneD, NekDouble> e_out;
-    Array<OneD, NekDouble> fce(inarray.size());
+    Array<OneD, NekDouble> fce(npts_fce);
     Array<OneD, const NekDouble> wfce;
+
+    GlobalLinSysKey gkey(NullGlobalLinSysKey); // Default: return Null
 
     if (m_WaveSpace)
     {
@@ -175,7 +179,7 @@ void ContField3DHomogeneous2D::v_HelmSolve(
     else
     {
         // Fourier transform forcing function
-        HomogeneousFwdTrans(inarray, fce);
+        HomogeneousFwdTrans(npts_fce, inarray, fce);
     }
 
     int l = 0;
@@ -189,15 +193,16 @@ void ContField3DHomogeneous2D::v_HelmSolve(
             new_factors = factors;
             new_factors[StdRegions::eFactorLambda] += beta;
 
-            wfce = (PhysSpaceForcing) ? fce + cnt : fce + cnt1;
-            m_lines[l]->HelmSolve(wfce, e_out = outarray + cnt1, new_factors,
-                                  varcoeff, varfactors, dirForcing,
-                                  PhysSpaceForcing);
+            wfce      = (PhysSpaceForcing) ? fce + cnt : fce + cnt1;
+            auto gkey = m_lines[l]->HelmSolve(wfce, e_out = outarray + cnt1,
+                                              new_factors, varcoeff, varfactors,
+                                              dirForcing, PhysSpaceForcing);
 
             cnt += m_lines[l]->GetTotPoints();
             cnt1 += m_lines[l]->GetNcoeffs();
         }
     }
+    return gkey;
 }
 
 /**

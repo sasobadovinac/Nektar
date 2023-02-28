@@ -111,21 +111,6 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetName() const
-    {
-        return std::string("EulerExponential");
-    }
-
-    LUE virtual std::string GetFullName() const
-    {
-        return GetVariant() + GetName() + "Order" + std::to_string(GetOrder());
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     std::string variant, int order)
     {
@@ -184,8 +169,9 @@ public:
             phase->m_V[n][n - 1] = 1.0; // constant 1
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = phase->m_order - 1;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = phase->m_order - 1;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
@@ -198,8 +184,51 @@ public:
         phase->CheckAndVerify();
     }
 
-    virtual void InitializeSecondaryData(TimeIntegrationAlgorithmGLM *phase,
-                                         NekDouble deltaT) const
+    LUE void SetExponentialCoefficients(
+        Array<OneD, std::complex<NekDouble>> &Lambda)
+    {
+        ASSERTL0(!m_integration_phases.empty(), "No scheme")
+
+        /**
+         * \brief Lambda Matrix Assumption, parameter Lambda.
+         *
+         * The one-dimensional Lambda matrix is a diagonal
+         * matrix thus values are non zero if and only i=j. As such,
+         * the diagonal Lambda values are stored in an array of
+         * complex numbers.
+         */
+
+        // Assume that each phase is an exponential integrator.
+        for (int i = 0; i < m_integration_phases.size(); i++)
+        {
+            m_integration_phases[i]->m_L = Lambda;
+
+            // Anytime the coefficents are updated reset the nVars to
+            // be assured that the exponential matrices are
+            // recalculated (e.g. the number of variables may remain
+            // the same but the coefficients have changed).
+            m_integration_phases[i]->m_lastNVars = 0;
+        }
+    }
+
+protected:
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("EulerExponential");
+    }
+
+    LUE virtual std::string v_GetFullName() const override
+    {
+        return GetVariant() + GetName() + "Order" + std::to_string(GetOrder());
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
+    }
+
+    virtual void v_InitializeSecondaryData(TimeIntegrationAlgorithmGLM *phase,
+                                           NekDouble deltaT) const override
     {
         /**
          * \brief Lambda Matrix Assumption, member variable phase->m_L
@@ -394,33 +423,6 @@ public:
             {
                 phase->m_V_phi[k][n][n - 1] = 1.0; // constant 1
             }
-        }
-    }
-
-    LUE void SetExponentialCoefficients(
-        Array<OneD, std::complex<NekDouble>> &Lambda)
-    {
-        ASSERTL0(!m_integration_phases.empty(), "No scheme")
-
-        /**
-         * \brief Lambda Matrix Assumption, parameter Lambda.
-         *
-         * The one-dimensional Lambda matrix is a diagonal
-         * matrix thus values are non zero if and only i=j. As such,
-         * the diagonal Lambda values are stored in an array of
-         * complex numbers.
-         */
-
-        // Assume that each phase is an exponential integrator.
-        for (int i = 0; i < m_integration_phases.size(); i++)
-        {
-            m_integration_phases[i]->m_L = Lambda;
-
-            // Anytime the coefficents are updated reset the nVars to
-            // be assured that the exponential matrices are
-            // recalculated (e.g. the number of variables may remain
-            // the same but the coefficients have changed).
-            m_integration_phases[i]->m_lastNVars = 0;
         }
     }
 
