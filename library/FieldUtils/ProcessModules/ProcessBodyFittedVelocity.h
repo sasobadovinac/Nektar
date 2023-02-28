@@ -60,19 +60,21 @@ public:
     ProcessBodyFittedVelocity(FieldSharedPtr f);
     virtual ~ProcessBodyFittedVelocity();
 
+protected:
     /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessBodyFittedVelocity";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
-        return "Get the wall-normal data at a given origin.";
+        return "Get velocity in the body-fitted coordinate system.";
     }
 
+public:
     /**
      * @brief At each quadrature point inside the domian, compute the
      * body-fitted coordinate system with respect to the input boundary id.

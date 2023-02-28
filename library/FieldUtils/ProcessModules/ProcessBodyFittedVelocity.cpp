@@ -114,9 +114,9 @@ ProcessBodyFittedVelocity::~ProcessBodyFittedVelocity()
  *   "ProcessBoundaryExtract".
  * - "fixedDir" is the dorection at which the velocity component is not rotated.
  */
-void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
+void ProcessBodyFittedVelocity::v_Process(po::variables_map &vm)
 {
-    ProcessBoundaryExtract::Process(vm);
+    ProcessBoundaryExtract::v_Process(vm);
 
     std::cout << "running!" << std::endl; //Ganlin
 
