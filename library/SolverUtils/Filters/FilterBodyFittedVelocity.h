@@ -100,6 +100,9 @@ protected:
     std::vector<Array<OneD, NekDouble>> m_curFieldsVels;
     std::vector<Array<OneD, NekDouble>> m_outFieldsVels;
 
+    std::vector<Array<OneD, NekDouble>> m_curFieldsThermalVars;
+    std::vector<Array<OneD, NekDouble>> m_outFieldsThermalVars;
+
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
