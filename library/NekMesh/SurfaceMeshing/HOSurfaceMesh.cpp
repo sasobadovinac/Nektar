@@ -56,8 +56,8 @@ ModuleKey HOSurfaceMesh::className = GetModuleFactory().RegisterCreatorFunction(
 
 HOSurfaceMesh::HOSurfaceMesh(MeshSharedPtr m) : ProcessModule(m)
 {
-    m_config["opti"] =
-        ConfigOption(true, "0", "Perform edge node optimisation.");
+    m_config["no_opti"] =
+        ConfigOption(false, "0", "Disable edge node optimisation.");
 }
 
 HOSurfaceMesh::~HOSurfaceMesh()
@@ -91,7 +91,8 @@ void HOSurfaceMesh::Process()
 
     LibUtilities::PointsManager()[pkey]->GetPoints(u, v);
 
-    bool qOpti = m_config["opti"].beenSet;
+    // HO surface optimisation eneabled by default
+    bool qOpti = !m_config["no_opti"].beenSet;
 
     // loop over all the faces in the surface mesh, check all three edges for
     // high order info, if nothing high-order the edge.
@@ -365,7 +366,7 @@ void HOSurfaceMesh::Process()
                         }
                         Norm = sqrt(Norm);
 
-                        if (Norm < 2E-2)
+                        if (Norm < 1E-8)
                         {
                             repeat = false;
                             break;

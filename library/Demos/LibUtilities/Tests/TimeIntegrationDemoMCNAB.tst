@@ -5,7 +5,7 @@
     <parameters>--dof 100 --timesteps 100 --method MCNAB</parameters>
     <metrics>
         <metric type="L2" id="1">
-            <value tolerance="1e-12">0.0744875</value>
+            <value tolerance="1e-12">0.00803105</value>
         </metric>
     </metrics>
 </test>

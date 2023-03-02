@@ -136,8 +136,9 @@ public:
         phase->m_V[1][0] = 1.0;
         phase->m_V[3][2] = 1.0;
 
-        phase->m_numMultiStepValues = 2;
-        phase->m_numMultiStepDerivs = 2;
+        phase->m_numMultiStepValues         = 2;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 2;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
         phase->m_timeLevelOffset[1] = 1;

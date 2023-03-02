@@ -76,35 +76,33 @@ void FilterCellHistoryPoints::v_Update(
         return;
     }
 
-    size_t j                          = 0;
-    size_t k                          = 0;
-    size_t numPoints                  = m_historyPoints.size();
-    size_t numFields                  = m_cell->GetNumCellVariables();
+    const size_t numPoints            = m_historyPoints.size();
+    const size_t numFields            = m_cell->GetNumCellVariables();
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
     Array<OneD, NekDouble> data(numPoints * numFields, 0.0);
     Array<OneD, NekDouble> gloCoord(3, 0.0);
     Array<OneD, NekDouble> physvals;
     Array<OneD, NekDouble> locCoord;
-    int expId;
-    int nppp = 0; // Number of points per plane
 
     // Pull out data values field by field
-    for (j = 0; j < numFields; ++j)
+    for (size_t j = 0; j < numFields; ++j)
     {
-        k = 0;
         if (m_isHomogeneous1D)
         {
+            // Number of points per plane
+            const int nppp = pFields[0]->GetPlane(0)->GetTotPoints();
+
             for (auto &x : m_historyList)
             {
-                locCoord = x.second;
-                expId    = x.first->GetVid();
-                nppp     = pFields[0]->GetPlane(0)->GetTotPoints();
+                locCoord        = std::get<1>(x);
+                const int indx  = std::get<2>(x);
+                const int expId = std::get<3>(x);
 
                 physvals = m_cell->GetCellSolution(j) + m_outputPlane * nppp +
                            pFields[j]->GetPhys_Offset(expId);
 
-                // interpolate point can do with zero plane methods
-                data[m_historyLocalPointMap[k++] * numFields + j] =
+                // interpolate point
+                data[indx * numFields + j] =
                     pFields[0]->GetExp(expId)->StdPhysEvaluate(locCoord,
                                                                physvals);
             }
@@ -113,14 +111,15 @@ void FilterCellHistoryPoints::v_Update(
         {
             for (auto &x : m_historyList)
             {
-                locCoord = x.second;
-                expId    = x.first->GetVid();
+                locCoord        = std::get<1>(x);
+                const int indx  = std::get<2>(x);
+                const int expId = std::get<3>(x);
 
                 physvals = m_cell->GetCellSolution(j) +
                            pFields[0]->GetPhys_Offset(expId);
 
                 // interpolate point
-                data[m_historyLocalPointMap[k++] * numFields + j] =
+                data[indx * numFields + j] =
                     pFields[0]->GetExp(expId)->StdPhysEvaluate(locCoord,
                                                                physvals);
             }

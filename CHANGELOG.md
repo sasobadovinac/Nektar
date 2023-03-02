@@ -51,6 +51,13 @@ v5.3.0
 - Fix TimeIntegrationDemo.cpp and add ESDIRK tst files to the CI (!1485)
 - Add DIRKOrder1, BDFImplicitOrder3, BDFImplicitOrder4, RungeKutta1, and RungeKutta3 schemes to the register (!1485)
 - Use DIRK (instead of IMEXdirk) schemes for the start-up phase of high-order BDF and AM schemes (!1485).
+- Slightly tidy-up time integration algorithms (!1496)
+- Reduced memory usage in the FilterHistoryPoint (!1458)
+- Remove redundant functor typedef (!1498)
+- Fix CNAB/MCNAB time-integration schemes (!1493)
+- Add missing m_ prefix to member variables in FFTW (!1504)
+- Make some virtual functions protected (!1506)
+- Disable problematic Movement_fixed_3D_stacked_cylinders_curved_hdf5_par test (!1507)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -81,6 +88,9 @@ v5.3.0
 **VortexWaveInteractionSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 
+**DummySolver**
+- Fix CWIPI test to use DirectFull for projection of received data (!1502)
+
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
 exporting in .vtu format (!1386)
@@ -93,6 +103,11 @@ exporting in .vtu format (!1386)
 - Fix CADSurfOCE curvature bug where negative curvature values could be returned causing incorrect mesh spacing (!1442)
 - Fix ProjectCAD bug with findAndProject where the projection was missing and variable was passed without reference (!1442)
 - Fix 3d_bl_wing test case for STEP files where the wrong surfaces were selected for the BL (!1442)
+- Fix error when setting BL progression to 1.0 due a division by 0 (!1455)
+- Changed the BOOLPARAMETERS tag in InputMCF to allow disabling the high order
+  surface optimisation with "DisableSurfaceOptimiser" (surface optimisation is
+  still enabled by default) (!1455)
+- Fix 3d_bl_wing test case for STEP files - updated to use an improved CAD definition for the NACA aerofoil (!1486)
 
 **FieldConvert**
 - Add vars and dirs options in the gradient module to specify fields and partial derivative directions (!1415)
