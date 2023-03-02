@@ -61,13 +61,6 @@ typedef const AT<      const std::complex<NekDouble>>   ConstComplexSingleArray;
 typedef       AT<            std::complex<NekDouble>>        ComplexSingleArray;
 // clang-format on
 
-// Functors
-typedef std::function<void(ConstDoubleArray &, DoubleArray &, const NekDouble)>
-    FunctorType1;
-typedef std::function<void(ConstDoubleArray &, DoubleArray &, const NekDouble,
-                           const NekDouble)>
-    FunctorType2;
-
 // Shared pointers
 class TimeIntegrationScheme;
 

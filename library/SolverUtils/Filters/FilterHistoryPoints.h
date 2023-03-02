@@ -35,6 +35,8 @@
 #ifndef NEKTAR_SOLVERUTILS_FILTERS_FILTERHISTORYPOINTS_H
 #define NEKTAR_SOLVERUTILS_FILTERS_FILTERHISTORYPOINTS_H
 
+#include "LibUtilities/BasicConst/NektarUnivTypeDefs.hpp"
+#include "LibUtilities/BasicUtils/SharedArray.hpp"
 #include <SolverUtils/Filters/Filter.h>
 
 namespace Nektar
@@ -83,24 +85,31 @@ protected:
     void WriteData(const int &rank, const Array<OneD, NekDouble> &data,
                    const int &numFields, const NekDouble &time);
 
-    SpatialDomains::PointGeomVector m_historyPoints;
-    unsigned int m_index;
+    Array<OneD, Array<OneD, const NekDouble>> m_historyPoints =
+        Array<OneD, Array<OneD, const NekDouble>>(0);
+    size_t m_historyPointsSize = 0;
+    unsigned int m_index       = 0;
     unsigned int m_outputFrequency;
     /// plane to take history point from if using a homogeneous1D expansion
-    unsigned int m_outputPlane;
-    Array<OneD, int> m_planeIDs;
+    int m_outputPlane;
+    std::vector<int> m_planeIDs;
     bool m_isHomogeneous1D;
     bool m_waveSpace;
     std::string m_outputFile;
     std::ofstream m_outputStream;
     std::stringstream m_historyPointStream;
-    std::list<
-        std::pair<SpatialDomains::PointGeomSharedPtr, Array<OneD, NekDouble>>>
+    // List of history points that are local to this process
+    // Content of tuple:
+    // [0] = global coordinates
+    // [1] = local coordinates
+    // [2] = global index of history point
+    // [3] = expansion index of history point
+    std::list<std::tuple<Array<OneD, const NekDouble>,
+                         Array<OneD, const NekDouble>, int, int>>
         m_historyList;
-    std::map<int, int> m_historyLocalPointMap;
     std::map<LibUtilities::PtsType, Array<OneD, NekDouble>> m_pointDatMap;
     std::map<LibUtilities::PtsType, Array<OneD, int>> m_pointNumMap;
-    unsigned int m_outputIndex;
+    unsigned int m_outputIndex = 0;
     bool m_outputOneFile;
     bool m_adaptive;
 };

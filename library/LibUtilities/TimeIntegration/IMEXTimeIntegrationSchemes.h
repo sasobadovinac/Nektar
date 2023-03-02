@@ -150,12 +150,13 @@ public:
                 case 4:
                     IMEXdirkTimeIntegrationScheme::SetupSchemeData(
                         m_integration_phases[0], 3,
-                        std::vector<NekDouble>{2, 3});
+                        std::vector<NekDouble>{3, 4});
                     IMEXdirkTimeIntegrationScheme::SetupSchemeData(
                         m_integration_phases[1], 3,
-                        std::vector<NekDouble>{2, 3});
-                    IMEXTimeIntegrationScheme::SetupSchemeData(
-                        m_integration_phases[2], 3);
+                        std::vector<NekDouble>{3, 4});
+                    IMEXdirkTimeIntegrationScheme::SetupSchemeData(
+                        m_integration_phases[2], 3,
+                        std::vector<NekDouble>{3, 4});
                     break;
 
                 default:
@@ -259,8 +260,9 @@ public:
                 phase->m_V[n][n - 1] = 1.0; // constant 1
         }
 
-        phase->m_numMultiStepValues = phase->m_order;
-        phase->m_numMultiStepDerivs = phase->m_order;
+        phase->m_numMultiStepValues         = phase->m_order;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = phase->m_order;
 
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
 

@@ -45,14 +45,14 @@ std::string NekFFTW::className =
 
 NekFFTW::NekFFTW(int N) : NektarFFT(N)
 {
-    m_wsp = Array<OneD, NekDouble>(m_N);
-    phys  = Array<OneD, NekDouble>(m_N);
-    coef  = Array<OneD, NekDouble>(m_N);
+    m_wsp  = Array<OneD, NekDouble>(m_N);
+    m_phys = Array<OneD, NekDouble>(m_N);
+    m_coef = Array<OneD, NekDouble>(m_N);
 
-    plan_forward =
-        fftw_plan_r2r_1d(m_N, &phys[0], &coef[0], FFTW_R2HC, FFTW_ESTIMATE);
-    plan_backward =
-        fftw_plan_r2r_1d(m_N, &coef[0], &phys[0], FFTW_HC2R, FFTW_ESTIMATE);
+    m_plan_forward =
+        fftw_plan_r2r_1d(m_N, &m_phys[0], &m_coef[0], FFTW_R2HC, FFTW_ESTIMATE);
+    m_plan_backward =
+        fftw_plan_r2r_1d(m_N, &m_coef[0], &m_phys[0], FFTW_HC2R, FFTW_ESTIMATE);
 
     m_FFTW_w     = Array<OneD, NekDouble>(m_N);
     m_FFTW_w_inv = Array<OneD, NekDouble>(m_N);
@@ -79,26 +79,26 @@ NekFFTW::~NekFFTW()
 void NekFFTW::v_FFTFwdTrans(Array<OneD, NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray)
 {
-    Vmath::Vcopy(m_N, inarray, 1, phys, 1);
+    Vmath::Vcopy(m_N, inarray, 1, m_phys, 1);
 
-    fftw_execute(plan_forward);
+    fftw_execute(m_plan_forward);
 
-    Reshuffle_FFTW2Nek(coef);
+    Reshuffle_FFTW2Nek(m_coef);
 
-    Vmath::Vcopy(m_N, coef, 1, outarray, 1);
+    Vmath::Vcopy(m_N, m_coef, 1, outarray, 1);
 }
 
 // Backward transformation
 void NekFFTW::v_FFTBwdTrans(Array<OneD, NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray)
 {
-    Vmath::Vcopy(m_N, inarray, 1, coef, 1);
+    Vmath::Vcopy(m_N, inarray, 1, m_coef, 1);
 
-    Reshuffle_Nek2FFTW(coef);
+    Reshuffle_Nek2FFTW(m_coef);
 
-    fftw_execute(plan_backward);
+    fftw_execute(m_plan_backward);
 
-    Vmath::Vcopy(m_N, phys, 1, outarray, 1);
+    Vmath::Vcopy(m_N, m_phys, 1, outarray, 1);
 }
 
 // Reshuffle FFTW2Nek

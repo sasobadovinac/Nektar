@@ -5,7 +5,7 @@
     <parameters>--dof 100 --timesteps 100 --method IMEX --variant Gear</parameters>
     <metrics>
         <metric type="L2" id="1">
-            <value tolerance="1e-12">0.508365</value>
+            <value tolerance="1e-12">0.0146372</value>
         </metric>
     </metrics>
 </test>
