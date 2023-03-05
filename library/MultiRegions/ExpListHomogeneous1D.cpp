@@ -574,13 +574,13 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
     const int dir, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    int nT_pts = inarray.size(); // number of total points = n. of Fourier
-                                 // points * n. of points per plane (nT_pts)
-
-    int nT_coeffs =
-        outarray
-            .size(); // equal to nT_pts, note that outarray.size() != Ncoeffs
-    int cntPts = 0, cntCoeff = 0; // Initialise offset counter
+    int nT_pts = m_npoints; // number of total points = n. of Fourier
+                            // points * n. of points per plane (nT_pts)
+    int nP_pts =
+        nT_pts / m_planes.size(); // number of points per plane = n of
+                                  // Fourier transform required (nP_pts)
+    int nT_coeffs = m_planes[0]->GetNcoeffs() * m_planes.size();
+    int nP_coeffs = nT_coeffs / m_planes.size();
 
     Array<OneD, NekDouble> tmpIn(nT_pts);
     Array<OneD, NekDouble> tmp1, tmp2;
@@ -601,11 +601,8 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
         for (int i = 0; i < m_planes.size(); i++)
         {
             // Call 2D routine on each plane
-            m_planes[i]->IProductWRTDerivBase(dir, tmpIn + cntPts,
-                                              tmp1 = outarray + cntCoeff);
-
-            cntPts += m_planes[i]->GetTotPoints();
-            cntCoeff += m_planes[i]->GetNcoeffs();
+            m_planes[i]->IProductWRTDerivBase(dir, tmpIn + i * nP_pts,
+                                              tmp1 = outarray + i * nP_coeffs);
         }
     }
     // Do homogeneous derivative
@@ -624,7 +621,6 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
 
             NekDouble sign = -1.0;
             NekDouble beta;
-            cntPts = 0, cntCoeff = 0; // Zero offset counter
 
             // Half Modes
             if (m_homogeneousBasis->GetBasisType() ==
@@ -650,25 +646,29 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
             // Fully complex (Fourier or FourierSingleMode)
             else
             {
+                Array<OneD, NekDouble> tmpHomTwo(nT_coeffs, 0.0);
                 for (int i = 0; i < m_planes.size(); i++)
                 {
-                    int ncoeff = m_planes[i]->GetNcoeffs();
+                    if (i != 1 || m_transposition->GetK(i) !=
+                                      0) // Mean + Null mode unchanged
+                    {
 
-                    // Do IProduct with 2D basis ie \int_\Omega \phi_{pq}
-                    // inarray[ndim]
-                    m_planes[i]->IProductWRTBase(tmpIn + cntPts,
-                                                 tmp1 = tmpHom + cntCoeff);
+                        // Do IProduct with 2D basis ie \int_\Omega \phi_{pq}
+                        // inarray[ndim]
+                        m_planes[i]->IProductWRTBase(tmpIn + i * nP_pts,
+                                                     tmp1 = tmpHomTwo +
+                                                            i * nP_coeffs);
 
-                    // Add fourier coefficient
-                    beta =
-                        -sign * 2 * M_PI * (m_transposition->GetK(i)) / m_lhom;
-                    Vmath::Smul(ncoeff, beta, tmp1 = tmpHom + cntCoeff, 1,
-                                tmp2 = tmpHom + cntCoeff, 1);
-
+                        // Add fourier coefficient (switch Real and Imaginary
+                        // parts ie planes) Multiply by i changes real and
+                        // imaginary parts
+                        beta = sign * 2 * M_PI * (m_transposition->GetK(i)) /
+                               m_lhom;
+                        Vmath::Smul(
+                            nP_coeffs, beta, tmp1 = tmpHomTwo + i * nP_coeffs,
+                            1, tmp2 = tmpHom + (i - int(sign)) * nP_coeffs, 1);
+                    }
                     sign = -1.0 * sign;
-
-                    cntCoeff += ncoeff;
-                    cntPts += m_planes[i]->GetTotPoints();
                 }
             }
 
@@ -711,13 +711,14 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    int nT_pts = inarray[0].size(); // number of total points = n. of Fourier
-                                    // points * n. of points per plane (nT_pts)
+    int nT_pts = m_npoints; // number of total points = n. of Fourier
+                            // points * n. of points per plane (nT_pts)
+    int nP_pts =
+        nT_pts / m_planes.size(); // number of points per plane = n of
+                                  // Fourier transform required (nP_pts)
+    int nT_coeffs = m_planes[0]->GetNcoeffs() * m_planes.size();
 
-    int nT_coeffs =
-        outarray
-            .size(); // equal to nT_pts, note that outarray.size() != Ncoeffs
-    int cntPts = 0, cntCoeff = 0; // Initialise offset counter
+    int nP_coeffs = nT_coeffs / m_planes.size();
 
     int ndim = inarray.size(); // Dimension including homogeneous direction
                                // (e.g. 3DH1D, ndim=3D)
@@ -741,26 +742,22 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
         for (int i = 0; i < ndim; i++)
         {
             tmpIn[i] = Array<OneD, NekDouble>(nT_pts);
-            HomogeneousFwdTrans(m_npoints, inarray[i], tmpIn[i]);
+            HomogeneousFwdTrans(nP_pts, inarray[i], tmpIn[i]);
         }
     }
 
     // Do 2D-IProductWRTDerivBase on each plane
-    // TODO Check ExpList::m_coll_offset_phys does not write out of bounds
-    // within the vector
     for (int i = 0; i < m_planes.size(); i++)
     {
         // Set each vector component to values of i-th plane
         for (int j = 0; j < cdim; j++)
         {
-            tmpPhys[j] = tmpIn[j] + cntPts;
+            tmpPhys[j] = tmpIn[j] + i * nP_pts;
         }
 
         // Call 2D routine on each plane
-        m_planes[i]->IProductWRTDerivBase(tmpPhys, tmp1 = outarray + cntCoeff);
-
-        cntPts += m_planes[i]->GetTotPoints();
-        cntCoeff += m_planes[i]->GetNcoeffs();
+        m_planes[i]->IProductWRTDerivBase(tmpPhys,
+                                          tmp1 = outarray + i * nP_coeffs);
     }
 
     // Add homogeneous derivative
@@ -776,7 +773,6 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
 
         NekDouble sign = -1.0;
         NekDouble beta;
-        cntPts = 0, cntCoeff = 0; // Zero offset counter
 
         // Half Modes
         if (m_homogeneousBasis->GetBasisType() ==
@@ -802,24 +798,26 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
         // Fully complex (Fourier or FourierSingleMode)
         else
         {
+            Array<OneD, NekDouble> tmpHomTwo(nT_coeffs, 0.0);
             for (int i = 0; i < m_planes.size(); i++)
             {
-                int ncoeff = m_planes[i]->GetNcoeffs();
+                if (i != 1 || m_transposition->GetK(i) != 0) // unchanged modes
+                {
+                    // Do IProduct with 2D basis ie \int_\Omega \phi_{pq}
+                    // inarray[ndim-1]
+                    m_planes[i]->IProductWRTBase((tmpIn[ndim - 1]) + i * nP_pts,
+                                                 tmp1 =
+                                                     tmpHomTwo + i * nP_coeffs);
 
-                // Do IProduct with 2D basis ie \int_\Omega \phi_{pq}
-                // inarray[ndim]
-                m_planes[i]->IProductWRTBase(tmpIn[ndim - 1] + cntPts,
-                                             tmp1 = tmpHom + cntCoeff);
-
-                // Add fourier coefficient
-                beta = -sign * 2 * M_PI * (m_transposition->GetK(i)) / m_lhom;
-                Vmath::Smul(ncoeff, beta, tmp1 = tmpHom + cntCoeff, 1,
-                            tmp2 = tmpHom + cntCoeff, 1);
-
+                    // Add fourier coefficient (switch Real and Imaginary parts
+                    // ie planes) Multiply by i changes real and imaginary parts
+                    beta =
+                        sign * 2 * M_PI * (m_transposition->GetK(i)) / m_lhom;
+                    Vmath::Smul(nP_coeffs, beta,
+                                tmp1 = tmpHomTwo + i * nP_coeffs, 1,
+                                tmp2 = tmpHom + (i - int(sign)) * nP_coeffs, 1);
+                }
                 sign = -1.0 * sign;
-
-                cntCoeff += ncoeff;
-                cntPts += m_planes[i]->GetTotPoints();
             }
         }
 
