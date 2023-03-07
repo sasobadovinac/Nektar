@@ -88,12 +88,12 @@ void PtsIO::Import(const string &inFile, PtsFieldSharedPtr &ptsField,
         // Load metadata
         ImportFieldMetaData(infile, fieldmetadatamap);
 
-        if (filenames.size() == m_comm->GetSize())
+        if (filenames.size() == m_comm->GetSpaceComm()->GetSize())
         {
             // only load the file that matches this rank
             filenames.clear();
             boost::format pad("P%1$07d.%2$s");
-            pad % m_comm->GetRank() % GetFileEnding();
+            pad % m_comm->GetSpaceComm()->GetRank() % GetFileEnding();
             filenames.push_back(pad.str());
         }
 
@@ -307,8 +307,8 @@ void PtsIO::SetUpFieldMetaData(const string outname)
 {
     ASSERTL0(!outname.empty(), "Empty path given to SetUpFieldMetaData()");
 
-    int nprocs = m_comm->GetSize();
-    int rank   = m_comm->GetRank();
+    int nprocs = m_comm->GetSpaceComm()->GetSize();
+    int rank   = m_comm->GetSpaceComm()->GetRank();
 
     fs::path specPath(outname);
 
