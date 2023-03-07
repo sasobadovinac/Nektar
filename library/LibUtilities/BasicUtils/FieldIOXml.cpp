@@ -351,7 +351,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
     }
     doc.SaveFile(filename);
 
-    m_comm->Block();
+    m_comm->GetSpaceComm()->Block();
 
     // all data has been written
     if (m_comm->TreatAsRankZero())
@@ -715,7 +715,7 @@ void FieldIOXml::SetUpFieldMetaData(
         idlist.insert(idlist.end(), fielddefs[i]->m_elementIDs.begin(),
                       fielddefs[i]->m_elementIDs.end());
     }
-    m_comm->AllReduce(elmtnums, LibUtilities::ReduceMax);
+    m_comm->GetSpaceComm()->AllReduce(elmtnums, LibUtilities::ReduceMax);
 
     // Collate per-process element lists on root process to generate
     // the info file.

@@ -162,7 +162,7 @@ const std::string FieldIO::GetFileType(const std::string &filename,
     if (size > 1)
     {
         int code = (int)ioType;
-        comm->Bcast(code, 0);
+        comm->GetSpaceComm()->Bcast(code, 0);
         ioType = (FieldIOType)code;
     }
 

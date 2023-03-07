@@ -203,18 +203,18 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
     size_t nMaxFields = nFields;
     m_comm->GetSpaceComm()->AllReduce(nMaxFields, LibUtilities::ReduceMax);
 
-    int root_rank  = -1;
-    bool amRoot    = false;
-    bool amRootPIT = false;
+    int root_rank = -1;
+    bool amRoot   = false;
     LibUtilities::CommSharedPtr max_fields_comm;
 
     if (m_comm->GetSpaceComm()->GetSize() > 1)
     {
-        max_fields_comm = m_comm->CommCreateIf((nFields == nMaxFields) ? 1 : 0);
+        max_fields_comm = m_comm->GetSpaceComm()->CommCreateIf(
+            (nFields == nMaxFields) ? 1 : 0);
     }
     else
     {
-        max_fields_comm = m_comm;
+        max_fields_comm = m_comm->GetSpaceComm();
     }
 
     if (max_fields_comm)
@@ -222,15 +222,14 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         int rank  = m_comm->GetRank();
         root_rank = rank;
         max_fields_comm->AllReduce(root_rank, LibUtilities::ReduceMin);
-        amRoot    = (rank == root_rank);
-        amRootPIT = m_comm->GetSpaceComm()->TreatAsRankZero();
+        amRoot = (rank == root_rank);
         if (!amRoot)
         {
             root_rank = -1;
         }
     }
 
-    m_comm->AllReduce(root_rank, LibUtilities::ReduceMax);
+    m_comm->GetSpaceComm()->AllReduce(root_rank, LibUtilities::ReduceMax);
     ASSERTL1(root_rank >= 0 && root_rank < m_comm->GetSpaceComm()->GetSize(),
              prfx.str() + "invalid root rank.");
 
@@ -440,7 +439,7 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
     std::vector<uint64_t> all_dsetsize(MAX_CNTS, 0);
 
     // The root rank creates the file layout from scratch
-    if (amRootPIT)
+    if (amRoot)
     {
         H5::FileSharedPtr outfile = H5::File::Create(outFile, H5F_ACC_TRUNC);
         ASSERTL1(outfile, prfx.str() + "cannot create HDF5 file.");
@@ -665,7 +664,7 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
     }
 
     // Write the DECOMPOSITION dataset
-    if (amRootPIT)
+    if (amRoot)
     {
         H5::PListSharedPtr serialProps = H5::PList::Default();
         H5::PListSharedPtr writeSR     = H5::PList::Default();

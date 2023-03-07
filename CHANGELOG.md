@@ -59,6 +59,7 @@ v5.3.0
 - Add missing m_ prefix to member variables in FFTW (!1504)
 - Make some virtual functions protected (!1506)
 - Disable problematic Movement_fixed_3D_stacked_cylinders_curved_hdf5_par test (!1507)
+- Fix I/O issue related to Hdf5 that was unable to open file and fixed similar issue in other IO classes in BasicUtils (!1512)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
