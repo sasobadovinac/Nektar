@@ -386,8 +386,6 @@ public:
     /// Substitutes expressions defined in the XML document.
     LIB_UTILITIES_EXPORT void SubstituteExpressions(std::string &expr);
 
-    LIB_UTILITIES_EXPORT void SetUpXmlDoc();
-
     /// Get bool to update optimisation file
     LIB_UTILITIES_EXPORT bool GetUpdateOptFile() const
     {
