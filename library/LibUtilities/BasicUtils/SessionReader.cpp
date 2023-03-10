@@ -2590,11 +2590,6 @@ void SessionReader::VerifySolverInfo()
     }
 }
 
-void SessionReader::SetUpXmlDoc(void)
-{
-    m_xmlDoc = MergeDoc(m_filenames);
-}
-
 InterpreterSharedPtr SessionReader::GetInterpreter()
 {
     return m_interpreter;
