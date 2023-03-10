@@ -109,8 +109,7 @@ const std::string FieldIO::GetFileType(const std::string &filename,
         if (fs::is_directory(filename))
         {
             fs::path fullpath = filename;
-
-            fs::path d = fullpath;
+            fs::path d        = fullpath;
             boost::regex expr("P\\d{7}.fld");
             boost::smatch what;
 

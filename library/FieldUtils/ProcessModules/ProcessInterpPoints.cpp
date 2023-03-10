@@ -282,8 +282,8 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
-    int rank   = m_f->m_comm->GetRank();
-    int nprocs = m_f->m_comm->GetSize();
+    int rank   = m_f->m_comm->GetSpaceComm()->GetRank();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
     // Check for command line point specification
 
     if (m_config["topts"].as<string>().compare("NotSet") != 0)

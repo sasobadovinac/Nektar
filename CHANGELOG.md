@@ -64,6 +64,7 @@ v5.3.0
 - Fix I/O issue related to Hdf5 that was unable to open file and fixed similar issue in other IO classes in BasicUtils (!1512)
 - Remove unused function SetUpXmlDoc (!1513)
 - Add new interpolation function to FieldUtils (!1514)
+- Generalize the use of the space communicator (!1518)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

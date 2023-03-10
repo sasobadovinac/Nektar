@@ -98,7 +98,8 @@ void ProcessBoundaryExtract::v_Process(po::variables_map &vm)
 
         // not all partitions in parallel touch all boundaries so
         // find maximum number of boundaries
-        m_f->m_comm->AllReduce(numBndExp, LibUtilities::ReduceMax);
+        m_f->m_comm->GetSpaceComm()->AllReduce(numBndExp,
+                                               LibUtilities::ReduceMax);
 
         // THis presumes boundary regions are numbered consecutively
         for (int i = 0; i < numBndExp; ++i)

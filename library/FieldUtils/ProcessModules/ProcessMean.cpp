@@ -80,7 +80,7 @@ void ProcessMean::v_Process(po::variables_map &vm)
     {
         NekDouble integral = m_f->m_exp[0]->Integral(m_f->m_exp[i]->GetPhys());
 
-        if (m_f->m_comm->GetRank() == 0)
+        if (m_f->m_comm->GetSpaceComm()->GetRank() == 0)
         {
             cout << "Integral (variable " << m_f->m_variables[i]
                  << ") : " << integral << endl;

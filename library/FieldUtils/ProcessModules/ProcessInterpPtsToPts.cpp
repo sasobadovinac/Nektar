@@ -100,7 +100,7 @@ void ProcessInterpPtsToPts::v_Process(po::variables_map &vm)
 {
     ASSERTL0(m_f->m_fieldPts != LibUtilities::NullPtsField,
              "Should have a PtsField for ProcessInterpPtsToPts.");
-    ASSERTL0(m_f->m_comm->GetSize() == 1,
+    ASSERTL0(m_f->m_comm->GetSpaceComm()->GetSize() == 1,
              "ProcessInterpPtsToPts not implemented in parallel.");
 
     // Move m_f->m_fieldPts
@@ -134,8 +134,8 @@ void ProcessInterpPtsToPts::CreateFieldPts(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
-    int rank   = m_f->m_comm->GetRank();
-    int nprocs = m_f->m_comm->GetSize();
+    int rank   = m_f->m_comm->GetSpaceComm()->GetRank();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
     // Check for command line point specification
     if (m_config["topts"].as<string>().compare("NotSet") != 0)
     {
