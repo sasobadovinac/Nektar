@@ -43,6 +43,7 @@ v5.3.0
 - Add missing override keyword to virtual functions in LibUtilities (!1459)
 - Enable ARM macOS runner, fixes for SCOTCH allocation and PETSc detection on macOS (!1462)
 - Add FieldConvert module and filter to project velocity into body-fitted coordinate system (!1467)
+- Fix body-fitted velocity filter and also record the max/min for density,pressure, and temperature field (!1490)
 - Fix typos in Vmath and VDmath (!1480)
 - Fix minor typo and removed unused functions in LibUtilities/TimeIntegration (!1476) 
 - Fix RK5 time integration scheme (!1482)
