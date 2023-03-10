@@ -78,9 +78,10 @@ void ProcessPhiFromFile::v_Process(po::variables_map &vm)
     boost::ignore_unused(vm);
 
     // Do not run in parallel
-    ASSERTL0(m_f->m_session->GetComm()->IsSerial(), "Parallel execution is "
-                                                    "not supported yet in "
-                                                    "this module.")
+    ASSERTL0(m_f->m_session->GetComm()->GetSpaceComm()->IsSerial(),
+             "Parallel execution is "
+             "not supported yet in "
+             "this module.")
 
     // Check if required params are defined
     ASSERTL0(m_f->m_graph, "A session file file must be provided before the "

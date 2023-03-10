@@ -149,7 +149,7 @@ fs::path OutputFld::v_GetFullOutName(std::string &filename,
 {
     boost::ignore_unused(vm);
 
-    int nprocs = m_f->m_comm->GetSize();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
     fs::path specPath(filename), fulloutname;
     if (nprocs == 1)
     {
@@ -159,7 +159,7 @@ fs::path OutputFld::v_GetFullOutName(std::string &filename,
     {
         // Guess at filename that might belong to this process.
         boost::format pad("P%1$07d.%2$s");
-        pad % m_f->m_comm->GetRank() % "fld";
+        pad % m_f->m_comm->GetSpaceComm()->GetRank() % "fld";
 
         // Generate full path name
         fs::path poutfile(pad.str());

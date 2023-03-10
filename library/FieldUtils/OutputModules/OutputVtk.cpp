@@ -1027,7 +1027,7 @@ void OutputVtk::OutputFromExpLowOrderMultiBlock(po::variables_map &vm,
         m_f->m_numHomogeneousDir == 0,
         "Multi block VTK is not implemented for homogeneous expansion types.")
 
-    ASSERTL0(m_f->m_comm->IsSerial(),
+    ASSERTL0(m_f->m_comm->GetSpaceComm()->IsSerial(),
              "Multi block VTK is not implemented in parallel.")
 
     int dim = m_f->m_graph->GetMeshDimension();
@@ -1514,7 +1514,8 @@ void OutputVtk::WriteVTK(vtkDataObject *vtkMesh, std::string &filename,
     // We could use the VTK lib to do this, but that requires VTK with MPI
     // enabled & messing about with the parallel controller & changing
     // our file naming scheme as VTK forces _${proc-number} as a suffix...
-    if (m_f->m_comm->TreatAsRankZero() && !m_f->m_comm->IsSerial())
+    if (m_f->m_comm->GetSpaceComm()->TreatAsRankZero() &&
+        !m_f->m_comm->GetSpaceComm()->IsSerial())
     {
         WritePVtu(vm);
     }
@@ -1529,7 +1530,7 @@ void OutputVtk::WritePVtu(po::variables_map &vm)
 
     std::ofstream outfile(filename.c_str());
 
-    int nprocs = m_f->m_comm->GetSize();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
     std::string path =
         LibUtilities::PortablePath(OutputVtkBase::v_GetPath(filename, vm));
 

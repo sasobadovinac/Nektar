@@ -219,7 +219,7 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
 
     if (max_fields_comm)
     {
-        int rank  = m_comm->GetRank();
+        int rank  = m_comm->GetSpaceComm()->GetRank();
         root_rank = rank;
         max_fields_comm->AllReduce(root_rank, LibUtilities::ReduceMin);
         amRoot = (rank == root_rank);

@@ -224,7 +224,8 @@ void OutputVtkBase::v_OutputFromPts(po::variables_map &vm)
     cout << "Written file: " << filename << endl;
 
     // output parallel outline info if necessary
-    if ((m_f->m_comm->GetRank() == 0) && (m_f->m_comm->GetSize() != 1))
+    if ((m_f->m_comm->GetSpaceComm()->GetRank() == 0) &&
+        (m_f->m_comm->GetSpaceComm()->GetSize() != 1))
     {
         WritePVtu(vm);
         cout << "Written file: " << filename << endl;
@@ -272,7 +273,8 @@ void OutputVtkBase::v_OutputFromExp(po::variables_map &vm)
     cout << "Written file: " << filename << endl;
 
     // output parallel outline info if necessary
-    if ((m_f->m_comm->GetRank() == 0) && (m_f->m_comm->GetSize() != 1))
+    if ((m_f->m_comm->GetSpaceComm()->GetRank() == 0) &&
+        (m_f->m_comm->GetSpaceComm()->GetSize() != 1))
     {
         WritePVtu(vm);
     }
@@ -290,7 +292,7 @@ fs::path OutputVtkBase::v_GetPath(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
-    int nprocs = m_f->m_comm->GetSize();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
     fs::path specPath;
     if (nprocs == 1)
     {
@@ -309,7 +311,7 @@ fs::path OutputVtkBase::v_GetPath(std::string &filename, po::variables_map &vm)
 fs::path OutputVtkBase::v_GetFullOutName(std::string &filename,
                                          po::variables_map &vm)
 {
-    int nprocs = m_f->m_comm->GetSize();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
 
     fs::path fulloutname;
     if (nprocs == 1)
@@ -320,7 +322,7 @@ fs::path OutputVtkBase::v_GetFullOutName(std::string &filename,
     {
         // Guess at filename that might belong to this process.
         boost::format pad("P%1$07d.%2$s");
-        pad % m_f->m_comm->GetRank() % "vtu";
+        pad % m_f->m_comm->GetSpaceComm()->GetRank() % "vtu";
 
         // Generate full path name
         fs::path specPath = GetPath(filename, vm);
@@ -385,7 +387,7 @@ void OutputVtkBase::WritePVtu(po::variables_map &vm)
 
     ofstream outfile(filename.c_str());
 
-    int nprocs  = m_f->m_comm->GetSize();
+    int nprocs  = m_f->m_comm->GetSpaceComm()->GetSize();
     string path = LibUtilities::PortablePath(GetPath(filename, vm));
 
     outfile << "<?xml version=\"1.0\"?>" << endl;
@@ -437,9 +439,9 @@ std::string OutputVtkBase::PrepareOutput(po::variables_map &vm)
     fs::path fulloutname = GetFullOutName(filename, vm);
     filename             = LibUtilities::PortablePath(fulloutname);
 
-    if (m_f->m_comm->GetSize() != 1)
+    if (m_f->m_comm->GetSpaceComm()->GetSize() != 1)
     {
-        if (m_f->m_comm->TreatAsRankZero())
+        if (m_f->m_comm->GetSpaceComm()->TreatAsRankZero())
         {
             try
             {
@@ -451,7 +453,7 @@ std::string OutputVtkBase::PrepareOutput(po::variables_map &vm)
             }
             cout << "Writing files to directory: " << specPath << endl;
         }
-        m_f->m_comm->Block();
+        m_f->m_comm->GetSpaceComm()->Block();
     }
     else
     {

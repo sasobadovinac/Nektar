@@ -233,8 +233,8 @@ int main(int argc, char *argv[])
         if (vm.count("nparts"))
         {
             // work out number of processors to run in serial over partitions
-            MPInprocs = MPIComm->GetSize();
-            MPIrank   = MPIComm->GetRank();
+            MPInprocs = MPIComm->GetSpaceComm()->GetSize();
+            MPIrank   = MPIComm->GetSpaceComm()->GetRank();
 
             nParts = vm["nparts"].as<int>();
 
@@ -517,7 +517,7 @@ int main(int argc, char *argv[])
         {
             if (MPInprocs > 1)
             {
-                MPIComm->Block();
+                MPIComm->GetSpaceComm()->Block();
             }
 
             if (MPIrank == 0)
@@ -569,8 +569,8 @@ int main(int argc, char *argv[])
 
     if (MPInprocs > 1)
     {
-        MPIComm->Block();
-        MPIComm->Finalise();
+        MPIComm->GetSpaceComm()->Block();
+        MPIComm->GetSpaceComm()->Finalise();
     }
 
     return 0;

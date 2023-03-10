@@ -160,7 +160,7 @@ void ProcessInnerProduct::v_Process(po::variables_map &vm)
 
             totiprod = IProduct(processFields, fromField, SaveFld);
 
-            if (m_f->m_comm->GetRank() == 0)
+            if (m_f->m_comm->GetSpaceComm()->GetRank() == 0)
             {
                 cout << "Inner Product WRT " << fromfiles[f] << " : "
                      << totiprod << endl;
@@ -206,7 +206,7 @@ void ProcessInnerProduct::v_Process(po::variables_map &vm)
             {
                 totiprod = IProduct(processFields, allFromField[f], SaveFld);
 
-                if (m_f->m_comm->GetRank() == 0)
+                if (m_f->m_comm->GetSpaceComm()->GetRank() == 0)
                 {
                     cout << "Inner Product of " << fromfiles[g] << " WRT "
                          << fromfiles[f] << " : " << totiprod << endl;

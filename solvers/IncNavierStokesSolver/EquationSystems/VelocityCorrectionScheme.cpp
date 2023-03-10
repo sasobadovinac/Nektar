@@ -488,7 +488,7 @@ NekDouble VelocityCorrectionScheme::MeasureFlowrate(
     }
     else
     {
-        m_comm->AllReduce(flowrate, LibUtilities::ReduceSum);
+        m_comm->GetSpaceComm()->AllReduce(flowrate, LibUtilities::ReduceSum);
     }
     return flowrate / m_flowrateArea;
 }
