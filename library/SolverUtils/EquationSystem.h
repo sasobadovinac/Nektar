@@ -354,7 +354,6 @@ protected:
     /// Communicator
     LibUtilities::CommSharedPtr m_comm;
     bool m_verbose;
-    bool m_root;
     /// The session reader
     LibUtilities::SessionReaderSharedPtr m_session;
     /// Map of known SessionFunctions

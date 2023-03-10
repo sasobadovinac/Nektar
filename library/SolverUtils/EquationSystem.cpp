@@ -141,11 +141,6 @@ void EquationSystem::v_InitObject(bool DeclareFields)
     m_HomogeneousType    = eNotHomogeneous;
 
     m_verbose = m_session->DefinesCmdLineArgument("verbose");
-    m_root    = false;
-    if (m_comm->GetRank() == 0)
-    {
-        m_root = true;
-    }
 
     if (m_session->DefinesSolverInfo("HOMOGENEOUS"))
     {
@@ -306,7 +301,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                         for (i = 0; i < m_fields.size(); i++)
                         {
                             m_fields[i] = MemoryManager<
-                                MultiRegions ::ContField3DHomogeneous2D>::
+                                MultiRegions::ContField3DHomogeneous2D>::
                                 AllocateSharedPtr(m_session, BkeyY, BkeyZ,
                                                   m_LhomY, m_LhomZ, m_useFFT,
                                                   m_homogen_dealiasing, m_graph,
@@ -344,7 +339,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                             for (i = 0; i < m_fields.size(); i++)
                             {
                                 m_fields[i] = MemoryManager<
-                                    MultiRegions ::ContField3DHomogeneous1D>::
+                                    MultiRegions::ContField3DHomogeneous1D>::
                                     AllocateSharedPtr(
                                         m_session, BkeyZ, m_LhomZ, m_useFFT,
                                         m_homogen_dealiasing, m_graph,
@@ -372,7 +367,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                                 if (m_session->GetVariable(i).compare("w") == 0)
                                 {
                                     m_fields[i] = MemoryManager<
-                                        MultiRegions ::
+                                        MultiRegions::
                                             ContField3DHomogeneous1D>::
                                         AllocateSharedPtr(
                                             m_session, BkeyZI, m_LhomZ,
@@ -383,7 +378,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                                 else
                                 {
                                     m_fields[i] = MemoryManager<
-                                        MultiRegions ::
+                                        MultiRegions::
                                             ContField3DHomogeneous1D>::
                                         AllocateSharedPtr(
                                             m_session, BkeyZR, m_LhomZ,
@@ -404,7 +399,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                             for (i = 0; i < m_fields.size(); i++)
                             {
                                 m_fields[i] = MemoryManager<
-                                    MultiRegions ::ContField3DHomogeneous1D>::
+                                    MultiRegions::ContField3DHomogeneous1D>::
                                     AllocateSharedPtr(
                                         m_session, BkeyZ, m_LhomZ, m_useFFT,
                                         m_homogen_dealiasing, m_graph,
@@ -440,7 +435,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                             else
                             {
                                 m_fields[i] =
-                                    MemoryManager<MultiRegions ::ContField>::
+                                    MemoryManager<MultiRegions::ContField>::
                                         AllocateSharedPtr(
                                             m_session, m_graph,
                                             m_session->GetVariable(i),
@@ -486,7 +481,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                                 m_session->GetVariable(i)))
                         {
                             m_fields[i] =
-                                MemoryManager<MultiRegions ::ContField>::
+                                MemoryManager<MultiRegions::ContField>::
                                     AllocateSharedPtr(
                                         *firstfield, m_graph,
                                         m_session->GetVariable(i),
@@ -496,7 +491,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                         else
                         {
                             m_fields[i] =
-                                MemoryManager<MultiRegions ::ContField>::
+                                MemoryManager<MultiRegions::ContField>::
                                     AllocateSharedPtr(
                                         m_session, m_graph,
                                         m_session->GetVariable(i),
@@ -553,7 +548,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                         for (i = 0; i < m_fields.size(); i++)
                         {
                             m_fields[i] = MemoryManager<
-                                MultiRegions ::DisContField3DHomogeneous2D>::
+                                MultiRegions::DisContField3DHomogeneous2D>::
                                 AllocateSharedPtr(m_session, BkeyY, BkeyZ,
                                                   m_LhomY, m_LhomZ, m_useFFT,
                                                   m_homogen_dealiasing, m_graph,
@@ -586,7 +581,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                         for (i = 0; i < m_fields.size(); i++)
                         {
                             m_fields[i] = MemoryManager<
-                                MultiRegions ::DisContField3DHomogeneous1D>::
+                                MultiRegions::DisContField3DHomogeneous1D>::
                                 AllocateSharedPtr(m_session, BkeyZ, m_LhomZ,
                                                   m_useFFT,
                                                   m_homogen_dealiasing, m_graph,

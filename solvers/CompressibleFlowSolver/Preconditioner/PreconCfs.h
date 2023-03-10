@@ -80,7 +80,6 @@ public:
 protected:
     // PreconCfsType                       m_preconType;
     LibUtilities::CommSharedPtr m_Comm;
-    bool m_root;
     bool m_verbose;
     int m_spacedim;
 

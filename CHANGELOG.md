@@ -75,6 +75,7 @@ v5.3.0
 - Improve performance of the block diagonal operator of the preconditioner (!1404)
 - ExtractSurface2DCSF utility is updated to use the boost program option (!1407)
 - Fix a Wuninitialized-const-reference warning (!1449)
+- Remove m_root in PreconCfs to avoid possible future conflict with parallel-in-time driver (!1515)
 
 **CardiacEPSolver**
 - Fix a shadowed loop counter variable in the benchmark filter (!1436)
