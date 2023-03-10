@@ -93,6 +93,9 @@ public:
         const LibUtilities::PtsFieldSharedPtr ptsInField,
         LibUtilities::PtsFieldSharedPtr &ptsOutField);
 
+    /// Interpolate from an expansion to an expansion
+    FIELD_UTILS_EXPORT void InterpExp1ToExp2(const T exp1, T &exp2);
+
 protected:
     /// input field
     T m_expInField;
