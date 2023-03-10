@@ -67,9 +67,9 @@ void Interpolator<T>::Interpolate(const T expInField, T &expOutField,
     ASSERTL0(expInField.size() == expOutField.size(),
              "number of fields does not match");
     ASSERTL0(expInField[0]->GetCoordim(0) <= GetDim(),
-             "too many dimesions in inField");
+             "too many dimensions in inField");
     ASSERTL0(expOutField[0]->GetCoordim(0) <= GetDim(),
-             "too many dimesions in outField");
+             "too many dimensions in outField");
     ASSERTL0(GetInterpMethod() == LibUtilities::eNoMethod,
              "only direct evaluation supported for this interpolation");
 
@@ -339,6 +339,72 @@ void Interpolator<T>::Interpolate(
         for (int j = 0; j < nOutPts; ++j)
         {
             expOutField[i]->UpdatePhys()[j] = tmpPts->GetPointVal(ptsi, j);
+        }
+    }
+}
+
+template <typename T>
+void Interpolator<T>::InterpExp1ToExp2(const T exp1, T &exp2)
+{
+
+    // Interpolation from exp1 -> exp2 assuming that exp1 and exp2 are the
+    // same explists, but at potentially different polynomial orders.
+    if (exp1.size() != exp2.size())
+    {
+        NEKERROR(ErrorUtil::efatal, "not the same mesh")
+    }
+
+    for (int n = 0; n < exp1.size(); ++n)
+    {
+        // Interpolation from exp1 -> exp2 assuming that exp1 and exp2 are the
+        // same explists, but at potentially different polynomial orders.
+        if (exp1[n]->GetExpSize() != exp2[n]->GetExpSize())
+        {
+            NEKERROR(ErrorUtil::efatal, "not the same mesh")
+        }
+
+        // If same polynomial orders, simply copy solution
+        if (exp1[n]->GetTotPoints() == exp2[n]->GetTotPoints())
+        {
+            Vmath::Vcopy(exp1[n]->GetTotPoints(), exp1[n]->GetPhys(), 1,
+                         exp2[n]->UpdatePhys(), 1);
+        }
+        // If different polynomial orders, interpolate solution
+        else
+        {
+            // Transform solution from physical to coefficient space
+            exp1[n]->FwdTransLocalElmt(exp1[n]->GetPhys(),
+                                       exp1[n]->UpdateCoeffs());
+
+            for (int i = 0; i < exp1[n]->GetExpSize(); ++i)
+            {
+                // Get the elements
+                LocalRegions::ExpansionSharedPtr elmt1 = exp1[n]->GetExp(i),
+                                                 elmt2 = exp2[n]->GetExp(i);
+
+                // Get the offset of elements in the storage arrays.
+                int offset1 = exp1[n]->GetCoeff_Offset(i);
+                int offset2 = exp2[n]->GetCoeff_Offset(i);
+
+                // Get number of modes
+                Array<OneD, LibUtilities::BasisSharedPtr> base1 =
+                    elmt1->GetBase();
+                std::vector<unsigned int> nummodes1(base1.size());
+                std::vector<LibUtilities::BasisType> btype1(base1.size());
+                for (int j = 0; j < nummodes1.size(); ++j)
+                {
+                    nummodes1[j] = base1[j]->GetNumModes();
+                    btype1[j]    = base1[j]->GetBasisType();
+                }
+
+                // Extract data from exp1 -> exp2.
+                elmt2->ExtractDataToCoeffs(
+                    &exp1[n]->GetCoeffs()[offset1], nummodes1, 0,
+                    &exp2[n]->UpdateCoeffs()[offset2], btype1);
+            }
+
+            // Transform solution back to physical space
+            exp2[n]->BwdTrans(exp2[n]->GetCoeffs(), exp2[n]->UpdatePhys());
         }
     }
 }
