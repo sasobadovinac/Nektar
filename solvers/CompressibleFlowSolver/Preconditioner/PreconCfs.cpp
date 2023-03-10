@@ -43,16 +43,8 @@ PreconCfs::PreconCfs(const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
                      const LibUtilities::SessionReaderSharedPtr &pSession,
                      const LibUtilities::CommSharedPtr &vComm)
 {
-    m_Comm    = vComm;
-    m_verbose = false;
-    m_root    = false;
-
-    if (0 == m_Comm->GetRank())
-    {
-        m_root = true;
-    }
-    m_verbose = pSession->DefinesCmdLineArgument("verbose");
-
+    m_Comm     = vComm;
+    m_verbose  = pSession->DefinesCmdLineArgument("verbose");
     m_spacedim = pFields[0]->GetGraph()->GetSpaceDimension();
     pSession->LoadParameter("PreconMatFreezNumb", m_PreconMatFreezNumb, 200);
 }

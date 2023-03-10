@@ -211,7 +211,7 @@ void PreconCfsBRJ::v_BuildPreconCfs(
             m_TraceJacArraySingle, m_TraceJacDerivArraySingle,
             m_TraceIPSymJacArraySingle);
 
-        if (m_verbose && m_root)
+        if (m_verbose && m_Comm->GetRank() == 0)
         {
             cout << "     ## CalcuPreconMat " << endl;
         }

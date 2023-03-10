@@ -413,7 +413,7 @@ void CFSImplicit::CalcRefValues(const Array<OneD, const NekDouble> &inarray)
     {
         m_magnitdEstimat[i] = sqrt(m_magnitdEstimat[i] * invTotalDOF);
     }
-    if (m_root && m_verbose)
+    if (m_comm->GetRank() == 0 && m_verbose)
     {
         for (int i = 0; i < nvariables; ++i)
         {
