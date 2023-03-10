@@ -58,6 +58,7 @@ v5.3.0
 - Fix CNAB/MCNAB time-integration schemes (!1493)
 - Add missing m_ prefix to member variables in FFTW (!1504)
 - Make some virtual functions protected (!1506)
+- Remove trailing CONDITIONS tag in xml files (!1510) 
 - Disable problematic Movement_fixed_3D_stacked_cylinders_curved_hdf5_par test (!1507)
 - Fix I/O issue related to Hdf5 that was unable to open file and fixed similar issue in other IO classes in BasicUtils (!1512)
 - Remove unused function SetUpXmlDoc (!1513)

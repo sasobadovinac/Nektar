@@ -3105,5 +3105,4 @@
             NUMPOINTS="4,4" POINTSTYPE="PolyEvenlySpaced,PolyEvenlySpaced"
             FIELDS="u" />
     </EXPANSIONS>
-    <CONDITIONS />
 </NEKTAR>
