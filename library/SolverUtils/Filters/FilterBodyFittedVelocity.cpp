@@ -220,7 +220,21 @@ void FilterBodyFittedVelocity::v_Initialise(
         m_outFieldsVels[n]     = Array<OneD, NekDouble>(npoints, 0.0);
     }
 
+    // Allocate storage for rho,p,T
+    if (m_problemType == eCompressible)
+    {
+        m_curFieldsThermalVars.resize(3);
+        m_outFieldsThermalVars.resize(3);
+
+        for (int n = 0; n < 3; ++n)
+        {
+            m_curFieldsThermalVars[n] = Array<OneD, NekDouble>(npoints, 0.0);
+            m_outFieldsThermalVars[n] = Array<OneD, NekDouble>(npoints, 0.0);
+        }
+    }
+
     // m_outFields contains the initialization values
+    // 2d: rho,rhou,rhov,E,u,v,p,T,s,a,Mach,Sensor,distanceToWall,u_bfc,v_bfc
     if (m_initialized)
     {
         for (int n = 0; n < m_spaceDim; ++n)
@@ -231,6 +245,25 @@ void FilterBodyFittedVelocity::v_Initialise(
             {
                 pFields[0]->HomogeneousBwdTrans(npoints, m_outFieldsVels[n],
                                                 m_outFieldsVels[n]);
+            }
+        }
+
+        if (m_problemType == eCompressible)
+        {
+            // For cfs, initialize thermal vars
+            // shift_thermal for [rho, p, T] in m_outFields
+            int shift_thermal[3] = {0, m_spaceDim * 2 + 2, m_spaceDim * 2 + 3};
+
+            for (int n = 0; n < 3; ++n)
+            {
+                pFields[0]->BwdTrans(m_outFields[shift_thermal[n]],
+                                     m_outFieldsThermalVars[n]);
+                if (pFields[0]->GetWaveSpace())
+                {
+                    pFields[0]->HomogeneousBwdTrans(npoints,
+                                                    m_outFieldsThermalVars[n],
+                                                    m_outFieldsThermalVars[n]);
+                }
             }
         }
     }
@@ -312,16 +345,17 @@ void FilterBodyFittedVelocity::v_ProcessSample(
 {
     boost::ignore_unused(time);
 
-    // Use shift to get the current u,v,w in Cartesian coordinate
+    // Use shift_vel to get the current u,v,w in Cartesian coordinate
     // cfs_2D:
     // rho,rhou,rhov,E,u,v,p,T,s,a,Mach,Sensor,distanceToWall,u_bfc,v_bfc
     // inc_2D: u,v,p
-    int shift = (m_problemType == eCompressible) ? (m_spaceDim + 2) : 0;
+    int shift_vel = (m_problemType == eCompressible) ? (m_spaceDim + 2) : 0;
 
     // Get current u,v,w in Cartesian coordinate
     for (int n = 0; n < m_spaceDim; ++n)
     {
-        pFields[0]->BwdTrans(fieldcoeffs[shift + n], m_curFieldsVels_Car[n]);
+        pFields[0]->BwdTrans(fieldcoeffs[shift_vel + n],
+                             m_curFieldsVels_Car[n]);
         if (pFields[0]->GetWaveSpace())
         {
             pFields[0]->HomogeneousBwdTrans(pFields[0]->GetNpoints(),
@@ -386,6 +420,71 @@ void FilterBodyFittedVelocity::v_ProcessSample(
     {
         pFields[0]->FwdTransLocalElmt(m_outFieldsVels[n],
                                       m_outFields[m_nVars + 1 + n]);
+    }
+
+    // Process the thermal variables for compressible flows
+    if (m_problemType == eCompressible)
+    {
+        // Get current rho,p,T fields
+        // shift_thermal for [rho, p, T] in fieldcoeffs
+        int shift_thermal[3] = {0, m_spaceDim * 2 + 2, m_spaceDim * 2 + 3};
+
+        for (int n = 0; n < 3; ++n)
+        {
+            pFields[0]->BwdTrans(fieldcoeffs[shift_thermal[n]],
+                                 m_curFieldsThermalVars[n]);
+            if (pFields[0]->GetWaveSpace())
+            {
+                pFields[0]->HomogeneousBwdTrans(pFields[0]->GetNpoints(),
+                                                m_curFieldsThermalVars[n],
+                                                m_curFieldsThermalVars[n]);
+            }
+        }
+
+        // Get max/min/original for the rho/p/T fields
+        for (int n = 0; n < 3; ++n)
+        {
+            size_t length = m_outFieldsThermalVars[n].size();
+
+            if (m_filterType == eMax)
+            {
+                // Compute max
+                for (int i = 0; i < length; ++i)
+                {
+                    if (m_curFieldsThermalVars[n][i] >
+                        m_outFieldsThermalVars[n][i])
+                    {
+                        m_outFieldsThermalVars[n][i] =
+                            m_curFieldsThermalVars[n][i];
+                    }
+                }
+            }
+            else if (m_filterType == eMin)
+            {
+                // Compute min
+                for (int i = 0; i < length; ++i)
+                {
+                    if (m_curFieldsThermalVars[n][i] <
+                        m_outFieldsThermalVars[n][i])
+                    {
+                        m_outFieldsThermalVars[n][i] =
+                            m_curFieldsThermalVars[n][i];
+                    }
+                }
+            }
+            else
+            {
+                // Original field
+                m_outFieldsThermalVars[n] = m_curFieldsThermalVars[n];
+            }
+        }
+
+        // Forward transform and put into m_outFields
+        for (int n = 0; n < 3; ++n)
+        {
+            pFields[0]->FwdTransLocalElmt(m_outFieldsThermalVars[n],
+                                          m_outFields[shift_thermal[n]]);
+        }
     }
 }
 

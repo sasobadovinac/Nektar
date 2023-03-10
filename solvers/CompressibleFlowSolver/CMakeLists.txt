@@ -139,6 +139,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_AV_Phys_Mod_LDGNS)
     ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_AV_Phys_Dil_IP_Impl)
     ADD_NEKTAR_TEST(TimeDependentAbsorption)
+    ADD_NEKTAR_TEST(EmbededCylinder2D)
     ADD_NEKTAR_TEST(Movement_fixed_couette)
 
     IF (NEKTAR_USE_MPI)
