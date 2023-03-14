@@ -3,13 +3,13 @@
 
 This directory consists of the following primary files:
 
-
 \begin{center}
 \begin{tabular}{|c | c | } \hline
 TimeIntegrationScheme.h & TimeIntegrationScheme.cpp \\ \hline 
 TimeIntegrationGLM.h & TimeIntegrationGLM.cpp \\ \hline
 *TimeIntegrationSchemes.h & Specific GLM schemes, e.g. AB, RK, IMEX, etc. \\ \hline
 TimeIntegrationFIT.h & TimeIntegrationFIT.cpp \\ \hline
+TimeIntegrationGEM.h & TimeIntegrationGEM.cpp \\ \hline
 \end{tabular}
 \end{center}
 
@@ -25,11 +25,12 @@ more (linear multistep methods) phases using the
 TimeIntegrationAlgorithmGLM class, which is where the GLM algorithm is
 performed using the helper class TimeIntegrationSolutionGLM.
 
-
-More recently Fractional-in-time schemes have been added as a sibbling
-class to the GLM class (found in the child class
-TimeIntegrationFIT). The Fractional-in-time schemes makes use of its
+More recently Extrapolation and Fractional-in-time schemes have been 
+added as a sibbling class to the GLM class (found in the child class
+TimeIntegrationGEM and TimeIntegrationFIT, respectively). The 
+Extrapolation and the Fractional-in-time schemes make use of their 
 own separate algorithm.
+
 
 \subsection{General Linear Methods}
 \label{subsectionGeneralLinearMethods}
@@ -242,6 +243,22 @@ The aim in {\nek} is to fully support the first three types of GLMs.
 Fully implicit methods are currently not implemented. {\nek} also
 fully supports Exponential Methods using GLMs.
 
+\subsection{Extrapolation Integration Schemes}
+
+In addition to the GLMs {\nek} also supports extrapolation methods:
+\begin{itemize}
+  \item \textbf{Extrapolation Methods}: Extrapolation methods allow 
+    the construction of arbitrarily high-order time-integration 
+    methods based on a series for low-order approximations.
+\end{itemize}
+
+The Extrapolation methods follow the same paradigm as the GLMs, that is
+both have the same parent class and as such have the same interface.
+
+For more details about Extrapolation methods, interested readers can refer
+to \cite{Deuflhard1985}.
+
+
 \subsection{Fractional-in-time Integration Schemes}
 
 In addition to the GLMs {\nek} also supports fractional methods:
@@ -332,7 +349,18 @@ EulerExponential & Lawson  & Exponential Euler scheme using the
                  & N{\o}rsett & Exponential Euler scheme using the
                                 N{\o}rsett variant of order 1-4
                                 (Higher order not yet properly seeded) \\
-
+ExtrapolationMethod & ExplicitEuler & Extrapolation method of arbitrary order
+                                      using a series of first-order explict Euler
+                                      scheme\\
+                    & ExplicitMidpoint & Extrapolation method of arbitrary order
+                                      using a series of second-order explict midpoint
+                                      scheme\\
+                    & ImplicitEuler & Extrapolation method of arbitrary order
+                                      using a series of first-order implicit Euler
+                                      scheme\\
+                    & ImplicitMidpoint & Extrapolation method of arbitrary order
+                                         using a series of second-order implicit Euler
+                                         scheme\\
 FractionalInTime &            & Fractional-in-time scheme of order 1-4
                               (Higher order not yet properly seeded),
                               free parameters, none,

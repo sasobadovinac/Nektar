@@ -29,8 +29,9 @@
 // DEALINGS IN THE SOFTWARE.
 //
 // Description: Header file of time integration scheme base class,
-// this class is the parent class for the TimeIntegrationSchemeGLM and
-// TimeIntegrationSchemeFIT classes.
+// this class is the parent class for the TimeIntegrationSchemeGLM,
+// TimeIntegrationSchemeFIT, TimeIntegrationSchemeGEM, and
+// TimeIntegrationSchemeSDC classes.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
