@@ -187,7 +187,7 @@ void LinearisedAdvection::v_InitObject(
             m_isperiodic = m_interporder < 2;
             m_session->LoadParameter("N_start", m_start, 0);
             m_session->LoadParameter("N_skip", m_skip, 1);
-            DFT(file, pFields, m_slices);
+            DFT(file, pFields);
         }
         else
         {
@@ -310,7 +310,7 @@ void LinearisedAdvection::v_Advect(
     {
         for (size_t i = 0; i < ndim; ++i)
         {
-            UpdateBase(m_slices, m_interp[i], m_baseflow[i], time, m_period);
+            UpdateBase(m_interp[i], m_baseflow[i], time);
             UpdateGradBase(i, fields[i]);
         }
     }
@@ -504,14 +504,13 @@ void LinearisedAdvection::ImportFldBase(
 }
 
 void LinearisedAdvection::UpdateBase(
-    const NekDouble m_slices, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const NekDouble m_time,
-    const NekDouble m_period)
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const NekDouble time)
 {
     int npoints = m_baseflow[0].size();
     if (m_isperiodic)
     {
-        NekDouble BetaT = 2 * M_PI * fmod(m_time, m_period) / m_period;
+        NekDouble BetaT = 2 * M_PI * fmod(time, m_period) / m_period;
         NekDouble phase;
         Array<OneD, NekDouble> auxiliary(npoints);
 
@@ -531,7 +530,7 @@ void LinearisedAdvection::UpdateBase(
     }
     else
     {
-        NekDouble x = m_time;
+        NekDouble x = time;
         x           = x / m_period * (m_slices - 1);
         int ix      = x;
         if (ix < 0)
@@ -668,8 +667,7 @@ DNekBlkMatSharedPtr LinearisedAdvection::GetFloquetBlockMatrix(
 
 // Discrete Fourier Transform for Floquet analysis
 void LinearisedAdvection::DFT(
-    const string file, Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble m_slices)
+    const string file, Array<OneD, MultiRegions::ExpListSharedPtr> &pFields)
 {
     size_t ConvectedFields = m_baseflow.size() - 1;
     size_t npoints         = m_baseflow[0].size();

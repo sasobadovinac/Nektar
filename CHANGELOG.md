@@ -92,6 +92,7 @@ v5.3.0
 - Fixed Taylor-Hood expansion for VCSWeakPressure (!1444)
 - Fix filename in LinearisedAdvection (!1479)
 - Added scalar advection terms to AdjointSolver (!1466)
+- Remove member variables as funtion parameters in LinearisedAdvection solver (!1522)
 
 **VortexWaveInteractionSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
