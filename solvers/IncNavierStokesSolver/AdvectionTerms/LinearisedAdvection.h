@@ -127,17 +127,14 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields) override;
 
-    void UpdateBase(const NekDouble m_slices,
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray, const NekDouble m_time,
-                    const NekDouble m_period);
+    void UpdateBase(const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray, const NekDouble time);
 
     void UpdateGradBase(const int var,
                         const MultiRegions::ExpListSharedPtr &field);
 
     void DFT(const std::string file,
-             Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-             const NekDouble m_slices);
+             Array<OneD, MultiRegions::ExpListSharedPtr> &pFields);
 
     /// Import Base flow
     void ImportFldBase(std::string pInfile,

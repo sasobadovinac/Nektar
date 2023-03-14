@@ -107,8 +107,7 @@ void AdjointAdvection::v_Advect(
     {
         for (int i = 0; i < ndim; ++i)
         {
-            UpdateBase(m_slices, m_interp[i], m_baseflow[i], m_period - time,
-                       m_period);
+            UpdateBase(m_interp[i], m_baseflow[i], m_period - time);
             UpdateGradBase(i, fields[i]);
         }
     }
