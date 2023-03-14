@@ -138,6 +138,7 @@ exporting in .vtu format (!1386)
 - Use Nektar::LibUtilities::Timer for better accuracy (!1468)
 - Make some virtual functions protected (!1469)
 - Extend clang-format checks to solvers, utilities, tests and templates (!1434)
+- Fix documentation for exponential scheme (!1519)
 
 **CI**
 - Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)
@@ -150,7 +151,6 @@ exporting in .vtu format (!1386)
 - Kill orphan Tester-g processes on Windows and remove source tree after build
 (!1471)
 - Fixed path issue and warning in the nektar-workbook image (!1470)
-
 
 v5.2.0
 ------
@@ -710,7 +710,6 @@ v4.4.1
   IMEXGear, CNAB, 2nd order IMEX-DIRK, 3rd order IMEX-DIRK (!854)
 - Fix bug due to subtractive cancellation in polylib routines (!778)
 
-
 **FieldConvert:**
 - Fix issue with field ordering in the interppointdatatofld module (!754)
 - Fix issue with FieldConvert when range flag used (!761)
@@ -1046,7 +1045,6 @@ v4.3.0
 
 v4.2.0
 ------
-
 **Library:**
 - Add Runge-Kutta SSP schemes for 2nd/3rd order using keys `RungeKutta2_SSP` and
   `RungeKutta3_SSP`. `ClassicalRungeKutta4` is now called `RungeKutta4`. (!481)
@@ -1075,10 +1073,8 @@ v4.2.0
   surface, allowing for calculation of y plus values (!488)
 - Fixes for equispaced output (!510)
 
-
 v4.1.0
 ------
-
 **Library:**
 - Add support for interpolating point data from .pts files (!433)
 - Fixes for curvilinear element normals (!443)
@@ -1150,7 +1146,6 @@ v4.1.0
 
 v4.0.1
 ------
-
 **Library:**
 - Change hybrid parallelisation to use command line options (!368)
 - Add support for multi-variable functions in expression evaluator: new
@@ -1205,7 +1200,6 @@ v4.0.1
 
 v4.0.0
 ------
-
 **Library:**
 - Update boost to 1.55 (!289)
 - Fix parallel history points on manifold (!298)
@@ -1229,7 +1223,6 @@ v4.0.0
 
 v3.4.0
 ------
-
 **Library:**
 - New parallel output format. Parallel files are now stored in directories which
   contain partition information. (!100, !102, !236, !242, !249, !256).

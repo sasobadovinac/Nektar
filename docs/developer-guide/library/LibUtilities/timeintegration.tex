@@ -234,13 +234,13 @@ methods. We distinguish the following types of general linear methods:
     \item \textbf{N{\o}rsett-Euler explicit method}: $y_n =
       \varphi_1(z)N(y_{n-1},t_{n-1}) + \varphi_0(z)y_{n-1}$
   \end{itemize}
-where $\varphi_0(z) = e^{z}$ for $k = 0$, $\varphi_{k}(z) =
-\frac{\varphi_{k-1}(z) - \varphi_{k-1}(0)}{z}$ for $k \geq 1$.
-\end{itemize}
+  where $\varphi_0(z) = e^{z}$ for $k = 0$, $\varphi_{k}(z) =
+  \frac{\varphi_{k-1}(z) - \varphi_{k-1}(0)}{z}$ for $k \geq 1$.
+  \end{itemize}
+  While implemented, exponential schemes are not currently seeded.
 
 The aim in {\nek} is to fully support the first three types of GLMs.
-Fully implicit methods are currently not implemented. {\nek} also
-fully supports Exponential Methods using GLMs.
+Fully implicit methods are currently not implemented.
 
 \subsection{Fractional-in-time Integration Schemes}
 
