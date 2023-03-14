@@ -78,6 +78,8 @@ int main(int argc, char *argv[])
         ("npz", po::value<int>(),
          "Used to define number of partitions in z for Homogeneous1D "
          "expansions for parallel runs.")
+        ("npt", po::value<int>(),
+         "Used to define number of partitions in time for Parareal runs. ")
         ("onlyshape", po::value<string>(),
          "Only use element with defined shape type i.e. -onlyshape "
          " Tetrahedron")
@@ -255,6 +257,36 @@ int main(int argc, char *argv[])
 
         f->m_comm =
             LibUtilities::GetCommFactory().CreateInstance("Serial", argc, argv);
+    }
+
+    // For parallel-in-time
+    if (vm.count("npt"))
+    {
+        for (auto &io : inout)
+        {
+            fs::path inpath  = io;
+            fs::path outpath = inpath.parent_path();
+            if (outpath.extension() == ".pit")
+            {
+                fs::path ftype  = inpath.extension();
+                string filename = inpath.stem().string();
+                size_t start    = 0U;
+                size_t end      = filename.find("_");
+                while (end != std::string::npos)
+                {
+                    start = end + 1;
+                    end   = filename.find("_", start);
+                }
+                int index =
+                    atoi(filename.substr(start, filename.size()).c_str());
+                outpath += fs::path("/");
+                outpath += fs::path(filename.substr(0, start));
+                outpath += fs::path(boost::lexical_cast<std::string>(
+                    index + f->m_comm->GetRank() % vm["npt"].as<int>()));
+                outpath += ftype;
+                io = outpath.string();
+            }
+        }
     }
 
     vector<ModuleSharedPtr> modules;
