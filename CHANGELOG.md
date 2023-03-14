@@ -65,6 +65,7 @@ v5.3.0
 - Remove unused function SetUpXmlDoc (!1513)
 - Add new interpolation function to FieldUtils (!1514)
 - Generalize the use of the space communicator (!1518)
+- Add parallel-in-time feature to FieldConvert (!1520)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

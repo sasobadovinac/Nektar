@@ -211,6 +211,13 @@ void InputXml::v_Process(po::variables_map &vm)
         cmdArgs.push_back(boost::lexical_cast<string>(vm["npz"].as<int>()));
     }
 
+    // Parallel-in-time
+    if (vm.count("npt"))
+    {
+        cmdArgs.push_back("--npt");
+        cmdArgs.push_back(boost::lexical_cast<string>(vm["npt"].as<int>()));
+    }
+
     int argc          = cmdArgs.size();
     const char **argv = new const char *[argc];
     for (int i = 0; i < argc; ++i)

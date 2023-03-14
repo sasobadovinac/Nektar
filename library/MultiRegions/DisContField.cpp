@@ -3600,7 +3600,7 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
 
                     m_bndCondExpansions[i]->SetCoeff(
                         0, (std::static_pointer_cast<
-                                SpatialDomains ::DirichletBoundaryCondition>(
+                                SpatialDomains::DirichletBoundaryCondition>(
                                 m_bndConditions[i])
                                 ->m_dirichletCondition)
                                .Evaluate(x0[0], x1[0], x2[0], time));
@@ -3612,7 +3612,7 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                 {
                     m_bndCondExpansions[i]->SetCoeff(
                         0, (std::static_pointer_cast<
-                                SpatialDomains ::NeumannBoundaryCondition>(
+                                SpatialDomains::NeumannBoundaryCondition>(
                                 m_bndConditions[i])
                                 ->m_neumannCondition)
                                .Evaluate(x0[0], x1[0], x2[0], time));
@@ -3622,7 +3622,7 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                 {
                     m_bndCondExpansions[i]->SetCoeff(
                         0, (std::static_pointer_cast<
-                                SpatialDomains ::RobinBoundaryCondition>(
+                                SpatialDomains::RobinBoundaryCondition>(
                                 m_bndConditions[i])
                                 ->m_robinFunction)
                                .Evaluate(x0[0], x1[0], x2[0], time));

@@ -271,6 +271,8 @@ FilterFieldConvert::FilterFieldConvert(
             ("npz", po::value<int>(),
                 "Used to define number of partitions in z for Homogeneous1D "
                 "expansions for parallel runs.")
+            ("npt", po::value<int>(),
+                "Used to define number of partitions in time for Parareal runs. ")
             ("onlyshape", po::value<std::string>(),
                 "Only use element with defined shape type i.e. -onlyshape "
                 " Tetrahedron")
