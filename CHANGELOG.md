@@ -1,6 +1,5 @@
 Changelog
 =========
-
 v5.3.0
 ------
 **Library**
@@ -67,6 +66,7 @@ v5.3.0
 - Add new interpolation function to FieldUtils (!1514)
 - Generalize the use of the space communicator (!1518)
 - Add parallel-in-time feature to FieldConvert (!1520)
+- Add Spectral Deferred Correction (SDC) time integration schemes (!1481)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

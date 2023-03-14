@@ -287,12 +287,15 @@ SET(TimeIntegrationHeaders
         ./TimeIntegration/IMEXTimeIntegrationSchemes.h
         ./TimeIntegration/IMEXdirkTimeIntegrationSchemes.h
         ./TimeIntegration/IMEXGearTimeIntegrationScheme.h
+        ./TimeIntegration/IMEXTimeIntegrationSchemeSDC.h
+        ./TimeIntegration/ImplicitTimeIntegrationSchemeSDC.h
         ./TimeIntegration/MCNABTimeIntegrationScheme.h
         ./TimeIntegration/RungeKuttaTimeIntegrationSchemes.h
         ./TimeIntegration/TimeIntegrationScheme.h
         ./TimeIntegration/TimeIntegrationSchemeFIT.h
         ./TimeIntegration/TimeIntegrationSchemeGEM.h
         ./TimeIntegration/TimeIntegrationSchemeGLM.h
+        ./TimeIntegration/TimeIntegrationSchemeSDC.h
         ./TimeIntegration/TimeIntegrationAlgorithmGLM.h
         ./TimeIntegration/TimeIntegrationSolutionGLM.h
 )
@@ -303,6 +306,7 @@ SET(TimeIntegrationSources
         ./TimeIntegration/TimeIntegrationSchemeFIT.cpp
         ./TimeIntegration/TimeIntegrationSchemeGEM.cpp
         ./TimeIntegration/TimeIntegrationSchemeGLM.cpp
+        ./TimeIntegration/TimeIntegrationSchemeSDC.cpp
         ./TimeIntegration/TimeIntegrationAlgorithmGLM.cpp
         ./TimeIntegration/TimeIntegrationSolutionGLM.cpp
 )
