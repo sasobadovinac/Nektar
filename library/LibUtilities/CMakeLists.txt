@@ -291,6 +291,7 @@ SET(TimeIntegrationHeaders
         ./TimeIntegration/RungeKuttaTimeIntegrationSchemes.h
         ./TimeIntegration/TimeIntegrationScheme.h
         ./TimeIntegration/TimeIntegrationSchemeFIT.h
+        ./TimeIntegration/TimeIntegrationSchemeGEM.h
         ./TimeIntegration/TimeIntegrationSchemeGLM.h
         ./TimeIntegration/TimeIntegrationAlgorithmGLM.h
         ./TimeIntegration/TimeIntegrationSolutionGLM.h
@@ -300,6 +301,7 @@ SET(TimeIntegrationSources
         ./TimeIntegration/SchemeInitializer.cpp
         ./TimeIntegration/TimeIntegrationScheme.cpp
         ./TimeIntegration/TimeIntegrationSchemeFIT.cpp
+        ./TimeIntegration/TimeIntegrationSchemeGEM.cpp
         ./TimeIntegration/TimeIntegrationSchemeGLM.cpp
         ./TimeIntegration/TimeIntegrationAlgorithmGLM.cpp
         ./TimeIntegration/TimeIntegrationSolutionGLM.cpp

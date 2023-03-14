@@ -104,6 +104,14 @@ typedef std::shared_ptr<TimeIntegrationSolutionGLM>
 typedef std::vector<TimeIntegrationSolutionGLMSharedPtr>
     TimeIntegrationSolutionGLMVector;
 
+class TimeIntegrationSchemeGEM;
+
+typedef std::shared_ptr<TimeIntegrationSchemeGEM>
+    TimeIntegrationSchemeGEMSharedPtr;
+
+typedef std::vector<TimeIntegrationSchemeGEMSharedPtr>
+    TimeIntegrationSchemeGEMVector;
+
 //
 enum TimeIntegrationSchemeType
 {
@@ -114,6 +122,7 @@ enum TimeIntegrationSchemeType
     eImplicit,           //!< Fully implicit scheme
     eExponential,        //!< Exponential scheme
     eFractionalInTime,   //!< Fractional in Time scheme
+    eExtrapolationMethod, //!< Extrapolation scheme
 };
 
 } // end namespace LibUtilities

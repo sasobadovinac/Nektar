@@ -52,12 +52,14 @@
 
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeFIT.h>
 
+#include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGEM.h>
+
 namespace Nektar
 {
 namespace LibUtilities
 {
 
-// Register all the schemes with the Time Integration Scheme Facatory...
+// Register all the schemes with the Time Integration Scheme Factory...
 //
 #define REGISTER(scheme)                                                       \
     std::string scheme##TimeIntegrationScheme::className =                     \
@@ -144,6 +146,11 @@ REGISTER(RungeKutta3_SSP);
 REGISTER(ClassicalRungeKutta4);
 REGISTER(RungeKutta4);
 REGISTER(RungeKutta5);
+
+// TimeIntegrationSchemesGEM.h
+std::string TimeIntegrationSchemeGEM::className =
+    GetTimeIntegrationSchemeFactory().RegisterCreatorFunction(
+        "ExtrapolationMethod", TimeIntegrationSchemeGEM::create);
 
 } // end namespace LibUtilities
 } // namespace Nektar
