@@ -52,6 +52,10 @@
 
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeFIT.h>
 
+#include <LibUtilities/TimeIntegration/ExplicitTimeIntegrationSchemeSDC.h>
+#include <LibUtilities/TimeIntegration/IMEXTimeIntegrationSchemeSDC.h>
+#include <LibUtilities/TimeIntegration/ImplicitTimeIntegrationSchemeSDC.h>
+
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGEM.h>
 
 namespace Nektar
@@ -146,6 +150,17 @@ REGISTER(RungeKutta3_SSP);
 REGISTER(ClassicalRungeKutta4);
 REGISTER(RungeKutta4);
 REGISTER(RungeKutta5);
+
+// TimeIntegrationSchemesSDC.h
+std::string ExplicitTimeIntegrationSchemeSDC::className =
+    GetTimeIntegrationSchemeFactory().RegisterCreatorFunction(
+        "ExplicitSDC", ExplicitTimeIntegrationSchemeSDC::create);
+std::string ImplicitTimeIntegrationSchemeSDC::className =
+    GetTimeIntegrationSchemeFactory().RegisterCreatorFunction(
+        "ImplicitSDC", ImplicitTimeIntegrationSchemeSDC::create);
+std::string IMEXTimeIntegrationSchemeSDC::className =
+    GetTimeIntegrationSchemeFactory().RegisterCreatorFunction(
+        "IMEXSDC", IMEXTimeIntegrationSchemeSDC::create);
 
 // TimeIntegrationSchemesGEM.h
 std::string TimeIntegrationSchemeGEM::className =

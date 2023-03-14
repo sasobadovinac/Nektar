@@ -490,7 +490,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
 
         // The same storage will be used for every stage -> m_tmp is a
         // DoubleArray
-        if (type == eExplicit || m_schemeType == eExponential)
+        if (type == eExplicit || type == eExponential)
         {
             m_Y = m_tmp;
         }
@@ -677,7 +677,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             }
             op.DoOdeRhs(m_Y, m_F_IMEX[stage], m_T);
         }
-        else if (type == eExplicit || m_schemeType == eExponential)
+        else if (type == eExplicit || type == eExponential)
         {
             // Avoid projecting the same solution twice
             if (!((stage == 0) && m_firstStageEqualsOldSolution))
@@ -793,7 +793,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
     }
 
     // Ensure that the new solution is projected if necessary
-    if (type == eExplicit || m_schemeType == eExponential)
+    if (type == eExplicit || type == eExponential)
     {
         op.DoProjection(y_new[0], y_new[0], t_new[0]);
     }

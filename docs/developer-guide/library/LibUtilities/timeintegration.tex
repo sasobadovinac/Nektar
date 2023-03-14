@@ -10,6 +10,7 @@ TimeIntegrationGLM.h & TimeIntegrationGLM.cpp \\ \hline
 *TimeIntegrationSchemes.h & Specific GLM schemes, e.g. AB, RK, IMEX, etc. \\ \hline
 TimeIntegrationFIT.h & TimeIntegrationFIT.cpp \\ \hline
 TimeIntegrationGEM.h & TimeIntegrationGEM.cpp \\ \hline
+TimeIntegrationSDC.h & TimeIntegrationSDC.cpp \\ \hline
 \end{tabular}
 \end{center}
 
@@ -25,11 +26,12 @@ more (linear multistep methods) phases using the
 TimeIntegrationAlgorithmGLM class, which is where the GLM algorithm is
 performed using the helper class TimeIntegrationSolutionGLM.
 
-More recently Extrapolation and Fractional-in-time schemes have been 
-added as a sibbling class to the GLM class (found in the child class
-TimeIntegrationGEM and TimeIntegrationFIT, respectively). The 
-Extrapolation and the Fractional-in-time schemes make use of their 
-own separate algorithm.
+More recently Extrapolation, Spectral-Deferred-Correction, and 
+Fractional-in-time schemes have been added as sibbling classes to the 
+GLM class (found in the child classes
+TimeIntegrationGEM, TimeIntegrationSDC, and TimeIntegrationFIT, 
+respectively). The Extrapolation, Spectral-Deferred-Correction, and 
+the Fractional-in-time schemes make use of their own separate algorithm.
 
 
 \subsection{General Linear Methods}
@@ -259,6 +261,38 @@ For more details about Extrapolation methods, interested readers can refer
 to \cite{Deuflhard1985}.
 
 
+\subsection{Extrapolation Integration Schemes}
+
+In addition to the GLMs {\nek} also supports extrapolation methods:
+\begin{itemize}
+  \item \textbf{Extrapolation Methods}: Extrapolation methods allow 
+    the construction of arbitrarily high-order time-integration 
+    methods based on a series for low-order approximations.
+\end{itemize}
+
+The Extrapolation methods follow the same paradigm as the GLMs, that is
+both have the same parent class and as such have the same interface.
+
+For more details about Extrapolation methods, interested readers can refer
+to \cite{Deuflhard1985}.
+
+\subsection{Spectral Deferred Correction Integration Schemes}
+
+In addition to the GLMs {\nek} also supports spectral deferred correction 
+methods:
+\begin{itemize}
+  \item \textbf{Spectral Deferred Correction Methods}: Spectral Deferred 
+    Correction methods allow the construction of arbitrarily high-order 
+    time-integration methods based on a series for low-order approximations.
+\end{itemize}
+
+The Spectral Deferred Correction methods follow the same paradigm as the 
+GLMs, that is both have the same parent class and as such have the same 
+interface.
+
+For more details about Spectral Deferred Correction methods, interested
+readers can refer to \cite{Dutt2000, Minion2003, Ketcheson2014}.
+
 \subsection{Fractional-in-time Integration Schemes}
 
 In addition to the GLMs {\nek} also supports fractional methods:
@@ -361,6 +395,24 @@ ExtrapolationMethod & ExplicitEuler & Extrapolation method of arbitrary order
                     & ImplicitMidpoint & Extrapolation method of arbitrary order
                                          using a series of second-order implicit Euler
                                          scheme\\
+ExplicitSDC & Equidistant & Explicit Spectral Deferred Correction method of arbitrary order
+                            using equidistant quadrature points and first-order explicit
+                            Euler schemes\\
+            & GaussLobattoChebyshev & Explicit Spectral Deferred Correction method of arbitrary order
+                                      using Gauss-Lobatto-Chebyshev quadrature points and first-order
+                                      explicit Euler schemes\\
+            & GaussLobattoLegendre & Explicit Spectral Deferred Correction method of arbitrary order
+                                     using Gauss-Lobatto-Legendre quadrature points and first-order
+                                     explicit Euler schemes\\
+            & GaussRadauChebyshev & Explicit Spectral Deferred Correction method of arbitrary order
+                                    using Gauss-Radau-Chebyshev quadrature points and first-order
+                                    explicit Euler schemes\\
+            & GaussRadauLegendre & Explicit Spectral Deferred Correction method of arbitrary order
+                                   using Gauss-Radau-Legendre quadrature points and first-order
+                                   explicit Euler schemes\\
+ImplicitSDC & GaussRadauLegendre & Implicit Spectral Deferred Correction method of arbitrary order
+                                   using Gauss-Radau-Legendre quadrature points and first-order
+                                   implicit Euler schemes\\
 FractionalInTime &            & Fractional-in-time scheme of order 1-4
                               (Higher order not yet properly seeded),
                               free parameters, none,
