@@ -465,6 +465,7 @@ std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
     // List hidden options (e.g. session file arguments are not actually
     // specified using the input-file option by the user).
     po::options_description hidden("Hidden options");
+
     hidden.add_options()("input-file", po::value<vector<string>>(),
                          "input filename");
 
@@ -2368,7 +2369,21 @@ void SessionReader::ReadFunctions(TiXmlElement *conditions)
                              "filename:var1,var2");
 
                 // set the filename
-                funcDef.m_filename = fSplit[0];
+                fs::path fullpath = fSplit[0];
+                fs::path ftype    = fullpath.extension();
+                if (fullpath.parent_path().extension() == ".pit")
+                {
+                    string filename = fullpath.stem().string();
+                    fullpath        = fullpath.parent_path();
+                    size_t start    = filename.find_last_of("_") + 1;
+                    int index =
+                        atoi(filename.substr(start, filename.size()).c_str());
+                    fullpath /= filename.substr(0, start) +
+                                std::to_string(
+                                    index + m_comm->GetTimeComm()->GetRank()) +
+                                ftype.string();
+                }
+                funcDef.m_filename = fullpath.string();
 
                 if (fSplit.size() == 2)
                 {
