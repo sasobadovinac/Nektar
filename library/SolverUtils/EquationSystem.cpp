@@ -698,8 +698,9 @@ void EquationSystem::v_InitObject(bool DeclareFields)
              "should be set!");
     m_session->LoadParameter("TimeIncrementFactor", m_TimeIncrementFactor, 1.0);
 
-    m_nchk         = 0;
-    m_pararealIter = 0;
+    m_nchk                = 0;
+    m_pararealIter        = 0;
+    m_useInitialCondition = true;
 }
 
 /**
@@ -964,6 +965,12 @@ void EquationSystem::v_SetInitialConditions(NekDouble initialtime,
 {
     boost::ignore_unused(initialtime);
 
+    if (!m_useInitialCondition)
+    {
+        ++m_nchk;
+        return;
+    }
+
     if (m_session->GetComm()->GetRank() == 0)
     {
         cout << "Initial Conditions:" << endl;
@@ -988,7 +995,6 @@ void EquationSystem::v_SetInitialConditions(NekDouble initialtime,
 
         if (m_session->GetComm()->GetRank() == 0)
         {
-
             for (int i = 0; i < m_fields.size(); ++i)
             {
                 std::string varName = m_session->GetVariable(i);
@@ -1016,31 +1022,21 @@ void EquationSystem::v_SetInitialConditions(NekDouble initialtime,
         }
     }
 
-    if (dumpInitialConditions && m_checksteps && m_nchk == 0)
+    if (dumpInitialConditions && m_checksteps && m_nchk == 0 &&
+        !ParallelInTime())
     {
-        if (!ParallelInTime())
+        Checkpoint_Output(m_nchk);
+    }
+    else if (dumpInitialConditions && m_nchk == 0 && ParallelInTime())
+    {
+        std::string newdir = m_sessionName + ".pit";
+        if (!fs::is_directory(newdir))
         {
-            Checkpoint_Output(m_nchk);
+            fs::create_directory(newdir);
         }
-        else // FIXME: Parareal (not optimal)
+        if (m_comm->GetTimeComm()->GetRank() == 0)
         {
-            std::string newdir = m_sessionName + ".pit";
-            if (!fs::is_directory(newdir))
-            {
-                fs::create_directory(newdir);
-            }
-            WriteFld(newdir + "/" + m_sessionName + "_" +
-                     boost::lexical_cast<std::string>(
-                         m_comm->GetTimeComm()->GetRank()) +
-                     ".fld");
-            // Remove duplicated IC files
-            if (m_comm->GetTimeComm()->GetRank() != 0)
-            {
-                fs::remove_all(newdir + "/" + m_sessionName + "_" +
-                               boost::lexical_cast<std::string>(
-                                   m_comm->GetTimeComm()->GetRank()) +
-                               ".fld");
-            }
+            WriteFld(newdir + "/" + m_sessionName + "_0.fld");
         }
     }
     ++m_nchk;
@@ -1117,7 +1113,7 @@ void EquationSystem::v_Output(void)
     }
     else
     {
-        // Parareal-in-time
+        // Parallel-in-time
         std::string newdir = m_sessionName + ".pit";
         if (!fs::is_directory(newdir))
         {
@@ -1169,9 +1165,7 @@ void EquationSystem::Checkpoint_Output(const int n)
     }
     else
     {
-        // Parareal-in-time
-        // std::string paradir = "parareal_iteration_" +
-        //    boost::lexical_cast<std::string>(m_pararealIter);
+        // Parallel-in-time
         std::string paradir = m_sessionName + "_" +
                               boost::lexical_cast<std::string>(m_pararealIter) +
                               ".pit";
@@ -1203,9 +1197,7 @@ void EquationSystem::Checkpoint_Output(
     }
     else
     {
-        // Parareal-in-time
-        // std::string paradir = "parareal_iteration_" +
-        //    boost::lexical_cast<std::string>(m_pararealIter);
+        // Parallel-in-time
         std::string paradir = m_sessionName + "_" +
                               boost::lexical_cast<std::string>(m_pararealIter) +
                               ".pit";

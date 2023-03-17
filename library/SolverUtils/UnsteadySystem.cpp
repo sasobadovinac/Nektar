@@ -284,6 +284,7 @@ void UnsteadySystem::v_DoSolve()
 
         // Flag to update AV
         m_CalcPhysicalAV = true;
+
         // Frozen preconditioner checks
         if (!ParallelInTime())
         {
@@ -345,12 +346,13 @@ void UnsteadySystem::v_DoSolve()
 
         // Write out status information
         if (m_infosteps &&
-            (m_session->GetComm()->GetRank() == 0 || ParallelInTime()) &&
+            m_session->GetComm()->GetSpaceComm()->GetRank() == 0 &&
             !((step + 1) % m_infosteps))
         {
             if (ParallelInTime())
             {
-                cout << "RANK " << m_session->GetComm()->GetRank()
+                cout << "RANK "
+                     << m_session->GetComm()->GetTimeComm()->GetRank()
                      << " Steps: " << setw(8) << left << step + 1 << " "
                      << "Time: " << setw(12) << left << m_time;
             }
@@ -538,7 +540,8 @@ void UnsteadySystem::v_DoSolve()
                  << "CFL time-step     : " << m_timestep << endl;
         }
 
-        if (m_session->GetSolverInfo("Driver") != "SteadyState")
+        if (m_session->GetSolverInfo("Driver") != "SteadyState" &&
+            m_session->GetSolverInfo("Driver") != "Parareal")
         {
             cout << "Time-integration  : " << intTime << "s" << endl;
         }

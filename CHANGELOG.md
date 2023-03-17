@@ -72,6 +72,7 @@ v5.3.0
 - Add Spectral Deferred Correction (SDC) time integration schemes (!1481)
 - Modify SessionReader to read restart/exact solution files parallel-in-time (!1521)
 - Fix Polylib_test.cpp (!1524)
+- Update to Parareal file output (!1517)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -89,6 +90,7 @@ v5.3.0
 - Fix a Wuninitialized-const-reference warning (!1449)
 - New implementation of the Stagnation Inflow Boundary Condition (!1478)
 - Remove m_root in PreconCfs to avoid possible future conflict with parallel-in-time driver (!1515)
+- Update to Parareal file output (!1517)
 
 **CardiacEPSolver**
 - Fix a shadowed loop counter variable in the benchmark filter (!1436)
@@ -202,6 +204,7 @@ v5.2.0
 - Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
 - Equation types are registered to the session reader (!1344)
 - Added Block-Preconditioner for Full Matrix solve (!1350)
+- Update to Parareal file output (!1517)
 
 **ADRSolver:**
 - Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
