@@ -224,14 +224,8 @@ void ProcessInterpPoints::v_Process(po::variables_map &vm)
     set<int> sinmode;
     if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
     {
-        vector<int> value;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     m_config["realmodetoimag"].as<string>(), value),
-                 "Failed to interpret realmodetoimag string");
-        for (int j : value)
-        {
-            sinmode.insert(j);
-        }
+        ParseUtils::GenerateVariableSet(m_config["realmodetoimag"].as<string>(),
+                                        m_f->m_variables, sinmode);
     }
     for (int j = 0; j < nfields; ++j)
     {

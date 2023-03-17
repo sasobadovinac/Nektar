@@ -67,37 +67,10 @@ ProcessGrad::~ProcessGrad()
 void ProcessGrad::ParserOptions(std::set<int> &variables,
                                 std::set<int> &directions)
 {
-    int expdim   = m_f->m_graph->GetMeshDimension();
-    int spacedim = m_f->m_numHomogeneousDir + expdim;
-    variables.clear();
     if (m_config["vars"].as<string>().compare("NotSet"))
     {
-        vector<string> vars;
-        ASSERTL0(
-            ParseUtils::GenerateVector(m_config["vars"].as<string>(), vars),
-            "Failed to interpret variable numbers or names");
-        for (string s : vars)
-        {
-            int v = -1;
-            try
-            {
-                v = boost::lexical_cast<int>(s);
-            }
-            catch (const boost::bad_lexical_cast &)
-            {
-                auto index =
-                    find(m_f->m_variables.begin(), m_f->m_variables.end(), s);
-                v = index - m_f->m_variables.begin();
-            }
-            if (v < 0 || v >= m_f->m_variables.size())
-            {
-                WARNINGL0(false, "Warning: variable " + s + " not found");
-            }
-            else
-            {
-                variables.insert(v);
-            }
-        }
+        ParseUtils::GenerateVariableSet(m_config["vars"].as<string>(),
+                                        m_f->m_variables, variables);
     }
     else
     {
@@ -106,37 +79,13 @@ void ProcessGrad::ParserOptions(std::set<int> &variables,
             variables.insert(v);
         }
     }
-    directions.clear();
     vector<string> coords = {"x", "y", "z"};
+    int spacedim = m_f->m_numHomogeneousDir + m_f->m_graph->GetMeshDimension();
+    coords.resize(spacedim);
     if (m_config["dirs"].as<string>().compare("NotSet"))
     {
-        vector<string> vars;
-        ASSERTL0(
-            ParseUtils::GenerateVector(m_config["dirs"].as<string>(), vars),
-            "Failed to interpret coordinate numbers or names");
-        for (string s : vars)
-        {
-            int d = -1;
-            try
-            {
-                d = boost::lexical_cast<int>(s);
-            }
-            catch (const boost::bad_lexical_cast &)
-            {
-                auto index =
-                    find(coords.begin(), coords.end(), boost::to_lower_copy(s));
-                d = index - coords.begin();
-            }
-            if (d < 0 || d >= spacedim)
-            {
-                WARNINGL0(false,
-                          "Warning: space direction " + s + " not found");
-            }
-            else
-            {
-                directions.insert(d);
-            }
-        }
+        ParseUtils::GenerateVariableSet(m_config["dirs"].as<string>(), coords,
+                                        directions);
     }
     else
     {
