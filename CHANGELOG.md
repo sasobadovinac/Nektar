@@ -54,6 +54,7 @@ v5.3.0
 - Fix TimeIntegrationDemo.cpp and add ESDIRK tst files to the CI (!1485)
 - Add DIRKOrder1, BDFImplicitOrder3, BDFImplicitOrder4, RungeKutta1, and RungeKutta3 schemes to the register (!1485)
 - Use DIRK (instead of IMEXdirk) schemes for the start-up phase of high-order BDF and AM schemes (!1485).
+- Fix IMEXdirk_1_2_2 and IMEXdirk_2_3_3 time-integration schemes (!1499)
 - Add extrapolation time-integration scheme (!1488)
 - Fix CNAB/MCNAB time-integration schemes (!1493)
 - Slightly tidy-up time integration algorithms (!1496)

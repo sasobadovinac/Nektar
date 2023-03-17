@@ -366,7 +366,8 @@ IMEX           & Gear & IMEX Gear variant of order 2\\
 IMEX           & dirk & IMEX DIRK variant with free parameters (s, sigma), 
                         where s is the number of implicit stage schemes,
                         sigma is the number of explicit stage scheme and
-                        p is the combined order of the scheme.\\
+                        p is the combined order of the scheme (Note: IMEX 
+                        DIRK schemes are only validated for the ADR Solver).\\
 
                & dirk & Forward-Backward Euler, first order, free parameters (1,1)\\
                & dirk & Forward-Backward Euler, first order, free parameters (1,2)\\
@@ -441,16 +442,21 @@ example:\\
  </TIMEINTEGRATIONSCHEME>
 
  <SOLVERINFO>
-   <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes" />
-   <I PROPERTY="SolverType" VALUE="VelocityCorrectionScheme" />
-   <I PROPERTY="AdvectionForm" VALUE="Convective" /> 
-   <I PROPERTY="Projection" VALUE="Galerkin" /> 
+   <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvectionDiffusion"  />
+   <I PROPERTY="Projection"            VALUE="DisContinuous"               />
+   <I PROPERTY="AdvectionAdvancement"  VALUE="Explicit"                    />
+   <I PROPERTY="AdvectionType"         VALUE="WeakDG"                      />
+   <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"                    />
+   <I PROPERTY="UpwindType"            VALUE="Upwind"                      />
  </SOLVERINFO>
  
  <PARAMETERS>
-   <P> TimeStep = 0.001 </P> 
-   <P> NumSteps = 1000 </P> 
-   <P> Kinvis = 1 </P>
+   <P> TimeStep      = 0.0005              </P>
+   <P> NumSteps      = 200                 </P>
+   <P> wavefreq      = PI                  </P>
+   <P> epsilon       = 1.0                 </P>
+   <P> ax            = 2.0                 </P>
+   <P> ay            = 2.0                 </P>
 </PARAMETERS>
 \end{lstlisting}
 
