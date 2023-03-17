@@ -297,15 +297,14 @@ int main()
             for (np = NPLOWER; np <= NPUPPER; ++np)
             {
                 zwgj(z, w, np, alpha, beta);
+                Dgj(d, z, np, alpha, beta);
                 for (n = 2; n < np - 1; ++n)
                 {
-                    Dgj(d, z, np, alpha, beta);
-
                     for (i = 0; i < np; ++i)
                         p[i] = pow(z[i], n);
                     sum = 0;
                     for (i = 0; i < np; ++i)
-                        sum += fabs(ddot(np, d + i * np, 1, p, 1) -
+                        sum += fabs(ddot(np, d + i, np, p, 1) -
                                     n * pow(z[i], n - 1));
                     sum /= np;
                     if (fabs(sum) > EPS)
@@ -334,14 +333,14 @@ int main()
             for (np = NPLOWER; np <= NPUPPER; ++np)
             {
                 zwgrjm(z, w, np, alpha, beta);
+                Dgrjm(d, z, np, alpha, beta);
                 for (n = 2; n < np - 1; ++n)
                 {
-                    Dgrjm(d, z, np, alpha, beta);
                     for (i = 0; i < np; ++i)
                         p[i] = pow(z[i], n);
                     sum = 0;
                     for (i = 0; i < np; ++i)
-                        sum += fabs(ddot(np, d + i * np, 1, p, 1) -
+                        sum += fabs(ddot(np, d + i, np, p, 1) -
                                     n * pow(z[i], n - 1));
                     sum /= np;
                     if (fabs(sum) > EPS)
@@ -370,14 +369,14 @@ int main()
             for (np = NPLOWER; np <= NPUPPER; ++np)
             {
                 zwgrjp(z, w, np, alpha, beta);
+                Dgrjp(d, z, np, alpha, beta);
                 for (n = 2; n < np - 1; ++n)
                 {
-                    Dgrjp(d, z, np, alpha, beta);
                     for (i = 0; i < np; ++i)
                         p[i] = pow(z[i], n);
                     sum = 0;
                     for (i = 0; i < np; ++i)
-                        sum += fabs(ddot(np, d + i * np, 1, p, 1) -
+                        sum += fabs(ddot(np, d + i, np, p, 1) -
                                     n * pow(z[i], n - 1));
                     sum /= np;
                     if (fabs(sum) > EPS)
@@ -406,14 +405,14 @@ int main()
             for (np = NPLOWER; np <= NPUPPER; ++np)
             {
                 zwglj(z, w, np, alpha, beta);
+                Dglj(d, z, np, alpha, beta);
                 for (n = 2; n < np - 1; ++n)
                 {
-                    Dglj(d, z, np, alpha, beta);
                     for (i = 0; i < np; ++i)
                         p[i] = pow(z[i], n);
                     sum = 0;
                     for (i = 0; i < np; ++i)
-                        sum += fabs(ddot(np, d + i * np, 1, p, 1) -
+                        sum += fabs(ddot(np, d + i, np, p, 1) -
                                     n * pow(z[i], n - 1));
                     sum /= np;
                     if (fabs(sum) > EPS)
@@ -453,8 +452,7 @@ int main()
                     Imgj(d, z, w, np, np, alpha, beta);
                     sum = 0;
                     for (i = 0; i < np; ++i)
-                        sum +=
-                            fabs(ddot(np, d + i * np, 1, p, 1) - pow(w[i], n));
+                        sum += fabs(ddot(np, d + i, np, p, 1) - pow(w[i], n));
                     sum /= np;
                     if (fabs(sum) > EPS)
                         printf("alpha = %lf, beta = %lf, np = %d, n = %d "
@@ -492,8 +490,7 @@ int main()
                     Imgrjm(d, z, w, np, np, alpha, beta);
                     sum = 0;
                     for (i = 0; i < np; ++i)
-                        sum +=
-                            fabs(ddot(np, d + i * np, 1, p, 1) - pow(w[i], n));
+                        sum += fabs(ddot(np, d + i, np, p, 1) - pow(w[i], n));
                     sum /= np;
                     if (fabs(sum) > EPS)
                         printf("alpha = %lf, beta = %lf, np = %d, n = %d "
@@ -530,8 +527,7 @@ int main()
                     Imgrjp(d, z, w, np, np, alpha, beta);
                     sum = 0;
                     for (i = 0; i < np; ++i)
-                        sum +=
-                            fabs(ddot(np, d + i * np, 1, p, 1) - pow(w[i], n));
+                        sum += fabs(ddot(np, d + i, np, p, 1) - pow(w[i], n));
                     sum /= np;
                     if (fabs(sum) > EPS)
                         printf("alpha = %lf, beta = %lf, np = %d, n = %d "
@@ -569,8 +565,7 @@ int main()
                     Imglj(d, z, w, np, np, alpha, beta);
                     sum = 0;
                     for (i = 0; i < np; ++i)
-                        sum +=
-                            fabs(ddot(np, d + i * np, 1, p, 1) - pow(w[i], n));
+                        sum += fabs(ddot(np, d + i, np, p, 1) - pow(w[i], n));
                     sum /= np;
                     if (fabs(sum) > EPS)
                         printf("alpha = %lf, beta = %lf, np = %d, n = %d "
