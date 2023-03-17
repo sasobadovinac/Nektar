@@ -33,8 +33,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <boost/core/ignore_unused.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/spirit/include/qi_auto.hpp>
 #include <boost/spirit/include/qi_core.hpp>
 #include <sstream>
@@ -159,6 +161,38 @@ LIB_UTILITIES_EXPORT bool ParseUtils::GenerateVector(
     bool success = qi::phrase_parse(it, str.end(), +~qi::char_(",") % ',',
                                     qi::ascii::space, out);
     return success && it == str.end();
+}
+
+bool ParseUtils::GenerateVariableSet(const std::string &str,
+                                     const std::vector<std::string> &variables,
+                                     std::set<int> &out)
+{
+    out.clear();
+    std::vector<std::string> vars;
+    ASSERTL0(ParseUtils::GenerateVector(str, vars),
+             "Failed to interpret variable numbers or names from " + str);
+    for (std::string s : vars)
+    {
+        int v = -1;
+        try
+        {
+            v = boost::lexical_cast<int>(s);
+        }
+        catch (const boost::bad_lexical_cast &)
+        {
+            auto index = find(variables.begin(), variables.end(), s);
+            v          = index - variables.begin();
+        }
+        if (v < 0 || v >= variables.size())
+        {
+            WARNINGL0(false, "Warning: variable " + s + " not found");
+        }
+        else
+        {
+            out.insert(v);
+        }
+    }
+    return true;
 }
 
 } // namespace Nektar

@@ -74,14 +74,8 @@ void ProcessHalfModeToFourier::v_Process(po::variables_map &vm)
     set<int> sinmode;
     if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
     {
-        vector<int> value;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     m_config["realmodetoimag"].as<string>(), value),
-                 "Failed to interpret realmodetoimag string");
-        for (int j : value)
-        {
-            sinmode.insert(j);
-        }
+        ParseUtils::GenerateVariableSet(m_config["realmodetoimag"].as<string>(),
+                                        m_f->m_variables, sinmode);
     }
     // modify field definition
     for (int i = 0; i < m_f->m_data.size(); ++i)
@@ -120,15 +114,19 @@ void ProcessHalfModeToFourier::v_Process(po::variables_map &vm)
         int offset = 0, count = 0;
         for (size_t n = 0; n < m_f->m_fielddef[i]->m_fields.size(); ++n)
         {
-            int datalen = m_f->m_fielddef[i]->m_numModes[0] *
-                          m_f->m_fielddef[i]->m_numModes[1];
+            int datalen = LibUtilities::GetNumberOfCoefficients(
+                m_f->m_fielddef[i]->m_shapeType,
+                m_f->m_fielddef[i]->m_numModes[0],
+                m_f->m_fielddef[i]->m_numModes[1]);
             for (int e = 0; e < nelemts; ++e)
             {
                 if (!m_f->m_fielddef[i]->m_uniOrder)
                 {
 
-                    datalen = m_f->m_fielddef[i]->m_numModes[3 * e] *
-                              m_f->m_fielddef[i]->m_numModes[3 * e + 1];
+                    datalen = LibUtilities::GetNumberOfCoefficients(
+                        m_f->m_fielddef[i]->m_shapeType,
+                        m_f->m_fielddef[i]->m_numModes[3 * e],
+                        m_f->m_fielddef[i]->m_numModes[3 * e + 1]);
                 }
                 if (sinmode.count(n))
                 {

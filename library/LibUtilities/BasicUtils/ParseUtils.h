@@ -37,6 +37,7 @@
 #define NEKTAR_LIBUTILITIES_PARSEUTILS_H
 
 #include <LibUtilities/LibUtilitiesDeclspec.h>
+#include <set>
 #include <sstream>
 #include <vector>
 
@@ -104,6 +105,26 @@ public:
 
         return ss.str();
     }
+
+    /**
+     * @brief Generate a set of variable locations.
+     *
+     * This utility routine takes entries of @p str and returns a integer
+     * set that contains locations of parsed variables in @p variables.
+     * For example,
+     *
+     *     str = "0,1,w,p";
+     *     variables = {"u", "v", "w", "p"};
+     *
+     * will produce an set `out = {0,1,2,3}`.
+     *
+     * @param str  A string of variables separated by comma.
+     * @param variables A vector of variables
+     * @return out A set of locations of parsed variables in @p variables.
+     */
+    LIB_UTILITIES_EXPORT static bool GenerateVariableSet(
+        const std::string &str, const std::vector<std::string> &variables,
+        std::set<int> &out);
 };
 
 } // namespace Nektar
