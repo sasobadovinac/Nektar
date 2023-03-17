@@ -1,0 +1,144 @@
+<NEKTAR>
+
+    <GEOMETRY DIM="2" SPACE="3">
+        <VERTEX>
+            <V ID="0"> 0.0 0.0 0.0 </V>
+            <V ID="1"> 1.0 0.0 0.0 </V>
+            <V ID="2"> 0.0 1.0 0.0 </V>
+            <V ID="3"> 1.0 1.0 0.0 </V>
+        </VERTEX>
+        <EDGE>
+            <E ID="0"> 0 1 </E>
+            <E ID="1"> 1 3 </E>
+            <E ID="2"> 3 2 </E>
+            <E ID="3"> 2 0 </E>
+        </EDGE>
+        <ELEMENT>
+            <Q ID="0"> 0 1 2 3 </Q>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="0"> E[3] </C>
+            <C ID="1"> E[0,2] </C>
+            <C ID="2"> E[1] </C>
+            <C ID="3"> Q[0] </C>
+        </COMPOSITE>
+        <DOMAIN> C[3] </DOMAIN>
+    </GEOMETRY>
+
+    <EXPANSIONS>
+        <E COMPOSITE="C[3]" NUMMODES="2" FIELDS="rho,rhou,rhov,rhow,E" TYPE="MODIFIED" />
+    </EXPANSIONS>
+
+    <CONDITIONS>
+
+        <!--
+            Uniform flow through a square channel
+
+            This test is intended to test the implementation of the StagnationInflowBC
+            when the flow direction is specified. This should lead to a uniform flow in
+            the (1,0,1) direction, with a Mach number of 0.8.
+
+            Note that this case should converge to a steady state in less than 500 iterations.
+            If the test uses all 500 iterations, the performance of the BC or the solver has
+            degraded since this test was constructed.
+
+            The L2 and Linf errors for this test should be in the order of 1E-14. If they are
+            higher, then something is wrong.
+        -->
+        <PARAMETERS>
+            <!--
+                Independent variables, can be changed
+            -->
+            <P> CFL             = 0.1                         </P>
+            <P> NumSteps        = 500                         </P>
+            <P> SteadyStateTol  = 5e-15                       </P>
+            <P> IO_CheckSteps   = 0                           </P>
+            <P> IO_InfoSteps    = 1                           </P>
+            <P> Gamma           = 1.4                         </P>
+            <P> GasConstant     = 1. / Gamma                  </P>
+            <P> cInf            = 1.0                         </P>
+            <P> rhoInf          = 1.0                         </P>
+            <P> Mach            = 0.8                         </P>
+            <!--
+                Dependent variables, should not be changed
+            -->
+            <P> TInf            = cInf ^ 2 / Gamma / GasConstant              </P>
+            <P> pInf            = rhoInf * GasConstant * TInf                 </P>
+            <P> uInf            = Mach * cInf / 100                           </P>
+            <P> vInf            = 0.0                                         </P>
+            <P> wInf            = Mach * cInf / 100                           </P>
+            <P> T0              = TInf * ( 1. + (Gamma - 1) / 2 * Mach ^ 2 )  </P>
+            <P> P0              = pInf * ( T0 / TInf ) ^ (Gamma / (Gamma - 1))</P>
+            <P> rho0            = P0 / GasConstant / T0                       </P>
+        </PARAMETERS>
+
+        <SOLVERINFO>
+            <I PROPERTY="EQType"                VALUE="EulerCFE"            />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"       />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
+            <I PROPERTY="UpwindType"            VALUE="Roe"                 />
+            <I PROPERTY="ProblemType"           VALUE="General"             />
+        </SOLVERINFO>
+
+        <VARIABLES>
+            <V ID="0"> rho  </V>
+            <V ID="1"> rhou </V>
+            <V ID="2"> rhov </V>
+            <V ID="3"> rhow </V>
+            <V ID="4"> E    </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[0] </B>    <!-- Inlet  -->
+            <B ID="1"> C[1] </B>    <!-- Walls -->
+            <B ID="2"> C[2] </B>    <!-- Outlet -->
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <!-- Inlet -->
+            <!-- By setting rhou = rhov = rhow = 0, the flow direction will be normal to the boundary -->
+            <REGION REF="0">
+                <D VAR="rho"  USERDEFINEDTYPE="StagnationInflow" VALUE="rho0" />
+                <D VAR="rhou" USERDEFINEDTYPE="StagnationInflow" VALUE="1" />
+                <D VAR="rhov" USERDEFINEDTYPE="StagnationInflow" VALUE="0" />
+                <D VAR="rhow" USERDEFINEDTYPE="StagnationInflow" VALUE="1" />
+                <D VAR="E"    USERDEFINEDTYPE="StagnationInflow" VALUE="P0 / (Gamma - 1)" />
+            </REGION>
+            <!-- Walls -->
+            <REGION REF="1">
+                <D VAR="rho"  USERDEFINEDTYPE="Wall" VALUE="0" />
+                <D VAR="rhou" USERDEFINEDTYPE="Wall" VALUE="0" />
+                <D VAR="rhov" USERDEFINEDTYPE="Wall" VALUE="0" />
+                <D VAR="rhow" USERDEFINEDTYPE="Wall" VALUE="0" />
+                <D VAR="E"    USERDEFINEDTYPE="Wall" VALUE="0" />
+            </REGION>
+            <!-- Outlet -->
+            <REGION REF="2">
+                <D VAR="rho"  USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+                <D VAR="rhou" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+                <D VAR="rhov" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+                <D VAR="rhow" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+                <D VAR="E"    USERDEFINEDTYPE="PressureOutflow" VALUE="pInf" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="rho"  VALUE="rhoInf" />
+            <E VAR="rhou" VALUE="rhoInf * uInf" />
+            <E VAR="rhov" VALUE="rhoInf * vInf" />
+            <E VAR="rhow" VALUE="rhoInf * wInf" />
+            <E VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf^2 + vInf^2 + wInf^2)" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="rho"  VALUE="rhoInf" />
+            <E VAR="rhou" VALUE="rhoInf * Mach * cInf / sqrt(2)" />
+            <E VAR="rhov" VALUE="rhoInf * vInf" />
+            <E VAR="rhow" VALUE="rhoInf * Mach * cInf / sqrt(2)" />
+            <E VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * ((Mach * cInf)^2 + vInf^2)" />
+        </FUNCTION>
+
+    </CONDITIONS>
+
+</NEKTAR>

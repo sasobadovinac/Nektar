@@ -32,9 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <boost/core/ignore_unused.hpp>
-
 #include "StagnationInflowBC.h"
+#include <boost/core/ignore_unused.hpp>
 
 using namespace std;
 
@@ -53,21 +52,52 @@ StagnationInflowBC::StagnationInflowBC(
     const int pSpaceDim, const int bcRegion, const int cnt)
     : CFSBndCond(pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt)
 {
-    int nvariables = m_fields.size();
-    int expdim     = pFields[0]->GetGraph()->GetMeshDimension();
-    int spacedim   = pFields[0]->GetGraph()->GetSpaceDimension();
-    m_swirl        = ((spacedim == 3) && (expdim == 2));
-    // Loop over Boundary Regions for StagnationInflowBC
-    m_fieldStorage = Array<OneD, Array<OneD, NekDouble>>(nvariables);
-
-    int numBCPts =
+    const size_t nvariables = m_fields.size();
+    const int expdim        = m_fields[0]->GetGraph()->GetMeshDimension();
+    const int spacedim      = m_fields[0]->GetGraph()->GetSpaceDimension();
+    const int numBCPts =
         m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetNpoints();
+
+    // Allocate internal storage for boundary condition values
+    m_fieldStorage = Array<OneD, Array<OneD, NekDouble>>(nvariables);
     for (int i = 0; i < nvariables; ++i)
     {
         m_fieldStorage[i] = Array<OneD, NekDouble>(numBCPts, 0.0);
         Vmath::Vcopy(numBCPts,
                      m_fields[i]->GetBndCondExpansions()[m_bcRegion]->GetPhys(),
                      1, m_fieldStorage[i], 1);
+    }
+
+    // Compute the flow direction that will be imposed
+    for (int j = 0; j < numBCPts; ++j)
+    {
+        // Compute norm of user-specified flow direction
+        NekDouble dirNorm = 0.;
+        for (int i = 0; i < spacedim; ++i)
+        {
+            dirNorm += std::pow(m_fieldStorage[i + 1][j], 2);
+        }
+        dirNorm = std::sqrt(dirNorm);
+
+        // Use the user-specified flow direction if it's nonzero
+        if (dirNorm > 1.E-8)
+        {
+            for (int i = 0; i < spacedim; ++i)
+            {
+                m_fieldStorage[i + 1][j] /= dirNorm;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < expdim; ++i)
+            {
+                m_fieldStorage[i + 1][j] = -m_traceNormals[i][j];
+            }
+            for (int i = expdim; i < spacedim; ++i)
+            {
+                m_fieldStorage[i + 1][j] = 0.;
+            }
+        }
     }
 }
 
@@ -77,101 +107,69 @@ void StagnationInflowBC::v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
 {
     boost::ignore_unused(time);
 
-    int i, j;
-    int nTracePts = m_fields[0]->GetTrace()->GetNpoints();
-    int numBCPts =
-        m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetNpoints();
-    int nVariables = physarray.size();
+    const size_t nTracePts  = Fwd[0].size();
+    const size_t nVariables = physarray.size();
+
+    ASSERTL0(nTracePts == m_fields[0]->GetTrace()->GetNpoints(),
+             "Number of trace points does not match in "
+             "StagnationInflowBC::v_Apply()");
 
     const Array<OneD, const int> &traceBndMap = m_fields[0]->GetTraceBndMap();
 
-    NekDouble gammaInv         = 1.0 / m_gamma;
-    NekDouble gammaMinusOne    = m_gamma - 1.0;
-    NekDouble gammaMinusOneInv = 1.0 / gammaMinusOne;
+    // Get velocity magnitude from Fwd
+    Array<OneD, NekDouble> absVel(nTracePts, 0.0);
+    m_varConv->GetAbsoluteVelocity(Fwd, absVel);
 
-    // Get stagnation pressure (with zero swirl)
-    Array<OneD, NekDouble> pStag(numBCPts);
-    if (m_swirl)
-    {
-        Array<OneD, NekDouble> tmp(numBCPts);
-        Vmath::Vcopy(numBCPts, m_fieldStorage[3], 1, tmp, 1);
-        Vmath::Zero(numBCPts, m_fieldStorage[3], 1);
-        m_varConv->GetPressure(m_fieldStorage, pStag);
-        Vmath::Vcopy(numBCPts, tmp, 1, m_fieldStorage[3], 1);
-    }
-    else
-    {
-        m_varConv->GetPressure(m_fieldStorage, pStag);
-    }
-
-    // Get Mach from Fwd
-    Array<OneD, NekDouble> soundSpeed(nTracePts);
-    Array<OneD, NekDouble> Mach(nTracePts);
-    m_varConv->GetSoundSpeed(Fwd, soundSpeed);
-    m_varConv->GetMach(Fwd, soundSpeed, Mach);
-
-    // Auxiliary variables
-    int e, id1, id2, npts, pnt;
-    NekDouble rho, p;
-
-    // Loop on the m_bcRegion
-    for (e = 0;
+    // Loop over all elements on the boundary
+    for (int e = 0;
          e < m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetExpSize(); ++e)
     {
-        npts = m_fields[0]
-                   ->GetBndCondExpansions()[m_bcRegion]
-                   ->GetExp(e)
-                   ->GetTotPoints();
-        id1 =
+        // Number of quadrature points in this element
+        const int npts = m_fields[0]
+                             ->GetBndCondExpansions()[m_bcRegion]
+                             ->GetExp(e)
+                             ->GetTotPoints();
+        const int id1 =
             m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetPhys_Offset(e);
-        id2 =
+        const int id2 =
             m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset + e]);
 
-        // Loop on points of m_bcRegion 'e'
-        for (i = 0; i < npts; i++)
+        // Loop over all quadrature points on this element
+        for (int i = 0; i < npts; ++i)
         {
-            pnt = id2 + i;
+            // Copy conserved variables at stagnation state from BC
+            NekDouble rhoStag = m_fieldStorage[0][id1 + i];
+            NekDouble EStag   = m_fieldStorage[nVariables - 1][id1 + i];
 
-            // Pressure from stagnation pressure and Mach
-            p = pStag[id1 + i] /
-                pow(1.0 + (gammaMinusOne) / 2.0 * Mach[pnt] * Mach[pnt],
-                    m_gamma / (gammaMinusOne));
+            // Compute stagnation enthalpy
+            NekDouble hStag = m_gamma * EStag / rhoStag;
 
-            // rho from isentropic relation: rho = rhoStag *(p/pStag)^1/Gamma
-            rho =
-                m_fieldStorage[0][id1 + i] * pow(p / pStag[id1 + i], gammaInv);
+            // Compute static enthalpy by solving 1D energy balance
+            NekDouble hStat = hStag - 0.5 * pow(absVel[id2 + i], 2);
+
+            // Compute density from isentropic flow relation
+            NekDouble rho = rhoStag * pow(rhoStag * hStat / (EStag * m_gamma),
+                                          1. / (m_gamma - 1.));
+
+            // Update density for BC
             (m_fields[0]
                  ->GetBndCondExpansions()[m_bcRegion]
                  ->UpdatePhys())[id1 + i] = rho;
 
-            // Extrapolation for velocity and Kinetic energy calculation
-            int lim      = m_swirl ? nVariables - 2 : nVariables - 1;
-            NekDouble Ek = 0.0;
-            for (j = 1; j < lim; ++j)
+            // Update momentum for BC
+            for (int n = 0; n < m_spacedim; ++n)
             {
-                (m_fields[j]
+                (m_fields[1 + n]
                      ->GetBndCondExpansions()[m_bcRegion]
-                     ->UpdatePhys())[id1 + i] = Fwd[j][pnt];
-
-                Ek += 0.5 * (Fwd[j][pnt] * Fwd[j][pnt]) / Fwd[0][pnt];
+                     ->UpdatePhys())[id1 + i] =
+                    rho * absVel[id2 + i] * m_fieldStorage[1 + n][id1 + i];
             }
 
-            if (m_swirl)
-            {
-                // Prescribed swirl
-                (m_fields[3]
-                     ->GetBndCondExpansions()[m_bcRegion]
-                     ->UpdatePhys())[id1 + i] = m_fieldStorage[3][id1 + i];
-                Ek +=
-                    0.5 *
-                    (m_fieldStorage[3][id1 + i] * m_fieldStorage[3][id1 + i]) /
-                    Fwd[0][pnt];
-            }
-
-            // Energy
+            // Update total energy for BC
             (m_fields[nVariables - 1]
                  ->GetBndCondExpansions()[m_bcRegion]
-                 ->UpdatePhys())[id1 + i] = p * gammaMinusOneInv + Ek;
+                 ->UpdatePhys())[id1 + i] =
+                rho * (hStat / m_gamma + 0.5 * pow(absVel[id2 + i], 2));
         }
     }
 }
