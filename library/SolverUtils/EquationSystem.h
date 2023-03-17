@@ -318,6 +318,16 @@ public:
         m_pararealIter = num;
     }
 
+    SOLVER_UTILS_EXPORT bool GetUseInitialCondition()
+    {
+        return m_useInitialCondition;
+    }
+
+    SOLVER_UTILS_EXPORT void SetUseInitialCondition(bool num)
+    {
+        m_useInitialCondition = num;
+    }
+
     SOLVER_UTILS_EXPORT Array<OneD, const Array<OneD, NekDouble>> GetTraceNormals()
     {
         return m_traceNormals;
@@ -410,6 +420,8 @@ protected:
     bool m_multipleModes;
     /// Flag to determine if FFT is used for homogeneous transform.
     bool m_useFFT;
+    /// Flag to determine if IC are used.
+    bool m_useInitialCondition;
     /**
      * \brief Flag to determine if dealiasing is used for
      * homogeneous simulations.

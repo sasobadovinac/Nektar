@@ -2454,9 +2454,23 @@ void CoupledLinearNS::v_Output(void)
     }
     variables[i] = "p";
 
-    std::string outname = m_sessionName + ".fld";
-
-    WriteFld(outname, m_fields[0], fieldcoeffs, variables);
+    if (!ParallelInTime())
+    {
+        WriteFld(m_sessionName + ".fld", m_fields[0], fieldcoeffs, variables);
+    }
+    else
+    {
+        std::string newdir = m_sessionName + ".pit";
+        if (!fs::is_directory(newdir))
+        {
+            fs::create_directory(newdir);
+        }
+        WriteFld(newdir + "/" + m_sessionName + "_" +
+                     boost::lexical_cast<std::string>(
+                         m_comm->GetTimeComm()->GetRank() + 1) +
+                     ".fld",
+                 m_fields[0], fieldcoeffs, variables);
+    }
 }
 
 int CoupledLinearNS::v_GetForceDimension()

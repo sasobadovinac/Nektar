@@ -481,6 +481,7 @@ void DriverParareal::v_Execute(ostream &out)
     m_equ[0]->DoInitialise();
 
     // Initialize coarse solver
+    m_equ[1]->SetUseInitialCondition(false);
     m_equ[1]->DoInitialise();
 
     // Get initial conditions

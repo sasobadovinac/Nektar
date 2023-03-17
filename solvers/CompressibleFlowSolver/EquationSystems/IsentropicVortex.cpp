@@ -106,12 +106,26 @@ void IsentropicVortex::v_SetInitialConditions(NekDouble initialtime,
                               m_fields[i]->UpdateCoeffs());
     }
 
-    if (dumpInitialConditions && m_checksteps)
+    if (dumpInitialConditions && m_checksteps && !ParallelInTime())
     {
         // Dump initial conditions to file
         Checkpoint_Output(m_nchk);
         m_nchk++;
     }
+    else if (dumpInitialConditions && m_useInitialCondition && m_nchk == 0 &&
+             ParallelInTime())
+    {
+        std::string newdir = m_sessionName + ".pit";
+        if (!fs::is_directory(newdir))
+        {
+            fs::create_directory(newdir);
+        }
+        if (m_comm->GetTimeComm()->GetRank() == 0)
+        {
+            WriteFld(newdir + "/" + m_sessionName + "_0.fld");
+        }
+    }
+    m_nchk++;
 }
 
 /**
