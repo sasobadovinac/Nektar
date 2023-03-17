@@ -539,6 +539,38 @@ $A$, frequency $f$, and in the range of $[x_0, x_0+len]$ on a flat plate.
 </BOUNDARYCONDITIONS>
 \end{lstlisting}
 where \inltt{pOut} is the target static pressure at the boundary.
+
+\item Stagnation inflow boundary condition
+\begin{lstlisting}[style=XmlStyle]
+  <BOUNDARYCONDITIONS>
+    <REGION REF="0">
+      <D VAR="rho"  USERDEFINEDTYPE="StagnationInflow" VALUE="rho0" />
+      <D VAR="rhou" USERDEFINEDTYPE="StagnationInflow" VALUE="nx" />
+      <D VAR="rhov" USERDEFINEDTYPE="StagnationInflow" VALUE="ny" />
+      <D VAR="rhov" USERDEFINEDTYPE="StagnationInflow" VALUE="nz" />
+      <D VAR="E"    USERDEFINEDTYPE="StagnationInflow" VALUE="p0/(Gamma-1)" />
+    </REGION>
+  </BOUNDARYCONDITIONS>
+  where \inltt{rho0} and \inltt{p0} are the stagnation density and stagnation pressure, respectively.
+  The values \inltt{nx}, \inltt{ny}, and \inltt{nz} further define the direction of the flow. Note that 
+  it is not necessary to normalize the vector \inltt{(nx, ny, nz)}, it will be done automatically by the 
+  solver. If the flow direction isn't specified, the flow will enter in the boundary-normal direction.
+  The stagnation inflow boundary condition imposes a constant stagnation density and stagnation pressure 
+  on the boundary. These quantities are related to the stagnation temperature through the relation
+  \inltt{T0 = p0/(rho0 * GasConstant)}. This boundary condition is useful in situations when stagnation
+  quantities are known at the inlet, rather than the actual density and pressure. In addition to this, the
+  standard boundary condition where 5 quantities (the conservative variables) are imposed on the boundary
+  is not suitable in many situations because in a subsonic compressible flow, only 4 out of 5 variables
+  can be imposed at an inlet boundary. In contrast, the stagnation inflow boundary condition only imposes
+  4 quantities (2 stagnation quantities, and the direction of the flow). The last quantitity at the inlet
+  will instead be determined by the solution inside the domain. If you have a good estimate of one additional 
+  quantitity at the inlet, such as the magnitude of the velocity or the static pressure, you can estimate 
+  all remaining quantities at the inlet for the isentropic compressible flow relations. In fact, at each 
+  iteration, the solver uses the isentropic flow relations combined with the quantities imposed by the
+  boundary + one quantity from the interior solution to compute all remaining quantities at the boundary.
+  Once this has been done, the flux over the boundary at that iteration can be computed.
+  \end{lstlisting}
+
 \end{itemize}
 
 \subsection*{Initial conditions and exact solution}

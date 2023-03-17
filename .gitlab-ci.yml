@@ -173,6 +173,8 @@ include:
   <<: *execution-conditions
   image: debian:11-slim
   stage: quality-checks
+  variables:
+    GIT_STRATEGY: clone
   before_script:
     - apt-get update && apt-get install -y dos2unix
   script:
