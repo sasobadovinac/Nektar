@@ -38,6 +38,16 @@ IF( NEKTAR_SOLVER_ADR )
         ADD_NEKTAR_TEST(PararealDriverImDiffusion_m12_iter4)
     ENDIF()
 
+    # IMEXdirk time-integration
+    ADD_NEKTAR_TEST(UnsteadyAdvectionDiffusion2D_IMEXdirk_1_1_1)
+    ADD_NEKTAR_TEST(UnsteadyAdvectionDiffusion2D_IMEXdirk_1_2_1)
+    ADD_NEKTAR_TEST(UnsteadyAdvectionDiffusion2D_IMEXdirk_1_2_2)
+    ADD_NEKTAR_TEST(UnsteadyAdvectionDiffusion2D_IMEXdirk_2_2_2)
+    ADD_NEKTAR_TEST(UnsteadyAdvectionDiffusion2D_IMEXdirk_2_3_2)
+    ADD_NEKTAR_TEST(UnsteadyAdvectionDiffusion2D_IMEXdirk_2_3_3)
+    ADD_NEKTAR_TEST(UnsteadyAdvectionDiffusion2D_IMEXdirk_3_4_3)
+    ADD_NEKTAR_TEST(UnsteadyAdvectionDiffusion2D_IMEXdirk_4_4_3)
+
     #MMF advection
     ADD_NEKTAR_TEST        (TestMMFAdvPlane)
     ADD_NEKTAR_TEST        (TestMMFAdvCube)

@@ -710,7 +710,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             Vmath::Vcopy(m_npoints, m_Y[k], 1, y_new[0][k], 1);
         }
 
-        if (m_numstages == 1 && type == eIMEX)
+        if (m_numstages == 1)
         {
             t_new[0] = t_old[0] + deltaT;
         }
@@ -793,7 +793,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
     }
 
     // Ensure that the new solution is projected if necessary
-    if (type == eExplicit || type == eExponential)
+    if (type == eExplicit || type == eExponential ||
+        fabs(m_T - t_new[0]) > NekConstants::kNekZeroTol)
     {
         op.DoProjection(y_new[0], y_new[0], t_new[0]);
     }

@@ -358,9 +358,9 @@ public:
 
         phase->m_A[0][1][1] = lambda;
         phase->m_A[0][2][1] = 0.5 * (1.0 - lambda);
+        phase->m_A[0][2][2] = lambda;
         phase->m_A[0][3][1] =
             0.25 * (-6.0 * lambda * lambda + 16.0 * lambda - 1.0);
-        phase->m_A[0][2][2] = lambda;
         phase->m_A[0][3][2] =
             0.25 * (6.0 * lambda * lambda - 20.0 * lambda + 5.0);
         phase->m_A[0][3][3] = lambda;
