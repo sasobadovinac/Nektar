@@ -71,6 +71,7 @@ v5.3.0
 - Add parallel-in-time feature to FieldConvert (!1520)
 - Add Spectral Deferred Correction (SDC) time integration schemes (!1481)
 - Modify SessionReader to read restart/exact solution files parallel-in-time (!1521)
+- Fix Polylib_test.cpp (!1524)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
