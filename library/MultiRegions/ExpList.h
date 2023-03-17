@@ -936,7 +936,9 @@ public:
     MULTI_REGIONS_EXPORT void ExtractDataToCoeffs(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
-        Array<OneD, NekDouble> &coeffs);
+        Array<OneD, NekDouble> &coeffs,
+        std::unordered_map<int, int> zIdToPlane =
+            std::unordered_map<int, int>());
     // Extract data from file fileName and put coefficents into array coefffs
     MULTI_REGIONS_EXPORT void ExtractCoeffsFromFile(
         const std::string &fileName, LibUtilities::CommSharedPtr comm,
@@ -1358,7 +1360,8 @@ protected:
     virtual void v_ExtractDataToCoeffs(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
-        Array<OneD, NekDouble> &coeffs);
+        Array<OneD, NekDouble> &coeffs,
+        std::unordered_map<int, int> zIdToPlane);
     virtual void v_ExtractCoeffsToCoeffs(
         const std::shared_ptr<ExpList> &fromExpList,
         const Array<OneD, const NekDouble> &fromCoeffs,

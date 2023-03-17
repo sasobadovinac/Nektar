@@ -3563,9 +3563,9 @@ void ExpList::v_AppendFieldData(
 void ExpList::ExtractDataToCoeffs(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
     std::vector<NekDouble> &fielddata, std::string &field,
-    Array<OneD, NekDouble> &coeffs)
+    Array<OneD, NekDouble> &coeffs, std::unordered_map<int, int> zIdToPlane)
 {
-    v_ExtractDataToCoeffs(fielddef, fielddata, field, coeffs);
+    v_ExtractDataToCoeffs(fielddef, fielddata, field, coeffs, zIdToPlane);
 }
 
 void ExpList::ExtractCoeffsToCoeffs(
@@ -3587,8 +3587,9 @@ void ExpList::ExtractCoeffsToCoeffs(
 void ExpList::v_ExtractDataToCoeffs(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
     std::vector<NekDouble> &fielddata, std::string &field,
-    Array<OneD, NekDouble> &coeffs)
+    Array<OneD, NekDouble> &coeffs, std::unordered_map<int, int> zIdToPlane)
 {
+    boost::ignore_unused(zIdToPlane);
     int i, expId;
     int offset       = 0;
     int modes_offset = 0;

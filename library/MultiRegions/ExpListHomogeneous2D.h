@@ -192,7 +192,8 @@ protected:
     virtual void v_ExtractDataToCoeffs(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
-        Array<OneD, NekDouble> &coeffs) override;
+        Array<OneD, NekDouble> &coeffs,
+        std::unordered_map<int, int> zIdToPlane) override;
 
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
                                      std::string var) override;

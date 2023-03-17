@@ -442,54 +442,54 @@ void LinearisedAdvection::ImportFldBase(
     size_t nSessionVar     = m_session->GetVariables().size();
     size_t nSessionConvVar = nSessionVar - 1;
     size_t nFileVar        = FieldDef[0]->m_fields.size();
-    size_t nFileConvVar    = nFileVar - 1; // Ignore pressure
-    if (m_halfMode)
+
+    std::unordered_map<int, int> zIdToPlane;
+    if (m_singleMode || m_halfMode)
     {
-        ASSERTL0(nFileVar == 3, "For half mode, expect 2D2C base flow.");
-        nFileConvVar = 2;
+        zIdToPlane[0] = 0;
     }
 
-    for (size_t j = 0; j < nFileConvVar; ++j)
+    for (size_t j = 0; j < nFileVar; ++j)
     {
+        size_t k = 0;
+        for (; k < nSessionConvVar; ++k)
+        {
+            if (m_session->GetVariable(k) == FieldDef[0]->m_fields[j])
+            {
+                break;
+            }
+        }
+        if (k == nSessionConvVar)
+        {
+            continue;
+        }
         for (size_t i = 0; i < FieldDef.size(); ++i)
         {
-            bool flag = FieldDef[i]->m_fields[j] == m_session->GetVariable(j);
-
-            ASSERTL0(flag, (std::string("Order of ") + pInfile +
-                            std::string(" data and that defined in "
-                                        "the session file differs"))
-                               .c_str());
-
-            pFields[j]->ExtractDataToCoeffs(
-                FieldDef[i], FieldData[i], FieldDef[i]->m_fields[j], tmp_coeff);
+            pFields[j]->ExtractDataToCoeffs(FieldDef[i], FieldData[i],
+                                            FieldDef[i]->m_fields[j], tmp_coeff,
+                                            zIdToPlane);
         }
 
         if (m_singleMode || m_halfMode)
         {
-            pFields[j]->GetPlane(0)->BwdTrans(tmp_coeff, m_baseflow[j]);
+            pFields[j]->GetPlane(0)->BwdTrans(tmp_coeff, m_baseflow[k]);
 
             if (m_singleMode)
             {
                 // copy the bwd trans into the second plane for single
                 // Mode Analysis
                 int ncplane = (pFields[0]->GetNpoints()) / m_npointsZ;
-                Vmath::Vcopy(ncplane, &m_baseflow[j][0], 1,
-                             &m_baseflow[j][ncplane], 1);
+                Vmath::Vcopy(ncplane, &m_baseflow[k][0], 1,
+                             &m_baseflow[k][ncplane], 1);
             }
         }
         else // fully 3D base flow - put in physical space.
         {
             bool oldwavespace = pFields[j]->GetWaveSpace();
             pFields[j]->SetWaveSpace(false);
-            pFields[j]->BwdTrans(tmp_coeff, m_baseflow[j]);
+            pFields[j]->BwdTrans(tmp_coeff, m_baseflow[k]);
             pFields[j]->SetWaveSpace(oldwavespace);
         }
-    }
-
-    // Zero unused fields (e.g. w in a 2D2C base flow).
-    for (size_t j = nFileConvVar; j < nSessionConvVar; ++j)
-    {
-        Vmath::Fill(nqtot, 0.0, m_baseflow[j], 1);
     }
 
     // If time-periodic, put loaded data into the slice storage.

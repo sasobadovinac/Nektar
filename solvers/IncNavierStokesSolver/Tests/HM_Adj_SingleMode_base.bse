@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/fix/ImportFldSinglemodeExpansion</GitBranch>
+            <GitSHA1>0ea927ee3017cddbb868d394a440e26a06309e5e</GitSHA1>
+            <Hostname>ubuntu22</Hostname>
+            <NektarVersion>5.3.0</NektarVersion>
+            <Timestamp>31-Jan-2023 20:50:47</Timestamp>
+        </Provenance>
+        <ChkFileNum>0</ChkFileNum>
+        <Kinvis>1</Kinvis>
+        <SessionName0>HM_Adj.opt</SessionName0>
+        <SessionName1>HM_Adj.xml</SessionName1>
+        <Time>0</Time>
+        <TimeStep>0.001</TimeStep>
+    </Metadata>
+    <ELEMENTS FIELDS="u,v,w,p" SHAPE="Quadrilateral-HomogenousExp1D" BASIS="GLL_Lagrange,GLL_Lagrange,Fourier" HOMOGENEOUSLENGTHS="1" HOMOGENEOUSZIDS="0,1,2,3" NUMMODESPERDIR="UNIORDER:3,3,4" ID="0-3" COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxjYACBD/YMVKEpBxzFN/ev52/bQylNLfdAwGj44Aej4YMfjIYPAeBAJZpiAPHftD2U0tRyDxQ4UImmGIyGD34wGj74wSANn1EwCkbBKBgFo2AUjIIRAwDXEltE</ELEMENTS>
+</NEKTAR>
