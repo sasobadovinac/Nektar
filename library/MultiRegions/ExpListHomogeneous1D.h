@@ -140,8 +140,6 @@ protected:
     Homo1DBlockMatrixMapShPtr m_homogeneous1DBlockMat;
     Array<OneD, ExpListSharedPtr> m_planes;
 
-    std::unordered_map<int, int> m_zIdToPlane;
-
     DNekBlkMatSharedPtr GenHomogeneous1DBlockMatrix(
         Homogeneous1DMatType mattype) const;
 
@@ -212,7 +210,8 @@ protected:
     virtual void v_ExtractDataToCoeffs(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
-        Array<OneD, NekDouble> &coeffs) override;
+        Array<OneD, NekDouble> &coeffs,
+        std::unordered_map<int, int> zIdToPlane) override;
 
     virtual void v_ExtractCoeffsToCoeffs(
         const std::shared_ptr<ExpList> &fromExpList,

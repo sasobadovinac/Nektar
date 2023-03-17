@@ -928,7 +928,7 @@ void ExpListHomogeneous1D::v_AppendFieldData(
 void ExpListHomogeneous1D::v_ExtractDataToCoeffs(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
     std::vector<NekDouble> &fielddata, std::string &field,
-    Array<OneD, NekDouble> &coeffs)
+    Array<OneD, NekDouble> &coeffs, std::unordered_map<int, int> zIdToPlane)
 {
     int i, n;
     int offset  = 0;
@@ -959,13 +959,20 @@ void ExpListHomogeneous1D::v_ExtractDataToCoeffs(
 
         // Build map of plane IDs lying on this processor and determine
         // mapping from element ids to location in expansion list.
-        if (m_zIdToPlane.size() == 0)
+        if (zIdToPlane.size() == 0)
         {
+            int IDoffset = m_homogeneousBasis->GetBasisType() ==
+                                   LibUtilities::eFourierSingleMode
+                               ? 2
+                               : 0;
             for (i = 0; i < m_planes.size(); ++i)
             {
-                m_zIdToPlane[m_transposition->GetPlaneID(i)] = i;
+                zIdToPlane[m_transposition->GetPlaneID(i) + IDoffset] = i;
             }
+        }
 
+        if (m_elmtToExpId.size() == 0)
+        {
             for (i = 0; i < m_planes[0]->GetExpSize(); ++i)
             {
                 m_elmtToExpId[(*m_exp)[i]->GetGeom()->GetGlobalID()] = i;
@@ -1022,10 +1029,10 @@ void ExpListHomogeneous1D::v_ExtractDataToCoeffs(
             for (n = 0; n < nzmodes; ++n, offset += datalen)
             {
 
-                it = m_zIdToPlane.find(fieldDefHomoZids[n]);
+                it = zIdToPlane.find(fieldDefHomoZids[n]);
 
                 // Check to make sure this mode number lies in this field.
-                if (it == m_zIdToPlane.end())
+                if (it == zIdToPlane.end())
                 {
                     continue;
                 }

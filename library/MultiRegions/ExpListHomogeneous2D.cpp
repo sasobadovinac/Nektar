@@ -753,8 +753,9 @@ void ExpListHomogeneous2D::v_AppendFieldData(
 void ExpListHomogeneous2D::v_ExtractDataToCoeffs(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
     std::vector<NekDouble> &fielddata, std::string &field,
-    Array<OneD, NekDouble> &coeffs)
+    Array<OneD, NekDouble> &coeffs, std::unordered_map<int, int> zIdToPlane)
 {
+    boost::ignore_unused(zIdToPlane);
     int i, k;
     int offset           = 0;
     int datalen          = fielddata.size() / fielddef->m_fields.size();

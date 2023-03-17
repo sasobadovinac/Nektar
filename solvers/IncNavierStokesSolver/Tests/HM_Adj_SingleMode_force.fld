@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/fix/ForcingBody</GitBranch>
+            <GitSHA1>7994f8e888a4ed3cc3b024af1c815dc3582d9411</GitSHA1>
+            <Hostname>ubuntu22</Hostname>
+            <NektarVersion>5.3.0</NektarVersion>
+            <Timestamp>31-Jan-2023 15:42:28</Timestamp>
+        </Provenance>
+        <Kinvis>1</Kinvis>
+        <SessionName0>HM_Adj.opt</SessionName0>
+        <SessionName1>HM_Adj.xml</SessionName1>
+        <TimeStep>0.001</TimeStep>
+    </Metadata>
+    <ELEMENTS FIELDS="u,v,w,p" SHAPE="Quadrilateral-HomogenousExp1D" BASIS="GLL_Lagrange,GLL_Lagrange,FourierSingleMode" HOMOGENEOUSLENGTHS="1" HOMOGENEOUSZIDS="2,3" NUMMODESPERDIR="UNIORDER:3,3,2" ID="0-3" COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxjYIAACV2XkN+KnA4QWtKhW0xp1d8JLA4TeeZL3p2ifCDF//G5P2pmByDiIg4mk9RbZHaaHWC7mm1p4+15gAEvaNgJoRdYoopP2InKP2AJs/+SonF9zU0lqHs0HWD22/dUdxx1dDxwpqB1JU+BO9z+ig+JEl/nBB/I/8Yr4jMlCs09E9DsxQUOQNU9gNIXduLyL8R9cg4C5/fbPr3seECXcTNr7cFgaPioOEDUeRy4Ib7hXfRdmHsw/YvdHReg4gt2oovj8i/M/stSbTnsM+MO2Mxa89JjRwrc/qlKoQ96TqUccLQMOpmtlnMAl39R7X+AYT+qeoRHKsR/qn3+8s7+nuu+kzZ7FR3IFEcDuOINtzjMvJl835KebDF1gPCdHUgVR7Vnw050e0gTHw0fAuGDA8DUN6DRC3DQDA7o9J7umsmVVfIHShuy9/0ylDxgUBr1svql0AGIPwwPlIHFdaHiagfwuwfdHejuwQh3DPfA7L9yeZLGL0fOAxOqHv75kfhzP8z+V5meIn8XKBxw31tQ92eDyAH8/sXwPxpAhDMu/57NmKt3e7b1gYgFF/hqnpodeHKd+b2MvhE0fJyg6u2h6i3Q3EMo/aG7C8HH5V+4/XJ586o/ah341nslbm+LItx+iHqjAx5g9RoHsNs/CkYBcQAArfC9XQAA</ELEMENTS>
+</NEKTAR>
