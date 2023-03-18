@@ -112,31 +112,31 @@ DisContField::DisContField(const LibUtilities::SessionReaderSharedPtr &pSession,
         FindPeriodicTraces(bcs, bcvar);
     }
 
+    int i, cnt;
+    Array<OneD, int> ElmtID, TraceID;
+    GetBoundaryToElmtMap(ElmtID, TraceID);
+
+    for (cnt = i = 0; i < m_bndCondExpansions.size(); ++i)
+    {
+        MultiRegions::ExpListSharedPtr locExpList;
+        locExpList = m_bndCondExpansions[i];
+
+        for (int e = 0; e < locExpList->GetExpSize(); ++e)
+        {
+            (*m_exp)[ElmtID[cnt + e]]->SetTraceExp(TraceID[cnt + e],
+                                                   locExpList->GetExp(e));
+            locExpList->GetExp(e)->SetAdjacentElementExp(
+                TraceID[cnt + e], (*m_exp)[ElmtID[cnt + e]]);
+        }
+        cnt += m_bndCondExpansions[i]->GetExpSize();
+    }
+
     if (SetUpJustDG)
     {
         SetUpDG(variable, ImpType);
     }
     else
     {
-        int i, cnt;
-        Array<OneD, int> ElmtID, TraceID;
-        GetBoundaryToElmtMap(ElmtID, TraceID);
-
-        for (cnt = i = 0; i < m_bndCondExpansions.size(); ++i)
-        {
-            MultiRegions::ExpListSharedPtr locExpList;
-            locExpList = m_bndCondExpansions[i];
-
-            for (int e = 0; e < locExpList->GetExpSize(); ++e)
-            {
-                (*m_exp)[ElmtID[cnt + e]]->SetTraceExp(TraceID[cnt + e],
-                                                       locExpList->GetExp(e));
-                locExpList->GetExp(e)->SetAdjacentElementExp(
-                    TraceID[cnt + e], (*m_exp)[ElmtID[cnt + e]]);
-            }
-            cnt += m_bndCondExpansions[i]->GetExpSize();
-        }
-
         if (m_session->DefinesSolverInfo("PROJECTION"))
         {
             std::string ProjectStr = m_session->GetSolverInfo("PROJECTION");
@@ -3481,7 +3481,13 @@ GlobalLinSysKey DisContField::v_HelmSolve(
                 bndrhs[locid] += Sign[locid] * bndcoeffs[j];
             }
         }
-
+        else if (m_bndConditions[i]->GetBoundaryConditionType() ==
+                 SpatialDomains::ePeriodic)
+        {
+            // skip increment of cnt if ePeriodic
+            // because bndCondMap does not include ePeriodic
+            continue;
+        }
         cnt += (m_bndCondExpansions[i])->GetNcoeffs();
     }
 
@@ -3832,7 +3838,12 @@ void DisContField::v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                 map<int, int> VertGID;
                 int i, n, id;
                 int bid, cnt, Vid;
-                int nbcs = m_bndConditions.size();
+                int nbcs = 0;
+                // Determine number of boundary condition expansions.
+                for (i = 0; i < m_bndConditions.size(); ++i)
+                {
+                    nbcs += m_bndCondExpansions[i]->GetExpSize();
+                }
 
                 // make sure arrays are of sufficient length
                 m_BCtoElmMap   = Array<OneD, int>(nbcs, -1);
@@ -3842,12 +3853,15 @@ void DisContField::v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                 cnt = 0;
                 for (n = 0; n < m_bndCondExpansions.size(); ++n)
                 {
-                    Vid = m_bndCondExpansions[n]
-                              ->GetExp(0)
-                              ->GetGeom()
-                              ->GetVertex(0)
-                              ->GetVid();
-                    VertGID[Vid] = cnt++;
+                    for (i = 0; i < m_bndCondExpansions[n]->GetExpSize(); ++i)
+                    {
+                        Vid = m_bndCondExpansions[n]
+                                  ->GetExp(i)
+                                  ->GetGeom()
+                                  ->GetVertex(0)
+                                  ->GetVid();
+                        VertGID[Vid] = cnt++;
+                    }
                 }
 
                 // Loop over elements and find verts that match;
