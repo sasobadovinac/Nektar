@@ -73,6 +73,8 @@ v5.3.0
 - Modify SessionReader to read restart/exact solution files parallel-in-time (!1521)
 - Fix Polylib_test.cpp (!1524)
 - Update to Parareal file output (!1517)
+- Set adjacent elements for m_bndcondExpansions for both CG and DG (!1491)
+- Fix inconsisten treatment of 1D and 2D/3D expansions in DisContField::v_GetBoundaryToElmtMap (!1491)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
