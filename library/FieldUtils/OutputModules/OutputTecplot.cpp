@@ -527,8 +527,12 @@ void OutputTecplot::v_WriteTecplotZone(std::ofstream &outfile)
                     : m_fields[0].size();
 
             outfile << "Zone, N=" << nPoints << ", E=" << m_numBlocks
-                    << ", F=FEBlock, ET=" << TecplotZoneTypeMap[m_zoneType]
-                    << std::endl;
+                    << ", F=FEBlock, ET=" << TecplotZoneTypeMap[m_zoneType];
+            if (m_f->m_fieldMetaDataMap.count("Time"))
+            {
+                outfile << ", SOLUTIONTIME=" << m_f->m_fieldMetaDataMap["Time"];
+            }
+            outfile << std::endl;
         }
 
         if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0)

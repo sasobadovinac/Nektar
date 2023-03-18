@@ -73,6 +73,7 @@ v5.3.0
 - Modify SessionReader to read restart/exact solution files parallel-in-time (!1521)
 - Fix Polylib_test.cpp (!1524)
 - Update to Parareal file output (!1517)
+- Add time metadata to tecplot output (!1525)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
