@@ -74,6 +74,7 @@ v5.3.0
 - Fix Polylib_test.cpp (!1524)
 - Update to Parareal file output (!1517)
 - Add time metadata to tecplot output (!1525)
+- Fix segmentation fault when no time integration method specified for unsteady problem (!1526)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
