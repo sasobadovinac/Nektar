@@ -623,7 +623,10 @@ void UnsteadySystem::v_GenerateSummary(SummaryList &s)
     AddSummaryItem(s, "Time Step", m_timestep);
     AddSummaryItem(s, "No. of Steps", m_steps);
     AddSummaryItem(s, "Checkpoints (steps)", m_checksteps);
-    AddSummaryItem(s, "Integration Type", m_intScheme->GetName());
+    if (m_intScheme)
+    {
+        AddSummaryItem(s, "Integration Type", m_intScheme->GetName());
+    }
 }
 
 /**
