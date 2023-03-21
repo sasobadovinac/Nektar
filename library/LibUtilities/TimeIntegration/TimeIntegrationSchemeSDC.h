@@ -164,7 +164,7 @@ public:
                      "Maximum order (<= 2 * n - 2): " +
                          std::to_string(2 * int(m_freeParams[1]) - 2));
 
-            // m_order     = 2 * int(m_freeParams[1]) - 1;
+            // m_order     = 2 * int(m_freeParams[1]) - 2;
             m_nQuadPts = int(m_freeParams[1]) + 1;
             m_points   = SingleArray(m_nQuadPts, -1.0);
             m_weights  = SingleArray(m_nQuadPts, 0.0);
@@ -207,6 +207,33 @@ public:
 
     static std::string className;
 
+    LUE void UpdateIntegratedResidual(const NekDouble &delta_t,
+                                      const int option = 0);
+
+    LUE void ResidualEval(const NekDouble &delta_t, const int n,
+                          const TimeIntegrationSchemeOperators &op)
+    {
+        v_ResidualEval(delta_t, n, op);
+    }
+
+    LUE void ResidualEval(const NekDouble &delta_t,
+                          const TimeIntegrationSchemeOperators &op)
+    {
+        v_ResidualEval(delta_t, op);
+    }
+
+    LUE void ComputeInitialGuess(const NekDouble &delta_t,
+                                 const TimeIntegrationSchemeOperators &op)
+    {
+        v_ComputeInitialGuess(delta_t, op);
+    }
+
+    LUE void SDCIterationLoop(const NekDouble &delta_t,
+                              const TimeIntegrationSchemeOperators &op)
+    {
+        v_SDCIterationLoop(delta_t, op);
+    }
+
 protected:
     LUE virtual std::string v_GetName() const override;
     LUE virtual std::string v_GetVariant() const override;
@@ -220,22 +247,54 @@ protected:
     /**
      * \brief Gets the solution vector of the ODE
      */
-    virtual const TripleArray &v_GetSolutionVector() const override;
+    LUE virtual const TripleArray &v_GetSolutionVector() const override;
 
     /**
      * \brief Sets the solution vector of the ODE
      */
-    virtual void v_SetSolutionVector(const int Offset,
-                                     const DoubleArray &y) override;
+    LUE virtual void v_SetSolutionVector(const int Offset,
+                                         const DoubleArray &y) override;
 
     // The worker methods from the base class that are virtual
+    LUE virtual ConstDoubleArray &v_TimeIntegrate(
+        const int timestep, const NekDouble delta_t,
+        const TimeIntegrationSchemeOperators &op) override;
+
     LUE virtual void v_InitializeScheme(
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) override;
 
-    LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t, const int n,
+                                    const TimeIntegrationSchemeOperators &op)
+    {
+        ASSERTL0(false, "Specific version of spectral deferred correction "
+                        "not implemented");
+        boost::ignore_unused(delta_t, n, op);
+    }
+
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t,
+                                    const TimeIntegrationSchemeOperators &op)
+    {
+        ASSERTL0(false, "Specific version of spectral deferred correction "
+                        "not implemented");
+        boost::ignore_unused(delta_t, op);
+    }
+
+    LUE virtual void v_ComputeInitialGuess(
+        const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+    {
+        ASSERTL0(false, "Specific version of spectral deferred correction "
+                        "not implemented");
+        boost::ignore_unused(delta_t, op);
+    }
+
+    LUE virtual void v_SDCIterationLoop(
+        const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+    {
+        ASSERTL0(false, "Specific version of spectral deferred correction "
+                        "not implemented");
+        boost::ignore_unused(delta_t, op);
+    }
 
     LUE virtual void v_print(std::ostream &os) const override;
     LUE virtual void v_printFull(std::ostream &os) const override;
@@ -248,7 +307,7 @@ protected:
     std::vector<NekDouble> m_freeParams;
     NekDouble m_time, m_theta = 0.0;
 
-    TimeIntegrationSchemeType m_schemeType{eSpectralDeferredCorrection};
+    TimeIntegrationSchemeType m_schemeType{eNoTimeIntegrationSchemeType};
 
     // Storage of previous states and associated timesteps.
     TripleArray m_Y; /// Array containing the stage values
@@ -256,19 +315,12 @@ protected:
     TripleArray m_Fint;
     DoubleArray m_Fn;
     DoubleArray m_tmp;
-    DoubleArray m_wMat;
-    SingleArray m_coeffs;
+    SingleArray m_QMat;
     SingleArray m_points;
     SingleArray m_weights;
 
     int m_nvars{0};   // Number of variables in the integration scheme.
     int m_npoints{0}; // Number of points    in the integration scheme.
-
-    void UpdateIntegratedFlux(const NekDouble &delta_t);
-    NekDouble EvaluateInt(NekDouble *coeffs, const int npoints,
-                          const NekDouble &t1, const NekDouble &t2) const;
-    void EvaluateCoeffs(NekDouble *coeffs, NekDouble *points, const int index,
-                        const int npoints);
 
 }; // end class TimeIntegrationSchemeSDC
 

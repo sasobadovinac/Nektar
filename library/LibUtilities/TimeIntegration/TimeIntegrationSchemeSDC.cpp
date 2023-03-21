@@ -118,41 +118,18 @@ void TimeIntegrationSchemeSDC::v_InitializeScheme(
         m_npoints = y_0[0].size();
 
         // Compute integration matrix
-        m_coeffs = SingleArray(m_nQuadPts, 0.0);
-        m_wMat   = DoubleArray(m_nQuadPts - 1);
-        for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
-        {
-            m_wMat[n] = SingleArray(m_nQuadPts, 0.0);
-        }
+        m_QMat = SingleArray(m_nQuadPts * m_nQuadPts, 0.0);
 
         // Use first quadrature point in the integral
         if (m_variant == "Equidistant" || m_variant == "GaussLobattoLegendre" ||
             m_variant == "GaussLobattoChebyshev")
         {
-            for (unsigned int m = 0; m < m_nQuadPts; ++m)
-            {
-                EvaluateCoeffs(&m_coeffs[0], &m_points[0], m, m_nQuadPts);
-                for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
-                {
-                    m_wMat[n][m] = EvaluateInt(&m_coeffs[0], m_nQuadPts,
-                                               m_points[n], m_points[n + 1]);
-                }
-            }
+            Polylib::Qg(&m_QMat[0], &m_points[0], m_nQuadPts, 0);
         }
-        // Do not use first quadrature point in the integral
         else if (m_variant == "GaussRadauLegendre" ||
                  m_variant == "GaussRadauChebyshev")
         {
-            for (unsigned int m = 0; m < m_nQuadPts - 1; ++m)
-            {
-                EvaluateCoeffs(&m_coeffs[1], &m_points[1], m, m_nQuadPts - 1);
-                for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
-                {
-                    m_wMat[n][m + 1] =
-                        EvaluateInt(&m_coeffs[1], m_nQuadPts - 1, m_points[n],
-                                    m_points[n + 1]);
-                }
-            }
+            Polylib::Qg(&m_QMat[m_nQuadPts], &m_points[1], m_nQuadPts - 1, 1);
         }
 
         // Storage of previous states and associated timesteps.
@@ -200,22 +177,57 @@ void TimeIntegrationSchemeSDC::v_InitializeScheme(
     }
 }
 
+/**
+ * @brief Worker method that performs the time integration.
+ */
 ConstDoubleArray &TimeIntegrationSchemeSDC::v_TimeIntegrate(
     const int timestep, const NekDouble delta_t,
     const TimeIntegrationSchemeOperators &op)
 {
+
     boost::ignore_unused(timestep);
-    boost::ignore_unused(delta_t);
-    boost::ignore_unused(op);
 
-    ASSERTL0(
-        false,
-        "Specific version of spectral deferred correction not implemented");
+    // 1. Compute initial guess
+    ComputeInitialGuess(delta_t, op);
 
+    // 2. Return initial guess if m_order = 1
+    if (m_order == 1)
+    {
+        // 2.1. Copy final solution
+        for (unsigned int i = 0; i < m_nvars; ++i)
+        {
+            Vmath::Vcopy(m_npoints, m_Y[m_nQuadPts - 1][i], 1, m_Y[0][i], 1);
+        }
+
+        // 2.2. Update time step
+        m_time += delta_t;
+
+        // 2.3. Return solution
+        return m_Y[m_nQuadPts - 1];
+    }
+
+    // 3. Apply SDC correction loop
+    v_SDCIterationLoop(delta_t, op);
+
+    // 4. Get solution
+    // 4.1. Copy final solution
+    for (unsigned int i = 0; i < m_nvars; ++i)
+    {
+        Vmath::Vcopy(m_npoints, m_Y[m_nQuadPts - 1][i], 1, m_Y[0][i], 1);
+    }
+
+    // 4.2. Update time step
+    m_time += delta_t;
+
+    // 4.3. Return solution
     return m_Y[m_nQuadPts - 1];
 }
 
-void TimeIntegrationSchemeSDC::UpdateIntegratedFlux(const NekDouble &delta_t)
+/**
+ * @brief Worker method that compute the integrated flux.
+ */
+void TimeIntegrationSchemeSDC::UpdateIntegratedResidual(
+    const NekDouble &delta_t, const int option)
 {
     // Zeroing integrated flux
     for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
@@ -227,96 +239,29 @@ void TimeIntegrationSchemeSDC::UpdateIntegratedFlux(const NekDouble &delta_t)
     }
 
     // Update integrated flux
-    if (m_variant == "Equidistant" || m_variant == "GaussLobattoLegendre" ||
-        m_variant == "GaussLobattoChebyshev")
+    for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
     {
-        // Use first quadrature point in the integral
-        for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
+        for (unsigned int p = 0; p < m_nQuadPts; ++p)
         {
-            for (unsigned int p = 0; p < m_nQuadPts; ++p)
+            for (unsigned int i = 0; i < m_nvars; ++i)
             {
-                for (unsigned int i = 0; i < m_nvars; ++i)
+                if (option == 0)
                 {
-                    Vmath::Svtvp(m_npoints, delta_t * m_wMat[n][p], m_F[p][i],
-                                 1, m_Fint[n][i], 1, m_Fint[n][i], 1);
+                    Vmath::Svtvp(m_npoints,
+                                 delta_t * (m_QMat[(n + 1) * m_nQuadPts + p] -
+                                            m_QMat[n * m_nQuadPts + p]),
+                                 m_F[p][i], 1, m_Fint[n][i], 1, m_Fint[n][i],
+                                 1);
+                }
+                else if (option == 1)
+                {
+                    Vmath::Svtvp(
+                        m_npoints, delta_t * m_QMat[(n + 1) * m_nQuadPts + p],
+                        m_F[p][i], 1, m_Fint[n][i], 1, m_Fint[n][i], 1);
                 }
             }
         }
     }
-    else if (m_variant == "GaussRadauLegendre" ||
-             m_variant == "GaussRadauChebyshev")
-    {
-        // Do not use first quadrature point in the integral
-        for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
-        {
-            for (unsigned int p = 0; p < m_nQuadPts - 1; ++p)
-            {
-                for (unsigned int i = 0; i < m_nvars; ++i)
-                {
-                    Vmath::Svtvp(m_npoints, delta_t * m_wMat[n][p + 1],
-                                 m_F[p + 1][i], 1, m_Fint[n][i], 1,
-                                 m_Fint[n][i], 1);
-                }
-            }
-        }
-    }
-}
-
-/**
- * @brief Worker method that evaluates integral.
- */
-NekDouble TimeIntegrationSchemeSDC::EvaluateInt(NekDouble *coeffs,
-                                                const int npoints,
-                                                const NekDouble &t1,
-                                                const NekDouble &t2) const
-{
-    NekDouble val = 0.0;
-    for (int n = 0; n < npoints; n++)
-    {
-        val +=
-            coeffs[n] / (n + 1) * (std::pow(t2, n + 1) - std::pow(t1, n + 1));
-    }
-    return val;
-}
-
-/**
- * @brief Worker method that evaluates polynomial coefficients.
- */
-void TimeIntegrationSchemeSDC::EvaluateCoeffs(NekDouble *coeffs,
-                                              NekDouble *points,
-                                              const int index,
-                                              const int npoints)
-{
-    SingleArray tmp1(npoints, 0.0);
-    SingleArray tmp2(npoints, 0.0);
-    Vmath::Zero(npoints, coeffs, 1);
-
-    // Compute denominator
-    NekDouble denom = 1.0;
-    for (int n = 0; n < npoints; n++)
-    {
-        if (index != n)
-        {
-            denom *= (points[index] - points[n]);
-        }
-    }
-
-    // Compute coefficient
-    coeffs[0] = 1.0;
-    int m     = 0;
-    for (int n = 0; n < npoints; n++)
-    {
-        if (index != n)
-        {
-            m += 1;
-            Vmath::Zero(npoints, tmp1, 1);
-            Vmath::Zero(npoints, tmp2, 1);
-            Vmath::Smul(npoints, -1.0 * points[n], &coeffs[0], 1, &tmp1[0], 1);
-            Vmath::Vcopy(m, coeffs, 1, &tmp2[1], 1);
-            Vmath::Vadd(npoints, &tmp1[0], 1, &tmp2[0], 1, &coeffs[0], 1);
-        }
-    }
-    Vmath::Smul(npoints, 1.0 / denom, &coeffs[0], 1, &coeffs[0], 1);
 }
 
 /**
@@ -347,5 +292,6 @@ std::ostream &operator<<(std::ostream &os,
 
     return os;
 }
+
 } // end namespace LibUtilities
 } // namespace Nektar
