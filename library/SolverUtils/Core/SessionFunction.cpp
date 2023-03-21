@@ -128,6 +128,12 @@ void SessionFunction::Evaluate(
     for (int i = 0; i < pFieldNames.size(); i++)
     {
         Evaluate(pFieldNames[i], pFields[i]->UpdatePhys(), pTime, domain);
+        if (pFields[i]->GetWaveSpace())
+        {
+            pFields[i]->HomogeneousFwdTrans(pFields[i]->GetTotPoints(),
+                                            pFields[i]->GetPhys(),
+                                            pFields[i]->UpdatePhys());
+        }
         pFields[i]->FwdTransLocalElmt(pFields[i]->GetPhys(),
                                       pFields[i]->UpdateCoeffs());
     }
@@ -361,7 +367,10 @@ void SessionFunction::EvaluateFld(string pFieldName,
         }
     }
 
+    bool wavespace = m_field->GetWaveSpace();
+    m_field->SetWaveSpace(false);
     m_field->BwdTrans(vCoeffs, pArray);
+    m_field->SetWaveSpace(wavespace);
 }
 
 /**
