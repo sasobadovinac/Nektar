@@ -77,6 +77,7 @@ v5.3.0
 - Fix segmentation fault when no time integration method specified for unsteady problem (!1526)
 - Set adjacent elements for m_bndcondExpansions for both CG and DG (!1491)
 - Fix inconsisten treatment of 1D and 2D/3D expansions in DisContField::v_GetBoundaryToElmtMap (!1491)
+- Tidy-up parallel-in-time processing in FieldConvert (!1529)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

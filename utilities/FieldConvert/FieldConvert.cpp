@@ -270,20 +270,13 @@ int main(int argc, char *argv[])
             {
                 fs::path ftype  = inpath.extension();
                 string filename = inpath.stem().string();
-                size_t start    = 0U;
-                size_t end      = filename.find("_");
-                while (end != std::string::npos)
-                {
-                    start = end + 1;
-                    end   = filename.find("_", start);
-                }
+                size_t start    = filename.find_last_of("_") + 1;
                 int index =
                     atoi(filename.substr(start, filename.size()).c_str());
-                outpath += fs::path("/");
-                outpath += fs::path(filename.substr(0, start));
-                outpath += fs::path(boost::lexical_cast<std::string>(
-                    index + f->m_comm->GetRank() % vm["npt"].as<int>()));
-                outpath += ftype;
+                outpath /= filename.substr(0, start) +
+                           std::to_string(index + f->m_comm->GetRank() %
+                                                      vm["npt"].as<int>()) +
+                           ftype.string();
                 io = outpath.string();
             }
         }
