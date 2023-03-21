@@ -340,6 +340,7 @@ void MeshGraphXml::v_PartitionMesh(
                 vector<set<unsigned int>> elIDs(1);
                 partitioner->GetElementIDs(parts[0], tmp);
                 elIDs[0].insert(tmp.begin(), tmp.end());
+
                 this->WriteXMLGeometry(session->GetSessionName(), elIDs, parts);
 
                 if (m_session->DefinesCmdLineArgument("part-info") && isRoot)

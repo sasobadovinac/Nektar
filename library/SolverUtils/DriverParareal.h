@@ -104,6 +104,12 @@ protected:
     /// Maximum number of parareal iteration
     int m_pararealIterMax = 0;
 
+    /// Using exact solution to compute error norms
+    bool m_exactSolution = 0;
+
+    /// Parareal tolerance
+    NekDouble m_pararealToler = 1e-15;
+
     /// Constructor
     SOLVER_UTILS_EXPORT DriverParareal(
         const LibUtilities::SessionReaderSharedPtr pSession,
@@ -123,11 +129,11 @@ protected:
     /// Set the Parareal (coarse solver) session file
     void SetPararealSessionFile(void);
 
-    void RunCoarseSolve(const NekDouble time,
+    void RunCoarseSolve(const NekDouble time, const int nstep, const int iter,
                         const Array<OneD, const Array<OneD, NekDouble>> &input,
                         Array<OneD, Array<OneD, NekDouble>> &output);
 
-    void RunFineSolve(const NekDouble time,
+    void RunFineSolve(const NekDouble time, const int nstep, const int iter,
                       const Array<OneD, const Array<OneD, NekDouble>> &input,
                       Array<OneD, Array<OneD, NekDouble>> &output);
 

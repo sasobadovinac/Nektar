@@ -34,6 +34,7 @@
 
 #include <iomanip>
 
+#include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/DriverParareal.h>
 
 using namespace std;
@@ -101,64 +102,64 @@ void DriverParareal::v_InitObject(ostream &out)
         switch (m_EvolutionOperator)
         {
             case eNonlinear:
-                // Set coarse parareal session file
+                // Set coarse parareal session file.
                 SetPararealSessionFile();
 
-                // Set fine parareal solver
+                // Set fine parareal solver.
                 m_session->SetTag("AdvectiveType", "Convective");
                 m_session->SetTag("PararealSolver", "FineSolver");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
-                // Set coarse parareal solver
+                // Set coarse parareal solver.
                 m_sessionCoarse->SetTag("AdvectiveType", "Convective");
                 m_sessionCoarse->SetTag("PararealSolver", "CoarseSolver");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
             case eDirect:
-                // Set coarse parareal session file
+                // Set coarse parareal session file.
                 SetPararealSessionFile();
 
-                // Set fine parareal solver
+                // Set fine parareal solver.
                 m_session->SetTag("AdvectiveType", "Linearised");
                 m_session->SetTag("PararealSolver", "FineSolver");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
-                // Set coarse parareal solver
+                // Set coarse parareal solver.
                 m_sessionCoarse->SetTag("AdvectiveType", "Linearised");
                 m_sessionCoarse->SetTag("PararealSolver", "CoarseSolver");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
             case eAdjoint:
-                // Set coarse parareal session file
+                // Set coarse parareal session file.
                 SetPararealSessionFile();
 
-                // Set fine parareal solver
+                // Set fine parareal solver.
                 m_session->SetTag("AdvectiveType", "Adjoint");
                 m_session->SetTag("PararealSolver", "FineSolver");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
-                // Set coarse parareal solver
+                // Set coarse parareal solver.
                 m_sessionCoarse->SetTag("AdvectiveType", "Adjoint");
                 m_sessionCoarse->SetTag("PararealSolver", "CoarseSolver");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
             case eSkewSymmetric:
-                // Set coarse parareal session file
+                // Set coarse parareal session file.
                 SetPararealSessionFile();
 
-                // Set fine parareal solver
+                // Set fine parareal solver.
                 m_session->SetTag("AdvectiveType", "SkewSymmetric");
                 m_session->SetTag("PararealSolver", "FineSolver");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
-                // Set coarse parareal solver
+                // Set coarse parareal solver.
                 m_sessionCoarse->SetTag("AdvectiveType", "SkewSymmetric");
                 m_sessionCoarse->SetTag("PararealSolver", "CoarseSolver");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
@@ -178,7 +179,7 @@ void DriverParareal::v_InitObject(ostream &out)
 /// Set the Parareal (coarse solver) session file
 void DriverParareal::SetPararealSessionFile(void)
 {
-    // Get the coarse solver session file
+    // Get the coarse solver session file.
     string meshFile;
     string coarseSolverFile;
     vector<string> coarseSolverFilenames;
@@ -191,6 +192,7 @@ void DriverParareal::SetPararealSessionFile(void)
     coarseSolverFile = coarseSolverFile.substr(0, coarseSolverFile.size() - 4);
     coarseSolverFile += "_coarseSolver.xml";
     std::ifstream f(coarseSolverFile);
+
     if (f.good())
     {
         // if _coarseSolver.xml exit, read session file
@@ -210,7 +212,7 @@ void DriverParareal::SetPararealSessionFile(void)
         }
     }
 
-    // Define argument for the coarse parareal solver
+    // Define argument for the coarse parareal solver.
     int npx = m_session->DefinesCmdLineArgument("npx")
                   ? m_session->GetCmdLineArgument<int>("npx")
                   : 1;
@@ -227,7 +229,7 @@ void DriverParareal::SetPararealSessionFile(void)
                   ? m_session->GetCmdLineArgument<int>("npt")
                   : 1;
 
-    // Convert into string
+    // Convert into string.
     std::string npx_string = std::to_string(npx);
     std::string npy_string = std::to_string(npy);
     std::string npz_string = std::to_string(npz);
@@ -247,16 +249,22 @@ void DriverParareal::SetPararealSessionFile(void)
                     const_cast<char *>(npt_string.c_str()),
                     nullptr};
 
-    // Set session for coarse solver
+    // Set session for coarse solver.
     m_sessionCoarse = LibUtilities::SessionReader::CreateInstance(
         11, argv, coarseSolverFilenames, m_session->GetComm());
 
-    // Set graph for coarse solver
+    // Set graph for coarse solver.
     m_graphCoarse = SpatialDomains::MeshGraph::Read(m_sessionCoarse);
+
+    // Set BndRegionOrdering (necessary for DG with periodic BC) FIXME
+    m_graphCoarse->SetBndRegionOrdering(m_graph->GetBndRegionOrdering());
+
+    // Set CompositeOrdering (necessary for DG with periodic BC) FIXME
+    m_graphCoarse->SetCompositeOrdering(m_graph->GetCompositeOrdering());
 
     // If a coarse solver session file is not specified, use
     // m_coarseSolveFactor to determine the timestep of the coarse solver
-    // (default value is 100.0)
+    // (default value is 100.0).
     if (!f.good())
     {
         double timeStep =
@@ -269,12 +277,12 @@ void DriverParareal::SetPararealSessionFile(void)
 }
 
 void DriverParareal::RunCoarseSolve(
-    const NekDouble time,
+    const NekDouble time, const int nstep, const int iter,
     const Array<OneD, const Array<OneD, NekDouble>> &input,
     Array<OneD, Array<OneD, NekDouble>> &output)
 {
     // Output coarse timestep.
-    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
+    if (m_chunkRank == iter && m_comm->GetSpaceComm()->GetRank() == 0)
     {
         std::cout << "RUNNING COARSE SOLVE: dt = " << m_coarseTimeStep
                   << " nsteps = " << m_coarseSteps / m_numChunks << std::endl
@@ -283,12 +291,12 @@ void DriverParareal::RunCoarseSolve(
 
     // Set to coarse timestep.
     m_equ[1]->SetTime(time);
-    m_equ[1]->SetSteps(m_coarseSteps / m_numChunks);
+    m_equ[1]->SetSteps(nstep);
 
     // Copy initial condition from input.
     if (m_equ[0]->GetNpoints() == m_equ[1]->GetNpoints())
     {
-        // Interpolation not necessary, directly copy data
+        // Interpolation not necessary, directly copy data.
         for (int i = 0; i < m_equ[1]->GetNvariables(); ++i)
         {
             m_equ[1]->CopyToPhysField(i, input[i]);
@@ -296,13 +304,13 @@ void DriverParareal::RunCoarseSolve(
     }
     else
     {
-        // Copy data to fine solver and interpolate from fine to coarse (WIP)
+        // Copy data to fine solver and interpolate from fine to coarse (WIP).
         for (int i = 0; i < m_equ[0]->GetNvariables(); ++i)
         {
             m_equ[0]->CopyToPhysField(i, input[i]);
         }
-        m_interp.Interpolate(m_equ[0]->UpdateFields(),
-                             m_equ[1]->UpdateFields());
+        m_interp.InterpExp1ToExp2(m_equ[0]->UpdateFields(),
+                                  m_equ[1]->UpdateFields());
     }
 
     // Solve equations.
@@ -311,7 +319,7 @@ void DriverParareal::RunCoarseSolve(
     // Copy solution to output.
     if (m_equ[0]->GetNpoints() == m_equ[1]->GetNpoints())
     {
-        // Interpolation not necessary, directly copy data
+        // Interpolation not necessary, directly copy data.
         for (int i = 0; i < m_equ[1]->GetNvariables(); ++i)
         {
             m_equ[1]->CopyFromPhysField(i, output[i]);
@@ -319,9 +327,9 @@ void DriverParareal::RunCoarseSolve(
     }
     else
     {
-        // Copy data from coarse solver and interpolate coarse to fine (WIP)
-        m_interp.Interpolate(m_equ[1]->UpdateFields(),
-                             m_equ[0]->UpdateFields());
+        // Copy data from coarse solver and interpolate coarse to fine (WIP).
+        m_interp.InterpExp1ToExp2(m_equ[1]->UpdateFields(),
+                                  m_equ[0]->UpdateFields());
         for (int i = 0; i < m_equ[1]->GetNvariables(); ++i)
         {
             m_equ[0]->CopyFromPhysField(i, output[i]);
@@ -330,12 +338,12 @@ void DriverParareal::RunCoarseSolve(
 }
 
 void DriverParareal::RunFineSolve(
-    const NekDouble time,
+    const NekDouble time, const int nstep, const int iter,
     const Array<OneD, const Array<OneD, NekDouble>> &input,
     Array<OneD, Array<OneD, NekDouble>> &output)
 {
     // Output fine timestep.
-    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
+    if (m_chunkRank == iter && m_comm->GetSpaceComm()->GetRank() == 0)
     {
         std::cout << "RUNNING FINE SOLVE: dt = " << m_fineTimeStep
                   << " nsteps = " << m_fineSteps / m_numChunks << std::endl
@@ -354,10 +362,10 @@ void DriverParareal::RunFineSolve(
 
     // Set to fine timestep.
     m_equ[0]->SetTime(time);
-    m_equ[0]->SetSteps(m_fineSteps / m_numChunks);
+    m_equ[0]->SetSteps(nstep);
 
     // Reinitialize check point number for each parareal iteration.
-    m_equ[0]->SetCheckpointNumber(m_chunkRank * nChkPts);
+    m_equ[0]->SetCheckpointNumber(m_chunkRank * nChkPts + 1);
 
     // Update parareal iteration number.
     m_equ[0]->SetPararealIterationNumber(++nIter);
@@ -380,13 +388,16 @@ void DriverParareal::RunFineSolve(
 
 void DriverParareal::v_Execute(ostream &out)
 {
-    time_t starttime, endtime;
-    NekDouble CPUtime;
+    Nektar::LibUtilities::Timer timer;
+    NekDouble CPUtime = 0.0;
 
     m_numChunks = m_session->GetComm()->GetTimeComm()->GetSize();
     m_chunkRank = m_session->GetComm()->GetTimeComm()->GetRank();
 
     // Set parameters from session file.
+    m_pararealToler   = m_session->DefinesParameter("PararealToler")
+                            ? m_session->GetParameter("PararealToler")
+                            : m_pararealToler;
     m_pararealIterMax = m_session->DefinesParameter("PararealIterMax")
                             ? m_session->GetParameter("PararealIterMax")
                             : m_numChunks;
@@ -396,19 +407,28 @@ void DriverParareal::v_Execute(ostream &out)
     m_coarseSteps     = m_sessionCoarse->GetParameter("NumSteps");
     m_totalTime       = m_fineTimeStep * m_fineSteps;
     m_chunkTime       = m_totalTime / m_numChunks;
+    m_exactSolution   = m_session->DefinesParameter("ExactSolution")
+                            ? m_session->GetParameter("ExactSolution")
+                            : m_exactSolution;
 
-    // Turnoff I/O for coarse solver
+    // Turnoff I/O for coarse solver.
     m_equ[1]->SetInfoSteps(0);
     m_equ[1]->SetCheckpointSteps(0);
 
-    // Check time step inputs
-    ASSERTL0(m_fineSteps % m_numChunks == 0,
-             "Total step size should be divisible by number of chunks.");
+    // Check time step inputs.
+    ASSERTL0(
+        m_fineSteps % m_numChunks == 0,
+        "Total number of fine step should be divisible by number of chunks.");
 
-    ASSERTL0(m_fineSteps % m_coarseSteps == 0,
-             "number of coarse steps should divide number of fine steps");
+    ASSERTL0(
+        m_coarseSteps % m_numChunks == 0,
+        "Total number of coarse step should be divisible by number of chunks.");
 
-    // Check I/O inputs
+    ASSERTL0(fabs(m_coarseTimeStep * m_coarseSteps -
+                  m_fineTimeStep * m_fineSteps) < 1e-12,
+             "Fine and coarse total computational times do not match");
+
+    // Check I/O inputs.
     if (m_session->GetParameter("IO_InfoSteps"))
     {
         ASSERTL0(m_fineSteps % int(m_session->GetParameter("IO_InfoSteps") *
@@ -426,8 +446,8 @@ void DriverParareal::v_Execute(ostream &out)
                  "per time chunk");
     }
 
-    // Fine solver summary
-    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
+    // Fine solver summary.
+    if (m_chunkRank == 0 && m_comm->GetSpaceComm()->GetRank() == 0)
     {
         std::cout << "========================================================="
                      "=============="
@@ -442,8 +462,8 @@ void DriverParareal::v_Execute(ostream &out)
         std::cout << std::endl << std::flush;
     }
 
-    // Coarse solver summary
-    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
+    // Coarse solver summary.
+    if (m_chunkRank == 0 && m_comm->GetSpaceComm()->GetRank() == 0)
     {
         std::cout << "========================================================="
                      "=============="
@@ -456,145 +476,168 @@ void DriverParareal::v_Execute(ostream &out)
         m_equ[1]->PrintSummary(out);
     }
 
-    time(&starttime);
+    timer.Start();
 
-    // Allocate storage for parareal solver
+    // Allocate storage for parareal solver.
     int nPts = m_equ[0]->GetNpoints();
     int nVar = m_equ[0]->GetNvariables();
     Array<OneD, Array<OneD, NekDouble>> solution(nVar);
-    Array<OneD, Array<OneD, NekDouble>> solutionFine(nVar);
-    Array<OneD, Array<OneD, NekDouble>> solutionCoarse1(nVar);
-    Array<OneD, Array<OneD, NekDouble>> solutionCoarse2(nVar);
+    Array<OneD, Array<OneD, NekDouble>> solutionCoarsePrev(nVar);
+    Array<OneD, Array<OneD, NekDouble>> solutionCoarseCurr(nVar);
     Array<OneD, Array<OneD, NekDouble>> ic(nVar);
     Array<OneD, Array<OneD, NekDouble>> exactsoln(nVar);
     for (int i = 0; i < nVar; ++i)
     {
-        solution[i]        = Array<OneD, NekDouble>(nPts, 0.0);
-        solutionFine[i]    = Array<OneD, NekDouble>(nPts, 0.0);
-        solutionCoarse1[i] = Array<OneD, NekDouble>(nPts, 0.0);
-        solutionCoarse2[i] = Array<OneD, NekDouble>(nPts, 0.0);
-        ic[i]              = Array<OneD, NekDouble>(nPts, 0.0);
-        exactsoln[i]       = Array<OneD, NekDouble>(nPts, 0.0);
+        solution[i]           = Array<OneD, NekDouble>(nPts, 0.0);
+        solutionCoarsePrev[i] = Array<OneD, NekDouble>(nPts, 0.0);
+        solutionCoarseCurr[i] = Array<OneD, NekDouble>(nPts, 0.0);
+        ic[i]                 = Array<OneD, NekDouble>(nPts, 0.0);
+        exactsoln[i]          = Array<OneD, NekDouble>(nPts, 0.0);
     }
 
-    // Initialize fine solver
+    // Initialize fine solver.
     m_equ[0]->DoInitialise();
 
-    // Initialize coarse solver
+    // Initialize coarse solver.
     m_equ[1]->SetUseInitialCondition(false);
     m_equ[1]->DoInitialise();
 
-    // Get initial conditions
-    if (m_chunkRank == 0)
+    // Get initial conditions.
+    for (int i = 0; i < nVar; ++i)
     {
-        for (int i = 0; i < nVar; ++i)
-        {
-            m_equ[0]->CopyFromPhysField(i, ic[i]);
-        }
+        m_equ[0]->CopyFromPhysField(i, ic[i]);
     }
 
-    // Evaluate "ExactSolution" function, or zero array
-    if (m_chunkRank == m_numChunks - 1)
-    {
-        for (int i = 0; i < nVar; ++i)
-        {
-            m_equ[0]->EvaluateExactSolution(i, exactsoln[i], m_totalTime);
-        }
-    }
-
-    // Run coarse solution, G(y_j^k) to get initial conditions
-    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
+    // Run coarse solution, G(y_j^k) to get initial conditions.
+    if (m_chunkRank == 0 && m_comm->GetSpaceComm()->GetRank() == 0)
     {
         std::cout << "** INITIAL CONDITION **" << std::endl << std::flush;
     }
-    LibUtilities::CommSharedPtr tc = m_session->GetComm()->GetTimeComm();
-    int recvProc                   = m_chunkRank - 1;
-    int sendProc                   = m_chunkRank + 1;
-
-    // Calculate the initial coarse solve approximation
-    // This provides each time-slice with its initial condition.
-    if (m_chunkRank > 0)
-    {
-        for (int i = 0; i < nVar; ++i)
-        {
-            tc->Recv(recvProc, ic[i]);
-        }
-    }
-
-    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
-    {
-        std::cout << "** ITERATION " << 0 << " **" << std::endl << std::flush;
-    }
-
-    RunCoarseSolve(m_chunkRank * m_chunkTime, ic, solution);
-    if (m_chunkRank < m_numChunks - 1)
-    {
-        for (int i = 0; i < nVar; ++i)
-        {
-            tc->Send(sendProc, solution[i]);
-        }
-    }
-
-    // On the last time-slice, we calculate the L2 error of our coarse solution
-    if (m_chunkRank == m_numChunks - 1)
-    {
-        for (int i = 0; i < nVar; ++i)
-        {
-            // Copy the calculated coarse solution back
-            m_equ[0]->CopyToPhysField(i, solution[i]);
-
-            NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
-            NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
-
-            if (m_comm->GetRank() == m_chunkRank)
-            {
-                std::cout << "L2 error (variable " << m_equ[0]->GetVariable(i)
-                          << ") : " << vL2Error << std::endl
-                          << std::flush;
-                std::cout << "Linf error (variable " << m_equ[0]->GetVariable(i)
-                          << ") : " << vLinfError << std::endl
-                          << std::flush;
-            }
-        }
-    }
+    LibUtilities::CommSharedPtr tComm = m_session->GetComm()->GetTimeComm();
+    int recvProc                      = m_chunkRank - 1;
+    int sendProc                      = m_chunkRank + 1;
 
     // Iterate to improve on the approximation
     // For the moment, we use the maximum number of iterations
     // We can add a tolerance threshold later.
     // We start the iteration with the current approximation stored in
     // the 'solution' array.
-    for (int k = 0; k < m_pararealIterMax; ++k)
+    int k               = 0;
+    int kmax            = 0;
+    int convergenceCurr = false;
+    int convergencePrev = (m_chunkRank == 0);
+    NekDouble vL2Error  = 0.0;
+    Array<OneD, NekDouble> vL2Errors(nVar, 0.0);
+    Array<OneD, NekDouble> vLinfErrors(nVar, 0.0);
+
+    // To compute the initial conditions, the coarse solver is run serially
+    // for each time chunk to avoid communication time between processors.
+    if (m_chunkRank > 0)
     {
-        if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
+        RunCoarseSolve(0.0, m_chunkRank * m_coarseSteps / m_numChunks, -1, ic,
+                       ic);
+    }
+
+    // Compute initial coarse solution.
+    if (m_chunkRank == 0 && m_comm->GetSpaceComm()->GetRank() == 0)
+    {
+        std::cout << "** ITERATION " << 0 << " **" << std::endl << std::flush;
+    }
+
+    RunCoarseSolve(m_chunkRank * m_chunkTime, m_coarseSteps / m_numChunks, 0,
+                   ic, solutionCoarsePrev);
+
+    for (int i = 0; i < nVar; ++i)
+    {
+        for (int q = 0; q < nPts; ++q)
+        {
+            solution[i][q] = solutionCoarsePrev[i][q];
+        }
+    }
+
+    if (m_exactSolution)
+    {
+        // Evaluate exact solution.
+        for (int i = 0; i < nVar; ++i)
+        {
+            m_equ[0]->EvaluateExactSolution(i, exactsoln[i],
+                                            (m_chunkRank + 1) * m_chunkTime);
+        }
+    }
+
+    timer.Stop();
+    CPUtime += timer.Elapsed().count();
+    if (m_chunkRank == m_numChunks - 1 &&
+        m_comm->GetSpaceComm()->GetRank() == 0)
+    {
+        std::cout << "-------------------------------------------" << std::endl
+                  << std::flush;
+        std::cout << "Total Computation Time = " << CPUtime << "s" << std::endl
+                  << std::flush;
+        std::cout << "-------------------------------------------" << std::endl
+                  << std::flush;
+    }
+    for (int i = 0; i < nVar; ++i)
+    {
+        vL2Errors[i]   = m_equ[1]->L2Error(i, exactsoln[i], 1);
+        vLinfErrors[i] = m_equ[1]->LinfError(i, exactsoln[i]);
+        if (m_chunkRank == m_numChunks - 1 &&
+            m_comm->GetSpaceComm()->GetRank() == 0)
+        {
+            std::cout << "L2 error (variable " << m_equ[1]->GetVariable(i)
+                      << ") : " << vL2Errors[i] << std::endl
+                      << std::flush;
+            std::cout << "Linf error (variable " << m_equ[1]->GetVariable(i)
+                      << ") : " << vLinfErrors[i] << std::endl
+                      << std::flush;
+        }
+    }
+    timer.Start();
+
+    // Start Parareal iteration loop.
+    while (k < m_pararealIterMax && !convergenceCurr)
+    {
+        if (m_chunkRank == min(k, m_numChunks - 1) &&
+            m_comm->GetSpaceComm()->GetRank() == 0)
         {
             std::cout << "** ITERATION " << k + 1 << " **" << std::endl
                       << std::flush;
         }
 
-        // Calculate the coarse approximation G(y_j^k)
-        // For the first iteration, this is already known, so could skip
-        // Since this is based on previous solution, no comm necessary
-        RunCoarseSolve(m_chunkRank * m_chunkTime, ic, solutionCoarse1);
+        // Use previous parareal solution as "exact solution".
+        if (!m_exactSolution)
+        {
+            for (int i = 0; i < nVar; ++i)
+            {
+                for (int q = 0; q < nPts; ++q)
+                {
+                    exactsoln[i][q] = solution[i][q];
+                }
+            }
+        }
 
         // Calculate fine solution, F(y_j^k)
-        // Again no communication necessary
-        RunFineSolve(m_chunkRank * m_chunkTime, ic, solutionFine);
+        // Again no communication necessary.
+        RunFineSolve(m_chunkRank * m_chunkTime, m_fineSteps / m_numChunks, k,
+                     ic, solution);
 
         // Calculate coarse solve correction G(y_j^{k+1})
-        // These are dependent on the previous time slice, so need to compute
-        // serially.
-        if (m_chunkRank > 0)
+        // These are dependent on the previous time slice, so need to
+        // compute serially.
+        if (m_chunkRank > 0 && !convergencePrev)
         {
             // All time slices, apart from the first, receive their initial
             // state from the previous time slice.
+            tComm->Recv(recvProc, convergencePrev);
             for (int i = 0; i < nVar; ++i)
             {
-                tc->Recv(recvProc, ic[i]);
+                tComm->Recv(recvProc, ic[i]);
             }
         }
 
         // Run the coarse solver
-        RunCoarseSolve(m_chunkRank * m_chunkTime, ic, solutionCoarse2);
+        RunCoarseSolve(m_chunkRank * m_chunkTime, m_coarseSteps / m_numChunks,
+                       k, ic, solutionCoarseCurr);
 
         // Calculate the new approximation y_{j+1}^{k+1}
         // This is calculated point-wise.
@@ -602,57 +645,149 @@ void DriverParareal::v_Execute(ostream &out)
         {
             for (int q = 0; q < nPts; ++q)
             {
-                solution[i][q] = solutionCoarse2[i][q] + solutionFine[i][q] -
-                                 solutionCoarse1[i][q];
+                solution[i][q] +=
+                    solutionCoarseCurr[i][q] - solutionCoarsePrev[i][q];
+
+                solutionCoarsePrev[i][q] = solutionCoarseCurr[i][q];
             }
         }
 
-        // All but the last time slice should communicate the solution to the
-        // next time slice. This will become the initial condition for the next
-        // slice.
+        // Compute L2 error for each time chunk.
+        vL2Error = 0.0;
+        for (int i = 0; i < nVar; ++i)
+        {
+            // Copy the new approximation back.
+            m_equ[0]->CopyToPhysField(i, solution[i]);
+
+            vL2Error = max(vL2Error, m_equ[0]->L2Error(i, exactsoln[i], 1));
+        }
+
+        // Check convergence of L2 error for each time chunk.
+        if ((vL2Error < m_pararealToler && convergencePrev) || m_chunkRank == k)
+        {
+            convergenceCurr = true;
+        }
+
+        // All but the last time slice should communicate the solution to
+        // the next time slice. This will become the initial condition for
+        // the next slice.
         if (m_chunkRank < m_numChunks - 1)
         {
+            tComm->Send(sendProc, convergenceCurr);
             for (int i = 0; i < nVar; ++i)
             {
-                tc->Send(sendProc, solution[i]);
+                tComm->Send(sendProc, solution[i]);
             }
         }
 
-        // On the last time-slice, we calculate the L2 error of our latest
-        // approximation
-        if (m_chunkRank == m_numChunks - 1)
+        if (m_exactSolution)
         {
+            // Evaluate exact solution.
             for (int i = 0; i < nVar; ++i)
             {
-                // Copy the new approximation back
-                m_equ[0]->CopyToPhysField(i, solution[i]);
+                m_equ[0]->EvaluateExactSolution(
+                    i, exactsoln[i], (m_chunkRank + 1) * m_chunkTime);
+            }
+        }
 
-                NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
-                NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
+        timer.Stop();
+        CPUtime += timer.Elapsed().count();
+        if (m_chunkRank == m_numChunks - 1 &&
+            m_comm->GetSpaceComm()->GetRank() == 0)
+        {
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            std::cout << "Total Computation Time = " << CPUtime << "s"
+                      << std::endl
+                      << std::flush;
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+        }
+        for (int i = 0; i < nVar; ++i)
+        {
+            vL2Errors[i]   = m_equ[0]->L2Error(i, exactsoln[i], 1);
+            vLinfErrors[i] = m_equ[0]->LinfError(i, exactsoln[i]);
+            if (m_chunkRank == m_numChunks - 1 &&
+                m_comm->GetSpaceComm()->GetRank() == 0)
+            {
+                std::cout << "L2 error (variable " << m_equ[0]->GetVariable(i)
+                          << ") : " << vL2Errors[i] << std::endl
+                          << std::flush;
+                std::cout << "Linf error (variable " << m_equ[0]->GetVariable(i)
+                          << ") : " << vLinfErrors[i] << std::endl
+                          << std::flush;
+            }
+        }
+        timer.Start();
 
-                if (m_comm->GetRank() == m_chunkRank)
-                {
-                    std::cout << "L2 error (variable "
-                              << m_equ[0]->GetVariable(i) << ") : " << vL2Error
-                              << std::endl
-                              << std::flush;
-                    std::cout << "Linf error (variable "
-                              << m_equ[0]->GetVariable(i)
-                              << ") : " << vLinfError << std::endl
-                              << std::flush;
-                }
+        // Increment counter.
+        k++;
+        kmax = k;
+    }
+    timer.Stop();
+
+    // If already converged, simply copy previous computed solution.
+    m_comm->GetTimeComm()->AllReduce(kmax, Nektar::LibUtilities::ReduceMax);
+    for (; k < kmax; k++)
+    {
+        if (m_comm->GetSpaceComm()->GetRank() == 0 &&
+            m_session->GetParameter("IO_CheckSteps"))
+        {
+            std::string olddir = m_equ[0]->GetSessionName() + "_" +
+                                 boost::lexical_cast<std::string>(k) + ".pit";
+            std::string outdir = m_equ[0]->GetSessionName() + "_" +
+                                 boost::lexical_cast<std::string>(k + 1) +
+                                 ".pit";
+
+            int nChkPts =
+                m_fineSteps /
+                int(m_session->GetParameter("IO_CheckSteps") * m_numChunks);
+            for (int i = 0; i < nChkPts; i++)
+            {
+                // Old file name
+                std::string oldname =
+                    olddir + "/" + m_equ[0]->GetSessionName() + "_" +
+                    boost::lexical_cast<std::string>(m_chunkRank * nChkPts + i +
+                                                     1) +
+                    ".chk";
+
+                // New file name
+                std::string outname =
+                    outdir + "/" + m_equ[0]->GetSessionName() + "_" +
+                    boost::lexical_cast<std::string>(m_chunkRank * nChkPts + i +
+                                                     1) +
+                    ".chk";
+
+                // Remove file if already existing
+                fs::remove_all(outname);
+
+                // Copy from previous converged solution
+                fs::copy(oldname, outname);
             }
         }
     }
 
-    time(&endtime);
+    // Update solution before printing restart solution.
+    for (int i = 0; i < nVar; ++i)
+    {
+        m_equ[0]->CopyToPhysField(i, solution[i]);
+        m_equ[0]->UpdateFields()[i]->FwdTransLocalElmt(
+            m_equ[0]->UpdateFields()[i]->GetPhys(),
+            m_equ[0]->UpdateFields()[i]->UpdateCoeffs());
+    }
 
+    // Print restart solution.
     m_equ[0]->Output();
 
+    // Wait for all processors to finish their writing activities
+    m_comm->Block();
+
+    // Print total computational time.
     if (m_chunkRank == m_numChunks - 1)
     {
-        CPUtime = difftime(endtime, starttime);
-        if (m_comm->GetRank() == m_chunkRank)
+        if (m_comm->GetSpaceComm()->GetRank() == 0)
         {
             std::cout << "-------------------------------------------"
                       << std::endl
@@ -665,15 +800,20 @@ void DriverParareal::v_Execute(ostream &out)
                       << std::flush;
         }
 
+        // Print solution errors.
         for (int i = 0; i < nVar; ++i)
         {
-            // Copy the new approximation back
+            // Copy the new approximation back.
             m_equ[0]->CopyToPhysField(i, solution[i]);
 
+            // Evaluate exact solution.
+            m_equ[0]->EvaluateExactSolution(i, exactsoln[i], m_totalTime);
+
+            // Evaluate error norms.
             NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
             NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
 
-            if (m_comm->GetRank() == m_chunkRank)
+            if (m_comm->GetSpaceComm()->GetRank() == 0)
             {
                 std::cout << "L 2 error (variable " << m_equ[0]->GetVariable(i)
                           << ") : " << vL2Error << std::endl
@@ -683,6 +823,240 @@ void DriverParareal::v_Execute(ostream &out)
                           << std::endl
                           << std::flush;
             }
+        }
+    }
+
+    // Speed-up analysis
+    if (true)
+    {
+        int count = 20;
+
+        if (m_chunkRank == m_numChunks - 1 &&
+            m_comm->GetSpaceComm()->GetRank() == 0)
+        {
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            std::cout << "PARAREAL SPEED-UP ANALYSIS" << std::endl
+                      << std::flush;
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+        }
+
+        // Mean communication time.
+        NekDouble commTime = 0.0;
+        timer.Start();
+        for (int n = 0; n < count; n++)
+        {
+            if (m_chunkRank > 0)
+            {
+                for (int i = 0; i < nVar; ++i)
+                {
+                    tComm->Recv(recvProc, ic[i]);
+                }
+            }
+
+            if (m_chunkRank < m_numChunks - 1)
+            {
+                for (int i = 0; i < nVar; ++i)
+                {
+                    tComm->Send(sendProc, solution[i]);
+                }
+            }
+        }
+        timer.Stop();
+        commTime = timer.Elapsed().count() / count;
+
+        // Print communication time.
+        if (m_chunkRank == m_numChunks - 1 &&
+            m_comm->GetSpaceComm()->GetRank() == 0)
+        {
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            std::cout << "Mean Communication Time = " << commTime << "s"
+                      << std::endl
+                      << std::flush;
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+        }
+
+        // Mean restriction time.
+        NekDouble restTime = 0.0;
+        if (m_equ[0]->GetNpoints() != m_equ[1]->GetNpoints())
+        {
+            timer.Start();
+            for (int n = 0; n < count; n++)
+            {
+                m_interp.InterpExp1ToExp2(m_equ[0]->UpdateFields(),
+                                          m_equ[1]->UpdateFields());
+            }
+            timer.Stop();
+            restTime = timer.Elapsed().count() / count;
+
+            // Print restriction time.
+            if (m_chunkRank == m_numChunks - 1 &&
+                m_comm->GetSpaceComm()->GetRank() == 0)
+            {
+                std::cout << "-------------------------------------------"
+                          << std::endl
+                          << std::flush;
+                std::cout << "Mean Restriction Time = " << restTime << "s"
+                          << std::endl
+                          << std::flush;
+                std::cout << "-------------------------------------------"
+                          << std::endl
+                          << std::flush;
+            }
+        }
+
+        // Mean interpolation time.
+        NekDouble interTime = 0.0;
+        if (m_equ[0]->GetNpoints() != m_equ[1]->GetNpoints())
+        {
+            timer.Start();
+            for (int n = 0; n < count; n++)
+            {
+                m_interp.InterpExp1ToExp2(m_equ[1]->UpdateFields(),
+                                          m_equ[0]->UpdateFields());
+            }
+            timer.Stop();
+            interTime = timer.Elapsed().count() / count;
+
+            // Print restriction time.
+            if (m_chunkRank == m_numChunks - 1 &&
+                m_comm->GetSpaceComm()->GetRank() == 0)
+            {
+                std::cout << "-------------------------------------------"
+                          << std::endl
+                          << std::flush;
+                std::cout << "Mean Interpolation Time = " << interTime << "s"
+                          << std::endl
+                          << std::flush;
+                std::cout << "-------------------------------------------"
+                          << std::endl
+                          << std::flush;
+            }
+        }
+
+        // Mean coarse solver time.
+        NekDouble coarseSolveTime = 0.0;
+        timer.Start();
+        for (int n = 0; n < count; n++)
+        {
+            RunCoarseSolve(0.0, 100, -1, ic, solution);
+        }
+        timer.Stop();
+        coarseSolveTime = 0.01 * timer.Elapsed().count() / count *
+                              (m_coarseSteps / m_numChunks) -
+                          restTime - interTime;
+
+        // Print restriction time.
+        if (m_chunkRank == m_numChunks - 1 &&
+            m_comm->GetSpaceComm()->GetRank() == 0)
+        {
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            std::cout << "Mean Coarse Solve Time = " << coarseSolveTime << "s"
+                      << std::endl
+                      << std::flush;
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+        }
+
+        // Fine solver time.
+        NekDouble fineSolveTime = 0.0;
+        timer.Start();
+        // Turnoff I/O for fine solver.
+        m_equ[0]->SetInfoSteps(0);
+        m_equ[0]->SetCheckpointSteps(0);
+        for (int n = 0; n < count; n++)
+        {
+            RunFineSolve(0.0, 100, -1, ic, solution);
+        }
+        timer.Stop();
+        fineSolveTime = 0.01 * timer.Elapsed().count() / count *
+                        (m_fineSteps / m_numChunks);
+
+        // Print fine solve time.
+        if (m_chunkRank == m_numChunks - 1 &&
+            m_comm->GetSpaceComm()->GetRank() == 0)
+        {
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            std::cout << "Mean Fine Solve Time = " << fineSolveTime << "s"
+                      << std::endl
+                      << std::flush;
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+        }
+
+        // Print speedup time.
+        if (m_chunkRank == m_numChunks - 1 &&
+            m_comm->GetSpaceComm()->GetRank() == 0)
+        {
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            std::cout << "Maximum Speed-up" << std::endl << std::flush;
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            for (int k = 1; k <= m_numChunks; k++)
+            {
+                NekDouble ratio      = double(k) / m_numChunks;
+                NekDouble ratioSolve = coarseSolveTime / fineSolveTime;
+                NekDouble speedup = 1.0 / ((1.0 + ratio) * ratioSolve + ratio);
+                std::cout << "Speed-up (" << k << ") = " << speedup << std::endl
+                          << std::flush;
+            }
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            std::cout << "Speed-up with comm." << std::endl << std::flush;
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            for (int k = 1; k <= m_numChunks; k++)
+            {
+                NekDouble ratio      = double(k) / m_numChunks;
+                NekDouble ratioComm  = commTime / fineSolveTime;
+                NekDouble ratioSolve = coarseSolveTime / fineSolveTime;
+                NekDouble speedup = 1.0 / ((1.0 + ratio) * ratioSolve + ratio +
+                                           ratioComm / m_numChunks);
+                std::cout << "Speed-up (" << k << ") = " << speedup << std::endl
+                          << std::flush;
+            }
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            std::cout << "Speed-up with comm. and interp." << std::endl
+                      << std::flush;
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
+            for (int k = 1; k <= m_numChunks; k++)
+            {
+                NekDouble ratio     = double(k) / m_numChunks;
+                NekDouble ratioComm = commTime / fineSolveTime;
+                NekDouble ratioSolve =
+                    (coarseSolveTime + restTime + interTime) / fineSolveTime;
+                NekDouble speedup =
+                    1.0 / ((1.0 + ratio) * ratioSolve + ratio +
+                           ratioComm * k * (2 * m_numChunks - k - 1) / 2.0 /
+                               m_numChunks);
+                std::cout << "Speed-up (" << k << ") = " << speedup << std::endl
+                          << std::flush;
+            }
+            std::cout << "-------------------------------------------"
+                      << std::endl
+                      << std::flush;
         }
     }
 }

@@ -425,9 +425,19 @@ public:
         return m_compOrder;
     }
 
+    void SetCompositeOrdering(CompositeOrdering p_compOrder)
+    {
+        m_compOrder = p_compOrder;
+    }
+
     BndRegionOrdering &GetBndRegionOrdering()
     {
         return m_bndRegOrder;
+    }
+
+    void SetBndRegionOrdering(BndRegionOrdering p_bndRegOrder)
+    {
+        m_bndRegOrder = p_bndRegOrder;
     }
 
     /*an inital read which loads a very light weight data structure*/
