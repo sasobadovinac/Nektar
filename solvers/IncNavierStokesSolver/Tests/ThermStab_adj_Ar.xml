@@ -98,9 +98,9 @@
         </FUNCTION>
 
         <FUNCTION NAME="BodyForce">
-            <E VAR="u"     VALUE="0"                 EVARS="u v theta p" />
-            <E VAR="theta"     VALUE="v * Ra_p * Pr" EVARS="u v theta p" />
-            <E VAR="v" VALUE="0"                 EVARS="u v theta p"/>
+            <E VAR="u"     VALUE="0"                 EVARS="u v theta" />
+            <E VAR="theta"     VALUE="v * Ra_p * Pr" EVARS="u v theta" />
+            <E VAR="v" VALUE="0"                 EVARS="u v theta"/>
         </FUNCTION>
 
         <FUNCTION NAME="BaseFlow">

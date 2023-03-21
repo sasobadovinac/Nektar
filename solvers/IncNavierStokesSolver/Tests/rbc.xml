@@ -78,9 +78,9 @@
         </FUNCTION>
 
         <FUNCTION NAME="BodyForce">
-            <E VAR="u" VALUE="0" EVARS="u v T p" />
-            <E VAR="v" VALUE="Ra*Pr*T" EVARS="u v T p" />
-            <E VAR="T" VALUE="0" EVARS="u v T p"  />
+            <E VAR="u" VALUE="0" EVARS="u v T" />
+            <E VAR="v" VALUE="Ra*Pr*T" EVARS="u v T" />
+            <E VAR="T" VALUE="0" EVARS="u v T"  />
         </FUNCTION>
 
         <FUNCTION NAME="DiffusionCoefficient">

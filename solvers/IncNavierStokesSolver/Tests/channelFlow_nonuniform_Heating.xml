@@ -93,9 +93,8 @@
         </FUNCTION>
 
         <FUNCTION NAME="BodyForce">
-            <E VAR="u" VALUE="0"  EVARS="u v teta" />
-            <E VAR="v" VALUE="teta*Ra_uni/Pr" EVARS="u v teta" />
-            <E VAR="teta" VALUE="0" EVARS="u v teta"/>
+            <E VAR="v" VALUE="teta*Ra_uni/Pr + y" EVARS="teta" />
+            <E VAR="teta" VALUE="0"/>
         </FUNCTION>
 
         <FUNCTION NAME="InitialConditions">
@@ -109,7 +108,7 @@
             <E VAR="u"    VALUE="(1-y^2)" />
             <E VAR="v"    VALUE="0.0" />
             <E VAR="teta" VALUE="0.5*(1-y)" />
-            <E VAR="p"    VALUE="0.5*(y*(1-0.5*y) + 1.5)*Ra_uni/Pr" />
+            <E VAR="p"    VALUE="0.5*(y*(1-0.5*y) + 1.5)*Ra_uni/Pr + 0.5*(y*y-1)" />
         </FUNCTION>
 
     </CONDITIONS>
