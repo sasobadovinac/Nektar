@@ -73,6 +73,7 @@ v5.3.0
 - Modify SessionReader to read restart/exact solution files parallel-in-time (!1521)
 - Fix Polylib_test.cpp (!1524)
 - Update to Parareal file output (!1517)
+- Add convergence criteria to Parareal driver (!1457)
 - Add time metadata to tecplot output (!1525)
 - Fix segmentation fault when no time integration method specified for unsteady problem (!1526)
 - Set adjacent elements for m_bndcondExpansions for both CG and DG (!1491)

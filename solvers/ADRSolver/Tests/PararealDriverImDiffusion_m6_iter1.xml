@@ -39,6 +39,7 @@
             <P> IO_InfoSteps    = 0      </P> <!-- Frequency of printing information for the user -->
             <P> IO_CheckSteps   = 0      </P> <!-- Frequency of writing the checkpoints, the results -->
             <P> PararealIterMax = 1      </P> <!-- Max number of Parareal iteration -->
+            <P> PararealToler   = 1e-15  </P> <!-- Parareal iteration tolerance -->
         </PARAMETERS>
 
         <!-- setting the variable -->

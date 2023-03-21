@@ -61,7 +61,7 @@
     <CONDITIONS>
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyDiffusion"   />
-            <I PROPERTY="Projection"            VALUE="DisContinuous"       />
+            <I PROPERTY="Projection"            VALUE="Continuous"          />
             <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler"       />
             <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"            />
             <I PROPERTY="Driver"                VALUE="Parareal"            />
@@ -75,6 +75,7 @@
             <P> wavefreq        = PI               </P>
             <P> epsilon         = 1.0              </P>
             <P> PararealIterMax = 4                </P>
+            <P> PararealToler   = 1e-15            </P>
         </PARAMETERS>
 
         <VARIABLES>
