@@ -65,7 +65,7 @@ namespace Polylib
    - h    -   Lagrange Interpolant
    - I    -   Interpolation matrix
    - g    -   Gauss
-       - k	  -   Kronrod
+   - k	  -   Kronrod
    - gr   -   Gauss-Radau
    - gl   -   Gauss-Lobatto
    - j    -   Jacobi
@@ -86,6 +86,10 @@ namespace Polylib
        - zwrk        Compute Radau-Kronrod        points and weights
        - zwlk        Compute Lobatto-Kronrod      points and weights
        - JacZeros    Compute Gauss-Jacobi         points and weights
+
+   Integration Matrices:
+
+   - Qg          Compute Gauss               integration matrix
 
    Derivative Matrices:
 
@@ -110,6 +114,7 @@ namespace Polylib
 
    Polynomial Evaluation:
 
+   - polycoeff   Returns value and derivative of Jacobi poly.
    - jacobfd     Returns value and derivative of Jacobi poly. at point z
    - jacobd      Returns derivative of Jacobi poly. at point z (valid at z=-1,1)
 
@@ -167,6 +172,9 @@ LIB_UTILITIES_EXPORT void zwlk(double *, double *, const int, const double,
 LIB_UTILITIES_EXPORT void JacZeros(const int, double *, double *, const double,
                                    const double);
 
+/* Integration operators */
+LIB_UTILITIES_EXPORT void Qg(double *, const double *, const int, const int);
+
 /* Derivative operators */
 LIB_UTILITIES_EXPORT void Dgj(double *, const double *, const int, const double,
                               const double);
@@ -202,6 +210,8 @@ LIB_UTILITIES_EXPORT void Imglj(double *, const double *, const double *,
                                 const double);
 
 /* Polynomial functions */
+LIB_UTILITIES_EXPORT void polycoeffs(const int, const double *, double *,
+                                     const int);
 LIB_UTILITIES_EXPORT void jacobfd(const int, const double *, double *, double *,
                                   const int, const double, const double);
 LIB_UTILITIES_EXPORT void jacobd(const int, const double *, double *, const int,

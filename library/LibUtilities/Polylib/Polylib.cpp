@@ -579,6 +579,41 @@ void zwlk(double *z, double *w, const int npt, const double alpha,
 }
 
 /**
+\brief Compute the Integration Matrix.
+*/
+void Qg(double *Q, const double *z, const int np, const int offset)
+{
+
+    if (np <= 0)
+    {
+        Q[0] = 0.0;
+    }
+    else
+    {
+        int i, j, k;
+        double *pd;
+
+        pd = (double *)malloc(np * sizeof(double));
+
+        for (i = 0; i < np; i++)
+        {
+            polycoeffs(i, z, pd, np);
+            for (j = 0; j < np; j++)
+            {
+                Q[j * (np + offset) + i + offset] = 0.0;
+                for (k = 0; k < np; k++)
+                {
+                    Q[j * (np + offset) + i + offset] +=
+                        pd[k] / (k + 1) * pow(z[j], k + 1);
+                }
+            }
+        }
+        free(pd);
+    }
+    return;
+}
+
+/**
 \brief Compute the Derivative Matrix and its transpose associated
 with the Gauss-Jacobi zeros.
 
@@ -1065,6 +1100,44 @@ void Imglj(double *im, const double *zglj, const double *zm, const int nz,
     return;
 }
 
+void polycoeffs(const int i, const double *z, double *c, const int np)
+{
+    int j, k, m;
+
+    // Compute denominator
+    double d = 1.0;
+    for (j = 0; j < np; j++)
+    {
+        if (i != j)
+        {
+            d *= z[i] - z[j];
+        }
+        c[j] = 0.0;
+    }
+
+    // Compute coefficient
+    c[0] = 1.0;
+    m    = 0;
+    for (j = 0; j < np; j++)
+    {
+        if (i != j)
+        {
+            m += 1;
+            c[m] = c[m - 1];
+            for (k = m - 1; k > 0; k--)
+            {
+                c[k] *= -1.0 * z[j];
+                c[k] += c[k - 1];
+            }
+            c[0] *= -1.0 * z[j];
+        }
+    }
+    for (j = 0; j < np; j++)
+    {
+        c[j] /= d;
+    }
+}
+
 /**
 \brief Routine to calculate Jacobi polynomials, \f$
 P^{\alpha,\beta}_n(z) \f$, and their first derivative, \f$
@@ -1217,7 +1290,6 @@ void jacobfd(const int np, const double *z, double *poly_in, double *polyd,
 \li This formulation is valid for \f$ -1 \leq z \leq 1 \f$
 
 */
-
 void jacobd(const int np, const double *z, double *polyd, const int n,
             const double alpha, const double beta)
 {

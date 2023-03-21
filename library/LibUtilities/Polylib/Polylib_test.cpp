@@ -150,12 +150,13 @@ int test_gamma_fraction();
 int main()
 {
     int np, n, i;
-    double *z, *w, *p, sum = 0, alpha, beta, *d, *dt;
+    double *z, *w, *p, *q, sum = 0, alpha, beta, *d, *dt;
 
     z = dvector(0, NPUPPER - 1);
     w = dvector(0, NPUPPER - 1);
     p = dvector(0, NPUPPER - 1);
 
+    q  = dvector(0, NPUPPER * NPUPPER - 1);
     d  = dvector(0, NPUPPER * NPUPPER - 1);
     dt = dvector(0, NPUPPER * NPUPPER - 1);
 
@@ -283,6 +284,150 @@ int main()
         alpha += 0.5;
     }
     printf("Finished checking Gauss Lobatto Integration\n");
+#endif
+
+#if GAUSS_INT
+    printf("Begin checking integration through Gauss points\n");
+    alpha = -0.5;
+    while (alpha <= 5.0)
+    {
+        beta = -0.5;
+        while (beta <= 5.0)
+        {
+
+            for (np = NPLOWER; np <= NPUPPER; ++np)
+            {
+                zwgj(z, w, np, alpha, beta);
+                Qg(q, z, np, 0);
+                for (n = 2; n < np - 1; ++n)
+                {
+                    for (i = 0; i < np; ++i)
+                        p[i] = pow(z[i], n);
+                    sum = 0;
+                    for (i = 0; i < np; ++i)
+                        sum += fabs(ddot(np, q + i * np, 1, p, 1) -
+                                    pow(z[i], n + 1) / (n + 1));
+                    sum /= np;
+                    if (fabs(sum) > EPS)
+                        printf("alpha = %lf, beta = %lf, np = %d, n = %d "
+                               "difference %lg\n",
+                               alpha, beta, np, n, sum);
+                }
+            }
+            beta += 0.5;
+        }
+        printf("finished checking all beta values for alpha = %lf\n", alpha);
+        alpha += 0.5;
+    }
+    printf("Finished checking Gauss Jacobi integration\n");
+#endif
+
+#if GAUSS_RADAUM_INT
+    printf("Begin checking integration through Gauss Radau points\n");
+    alpha = -0.5;
+    while (alpha <= 5.0)
+    {
+        beta = -0.5;
+        while (beta <= 5.0)
+        {
+
+            for (np = NPLOWER; np <= NPUPPER; ++np)
+            {
+                zwgrjm(z, w, np, alpha, beta);
+                Qg(q, z, np, 0);
+                for (n = 2; n < np - 1; ++n)
+                {
+                    for (i = 0; i < np; ++i)
+                        p[i] = pow(z[i], n);
+                    sum = 0;
+                    for (i = 0; i < np; ++i)
+                        sum += fabs(ddot(np, q + i * np, 1, p, 1) -
+                                    pow(z[i], n + 1) / (n + 1));
+                    sum /= np;
+                    if (fabs(sum) > EPS)
+                        printf("alpha = %lf, beta = %lf, np = %d, n = %d "
+                               "difference %lg\n",
+                               alpha, beta, np, n, sum);
+                }
+            }
+            beta += 0.5;
+        }
+        printf("finished checking all beta values for alpha = %lf\n", alpha);
+        alpha += 0.5;
+    }
+    printf("Finished checking Gauss Radau integration\n");
+#endif
+
+#if GAUSS_RADAUP_INT
+    printf("Begin checking integration through Gauss Radau (z=1) points\n");
+    alpha = -0.5;
+    while (alpha <= 5.0)
+    {
+        beta = -0.5;
+        while (beta <= 5.0)
+        {
+
+            for (np = NPLOWER; np <= NPUPPER; ++np)
+            {
+                zwgrjp(z, w, np, alpha, beta);
+                Qg(q, z, np, 0);
+                for (n = 2; n < np - 1; ++n)
+                {
+                    for (i = 0; i < np; ++i)
+                        p[i] = pow(z[i], n);
+                    sum = 0;
+                    for (i = 0; i < np; ++i)
+                        sum += fabs(ddot(np, q + i * np, 1, p, 1) -
+                                    pow(z[i], n + 1) / (n + 1));
+                    sum /= np;
+                    if (fabs(sum) > EPS)
+                        printf("alpha = %lf, beta = %lf, np = %d, n = %d "
+                               "difference %lg\n",
+                               alpha, beta, np, n, sum);
+                }
+            }
+            beta += 0.5;
+        }
+        printf("finished checking all beta values for alpha = %lf\n", alpha);
+        alpha += 0.5;
+    }
+    printf("Finished checking Gauss Radau (z=1) integration\n");
+#endif
+
+#if GAUSS_LOBATTO_INT
+    printf("Begin checking integration through Gauss Lobatto points\n");
+    alpha = -0.5;
+    while (alpha <= 5.0)
+    {
+        beta = -0.5;
+        while (beta <= 5.0)
+        {
+
+            for (np = NPLOWER; np <= NPUPPER; ++np)
+            {
+                zwglj(z, w, np, alpha, beta);
+                Qg(q, z, np, 0);
+                for (n = 2; n < np - 1; ++n)
+                {
+                    for (i = 0; i < np; ++i)
+                        p[i] = pow(z[i], n);
+                    sum = 0;
+                    for (i = 0; i < np; ++i)
+                        sum += fabs(ddot(np, q + i * np, 1, p, 1) -
+                                    pow(z[i], n + 1) / (n + 1));
+                    sum /= np;
+                    if (fabs(sum) > EPS)
+                        printf("alpha = %lf, beta = %lf, np = %d, n = %d "
+                               "difference %lg\n",
+                               alpha, beta, np, n, sum);
+                }
+            }
+            beta += 0.5;
+        }
+        printf("finished checking all beta values for alpha = %lf\n", alpha);
+        alpha += 0.5;
+    }
+    printf("Finished checking Gauss Lobatto integration\n");
 #endif
 
 #if GAUSS_DIFF

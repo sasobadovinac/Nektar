@@ -75,12 +75,27 @@ protected:
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) override;
 
-    LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
+    LUE virtual void v_ResidualEval(
+        const NekDouble &delta_t, const int n,
+        const TimeIntegrationSchemeOperators &op) override;
+
+    LUE virtual void v_ResidualEval(
+        const NekDouble &delta_t,
+        const TimeIntegrationSchemeOperators &op) override;
+
+    LUE virtual void v_ComputeInitialGuess(
+        const NekDouble &delta_t,
+        const TimeIntegrationSchemeOperators &op) override;
+
+    LUE virtual void v_SDCIterationLoop(
+        const NekDouble &delta_t,
         const TimeIntegrationSchemeOperators &op) override;
 
 }; // end class ExplicitTimeIntegrationSchemeSDC
 
+/**
+ * @brief Worker method to initialize the integration scheme.
+ */
 void ExplicitTimeIntegrationSchemeSDC::v_InitializeScheme(
     const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
     const TimeIntegrationSchemeOperators &op)
@@ -91,22 +106,40 @@ void ExplicitTimeIntegrationSchemeSDC::v_InitializeScheme(
 }
 
 /**
- * @brief Worker method that performs the time integration.
+ * @brief Worker method to compute the residual.
  */
-ConstDoubleArray &ExplicitTimeIntegrationSchemeSDC::v_TimeIntegrate(
-    const int timestep, const NekDouble delta_t,
+void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(
+    const NekDouble &delta_t, const int n,
     const TimeIntegrationSchemeOperators &op)
 {
+    // Compute residual
+    op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_points[n]);
+    op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_points[n]);
+}
 
-    boost::ignore_unused(timestep);
-
-    // 1. Compute initial guess
+void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(
+    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+{
+    // Compute residual
     for (unsigned int n = 0; n < m_nQuadPts; ++n)
     {
-        // 1.1. Compute residual
+        v_ResidualEval(delta_t, n, op);
+    }
+}
+
+/**
+ * @brief Worker method to compute the initial SDC guess.
+ */
+void ExplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
+    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+{
+    // Compute initial guess
+    for (unsigned int n = 0; n < m_nQuadPts; ++n)
+    {
+        // Compute residual
         op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_points[n]);
 
-        // 1.2. Use explicit Euler as a first guess
+        // Use explicit Euler as a first guess
         if (n < m_nQuadPts - 1)
         {
             NekDouble dtn = delta_t * (m_points[n + 1] - m_points[n]);
@@ -119,30 +152,21 @@ ConstDoubleArray &ExplicitTimeIntegrationSchemeSDC::v_TimeIntegrate(
                             m_time + delta_t * m_points[n + 1]);
         }
     }
+}
 
-    // 2. Return initial guess if m_order = 1
-    if (m_order == 1)
+/**
+ * @brief Worker method to compute the SDC iteration.
+ */
+void ExplicitTimeIntegrationSchemeSDC::v_SDCIterationLoop(
+    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+{
+    unsigned int kstart = 1;
+    for (unsigned int k = kstart; k < m_order; ++k)
     {
-        // 2.1. Copy final solution
-        for (unsigned int i = 0; i < m_nvars; ++i)
-        {
-            Vmath::Vcopy(m_npoints, m_Y[m_nQuadPts - 1][i], 1, m_Y[0][i], 1);
-        }
+        // Update integrated residual
+        UpdateIntegratedResidual(delta_t);
 
-        // 2.2. Update time step
-        m_time += delta_t;
-
-        // 2.3. Return solution
-        return m_Y[m_nQuadPts - 1];
-    }
-
-    // 3. Apply SDC correction loop
-    for (unsigned int k = 1; k < m_order; ++k)
-    {
-        // 3.1. Update integrated residual
-        UpdateIntegratedFlux(delta_t);
-
-        // 3.2. Loop over quadrature points
+        // Loop over quadrature points
         for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
         {
             NekDouble dtn = delta_t * (m_points[n + 1] - m_points[n]);
@@ -178,19 +202,6 @@ ConstDoubleArray &ExplicitTimeIntegrationSchemeSDC::v_TimeIntegrate(
         op.DoOdeRhs(m_Y[m_nQuadPts - 1], m_F[m_nQuadPts - 1],
                     m_time + delta_t * m_points[m_nQuadPts - 1]);
     }
-
-    // 4. Get solution
-    // 4.1. Copy final solution
-    for (unsigned int i = 0; i < m_nvars; ++i)
-    {
-        Vmath::Vcopy(m_npoints, m_Y[m_nQuadPts - 1][i], 1, m_Y[0][i], 1);
-    }
-
-    // 4.2. Update time step
-    m_time += delta_t;
-
-    // 4.3. Return solution
-    return m_Y[m_nQuadPts - 1];
 }
 
 } // end namespace LibUtilities
