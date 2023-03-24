@@ -140,6 +140,7 @@ exporting in .vtu format (!1386)
 - Add vars and dirs options in the gradient module to specify fields and partial derivative directions (!1415)
 - Fix range option so that it also works with hdf5 (!1414)
 - Fix halfmodetofourier module with triangles (!1492)
+- Fix the output field names of WSS module of FieldConvert, revert !1352 (!1528)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
