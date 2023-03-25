@@ -157,6 +157,7 @@ void Bidomain::v_InitObject(bool DeclareField)
         m_ode.DefineImplicitSolve(&Bidomain::DoImplicitSolve, this);
     }
     m_ode.DefineOdeRhs(&Bidomain::DoOdeRhs, this);
+    m_ode.DefineProjection(&Bidomain::DoDummyProjection, this);
 }
 
 /**

@@ -293,6 +293,7 @@ void Monodomain::v_InitObject(bool DeclareField)
         m_ode.DefineImplicitSolve(&Monodomain::DoImplicitSolve, this);
     }
     m_ode.DefineOdeRhs(&Monodomain::DoOdeRhs, this);
+    m_ode.DefineProjection(&Monodomain::DoDummyProjection, this);
 }
 
 /**

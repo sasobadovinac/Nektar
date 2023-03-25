@@ -99,6 +99,7 @@ v5.3.0
 **CardiacEPSolver**
 - Fix a shadowed loop counter variable in the benchmark filter (!1436)
 - Update functions in derived classes to be consistent with the base class and add override keyword to virtual functions (!1439)
+- Add dummy projection to CardiacEPSolver (!1527)
 
 **IncNavierStokesSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
