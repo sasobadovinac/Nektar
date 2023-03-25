@@ -303,6 +303,7 @@ void BidomainRoth::v_InitObject(bool DeclareField)
         m_ode.DefineImplicitSolve(&BidomainRoth::DoImplicitSolve, this);
     }
     m_ode.DefineOdeRhs(&BidomainRoth::DoOdeRhs, this);
+    m_ode.DefineProjection(&BidomainRoth::DoDummyProjection, this);
 }
 
 /**

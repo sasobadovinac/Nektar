@@ -189,6 +189,11 @@ protected:
 
     SOLVER_UTILS_EXPORT virtual bool v_UpdateTimeStepCheck();
 
+    /// Perform dummy projection
+    SOLVER_UTILS_EXPORT void DoDummyProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
+
 private:
     void InitializeSteadyState();
 

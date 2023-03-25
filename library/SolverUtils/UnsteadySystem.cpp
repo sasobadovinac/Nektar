@@ -939,6 +939,21 @@ void UnsteadySystem::v_SteadyStateResidual(int step, Array<OneD, NekDouble> &L2)
     }
 }
 
+void UnsteadySystem::DoDummyProjection(
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
+{
+    boost::ignore_unused(time);
+
+    if (&inarray != &outarray)
+    {
+        for (int i = 0; i < inarray.size(); ++i)
+        {
+            Vmath::Vcopy(GetNpoints(), inarray[i], 1, outarray[i], 1);
+        }
+    }
+}
+
 std::string UnsteadySystem::cmdSetStartTime =
     LibUtilities::SessionReader::RegisterCmdLineArgument(
         "set-start-time", "", "Set the starting time of the simulation.");
