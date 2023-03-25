@@ -258,6 +258,7 @@ package-source-archive-build:
   script:
     - VERSION=$(cat VERSION)
     - mkdir -p src
+    - git config --global --add safe.directory $(pwd)
     - git archive --format=tar --prefix=nektar-v${VERSION}/ --output=src/nektar++-${VERSION}.tar HEAD
     - git archive --format=zip --prefix=nektar-v${VERSION}/ --output=src/nektar++-${VERSION}.zip HEAD
     - cd src
