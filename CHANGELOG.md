@@ -1,5 +1,11 @@
 Changelog
 =========
+
+v5.4.0
+------
+**Library:**
+- Add unit tests for Polylib (!1533)
+
 v5.3.0
 ------
 **Library**
