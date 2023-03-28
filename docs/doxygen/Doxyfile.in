@@ -765,6 +765,7 @@ INPUT                  = @CMAKE_SOURCE_DIR@/docs/doxygen/ \
                          @CMAKE_SOURCE_DIR@/library/FieldUtils/ \
                          @CMAKE_SOURCE_DIR@/library/SolverUtils/ \
                          @CMAKE_SOURCE_DIR@/library/NekMeshUtils/ \
+                         @CMAKE_SOURCE_DIR@/library/UnitTests/ \
                          @CMAKE_SOURCE_DIR@/solvers/ \
                          @CMAKE_SOURCE_DIR@/utilities/
 

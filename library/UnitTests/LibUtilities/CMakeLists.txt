@@ -5,6 +5,7 @@ SET(LibUtilitiesUnitTestSources
     TestSharedArray.cpp
     TestCheckedCast.cpp
     TestRealComparison.cpp
+    TestPolylib.cpp
     TestVmathSIMD.cpp
     main.cpp
     ../util.cpp
