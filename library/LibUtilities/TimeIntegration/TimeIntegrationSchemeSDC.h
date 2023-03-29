@@ -115,7 +115,6 @@ public:
                      "Maximum order (<= 2 * n - 2): " +
                          std::to_string(2 * int(m_freeParams[1]) - 2));
 
-            // m_order    = 2 * int(m_freeParams[1]) - 2;
             m_nQuadPts = int(m_freeParams[1]);
             m_points   = SingleArray(m_nQuadPts, 0.0);
             m_weights  = SingleArray(m_nQuadPts, 0.0);
@@ -129,7 +128,6 @@ public:
                      "Maximum order (<= 2 * n - 1): " +
                          std::to_string(2 * int(m_freeParams[1]) - 1));
 
-            // m_order     = 2 * int(m_freeParams[1]) - 1;
             m_nQuadPts = int(m_freeParams[1]) + 1;
             m_points   = SingleArray(m_nQuadPts, -1.0);
             m_weights  = SingleArray(m_nQuadPts, 0.0);
@@ -150,7 +148,6 @@ public:
                      "Maximum order (<= 2 * n - 2): " +
                          std::to_string(2 * int(m_freeParams[1]) - 2));
 
-            // m_order    = 2 * int(m_freeParams[1]) - 2;
             m_nQuadPts = int(m_freeParams[1]);
             m_points   = SingleArray(m_nQuadPts, 0.0);
             m_weights  = SingleArray(m_nQuadPts, 0.0);
@@ -164,7 +161,6 @@ public:
                      "Maximum order (<= 2 * n - 2): " +
                          std::to_string(2 * int(m_freeParams[1]) - 2));
 
-            // m_order     = 2 * int(m_freeParams[1]) - 2;
             m_nQuadPts = int(m_freeParams[1]) + 1;
             m_points   = SingleArray(m_nQuadPts, -1.0);
             m_weights  = SingleArray(m_nQuadPts, 0.0);
@@ -207,9 +203,6 @@ public:
 
     static std::string className;
 
-    LUE void UpdateIntegratedResidual(const NekDouble &delta_t,
-                                      const int option = 0);
-
     LUE void ResidualEval(const NekDouble &delta_t, const int n,
                           const TimeIntegrationSchemeOperators &op)
     {
@@ -233,6 +226,9 @@ public:
     {
         v_SDCIterationLoop(delta_t, op);
     }
+
+    LUE void UpdateIntegratedResidual(const NekDouble &delta_t,
+                                      const int option = 0);
 
 protected:
     LUE virtual std::string v_GetName() const override;

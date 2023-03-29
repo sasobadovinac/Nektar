@@ -139,13 +139,13 @@ protected:
     /**
      * \brief Gets the solution vector of the ODE
      */
-    virtual const TripleArray &v_GetSolutionVector() const override;
+    LUE virtual const TripleArray &v_GetSolutionVector() const override;
 
     /**
      * \brief Sets the solution vector of the ODE
      */
-    virtual void v_SetSolutionVector(const int Offset,
-                                     const DoubleArray &y) override;
+    LUE virtual void v_SetSolutionVector(const int Offset,
+                                         const DoubleArray &y) override;
 
     // The worker methods from the base class that are virtual
     LUE virtual void v_InitializeScheme(
@@ -168,7 +168,7 @@ protected:
     std::vector<NekDouble> m_freeParams;
     NekDouble m_time;
 
-    TimeIntegrationSchemeType m_schemeType{eExtrapolationMethod};
+    TimeIntegrationSchemeType m_schemeType{eNoTimeIntegrationSchemeType};
 
     // Storage of previous states and associated timesteps.
     TripleArray m_Y;  /// Array containing the stage values

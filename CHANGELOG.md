@@ -7,6 +7,7 @@ v5.4.0
 
 **Miscellaneous**
 - Tidy-up Parareal initial condition output (!1534)
+- Remove double entry in documentation and slightly tidy-up code (!1530)
 
 v5.3.0
 ------
