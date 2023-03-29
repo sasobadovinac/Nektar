@@ -1,10 +1,12 @@
 Changelog
 =========
-
 v5.4.0
 ------
 **Library:**
 - Add unit tests for Polylib (!1533)
+
+**Miscellaneous**
+- Tidy-up Parareal initial condition output (!1534)
 
 v5.3.0
 ------

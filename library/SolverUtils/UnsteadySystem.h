@@ -159,7 +159,8 @@ protected:
     SOLVER_UTILS_EXPORT virtual void v_DoSolve() override;
 
     /// Sets up initial conditions.
-    SOLVER_UTILS_EXPORT virtual void v_DoInitialise() override;
+    SOLVER_UTILS_EXPORT virtual void v_DoInitialise(
+        bool dumpInitialConditions = true) override;
 
     /// Print a summary of time stepping parameters.
     SOLVER_UTILS_EXPORT virtual void v_GenerateSummary(SummaryList &s) override;

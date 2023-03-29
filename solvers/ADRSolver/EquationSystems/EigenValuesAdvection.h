@@ -77,7 +77,7 @@ protected:
     Array<OneD, NekDouble> &GetNormalVelocity();
 
     virtual void v_InitObject(bool DeclareFields = true) override;
-    virtual void v_DoInitialise() override;
+    virtual void v_DoInitialise(bool dumpInitialConditions = false) override;
     virtual void v_DoSolve() override;
 
     // DG Advection routines

@@ -128,9 +128,9 @@ VCSMapping::~VCSMapping(void)
 {
 }
 
-void VCSMapping::v_DoInitialise(void)
+void VCSMapping::v_DoInitialise(bool dumpInitialConditions)
 {
-    UnsteadySystem::v_DoInitialise();
+    UnsteadySystem::v_DoInitialise(dumpInitialConditions);
 
     // Set up Field Meta Data for output files
     m_fieldMetaDataMap["Kinvis"] = boost::lexical_cast<std::string>(m_kinvis);

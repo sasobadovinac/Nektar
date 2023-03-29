@@ -132,9 +132,9 @@ protected:
     Array<OneD, NekDouble> PlanePhiWave();
 
     /// Sets a custom initial condition.
-    virtual void v_SetInitialConditions(NekDouble initialtime,
-                                        bool dumpInitialConditions,
-                                        const int domain) override;
+    virtual void v_SetInitialConditions(NekDouble initialtime      = 0.0,
+                                        bool dumpInitialConditions = true,
+                                        const int domain = 0) override;
 
     /// Prints a summary of the model parameters.
     virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;

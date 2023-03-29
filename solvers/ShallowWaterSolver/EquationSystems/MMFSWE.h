@@ -251,14 +251,14 @@ protected:
 
     virtual void v_DoSolve() override;
 
-    virtual void v_DoInitialise() override;
+    virtual void v_DoInitialise(bool dumpInitialConditions = false) override;
 
     /// Print Summary
     virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
-    virtual void v_SetInitialConditions(const NekDouble initialtime,
-                                        bool dumpInitialConditions,
-                                        const int domain) override;
+    virtual void v_SetInitialConditions(const NekDouble initialtime = 0.0,
+                                        bool dumpInitialConditions  = true,
+                                        const int domain = 0) override;
 
     virtual void v_EvaluateExactSolution(unsigned int field,
                                          Array<OneD, NekDouble> &outfield,

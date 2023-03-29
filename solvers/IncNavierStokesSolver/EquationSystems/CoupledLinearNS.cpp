@@ -1356,7 +1356,7 @@ void CoupledLinearNS::v_GenerateSummary(SolverUtils::SummaryList &s)
     SolverUtils::AddSummaryItem(s, "Solver Type", "Coupled Linearised NS");
 }
 
-void CoupledLinearNS::v_DoInitialise(void)
+void CoupledLinearNS::v_DoInitialise(bool dumpInitialConditions)
 {
     switch (m_equationType)
     {
@@ -1393,7 +1393,7 @@ void CoupledLinearNS::v_DoInitialise(void)
 
             // Set initial condition using time t=0
 
-            SetInitialConditions(0.0);
+            SetInitialConditions(0.0, dumpInitialConditions);
             break;
         }
         case eSteadyStokes:
@@ -1477,7 +1477,7 @@ void CoupledLinearNS::v_DoInitialise(void)
         break;
         case eSteadyLinearisedNS:
         {
-            SetInitialConditions(0.0);
+            SetInitialConditions(0.0, dumpInitialConditions);
 
             Array<OneD, Array<OneD, NekDouble>> AdvField(m_velocity.size());
             for (size_t i = 0; i < m_velocity.size(); ++i)

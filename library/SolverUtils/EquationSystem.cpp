@@ -698,9 +698,8 @@ void EquationSystem::v_InitObject(bool DeclareFields)
              "should be set!");
     m_session->LoadParameter("TimeIncrementFactor", m_TimeIncrementFactor, 1.0);
 
-    m_nchk                = 0;
-    m_pararealIter        = 0;
-    m_useInitialCondition = true;
+    m_nchk         = 0;
+    m_pararealIter = 0;
 }
 
 /**
@@ -965,12 +964,6 @@ void EquationSystem::v_SetInitialConditions(NekDouble initialtime,
 {
     boost::ignore_unused(initialtime);
 
-    if (!m_useInitialCondition)
-    {
-        ++m_nchk;
-        return;
-    }
-
     if (m_session->GetComm()->GetRank() == 0)
     {
         cout << "Initial Conditions:" << endl;
@@ -1059,8 +1052,9 @@ void EquationSystem::v_EvaluateExactSolution(unsigned int field,
 /**
  * By default, nothing needs initialising at the EquationSystem level.
  */
-void EquationSystem::v_DoInitialise()
+void EquationSystem::v_DoInitialise(bool dumpInitialConditions)
 {
+    boost::ignore_unused(dumpInitialConditions);
 }
 
 /**
