@@ -604,7 +604,7 @@ void VelocityCorrectionScheme::v_GenerateSummary(SolverUtils::SummaryList &s)
 /**
  *
  */
-void VelocityCorrectionScheme::v_DoInitialise(void)
+void VelocityCorrectionScheme::v_DoInitialise(bool dumpInitialConditions)
 {
     m_F = Array<OneD, Array<OneD, NekDouble>>(m_nConvectiveFields);
 
@@ -615,7 +615,7 @@ void VelocityCorrectionScheme::v_DoInitialise(void)
 
     m_flowrateAiidt = 0.0;
 
-    AdvectionSystem::v_DoInitialise();
+    AdvectionSystem::v_DoInitialise(dumpInitialConditions);
 
     // Set up Field Meta Data for output files
     m_fieldMetaDataMap["Kinvis"] = boost::lexical_cast<std::string>(m_kinvis);

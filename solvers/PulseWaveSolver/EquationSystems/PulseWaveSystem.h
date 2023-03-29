@@ -138,7 +138,7 @@ protected:
     virtual void v_InitObject(bool DeclareField = false) override;
 
     /// Sets up initial conditions.
-    virtual void v_DoInitialise() override;
+    virtual void v_DoInitialise(bool dumpInitialConditions = false) override;
 
     /// Solves an unsteady problem.
     virtual void v_DoSolve() override;

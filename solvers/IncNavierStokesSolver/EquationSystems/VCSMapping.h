@@ -92,7 +92,7 @@ protected:
     Array<OneD, Array<OneD, NekDouble>> m_gradP;
 
     // Virtual functions
-    virtual void v_DoInitialise(void) override;
+    virtual void v_DoInitialise(bool dumpInitialConditions = true) override;
 
     virtual void v_SetUpPressureForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,

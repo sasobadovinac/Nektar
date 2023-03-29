@@ -1537,12 +1537,12 @@ void MMFSWE::WallBoundary2D(int bcRegion, int cnt,
 /**
  *
  */
-void MMFSWE::v_DoInitialise()
+void MMFSWE::v_DoInitialise(bool dumpInitialConditions)
 {
     // Compute m_depth and m_Derivdepth
     EvaluateWaterDepth();
     EvaluateCoriolis();
-    SetInitialConditions();
+    SetInitialConditions(0.0, dumpInitialConditions);
     PrimitiveToConservative();
 
     // transfer the initial conditions to modal values

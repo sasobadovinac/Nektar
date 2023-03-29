@@ -86,7 +86,8 @@ public:
     SOLVER_UTILS_EXPORT inline void InitObject(bool DeclareField = true);
 
     /// Perform any initialisation necessary before solving the problem.
-    SOLVER_UTILS_EXPORT inline void DoInitialise();
+    SOLVER_UTILS_EXPORT inline void DoInitialise(
+        bool dumpInitialConditions = true);
 
     /// Solve the problem.
     SOLVER_UTILS_EXPORT inline void DoSolve();
@@ -318,16 +319,6 @@ public:
         m_pararealIter = num;
     }
 
-    SOLVER_UTILS_EXPORT bool GetUseInitialCondition()
-    {
-        return m_useInitialCondition;
-    }
-
-    SOLVER_UTILS_EXPORT void SetUseInitialCondition(bool num)
-    {
-        m_useInitialCondition = num;
-    }
-
     SOLVER_UTILS_EXPORT Array<OneD, const Array<OneD, NekDouble>> GetTraceNormals()
     {
         return m_traceNormals;
@@ -420,8 +411,6 @@ protected:
     bool m_multipleModes;
     /// Flag to determine if FFT is used for homogeneous transform.
     bool m_useFFT;
-    /// Flag to determine if IC are used.
-    bool m_useInitialCondition;
     /**
      * \brief Flag to determine if dealiasing is used for
      * homogeneous simulations.
@@ -485,7 +474,8 @@ protected:
     SOLVER_UTILS_EXPORT virtual void v_InitObject(bool DeclareFeld = true);
 
     /// Virtual function for initialisation implementation.
-    SOLVER_UTILS_EXPORT virtual void v_DoInitialise();
+    SOLVER_UTILS_EXPORT virtual void v_DoInitialise(
+        bool dumpInitialConditions = true);
 
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_DoSolve();
@@ -559,9 +549,9 @@ inline void EquationSystem::InitObject(bool DeclareField)
  *
  * Public interface routine to virtual function implementation.
  */
-inline void EquationSystem::DoInitialise()
+inline void EquationSystem::DoInitialise(bool dumpInitialConditions)
 {
-    v_DoInitialise();
+    v_DoInitialise(dumpInitialConditions);
 }
 
 /**

@@ -81,8 +81,10 @@ void SteadyAdvectionDiffusion::v_GenerateSummary(SolverUtils::SummaryList &s)
     SolverUtils::AddSummaryItem(s, "Lambda", m_lambda);
 }
 
-void SteadyAdvectionDiffusion::v_DoInitialise()
+void SteadyAdvectionDiffusion::v_DoInitialise(bool dumpInitialConditions)
 {
+    boost::ignore_unused(dumpInitialConditions);
+
     // set initial forcing from session file
     GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
 }

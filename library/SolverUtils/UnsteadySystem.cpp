@@ -595,11 +595,11 @@ void UnsteadySystem::v_DoSolve()
 /**
  * @brief Sets the initial conditions.
  */
-void UnsteadySystem::v_DoInitialise()
+void UnsteadySystem::v_DoInitialise(bool dumpInitialConditions)
 {
     CheckForRestartTime(m_time, m_nchk);
     SetBoundaryConditions(m_time);
-    SetInitialConditions(m_time);
+    SetInitialConditions(m_time, dumpInitialConditions);
     InitializeSteadyState();
 }
 

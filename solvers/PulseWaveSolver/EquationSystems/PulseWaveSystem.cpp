@@ -1216,8 +1216,9 @@ void PulseWaveSystem::SetUpDomainInterfaceBCs(
  *  all subdomains and fills the domain-linking boundary
  *  conditions with the initial values of their domain.
  */
-void PulseWaveSystem::v_DoInitialise()
+void PulseWaveSystem::v_DoInitialise(bool dumpInitialConditions)
 {
+    boost::ignore_unused(dumpInitialConditions);
 
     if (m_session->GetComm()->GetRank() == 0)
     {
@@ -1239,7 +1240,7 @@ void PulseWaveSystem::v_DoInitialise()
             cout << "Subdomain: " << omega << endl;
         }
 
-        SetInitialConditions(0.0, 0, d);
+        SetInitialConditions(0.0, false, d);
         omega++;
     }
 

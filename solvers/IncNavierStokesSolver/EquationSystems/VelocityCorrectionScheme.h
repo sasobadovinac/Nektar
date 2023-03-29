@@ -173,7 +173,7 @@ protected:
 
     virtual void v_TransPhysToCoeff(void) override;
 
-    virtual void v_DoInitialise(void) override;
+    virtual void v_DoInitialise(bool dumpInitialConditions = true) override;
 
     virtual Array<OneD, bool> v_GetSystemSingularChecks() override;
 
