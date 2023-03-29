@@ -302,7 +302,7 @@ protected:
     // Ahat array one for each order.
     TripleArray m_Ahats;
 
-    // Mulitply the last Ahat array, transposed by J
+    // Multiply the last Ahat array, transposed by J
     SingleArray m_AhattJ;
 
 }; // end class FractionalInTimeIntegrator

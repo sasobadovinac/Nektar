@@ -40,6 +40,17 @@ namespace Nektar
 namespace LibUtilities
 {
 
+const TripleArray &TimeIntegrationSchemeGEM::v_GetSolutionVector() const
+{
+    return m_Y;
+}
+
+void TimeIntegrationSchemeGEM::v_SetSolutionVector(const int Offset,
+                                                   const DoubleArray &y)
+{
+    m_Y[Offset] = y;
+}
+
 std::string TimeIntegrationSchemeGEM::v_GetName() const
 {
     return m_name;
@@ -74,23 +85,6 @@ NekDouble TimeIntegrationSchemeGEM::v_GetTimeStability() const
 unsigned int TimeIntegrationSchemeGEM::v_GetNumIntegrationPhases() const
 {
     return 1;
-}
-
-/**
- * \brief Gets the solution vector of the ODE
- */
-const TripleArray &TimeIntegrationSchemeGEM::v_GetSolutionVector() const
-{
-    return m_Y;
-}
-
-/**
- * \brief Sets the solution vector of the ODE
- */
-void TimeIntegrationSchemeGEM::v_SetSolutionVector(const int Offset,
-                                                   const DoubleArray &y)
-{
-    m_Y[Offset] = y;
 }
 
 /**

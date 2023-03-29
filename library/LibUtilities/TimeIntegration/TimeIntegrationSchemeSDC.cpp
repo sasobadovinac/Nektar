@@ -40,6 +40,17 @@ namespace Nektar
 namespace LibUtilities
 {
 
+const TripleArray &TimeIntegrationSchemeSDC::v_GetSolutionVector() const
+{
+    return m_Y;
+}
+
+void TimeIntegrationSchemeSDC::v_SetSolutionVector(const int Offset,
+                                                   const DoubleArray &y)
+{
+    m_Y[Offset] = y;
+}
+
 std::string TimeIntegrationSchemeSDC::v_GetName() const
 {
     return m_name;
@@ -74,23 +85,6 @@ NekDouble TimeIntegrationSchemeSDC::v_GetTimeStability() const
 unsigned int TimeIntegrationSchemeSDC::v_GetNumIntegrationPhases() const
 {
     return 1;
-}
-
-/**
- * \brief Gets the solution vector of the ODE
- */
-const TripleArray &TimeIntegrationSchemeSDC::v_GetSolutionVector() const
-{
-    return m_Y;
-}
-
-/**
- * \brief Sets the solution vector of the ODE
- */
-void TimeIntegrationSchemeSDC::v_SetSolutionVector(const int Offset,
-                                                   const DoubleArray &y)
-{
-    m_Y[Offset] = y;
 }
 
 /**
@@ -224,7 +218,7 @@ ConstDoubleArray &TimeIntegrationSchemeSDC::v_TimeIntegrate(
 }
 
 /**
- * @brief Worker method that compute the integrated flux.
+ * @brief Worker method that compute residual integral.
  */
 void TimeIntegrationSchemeSDC::UpdateIntegratedResidual(
     const NekDouble &delta_t, const int option)
