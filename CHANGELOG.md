@@ -4,6 +4,7 @@ v5.4.0
 ------
 **Library:**
 - Add unit tests for Polylib (!1533)
+- Register TimeIntegrationMethod to SessionReader (!1539)
 
 **Miscellaneous**
 - Tidy-up Parareal initial condition output (!1534)
