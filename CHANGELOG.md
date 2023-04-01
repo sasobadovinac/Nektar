@@ -7,6 +7,7 @@ v5.4.0
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
+- Set initial condition check points files to zero (0) (!1535) 
 
 **Miscellaneous**
 - Tidy-up Parareal initial condition output (!1534)
