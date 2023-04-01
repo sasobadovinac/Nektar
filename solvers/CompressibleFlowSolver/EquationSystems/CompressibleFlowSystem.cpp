@@ -651,9 +651,9 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
 
     if (dumpInitialConditions && m_checksteps && !ParallelInTime())
     {
-        Checkpoint_Output(m_nchk);
+        Checkpoint_Output(m_nchk - 1); // m_nchk has already been incremented
     }
-    else if (dumpInitialConditions && m_nchk == 0 && ParallelInTime())
+    else if (dumpInitialConditions && ParallelInTime())
     {
         std::string newdir = m_sessionName + ".pit";
         if (!fs::is_directory(newdir))
@@ -665,7 +665,6 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
             WriteFld(newdir + "/" + m_sessionName + "_0.fld");
         }
     }
-    m_nchk++;
 }
 
 /**

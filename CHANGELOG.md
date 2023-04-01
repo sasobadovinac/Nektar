@@ -5,6 +5,9 @@ v5.4.0
 **Library:**
 - Add unit tests for Polylib (!1533)
 
+**CompressibleFlowSolver**
+- Set initial condition check points files to zero (0) (!1535) 
+
 **Miscellaneous**
 - Tidy-up Parareal initial condition output (!1534)
 - Remove double entry in documentation and slightly tidy-up code (!1530)
