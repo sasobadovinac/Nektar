@@ -262,6 +262,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class AdamsBashforthOrder1TimeIntegrationScheme
 
 class AdamsBashforthOrder2TimeIntegrationScheme
@@ -291,6 +294,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class AdamsBashforthOrder2TimeIntegrationScheme
 
@@ -322,6 +328,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class AdamsBashforthOrder3TimeIntegrationScheme
 
 class AdamsBashforthOrder4TimeIntegrationScheme
@@ -351,6 +360,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class AdamsBashforthOrder4TimeIntegrationScheme
 

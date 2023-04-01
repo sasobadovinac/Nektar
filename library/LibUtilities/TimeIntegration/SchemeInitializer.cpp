@@ -58,6 +58,8 @@
 
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGEM.h>
 
+#include <LibUtilities/BasicUtils/SessionReader.h>
+
 namespace Nektar
 {
 namespace LibUtilities
@@ -65,39 +67,56 @@ namespace LibUtilities
 
 // Register all the schemes with the Time Integration Scheme Factory...
 //
-#define REGISTER(scheme)                                                       \
+#define FACTORYREGISTER(scheme)                                                \
     std::string scheme##TimeIntegrationScheme::className =                     \
         GetTimeIntegrationSchemeFactory().RegisterCreatorFunction(             \
             #scheme, scheme##TimeIntegrationScheme::create)
+#define SESSIONREGISTER(scheme)                                                \
+    std::string scheme##TimeIntegrationScheme::TimeIntegrationMethodLookupId = \
+        SessionReader::RegisterEnumValue("TimeIntegrationMethod", #scheme, 0)
 
 // AdamsBashforthTimeIntegrationSchemes.h
-REGISTER(AdamsBashforth);
-REGISTER(AdamsBashforthOrder1);
-REGISTER(AdamsBashforthOrder2);
-REGISTER(AdamsBashforthOrder3);
-REGISTER(AdamsBashforthOrder4);
+FACTORYREGISTER(AdamsBashforth);
+FACTORYREGISTER(AdamsBashforthOrder1);
+SESSIONREGISTER(AdamsBashforthOrder1);
+FACTORYREGISTER(AdamsBashforthOrder2);
+SESSIONREGISTER(AdamsBashforthOrder2);
+FACTORYREGISTER(AdamsBashforthOrder3);
+SESSIONREGISTER(AdamsBashforthOrder3);
+FACTORYREGISTER(AdamsBashforthOrder4);
+SESSIONREGISTER(AdamsBashforthOrder4);
 
 // AdamsMoultonTimeIntegrationSchemes.h
-REGISTER(AdamsMoulton);
-REGISTER(AdamsMoultonOrder1);
-REGISTER(AdamsMoultonOrder2);
-REGISTER(AdamsMoultonOrder3);
-REGISTER(AdamsMoultonOrder4);
+FACTORYREGISTER(AdamsMoulton);
+FACTORYREGISTER(AdamsMoultonOrder1);
+SESSIONREGISTER(AdamsMoultonOrder1);
+FACTORYREGISTER(AdamsMoultonOrder2);
+SESSIONREGISTER(AdamsMoultonOrder2);
+FACTORYREGISTER(AdamsMoultonOrder3);
+SESSIONREGISTER(AdamsMoultonOrder3);
+FACTORYREGISTER(AdamsMoultonOrder4);
+SESSIONREGISTER(AdamsMoultonOrder4);
 
 // BDFImplicitTimeIntegrationSchemes.h
-REGISTER(BDFImplicit);
-REGISTER(BDFImplicitOrder1);
-REGISTER(BDFImplicitOrder2);
-REGISTER(BDFImplicitOrder3);
-REGISTER(BDFImplicitOrder4);
+FACTORYREGISTER(BDFImplicit);
+FACTORYREGISTER(BDFImplicitOrder1);
+SESSIONREGISTER(BDFImplicitOrder1);
+FACTORYREGISTER(BDFImplicitOrder2);
+SESSIONREGISTER(BDFImplicitOrder2);
+FACTORYREGISTER(BDFImplicitOrder3);
+SESSIONREGISTER(BDFImplicitOrder3);
+FACTORYREGISTER(BDFImplicitOrder4);
+SESSIONREGISTER(BDFImplicitOrder4);
 
 // EulerTimeIntegrationSchemes.h
-REGISTER(Euler);
-REGISTER(BackwardEuler);
-REGISTER(ForwardEuler);
+FACTORYREGISTER(Euler);
+FACTORYREGISTER(BackwardEuler);
+SESSIONREGISTER(BackwardEuler);
+FACTORYREGISTER(ForwardEuler);
+SESSIONREGISTER(ForwardEuler);
 
 // FITTimeIntegrationSchemes.h
-REGISTER(EulerExponential);
+FACTORYREGISTER(EulerExponential);
 
 // TimeIntegrationSchemesFIT.h
 std::string FractionalInTimeIntegrationScheme::className =
@@ -105,51 +124,80 @@ std::string FractionalInTimeIntegrationScheme::className =
         "FractionalInTime", FractionalInTimeIntegrationScheme::create);
 
 // CNABTimeIntegrationScheme.h
-REGISTER(CNAB);
+FACTORYREGISTER(CNAB);
+SESSIONREGISTER(CNAB);
 
 // DIRKTimeIntegrationSchemes.h
-REGISTER(DIRK);
-REGISTER(DIRKOrder1);
-REGISTER(DIRKOrder2);
-REGISTER(DIRKOrder3);
-REGISTER(DIRKOrder3_ES5);
-REGISTER(DIRKOrder4_ES6);
+FACTORYREGISTER(DIRK);
+FACTORYREGISTER(DIRKOrder1);
+SESSIONREGISTER(DIRKOrder1);
+FACTORYREGISTER(DIRKOrder2);
+SESSIONREGISTER(DIRKOrder2);
+FACTORYREGISTER(DIRKOrder3);
+SESSIONREGISTER(DIRKOrder3);
+FACTORYREGISTER(DIRKOrder3_ES5);
+SESSIONREGISTER(DIRKOrder3_ES5);
+FACTORYREGISTER(DIRKOrder4_ES6);
+SESSIONREGISTER(DIRKOrder4_ES6);
 
 // IMEXdirkTimeIntegrationSchemes.h
-REGISTER(IMEXdirk);
-REGISTER(IMEXdirk_1_1_1);
-REGISTER(IMEXdirk_1_2_1);
-REGISTER(IMEXdirk_1_2_2);
-REGISTER(IMEXdirk_2_2_2);
-REGISTER(IMEXdirk_2_3_2);
-REGISTER(IMEXdirk_2_3_3);
-REGISTER(IMEXdirk_3_4_3);
-REGISTER(IMEXdirk_4_4_3);
+FACTORYREGISTER(IMEXdirk);
+FACTORYREGISTER(IMEXdirk_1_1_1);
+SESSIONREGISTER(IMEXdirk_1_1_1);
+FACTORYREGISTER(IMEXdirk_1_2_1);
+SESSIONREGISTER(IMEXdirk_1_2_1);
+FACTORYREGISTER(IMEXdirk_1_2_2);
+SESSIONREGISTER(IMEXdirk_1_2_2);
+FACTORYREGISTER(IMEXdirk_2_2_2);
+SESSIONREGISTER(IMEXdirk_2_2_2);
+FACTORYREGISTER(IMEXdirk_2_3_2);
+SESSIONREGISTER(IMEXdirk_2_3_2);
+FACTORYREGISTER(IMEXdirk_2_3_3);
+SESSIONREGISTER(IMEXdirk_2_3_3);
+FACTORYREGISTER(IMEXdirk_3_4_3);
+SESSIONREGISTER(IMEXdirk_3_4_3);
+FACTORYREGISTER(IMEXdirk_4_4_3);
+SESSIONREGISTER(IMEXdirk_4_4_3);
 
 // IMEXGearTimeIntegrationScheme.h
-REGISTER(IMEXGear);
+FACTORYREGISTER(IMEXGear);
+SESSIONREGISTER(IMEXGear);
 
 // IMEXTimeIntegrationSchemes.h
-REGISTER(IMEX);
-REGISTER(IMEXOrder1);
-REGISTER(IMEXOrder2);
-REGISTER(IMEXOrder3);
-REGISTER(IMEXOrder4);
+FACTORYREGISTER(IMEX);
+FACTORYREGISTER(IMEXOrder1);
+SESSIONREGISTER(IMEXOrder1);
+FACTORYREGISTER(IMEXOrder2);
+SESSIONREGISTER(IMEXOrder2);
+FACTORYREGISTER(IMEXOrder3);
+SESSIONREGISTER(IMEXOrder3);
+FACTORYREGISTER(IMEXOrder4);
+SESSIONREGISTER(IMEXOrder4);
 
 // MCNABTimeIntegrationScheme.h
-REGISTER(MCNAB);
+FACTORYREGISTER(MCNAB);
+SESSIONREGISTER(MCNAB);
 
 // RungeKuttaTimeIntegrationSchemes.h
-REGISTER(RungeKutta);
-REGISTER(RungeKutta1);
-REGISTER(RungeKutta2);
-REGISTER(RungeKutta2_ImprovedEuler);
-REGISTER(RungeKutta2_SSP);
-REGISTER(RungeKutta3);
-REGISTER(RungeKutta3_SSP);
-REGISTER(ClassicalRungeKutta4);
-REGISTER(RungeKutta4);
-REGISTER(RungeKutta5);
+FACTORYREGISTER(RungeKutta);
+FACTORYREGISTER(RungeKutta1);
+SESSIONREGISTER(RungeKutta1);
+FACTORYREGISTER(RungeKutta2);
+SESSIONREGISTER(RungeKutta2);
+FACTORYREGISTER(RungeKutta2_ImprovedEuler);
+SESSIONREGISTER(RungeKutta2_ImprovedEuler);
+FACTORYREGISTER(RungeKutta2_SSP);
+SESSIONREGISTER(RungeKutta2_SSP);
+FACTORYREGISTER(RungeKutta3);
+SESSIONREGISTER(RungeKutta3);
+FACTORYREGISTER(RungeKutta3_SSP);
+SESSIONREGISTER(RungeKutta3_SSP);
+FACTORYREGISTER(ClassicalRungeKutta4);
+SESSIONREGISTER(ClassicalRungeKutta4);
+FACTORYREGISTER(RungeKutta4);
+SESSIONREGISTER(RungeKutta4);
+FACTORYREGISTER(RungeKutta5);
+SESSIONREGISTER(RungeKutta5);
 
 // TimeIntegrationSchemesSDC.h
 std::string ExplicitTimeIntegrationSchemeSDC::className =

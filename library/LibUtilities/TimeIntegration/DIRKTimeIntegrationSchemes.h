@@ -392,6 +392,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class DIRKOrder1TimeIntegrationScheme
 
 class DIRKOrder2TimeIntegrationScheme : public DIRKTimeIntegrationScheme
@@ -420,6 +423,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class DIRKOrder2TimeIntegrationScheme
 
@@ -450,6 +456,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class DIRKOrder3TimeIntegrationScheme
 
 class DIRKOrder3_ES5TimeIntegrationScheme : public DIRKTimeIntegrationScheme
@@ -479,6 +488,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class DIRKOrder3_ES5TimeIntegrationScheme
 
 class DIRKOrder4_ES6TimeIntegrationScheme : public DIRKTimeIntegrationScheme
@@ -507,6 +519,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 }; // end class DIRKOrder4_ES6TimeIntegrationScheme
 
 } // end namespace LibUtilities

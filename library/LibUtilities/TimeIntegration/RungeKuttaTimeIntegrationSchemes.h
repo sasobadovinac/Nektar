@@ -325,6 +325,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class RungeKutta1TimeIntegrationScheme
 
 class RungeKutta2TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
@@ -353,6 +356,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class RungeKutta2TimeIntegrationScheme
 
 class RungeKutta3TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
@@ -380,6 +386,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class RungeKutta3TimeIntegrationScheme
 
@@ -411,6 +420,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class ClassicalRungeKutta4TimeIntegrationScheme
 
 class RungeKutta4TimeIntegrationScheme
@@ -424,6 +436,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class RungeKutta4TimeIntegrationScheme
 
@@ -452,6 +467,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class RungeKutta5TimeIntegrationScheme
 
@@ -483,6 +501,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class RungeKutta2_ImprovedEulerTimeIntegrationScheme
 
 class RungeKutta2_SSPTimeIntegrationScheme
@@ -513,6 +534,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class RungeKutta2_SSPTimeIntegrationScheme
 
 class RungeKutta3_SSPTimeIntegrationScheme
@@ -542,6 +566,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class RungeKutta3_SSPTimeIntegrationScheme
 

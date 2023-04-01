@@ -255,6 +255,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class BDFImplicitOrder1TimeIntegrationScheme
 
 class BDFImplicitOrder2TimeIntegrationScheme
@@ -284,6 +287,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class BDFImplicitOrder2TimeIntegrationScheme
 
@@ -315,6 +321,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class BDFImplicitOrder3TimeIntegrationScheme
 
 class BDFImplicitOrder4TimeIntegrationScheme
@@ -344,6 +353,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class BDFImplicitOrder4TimeIntegrationScheme
 

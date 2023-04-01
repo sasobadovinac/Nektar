@@ -267,6 +267,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class AdamsMoultonOrder1TimeIntegrationScheme
 
 class AdamsMoultonOrder2TimeIntegrationScheme
@@ -297,6 +300,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class AdamsMoultonOrder2TimeIntegrationScheme
 
@@ -329,6 +335,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class AdamsMoultonOrder3TimeIntegrationScheme
 
 class AdamsMoultonOrder4TimeIntegrationScheme
@@ -359,6 +368,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class AdamsMoultonOrder4TimeIntegrationScheme
 
