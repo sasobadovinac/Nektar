@@ -5,6 +5,9 @@ v5.4.0
 **Library:**
 - Add unit tests for Polylib (!1533)
 
+**CompressibleFlowSolver**
+- Fix AUSM3 Riemann solver and add tests to the CI (!1537)
+
 **Miscellaneous**
 - Tidy-up Parareal initial condition output (!1534)
 - Remove double entry in documentation and slightly tidy-up code (!1530)

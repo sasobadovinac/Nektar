@@ -64,6 +64,8 @@ protected:
     double M2Function(int A, double M);
     double M4Function(int A, double beta, double M);
     double P5Function(int A, double alpha, double M);
+
+    NekDouble m_Mco;
 };
 } // namespace Nektar
 
