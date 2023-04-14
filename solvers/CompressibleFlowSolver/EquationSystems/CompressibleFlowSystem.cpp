@@ -626,6 +626,7 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
     boost::ignore_unused(domain);
 
     EquationSystem::v_SetInitialConditions(initialtime, false);
+    // Note: m_nchk has been incremented here.
 
     // insert white noise in initial condition
     NekDouble Noise;
@@ -649,11 +650,12 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
         }
     }
 
-    if (dumpInitialConditions && m_checksteps && !ParallelInTime())
+    if (dumpInitialConditions && m_nchk - 1 == 0 && m_checksteps &&
+        !ParallelInTime())
     {
-        Checkpoint_Output(m_nchk - 1); // m_nchk has already been incremented
+        Checkpoint_Output(0);
     }
-    else if (dumpInitialConditions && ParallelInTime())
+    else if (dumpInitialConditions && m_nchk - 1 == 0 && ParallelInTime())
     {
         std::string newdir = m_sessionName + ".pit";
         if (!fs::is_directory(newdir))
