@@ -10,6 +10,9 @@ v5.4.0
 - Set initial condition check points files to zero (0) (!1535)
 - Prevent file overwrite with restart for the Compressible flow solver (!1540)
 
+**FieldConvert**
+- Add option to use .csv files in pointdatatofld module (!1545)
+
 **Miscellaneous**
 - Tidy-up Parareal initial condition output (!1534)
 - Remove double entry in documentation and slightly tidy-up code (!1530)
