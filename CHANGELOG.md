@@ -4,6 +4,7 @@ v5.4.0
 ------
 **Library:**
 - Add unit tests for Polylib (!1533)
+- Fix compilation against TetGen 1.6 (!1547)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)

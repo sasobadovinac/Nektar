@@ -54,12 +54,30 @@ IF(NEKTAR_USE_MESHGEN)
             DESCRIPTION "Tetgen library")
         SET(TETGEN_INCLUDE_DIR ${TPDIST}/include CACHE FILEPATH
             "TetGen include" FORCE)
+        ADD_DEFINITIONS(-DTETGEN_HAS_DEINITIALIZE)
         MESSAGE(STATUS "Build TetGen: ${TETGEN_LIBRARY}")
         SET(TETGEN_CONFIG_INCLUDE_DIR ${TPINC})
     ELSE()
         ADD_CUSTOM_TARGET(tetgen-1.5 ALL)
         MESSAGE(STATUS "Found TetGen: ${TETGEN_LIBRARY}")
         SET(TETGEN_CONFIG_INCLUDE_DIR ${TETGEN_INCLUDE_DIR})
+
+        # Test whether tetgen includes the deinitialize() routine (not include in 1.6.0
+        # but is present in 1.5.0.
+        INCLUDE(CheckCXXSourceCompiles)
+        SET(CMAKE_REQUIRED_INCLUDES "${TETGEN_INCLUDE_DIR}")
+        SET(CMAKE_REQUIRED_LIBRARIES "${TETGEN_LIBRARY}")
+        CHECK_CXX_SOURCE_COMPILES("
+            #include <tetgen.h>
+            int main() {
+                tetgenio tmp;
+                tmp.deinitialize();
+                return 0;
+            }
+            " TETGEN_HAS_DEINITIALIZE)
+        IF (TETGEN_HAS_DEINITIALIZE)
+            ADD_DEFINITIONS(-DTETGEN_HAS_DEINITIALIZE)
+        ENDIF()
     ENDIF()
 
     MARK_AS_ADVANCED(TETGEN_LIBRARY)
