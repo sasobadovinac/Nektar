@@ -41,6 +41,8 @@ using namespace std;
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
+#include <LibUtilities/BasicUtils/CsvIO.h>
+
 #include "ProcessPointDataToFld.h"
 
 namespace Nektar
@@ -92,9 +94,22 @@ void ProcessPointDataToFld::v_Process(po::variables_map &vm)
     string inFile = m_config["frompts"].as<string>().c_str();
     LibUtilities::CommSharedPtr c =
         LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0);
-    LibUtilities::PtsIOSharedPtr ptsIO =
-        MemoryManager<LibUtilities::PtsIO>::AllocateSharedPtr(c);
-    ptsIO->Import(inFile, fieldPts);
+
+    // Determine file format from file extension
+    if (boost::filesystem::path(inFile).extension() == ".pts")
+    {
+        LibUtilities::PtsIO(c).Import(inFile, fieldPts);
+    }
+    else if (boost::filesystem::path(inFile).extension() == ".csv")
+    {
+        LibUtilities::CsvIO(c).Import(inFile, fieldPts);
+    }
+    else
+    {
+        NEKERROR(ErrorUtil::efatal,
+                 "Unsupported file format for the \"frompts\" parameter. "
+                 "Supported formats: \".pts\" and \".csv\"");
+    }
 
     int nFields = fieldPts->GetNFields();
     ASSERTL0(nFields > 0, "No field values provided in input");
