@@ -154,7 +154,7 @@ template <typename T> struct sse2Int4
     // gather/scatter with sse2
     inline void gather(scalarType const *p, const sse2Int4<T> &indices)
     {
-        _data = _mm_i32gather_pd(p, indices._data, 8);
+        _data = _mm_i32gather_epi(p, indices._data, 8);
     }
 
     inline void scatter(scalarType *out, const sse2Int4<T> &indices) const
