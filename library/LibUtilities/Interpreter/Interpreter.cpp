@@ -139,10 +139,14 @@ static struct functions : bsp::symbols<func>
             ("exp", exp)     // exponential
             ("fabs", fabs)   // absolute value
             ("floor", floor) // floor
+            ("fmax", fmax)   // max function
+            ("fmin", fmin)   // min function
             ("fmod", static_cast<double (*)(double, double)>(
                          &fmod)) // floating-point remainder
             ("log", log)         // natural log
             ("log10", log10)     // log base 10
+            ("max", fmax)        // max function
+            ("min", fmin)        // min function
             ("rad", rad)         // radians
             ("sin", sin)         // sine
             ("sinh", sinh)       // hyperbolic sine
@@ -227,9 +231,13 @@ public:
         m_functionMapNameToInstanceType["exp"]    = E_EXP;
         m_functionMapNameToInstanceType["fabs"]   = E_FABS;
         m_functionMapNameToInstanceType["floor"]  = E_FLOOR;
+        m_functionMapNameToInstanceType["fmax"]   = E_MAX;
+        m_functionMapNameToInstanceType["fmin"]   = E_MIN;
         m_functionMapNameToInstanceType["fmod"]   = E_FMOD;
         m_functionMapNameToInstanceType["log"]    = E_LOG;
         m_functionMapNameToInstanceType["log10"]  = E_LOG10;
+        m_functionMapNameToInstanceType["max"]    = E_MAX;
+        m_functionMapNameToInstanceType["min"]    = E_MIN;
         m_functionMapNameToInstanceType["rad"]    = E_RAD;
         m_functionMapNameToInstanceType["sin"]    = E_SIN;
         m_functionMapNameToInstanceType["sinh"]   = E_SINH;
@@ -251,6 +259,8 @@ public:
         m_function[E_FLOOR]   = floor;
         m_function[E_LOG]     = log;
         m_function[E_LOG10]   = log10;
+        m_function2[E_MAX]    = fmax;
+        m_function2[E_MIN]    = fmin;
         m_function[E_SIN]     = sin;
         m_function[E_SINH]    = sinh;
         m_function[E_SQRT]    = sqrt;
@@ -875,6 +885,14 @@ public:
                     stack.push_back(
                         makeStep<EvalLog10>(stateIndex, stateIndex));
                     return std::make_pair(false, 0);
+                case E_MAX:
+                    stack.push_back(makeStep<EvalMax>(stateIndex, stateIndex,
+                                                      stateIndex + 1));
+                    return std::make_pair(false, 0);
+                case E_MIN:
+                    stack.push_back(makeStep<EvalMin>(stateIndex, stateIndex,
+                                                      stateIndex + 1));
+                    return std::make_pair(false, 0);
                 case E_RAD:
                     stack.push_back(makeStep<EvalRad>(stateIndex, stateIndex,
                                                       stateIndex + 1));
@@ -1344,6 +1362,8 @@ private:
         E_FMOD,
         E_LOG,
         E_LOG10,
+        E_MAX,
+        E_MIN,
         E_POW,
         E_RAD,
         E_SIN,
@@ -1930,6 +1950,40 @@ private:
         virtual void run_once()
         {
             state[storeIdx] = std::log10(state[argIdx1]);
+        }
+    };
+    struct EvalMax : public EvaluationStep
+    {
+        EvalMax(rgt rn, vr s, cvr c, cvr p, cvr v, ci i, ci l, ci r)
+            : EvaluationStep(rn, i, l, r, s, c, p, v)
+        {
+        }
+        virtual void run_many(ci n)
+        {
+            for (int i = 0; i < n; i++)
+                state[storeIdx * n + i] =
+                    fmax(state[argIdx1 * n + i], state[argIdx2 * n + i]);
+        }
+        virtual void run_once()
+        {
+            state[storeIdx] = fmax(state[argIdx1], state[argIdx2]);
+        }
+    };
+    struct EvalMin : public EvaluationStep
+    {
+        EvalMin(rgt rn, vr s, cvr c, cvr p, cvr v, ci i, ci l, ci r)
+            : EvaluationStep(rn, i, l, r, s, c, p, v)
+        {
+        }
+        virtual void run_many(ci n)
+        {
+            for (int i = 0; i < n; i++)
+                state[storeIdx * n + i] =
+                    fmin(state[argIdx1 * n + i], state[argIdx2 * n + i]);
+        }
+        virtual void run_once()
+        {
+            state[storeIdx] = fmin(state[argIdx1], state[argIdx2]);
         }
     };
     struct EvalRad : public EvaluationStep

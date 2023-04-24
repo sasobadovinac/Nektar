@@ -5,6 +5,7 @@ v5.4.0
 **Library:**
 - Add unit tests for Polylib (!1533)
 - Fix compilation against TetGen 1.6 (!1547)
+- Add min/max and fmin/fmax function to the interpretor registry (!1552)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
