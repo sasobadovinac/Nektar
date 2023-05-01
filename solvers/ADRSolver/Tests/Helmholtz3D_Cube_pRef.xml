@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <GEOMETRY DIM="3" SPACE="3">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx9ljdzFDEYhg9MxsZkk3M0JmNjkx4yNjkHm5yjySZW9Aw/wjNQ8VMYVNJZQwEqP1fM0AA3Jx2szLxqvjk9evRq93alLZV0GxRrw8dff9pncj441u5vFf62qfzLVcfVZONbO4p8iEx3DJX5jmEy3zFc5jtGyHzPSJnvGSXzPaNlvqdW5gfqZH5gjMwP1Mv8wFiZb4yT+cZ4mW9MkPnGxNj/tb7S/6WxXH01Z1Lm97QX+WTpOxqk75gifc9U6XumST8wXfqBGdI3ZkrfmBX738X73lVTmTeNn535LbVFPkf6jrnSd8yTvme+9D0LpB9YKP3AIukbi6VvLIn9+XOZxi8t/a/95Y3SdyyTvqNJ+p7l0veskH5gpfQDq6RvrJa+sSb2/Ogtv/99A86HtbE291V4es4TXyd9R7P0HS3S96yXvqdV+oE26Qc2SN/YKH1jU+RtdZX1pJpm2Cy5Y4vkHiQPbJXc2BZ52pfe/Cxfx/fq+rZL7tghuWen5IFdkhu7I8/3xbS+PZI72iX3dEge2Cu5sS/yT6F431LbH+uH/gpP52jiB6TvOCh9xyHpew5L33NE+oGj0g8ck75xXPrGicjT/57eozTDSckdpyT3nJY8cEZyozPyznjuvO8vXmeX5I6zknvOSR44L7lxIfL83Evruyi545LknsuSB65Iblwt/dtswPtxLeP5d+h16TtuSN9xU/qeW9L33JZ+4I70A3elb9yTvtGd8fwcui+544HknoeSBx5JbjzOeL4PPJHc8VRyT4/kgWeSG88zXqyl0gvJHS8l97ySPPBacuM3TRwXggAA</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1mFV0lUcURhkggQQCJEAIIcAlhGBVilMgRSq0OEWKNFSgFOreUoG6O3V3d/eWuru7uxvVl7Mf/r3Wn5dv7W9969x1Z+aeM5MmTbJ/KUeb5mizHOWveQ4XqT5crPpwC9WHW+bULcmpW5pTt5WYeq3FfF5Zzue1yfm8tjmf1051qVMupk6FmDrtxdTrIOb7dFR9vk+l6vN9Oqk+36dKdanTWUydajF1uoipVyNmvbqqPuvVTfVZr+6qz3oVVJc6PcTUqRVTp6eYenWhnGf2o5eY/agXc957K88+9VGefeobWqx8PzH5/mLO6VrKs99rK89+rxNaqvy6YvLriTlf6yvPuRmgPOdmg1Cfs4Fi8oPEnIvBynP+hijP+RsaWqH8MDH54WLOy4hQ9pdzvKGYczxSzP6PUr4QOlp5zndDaKXyG4nJjxGz/2OV53cyTnl+J+NDq5TfWEx+EzH7v6ny/N42U57f24TQauU3F5PfQsz+T1Se3+0k5fndTg6tUX6KmPxUMedlWij7y+9/upjf/wwx+7+l8vSFmcrTF2aFFpSfLSY/R8z+b6U8/WWu8vSXeaG1ys8Xk18gZv+3Vp4+1ag8fWphaJ3y24jJbytm/7dTnn63vfL0u0Wh9covFpPfQcx5WRLK/Yq+uaOYvrlUzLxapjz9dCfl6ac7hxYpv4uY/K5i5tVuytOXd1eevrxHaInye4rJ7yVmXu2tPP19H+Xp7/uGlim/n5j8/mLm1QHKMyeWK8+cODC0XPmDxOQPFjOvDgllH5k3K8TMpZXymUOHhg6Sf5iYOXO4fObWEaFD5B8pZm4cJZ85d3ToMPnHiJkDx8pvCD0udIT848X09RNCWR/m6Ili+vdJ8pmvJ4eOlH+KuBB6qnzm8Wmho+SfLqa/rpLP/D4jdLT8M8X0y7PkM+/PDm2Qf46Y/nduKOvD/eA8MXPsfPncGy4IHSP/QjFz6SL53DMuDh0r/xIxc+ZS+dxLLgsdJ/9yMXPjCvncY64MHS//KjFz4+pQ+jn3nmvE3HuuFdMnrlOe+9D1ynMfuiF0oPI3isnfJKav3Kw896pblOdedWvoYOVvE5O/XUwfukN57md3Ks/97K7QocrfLSZ/j5i+da/y3PPuU5573v2hw5V/QEz+QTF97qFQ9pH74sNi+twj8rlHrg6dJP9RMX3uMfncOx8PnSL/CTF97kn53FOfCp0m/2kxfe4Z+dxrnw2dIf85cUPo86GsD/fgF8T0uRflcz9+KXSm/JfF9LlX5HOffjV0lvzXxPS51+Vz/34jdLb8N8X0ubfkc19/O3SO/HfE9Ll3Q1kf7vfviZkD78tvDP0gdK78D8XMgY/k8074OHSe/E/EzIFP5fOu+Cx0vvzPxcyBL+TzDvkydIH8r8TMh69D6ee8W74R8275Vkyf+E553jPfK8975ofQicr/KCb/k5i+8rPyvIt+UZ530a+hk5X/TUz+dzF96A/leV/9qTzvqzWhU5X/S0z+bzF96x/leaf9qzzvtP9CpyvPA3GZ8illmT7XNHz2kfdes5Rl+lxz+bwDi8JfLL84ZZk+10I+78aW4S+RX5KyTJ8rlc87s1X4S+W3Tlmmz5XJ513aRuuG3zZlmT7XTuvDO7Y8ZZk+VyGf9217rQ9+h5Rl+lxH+byHK7U++J1SlulzVfJ5P3fW+uBXpyzT57rI571do3XD75qyTJ/rpvXhfd49ZZk5UJDPu72H1ge/NmW5MbSnfN75dVof/F4py8yBevn8X6C31ge/T8oyc6CvfP6P0E/rht8/ZZn58D9qUxM4</EDGE>
+        <FACE>
+            <Q COMPRESSED="B64Z-LittleEndian" BITSIZE="64">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</Q>
+        </FACE>
+        <ELEMENT>
+            <H COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxd1lVTVXEYxWEMQEBEQERAWkBAQEBARcLu7sbu7u7ubsXu7u7u7u7+Ct781oXvuXlmzZzZs9eZvfb/ODj8/8mDeTEf5kdH8z1lJ3TGAuiCrua6ym5YEN2xEHqY+1AujJ7ohd5YxNy3j7lOUfTFYuiHjiarjz8GYHEMRCeT1ScIgzEEQ9HZZPUJw3AsgRHmviJRfaKwJEZjDLqYrD6xWArjMB5dTVafBCyNiZiEbiarTzKWwRRMRT0Xaag+ZbEclsd0dDdZfSpgBmZiFhYyWX2ysSJWwsroYbL6VMGqWA2ro57jGlgTa2Ft1G7qoKfJdbEe1kc9Vw3Qy+SG2Agbo373JuhtclNshs3NfbVA7bAlqk8rbI3aYxv0MVl92mI71B7bm+soq08OdkDtsSP6mqw+nbAzao9dUO+Nrqg+3bA7ao890M9k9emJvVB77I3+JqtPH+yL2mM/DDBZffrjANQeB6Leb4NQfQbjENQeh2KgyeozDIej9jgCg0xWn5E4CrNxNAabrD5jcCxqj+MwBMfjBJyIk1B7nIyhJk/BqTgNtcfpGGbyDJyJs1B7nI3hJs/BuTgPtcf5qPNiAarPQlyE2uNijDBZfZbgUtQel2GkyeqzHFdgDq7EKJPVZxWuRu1xDeo8WIvqsw5zUXtcj9Emq88G3Ija4yaMMVl9NuMW1B63YqzJ6rMNt6P2uAN1bu3EXNyFu1F73INxJqvPXtyH2uN+jDdZfQ7gQdQeD2GCyepzGI+g9ngUdb4ew+N4Ak+i9ngKE00+jWfwLGqP5zDJ5PN4AS+i9ngJk02+jFfwKmqP11D/A66j+tzAm6g93sIUk9XnNt5B7fEuppqsPvfwPmqPDzDNZPV5iI9Qe3yMeu8/QfV5is9Qe3yO5UxWnxf4ErXHV1jeZPV5jW9Qe3yL6Sarzzt8j9rjB9T59BHV5xN+Ru3xC2aYrD5f8Rtqj98x02T1+YE/UXv8hVkmq89v/IPa41/8B8U9uKEA</H>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="1"> F[0,21,38,55,72,89,102,115,128,145,158,171,184,201,214,227] </C>
+            <C ID="2"> F[1,6,11,16,73,77,81,85,129,133,137,141,185,189,193,197] </C>
+            <C ID="3"> F[186,190,194,198,202,205,208,211,215,218,221,224,228,231,234,237] </C>
+            <C ID="4"> F[229,232,235,238,173,176,179,182,117,120,123,126,57,61,65,69] </C>
+            <C ID="5"> F[58,62,66,70,41,45,49,53,24,28,32,36,4,9,14,19] </C>
+            <C ID="6"> F[20,37,54,71,88,101,114,127,144,157,170,183,200,213,226,239] </C>
+            <C ID="7"> H[0-63] </C>
+        </COMPOSITE>
+        <DOMAIN> C[7] </DOMAIN>
+    </GEOMETRY>
+
+    <EXPANSIONS>
+        <E COMPOSITE="C[7]"
+            NUMMODES="5"
+            TYPE="MODIFIED"
+            FIELDS="u"
+            REFIDS="0,1,2,3,4,5,6,7,8,9,10,11" />
+    </EXPANSIONS>
+
+    <REFINEMENTS>
+        <R REF="0"
+            RADIUS="0.1"
+            COORDINATE1="0.0,0.0,0.0"
+            COORDINATE2="0.0,1.0,0.0"
+            NUMMODES="7" />
+
+        <R REF="1"
+            RADIUS="0.1"
+            COORDINATE1="0.0,1.0,0.0"
+            COORDINATE2="1.0,1.0,0.0"
+            NUMMODES="7" />
+
+        <R REF="2"
+            RADIUS="0.1"
+            COORDINATE1="1.0,1.0,0.0"
+            COORDINATE2="1.0,0.0,0.0"
+            NUMMODES="7" />
+
+        <R REF="3"
+            RADIUS="0.1"
+            COORDINATE1="1.0,0.0,0.0"
+            COORDINATE2="0.0,0.0,0.0"
+            NUMMODES="7" />
+
+        <R REF="4"
+            RADIUS="0.1"
+            COORDINATE1="0.0,0.0,1.0"
+            COORDINATE2="0.0,1.0,1.0"
+            NUMMODES="7" />
+
+        <R REF="5"
+            RADIUS="0.1"
+            COORDINATE1="0.0,1.0,1.0"
+            COORDINATE2="1.0,1.0,1.0"
+            NUMMODES="7" />
+
+        <R REF="6"
+            RADIUS="0.1"
+            COORDINATE1="1.0,1.0,1.0"
+            COORDINATE2="1.0,0.0,1.0"
+            NUMMODES="7" />
+
+        <R REF="7"
+            RADIUS="0.1"
+            COORDINATE1="1.0,0.0,1.0"
+            COORDINATE2="0.0,0.0,1.0"
+            NUMMODES="7" />
+
+        <R REF="8"
+            RADIUS="0.1"
+            COORDINATE1="0.0,0.0,0.0"
+            COORDINATE2="0.0,0.0,1.0"
+            NUMMODES="7" />
+
+        <R REF="9"
+            RADIUS="0.1"
+            COORDINATE1="1.0,0.0,0.0"
+            COORDINATE2="1.0,0.0,1.0"
+            NUMMODES="7" />
+
+        <R REF="10"
+            RADIUS="0.1"
+            COORDINATE1="1.0,1.0,0.0"
+            COORDINATE2="1.0,1.0,1.0"
+            NUMMODES="7" />
+
+        <R REF="11"
+            RADIUS="0.1"
+            COORDINATE1="0.0,1.0,0.0"
+            COORDINATE2="0.0,1.0,1.0"
+            NUMMODES="7" />
+    </REFINEMENTS>
+
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE"         VALUE="Helmholtz"           />
+            <I PROPERTY="Projection"     VALUE="Continuous"          />
+        </SOLVERINFO>
+
+        <PARAMETERS>
+            <P> Lambda                   = 1    </P>
+            <P> IterativeSolverTolerance = 1e-8 </P>
+        </PARAMETERS>
+
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1] </B>
+            <B ID="1"> C[2] </B>
+            <B ID="2"> C[3] </B>
+            <B ID="3"> C[4] </B>
+            <B ID="4"> C[5] </B>
+            <B ID="5"> C[6] </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*y)*cos(PI*z)" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*y)*cos(PI*z)" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*y)*cos(PI*z)" />
+            </REGION>
+            <REGION REF="3">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*y)*cos(PI*z)" />
+            </REGION>
+            <REGION REF="4">
+                <R VAR="u"  VALUE="10*cos(PI*x)*cos(PI*y)*cos(PI*z) + PI*sin(PI*x)*cos(PI*y)*cos(PI*z)"  PRIMCOEFF="10.0"/>
+            </REGION>
+            <REGION REF="5">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*y)*cos(PI*z)" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="Forcing">
+            <E VAR="u" VALUE="-(Lambda+3*PI*PI)*cos(PI*x)*cos(PI*y)*cos(PI*z)" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="cos(PI*x)*cos(PI*y)*cos(PI*z)" />
+        </FUNCTION>
+    </CONDITIONS>
+
+</NEKTAR>
