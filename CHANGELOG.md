@@ -4,6 +4,7 @@ v5.4.0
 ------
 **Library:**
 - Add unit tests for Polylib (!1533)
+- Add local p-refinement functionality (!508)
 - Fix compilation against TetGen 1.6 (!1547)
 - Add min/max and fmin/fmax function to the interpretor registry (!1552)
 - Fix a _m128d to _m128i conversion bug in sse2.hpp (!1551)
