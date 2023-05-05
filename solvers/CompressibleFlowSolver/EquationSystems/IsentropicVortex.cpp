@@ -106,7 +106,8 @@ void IsentropicVortex::v_SetInitialConditions(NekDouble initialtime,
                               m_fields[i]->UpdateCoeffs());
     }
 
-    if (dumpInitialConditions && m_checksteps && !ParallelInTime())
+    if (dumpInitialConditions && m_checksteps && m_nchk == 0 &&
+        !ParallelInTime())
     {
         // Dump initial conditions to file
         Checkpoint_Output(m_nchk);

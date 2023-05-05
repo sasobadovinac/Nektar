@@ -7,8 +7,9 @@ v5.4.0
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
-- Set initial condition check points files to zero (0) (!1535)
+- Set initial condition check points files to zero (0) (!1535) 
 - Prevent file overwrite with restart for the Compressible flow solver (!1540)
+- Prevent file overwrite with restart for the IsentropicVortex solver (!1543)
 
 **Miscellaneous**
 - Tidy-up Parareal initial condition output (!1534)
