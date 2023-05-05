@@ -51,6 +51,17 @@ namespace Nektar
 {
 namespace bnu = boost::numeric::ublas;
 
+enum SolverType
+{
+    eNoSolverType,
+    eCoupledLinearisedNS,
+    eSmoothedProfileMethod,
+    eVCSMapping,
+    eVelocityCorrectionScheme,
+    eVCSWeakPressure,
+    eWeakPressure
+};
+
 enum EquationType
 {
     eNoEquationType,

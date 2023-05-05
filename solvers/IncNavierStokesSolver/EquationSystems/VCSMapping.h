@@ -74,6 +74,8 @@ protected:
     // Mapping object
     GlobalMapping::MappingSharedPtr m_mapping;
 
+    static std::string solverTypeLookupId;
+
     bool m_verbose;
 
     // Flags defining how pressure and viscous mapping terms

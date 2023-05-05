@@ -49,6 +49,10 @@ string CoupledLinearNS::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "CoupledLinearisedNS", CoupledLinearNS::create);
 
+string CoupledLinearNS::solverTypeLookupId =
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "SolverType", "CoupledLinearisedNS", eCoupledLinearisedNS);
+
 /**
  *  @class CoupledLinearNS
  *
