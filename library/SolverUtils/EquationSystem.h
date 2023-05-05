@@ -522,6 +522,7 @@ protected:
         std::vector<std::string> &variables);
 
     static std::string equationSystemTypeLookupIds[];
+    static std::string projectionTypeLookupIds[];
 
 private:
     SOLVER_UTILS_EXPORT virtual Array<OneD, bool> v_GetSystemSingularChecks();

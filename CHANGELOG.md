@@ -2,7 +2,7 @@ Changelog
 =========
 v5.4.0
 ------
-**Library:**
+**Library**
 - Add unit tests for Polylib (!1533)
 - Fix compilation against TetGen 1.6 (!1547)
 
@@ -10,6 +10,7 @@ v5.4.0
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
 - Set initial condition check points files to zero (0) (!1535)
 - Prevent file overwrite with restart for the Compressible flow solver (!1540)
+- Register Projection and GJPStabilisation in SessionReader (!1542)
 
 **Miscellaneous**
 - Tidy-up Parareal initial condition output (!1534)

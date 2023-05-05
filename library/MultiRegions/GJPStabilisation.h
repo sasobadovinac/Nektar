@@ -76,6 +76,7 @@ private:
     int m_coordDim;
     int m_traceDim;
     bool m_useGJPSemiImplicit;
+    static std::string GJPStabilisationLookupIds[];
 
     // Trace normals
     Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
