@@ -26,6 +26,9 @@ v5.4.0
 - Tidy-up Parareal initial condition output (!1534)
 - Remove double entry in documentation and slightly tidy-up code (!1530)
 
+**NekMesh**
+- Changed CMake to set NEKTAR_USE_THREAD_SAFETY to ON when MeshGen is set to ON (!1546)
+
 v5.3.0
 ------
 **Library**

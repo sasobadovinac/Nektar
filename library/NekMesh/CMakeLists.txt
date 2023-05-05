@@ -222,6 +222,7 @@ IF(NEKTAR_USE_MESHGEN)
     TARGET_LINK_LIBRARIES(libNekMesh LINK_PRIVATE ${TETGEN_LIBRARY})
     TARGET_LINK_LIBRARIES(libNekMesh LINK_PRIVATE ${TRIANGLE_LIBRARY})
     TARGET_LINK_LIBRARIES(libNekMesh LINK_PRIVATE ${OCC_LIBRARIES})
+    SET(NEKTAR_USE_THREAD_SAFETY ON CACHE BOOL "Guarantee thread safety for boost pthreads parallelisation in ProcessVarOpti." FORCE)
 
     ADD_DEPENDENCIES(libNekMesh oce-0.18.3 tetgen-1.5 triangle-1.6)
 
