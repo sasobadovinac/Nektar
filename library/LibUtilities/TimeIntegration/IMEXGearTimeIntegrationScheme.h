@@ -159,6 +159,8 @@ protected:
         return 1.0;
     }
 
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXGearTimeIntegrationScheme
 
 } // end namespace LibUtilities

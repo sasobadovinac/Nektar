@@ -322,6 +322,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXOrder1TimeIntegrationScheme
 
 class IMEXOrder2TimeIntegrationScheme : public IMEXTimeIntegrationScheme
@@ -349,6 +352,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class IMEXOrder2TimeIntegrationScheme
 
@@ -378,6 +384,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXOrder3TimeIntegrationScheme
 
 class IMEXOrder4TimeIntegrationScheme : public IMEXTimeIntegrationScheme
@@ -405,6 +414,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class IMEXOrder4TimeIntegrationScheme
 

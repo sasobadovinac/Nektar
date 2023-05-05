@@ -161,6 +161,8 @@ protected:
         return 1.0;
     }
 
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class CNABTimeIntegrationScheme
 
 } // end namespace LibUtilities

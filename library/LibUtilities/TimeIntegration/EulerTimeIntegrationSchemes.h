@@ -193,6 +193,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class BackwardEulerTimeIntegrationScheme
 
 class ForwardEulerTimeIntegrationScheme : public EulerTimeIntegrationScheme
@@ -220,6 +223,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class ForwardEulerTimeIntegrationScheme
 
