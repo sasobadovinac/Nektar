@@ -68,6 +68,23 @@ std::string EquationSystem::equationSystemTypeLookupIds[2] = {
     LibUtilities::SessionReader::RegisterEnumValue("DEALIASING", "True", 0),
     LibUtilities::SessionReader::RegisterEnumValue("DEALIASING", "False", 1)};
 
+std::string EquationSystem::projectionTypeLookupIds[7] = {
+    LibUtilities::SessionReader::RegisterEnumValue("Projection", "Continuous",
+                                                   MultiRegions::eGalerkin),
+    LibUtilities::SessionReader::RegisterEnumValue("Projection", "CONTINUOUS",
+                                                   MultiRegions::eGalerkin),
+    LibUtilities::SessionReader::RegisterEnumValue("Projection", "Galerkin",
+                                                   MultiRegions::eGalerkin),
+    LibUtilities::SessionReader::RegisterEnumValue("Projection", "GALERKIN",
+                                                   MultiRegions::eGalerkin),
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "Projection", "DisContinuous", MultiRegions::eDiscontinuous),
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "Projection", "Mixed_CG_Discontinuous",
+        MultiRegions::eMixed_CG_Discontinuous),
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "Projection", "MixedCGDG", MultiRegions::eMixed_CG_Discontinuous),
+};
 /**
  * @class EquationSystem
  *

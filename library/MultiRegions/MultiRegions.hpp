@@ -117,6 +117,13 @@ enum PreconditionerType
     eLinearWithBlock
 };
 
+enum GJPStabilisationType
+{
+    eNoGJPStabilisation,
+    eExplicitGJPStabilisation,
+    eSemiImplicitGJPStabilisation
+};
+
 const char *const PreconditionerTypeMap[] = {
     "Null",
     "Diagonal",

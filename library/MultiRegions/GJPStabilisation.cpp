@@ -38,6 +38,12 @@ namespace Nektar
 {
 namespace MultiRegions
 {
+std::string GJPStabilisation::GJPStabilisationLookupIds[2] = {
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "GJPStabilisation", "Explicit", eExplicitGJPStabilisation),
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "GJPStabilisation", "SemiImplicit", eSemiImplicitGJPStabilisation),
+};
 GJPStabilisation::GJPStabilisation(ExpListSharedPtr pField)
 {
     LibUtilities::SessionReaderSharedPtr session = pField->GetSession();
