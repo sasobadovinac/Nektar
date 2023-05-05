@@ -49,6 +49,10 @@ string SmoothedProfileMethod::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "SmoothedProfileMethod", SmoothedProfileMethod::create);
 
+string SmoothedProfileMethod::solverTypeLookupId =
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "SolverType", "SmoothedProfileMethod", eSmoothedProfileMethod);
+
 /**
  * @brief Construct a new Smoothed Profile Method object
  *

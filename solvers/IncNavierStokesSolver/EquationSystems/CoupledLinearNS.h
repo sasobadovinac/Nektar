@@ -167,6 +167,8 @@ protected:
 
     virtual void v_InitObject(bool DeclareField = true) override;
 
+    static std::string solverTypeLookupId;
+
 private:
     /// Id to identify when single mode is mean mode (i.e. beta=0);
     bool m_zeroMode;

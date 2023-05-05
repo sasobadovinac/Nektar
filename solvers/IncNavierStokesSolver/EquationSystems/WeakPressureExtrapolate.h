@@ -35,6 +35,7 @@
 #ifndef NEKTAR_SOLVERS_WEAKPRESSUREEXTRAPOLATE_H
 #define NEKTAR_SOLVERS_WEAKPRESSUREEXTRAPOLATE_H
 
+#include <IncNavierStokesSolver/EquationSystems/IncNavierStokes.h>
 #include <IncNavierStokesSolver/EquationSystems/StandardExtrapolate.h>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
@@ -94,6 +95,8 @@ protected:
     virtual void v_AddNormVelOnOBC(
         const int nbcoeffs, const int nreg,
         Array<OneD, Array<OneD, NekDouble>> &u) override;
+
+    static std::string solverTypeLookupId;
 };
 
 } // namespace Nektar

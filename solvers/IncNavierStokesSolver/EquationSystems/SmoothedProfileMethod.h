@@ -105,6 +105,8 @@ protected:
     /// Position of "AeroForcesSPM" filter in 'm_session->GetFilters()'
     int m_forcesFilter;
 
+    static std::string solverTypeLookupId;
+
     // Interface for 'v_SolveUnsteadyStokesSystem'
     virtual void v_SolveUnsteadyStokesSystem(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,

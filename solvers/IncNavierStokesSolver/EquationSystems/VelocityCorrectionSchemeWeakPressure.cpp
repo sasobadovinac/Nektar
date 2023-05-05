@@ -46,6 +46,10 @@ string VCSWeakPressure::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "VCSWeakPressure", VCSWeakPressure::create);
 
+string VCSWeakPressure::solverTypeLookupId =
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "SolverType", "VCSWeakPressure", eVCSWeakPressure);
+
 /**
  * Constructor. Creates ...
  *

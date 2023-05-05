@@ -44,6 +44,9 @@ std::string WeakPressureExtrapolate::className =
     GetExtrapolateFactory().RegisterCreatorFunction(
         "WeakPressure", WeakPressureExtrapolate::create, "WeakPressure");
 
+std::string WeakPressureExtrapolate::solverTypeLookupId =
+    LibUtilities::SessionReader::RegisterEnumValue("SolverType", "WeakPressure",
+                                                   eWeakPressure);
 WeakPressureExtrapolate::WeakPressureExtrapolate(
     const LibUtilities::SessionReaderSharedPtr pSession,
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields,

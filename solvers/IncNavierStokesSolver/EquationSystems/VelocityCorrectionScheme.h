@@ -160,6 +160,8 @@ protected:
     /// Value of aii_dt used to compute Stokes flowrate solution.
     NekDouble m_flowrateAiidt;
 
+    static std::string solverTypeLookupId;
+
     void SetupFlowrate(NekDouble aii_dt);
     NekDouble MeasureFlowrate(
         const Array<OneD, Array<OneD, NekDouble>> &inarray);

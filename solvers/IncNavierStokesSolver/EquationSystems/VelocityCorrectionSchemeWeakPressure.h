@@ -92,6 +92,8 @@ protected:
         }
     }
 
+    static std::string solverTypeLookupId;
+
 private:
 };
 

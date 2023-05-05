@@ -53,6 +53,10 @@ string VelocityCorrectionScheme::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "VelocityCorrectionScheme", VelocityCorrectionScheme::create);
 
+string VelocityCorrectionScheme::solverTypeLookupId =
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "SolverType", "VelocityCorrectionScheme", eVelocityCorrectionScheme);
+
 /**
  * Constructor. Creates ...
  *

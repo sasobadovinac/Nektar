@@ -46,6 +46,10 @@ string VCSMapping::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "VCSMapping", VCSMapping::create);
 
+string VCSMapping::solverTypeLookupId =
+    LibUtilities::SessionReader::RegisterEnumValue("SolverType", "VCSMapping",
+                                                   eVCSMapping);
+
 /**
  * Constructor. Creates ...
  *

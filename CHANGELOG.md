@@ -18,6 +18,9 @@ v5.4.0
 **FieldConvert**
 - Add option to use .csv files in pointdatatofld module (!1545)
 
+**IncNavierStokesSolver**
+- Register SolverType in SessionReader (!1541)
+
 **Miscellaneous**
 - Tidy-up Parareal initial condition output (!1534)
 - Remove double entry in documentation and slightly tidy-up code (!1530)
