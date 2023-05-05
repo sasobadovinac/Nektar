@@ -480,6 +480,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXdirk_1_1_1TimeIntegrator
 
 // IMEX Dirk 1 2 1 : Forward - Backward Euler IMEX w/B implicit == B explicit
@@ -515,6 +518,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class IMEXdirk_1_2_1TimeIntegrator
 
@@ -552,6 +558,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXdirk_1_2_2TimeIntegrator
 
 // IMEX Dirk 2 2 2 : L Stable, two stage, second order IMEX
@@ -588,6 +597,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXdirk_2_2_2TimeIntegrationScheme
 
 // IMEX Dirk 2 3 2 : L Stable, two stage, second order IMEX
@@ -623,6 +635,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class IMEXdirk_2_3_2TimeIntegrationScheme
 
@@ -661,6 +676,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXdirk_2_3_3TimeIntegrationScheme
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -698,6 +716,9 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXdirk_3_4_3TimeIntegrationScheme
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -734,6 +755,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class IMEXdirk_4_4_3TimeIntegrationScheme
 

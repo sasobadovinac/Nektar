@@ -75,7 +75,7 @@
             <I PROPERTY="EQTYPE" VALUE="UnsteadyDiffusion" />
             <I PROPERTY="Projection" VALUE="Galerkin" />
             <I PROPERTY="DiffusionAdvancement" VALUE="Implicit" />
-            <I PROPERTY="TimeIntegrationMethod" VALUE="BACKWARDEuler" />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler" />
         </SOLVERINFO>
 
         <VARIABLES>

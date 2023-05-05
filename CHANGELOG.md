@@ -4,6 +4,7 @@ v5.4.0
 ------
 **Library:**
 - Add unit tests for Polylib (!1533)
+- Register TimeIntegrationMethod to SessionReader (!1539)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
