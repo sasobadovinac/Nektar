@@ -9,6 +9,7 @@ v5.4.0
 - Add min/max and fmin/fmax function to the interpretor registry (!1552)
 - Fix a _m128d to _m128i conversion bug in sse2.hpp (!1551)
 - Register TimeIntegrationMethod to SessionReader (!1539)
+- Remove unecessary for loop in NekLinSysIterGMRES (!1554)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
