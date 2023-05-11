@@ -49,7 +49,7 @@ namespace LibUtilities
 class ImplicitTimeIntegrationSchemeSDC : public TimeIntegrationSchemeSDC
 {
 public:
-    ImplicitTimeIntegrationSchemeSDC(std::string variant, unsigned int order,
+    ImplicitTimeIntegrationSchemeSDC(std::string variant, size_t order,
                                      std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeSDC(variant, order, freeParams)
     {
@@ -62,8 +62,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<ImplicitTimeIntegrationSchemeSDC>::AllocateSharedPtr(

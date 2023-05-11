@@ -50,7 +50,7 @@ TripleArray &TimeIntegrationSchemeSDC::v_UpdateSolutionVector()
     return m_Y;
 }
 
-void TimeIntegrationSchemeSDC::v_SetSolutionVector(const int Offset,
+void TimeIntegrationSchemeSDC::v_SetSolutionVector(const size_t Offset,
                                                    const DoubleArray &y)
 {
     m_Y[Offset] = y;
@@ -66,7 +66,7 @@ std::string TimeIntegrationSchemeSDC::v_GetVariant() const
     return m_variant;
 }
 
-unsigned int TimeIntegrationSchemeSDC::v_GetOrder() const
+size_t TimeIntegrationSchemeSDC::v_GetOrder() const
 {
     return m_order;
 }
@@ -87,7 +87,7 @@ NekDouble TimeIntegrationSchemeSDC::v_GetTimeStability() const
     return 1.0;
 }
 
-unsigned int TimeIntegrationSchemeSDC::v_GetNumIntegrationPhases() const
+size_t TimeIntegrationSchemeSDC::v_GetNumIntegrationPhases() const
 {
     return 1;
 }
@@ -186,7 +186,7 @@ void TimeIntegrationSchemeSDC::v_InitializeScheme(
  * @brief Worker method that performs the time integration.
  */
 ConstDoubleArray &TimeIntegrationSchemeSDC::v_TimeIntegrate(
-    const int timestep, const NekDouble delta_t,
+    const size_t timestep, const NekDouble delta_t,
     const TimeIntegrationSchemeOperators &op)
 {
     boost::ignore_unused(timestep);

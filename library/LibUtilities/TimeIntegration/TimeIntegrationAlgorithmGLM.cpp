@@ -75,13 +75,13 @@ TimeIntegrationSolutionGLMSharedPtr TimeIntegrationAlgorithmGLM::InitializeData(
     // solution vector of the current scheme
     if (GetNmultiStepDerivs() > 0)
     {
-        const Array<OneD, const unsigned int> offsets = GetTimeLevelOffset();
+        const Array<OneD, const size_t> offsets = GetTimeLevelOffset();
 
         if (offsets[GetNmultiStepValues() + GetNmultiStepImplicitDerivs()] == 0)
         {
-            int i;
-            int nvar    = y_0.size();
-            int npoints = y_0[0].size();
+            size_t i;
+            size_t nvar    = y_0.size();
+            size_t npoints = y_0[0].size();
             DoubleArray f_y_0(nvar);
             for (i = 0; i < nvar; i++)
             {
@@ -109,8 +109,8 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
     // ASSERTL1( !(m_parent->GetIntegrationSchemeType() == eImplicit), "Fully
     // Implicit integration scheme cannot be handled by this routine." );
 
-    int nvar    = solvector->GetFirstDim();
-    int npoints = solvector->GetSecondDim();
+    size_t nvar    = solvector->GetFirstDim();
+    size_t npoints = solvector->GetSecondDim();
 
     if (solvector->GetIntegrationSchemeData() != this)
     {
@@ -145,31 +145,30 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
         NekDouble t_n = 0;
         DoubleArray dtFy_n;
 
-        unsigned int nCurSchemeVals =
+        size_t nCurSchemeVals =
             GetNmultiStepValues(); // number of required values of the current
                                    // scheme
-        unsigned int nCurSchemeImpDers =
+        size_t nCurSchemeImpDers =
             GetNmultiStepImplicitDerivs(); // number of required implicit derivs
                                            // of the current scheme
-        unsigned int nCurSchemeDers =
+        size_t nCurSchemeDers =
             GetNmultiStepDerivs(); // number of required derivs of the current
                                    // scheme
-        unsigned int nCurSchemeSteps =
+        size_t nCurSchemeSteps =
             GetNsteps(); // number of steps in the current scheme
 
-        unsigned int nMasterSchemeVals =
+        size_t nMasterSchemeVals =
             solvector->GetNvalues(); // number of values of the master scheme
-        unsigned int nMasterSchemeImpDers =
+        size_t nMasterSchemeImpDers =
             solvector->GetNimplicitderivs(); // number of implicit derivs of the
                                              // master scheme
-        unsigned int nMasterSchemeDers =
+        size_t nMasterSchemeDers =
             solvector->GetNderivs(); // number of derivs of the master scheme
 
         // The arrays below contains information to which time-level
         // the values and derivatives of the schemes belong
-        const Array<OneD, const unsigned int> &curTimeLevels =
-            GetTimeLevelOffset();
-        const Array<OneD, const unsigned int> &masterTimeLevels =
+        const Array<OneD, const size_t> &curTimeLevels = GetTimeLevelOffset();
+        const Array<OneD, const size_t> &masterTimeLevels =
             solvector->GetTimeLevelOffset();
 
         // 1.2 Copy the required information from the master
@@ -179,7 +178,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
             MemoryManager<TimeIntegrationSolutionGLM>::AllocateSharedPtr(
                 this); // input solution vector of the current scheme
 
-        for (int n = 0; n < nCurSchemeVals; n++)
+        for (size_t n = 0; n < nCurSchemeVals; n++)
         {
             // Get the required value out of the master solution vector
             // DoubleArray& y_n = solvector->GetValue    ( curTimeLevels[n] );
@@ -193,7 +192,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
             solvector_in->SetValue(curTimeLevels[n], y_n, t_n);
         }
 
-        for (int n = nCurSchemeVals; n < nCurSchemeVals + nCurSchemeImpDers;
+        for (size_t n = nCurSchemeVals; n < nCurSchemeVals + nCurSchemeImpDers;
              n++)
         {
             // Get the required derivative out of the master
@@ -208,7 +207,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
                                                 deltaT);
         }
 
-        for (int n = nCurSchemeVals + nCurSchemeImpDers; n < nCurSchemeSteps;
+        for (size_t n = nCurSchemeVals + nCurSchemeImpDers; n < nCurSchemeSteps;
              n++)
         {
             // Get the required derivative out of the master
@@ -289,15 +288,16 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
         }
 
         DoubleArray f_impn(nvar);
-        int newImpDerivTimeLevel = (masterTimeLevels.size() > nMasterSchemeVals)
-                                       ? masterTimeLevels[nMasterSchemeVals]
-                                       : -1; // Contains the
-                                             // time level at
-                                             // which the
-                                             // derivative of
-                                             // the master
-                                             // scheme is
-                                             // known.
+        size_t newImpDerivTimeLevel =
+            (masterTimeLevels.size() > nMasterSchemeVals)
+                ? masterTimeLevels[nMasterSchemeVals]
+                : -1; // Contains the
+                      // time level at
+                      // which the
+                      // derivative of
+                      // the master
+                      // scheme is
+                      // known.
         if (CalcNewImpDeriv)
         {
             if (newImpDerivTimeLevel == 0 || newImpDerivTimeLevel == 1)
@@ -310,7 +310,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
                 ASSERTL1(false, "Problems with initialising scheme");
             }
 
-            for (int j = 0; j < nvar; j++)
+            for (size_t j = 0; j < nvar; j++)
             {
                 f_impn[j] = Array<OneD, NekDouble>(npoints);
             }
@@ -319,14 +319,14 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
             op.DoImplicitSolve(y_n, f_impn, t_n + deltaT, deltaT);
 
             // multiply by the step size
-            for (int j = 0; j < nvar; j++)
+            for (size_t j = 0; j < nvar; j++)
             {
                 Vmath::Vsub(m_npoints, f_impn[j], 1, y_n[j], 1, f_impn[j], 1);
             }
         }
 
         DoubleArray f_n(nvar);
-        int newDerivTimeLevel =
+        size_t newDerivTimeLevel =
             (masterTimeLevels.size() > nMasterSchemeVals)
                 ? masterTimeLevels[nMasterSchemeVals + nMasterSchemeImpDers]
                 : -1; // Contains the
@@ -361,7 +361,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
                 ASSERTL1(false, "Problems with initialising scheme");
             }
 
-            for (int j = 0; j < nvar; j++)
+            for (size_t j = 0; j < nvar; j++)
             {
                 f_n[j] = Array<OneD, NekDouble>(npoints);
             }
@@ -371,7 +371,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
 
             // Multiply by dt (as required by the General Linear Method
             // framework)
-            for (int j = 0; j < nvar; j++)
+            for (size_t j = 0; j < nvar; j++)
             {
                 Vmath::Smul(npoints, deltaT, f_n[j], 1, f_n[j], 1);
             }
@@ -460,7 +460,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
     if (m_initialised && m_nvars == GetFirstDim(y_old) &&
         m_npoints == GetSecondDim(y_old))
     {
-        for (int j = 0; j < m_nvars; j++)
+        for (size_t j = 0; j < m_nvars; j++)
         {
             Vmath::Zero(m_npoints, m_tmp[j], 1);
         }
@@ -483,7 +483,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         // storage will be used for every stage -> m_Y is a
         // DoubleArray
         m_tmp = DoubleArray(m_nvars);
-        for (int j = 0; j < m_nvars; j++)
+        for (size_t j = 0; j < m_nvars; j++)
         {
             m_tmp[j] = Array<OneD, NekDouble>(m_npoints, 0.0);
         }
@@ -497,7 +497,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         else
         {
             m_Y = DoubleArray(m_nvars);
-            for (int j = 0; j < m_nvars; j++)
+            for (size_t j = 0; j < m_nvars; j++)
             {
                 m_Y[j] = Array<OneD, NekDouble>(m_npoints, 0.0);
             }
@@ -506,10 +506,10 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         // Different storage for every stage derivative as the data
         // will be re-used to update the solution -> m_F is a TripleArray
         m_F = TripleArray(m_numstages);
-        for (int i = 0; i < m_numstages; ++i)
+        for (size_t i = 0; i < m_numstages; ++i)
         {
             m_F[i] = DoubleArray(m_nvars);
-            for (int j = 0; j < m_nvars; j++)
+            for (size_t j = 0; j < m_nvars; j++)
             {
                 m_F[i][j] = Array<OneD, NekDouble>(m_npoints, 0.0);
             }
@@ -518,10 +518,10 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         if (type == eIMEX)
         {
             m_F_IMEX = TripleArray(m_numstages);
-            for (int i = 0; i < m_numstages; ++i)
+            for (size_t i = 0; i < m_numstages; ++i)
             {
                 m_F_IMEX[i] = DoubleArray(m_nvars);
-                for (int j = 0; j < m_nvars; j++)
+                for (size_t j = 0; j < m_nvars; j++)
                 {
                     m_F_IMEX[i][j] = Array<OneD, NekDouble>(m_npoints, 0.0);
                 }
@@ -548,11 +548,11 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
     }
 
     // The loop below calculates the stage values and derivatives
-    for (int stage = 0; stage < m_numstages; stage++)
+    for (size_t stage = 0; stage < m_numstages; stage++)
     {
         if ((stage == 0) && m_firstStageEqualsOldSolution)
         {
-            for (int k = 0; k < m_nvars; k++)
+            for (size_t k = 0; k < m_nvars; k++)
             {
                 Vmath::Vcopy(m_npoints, y_old[0][k], 1, m_Y[k], 1);
             }
@@ -565,7 +565,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             // 1: The stage derivatives:
             if (stage != 0)
             {
-                for (int k = 0; k < m_nvars; k++)
+                for (size_t k = 0; k < m_nvars; k++)
                 {
                     Vmath::Smul(m_npoints, deltaT * A(k, stage, 0), m_F[0][k],
                                 1, m_tmp[k], 1);
@@ -581,9 +581,9 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
 
             m_T = A(stage, 0) * deltaT;
 
-            for (int j = 1; j < stage; j++)
+            for (size_t j = 1; j < stage; j++)
             {
-                for (int k = 0; k < m_nvars; k++)
+                for (size_t k = 0; k < m_nvars; k++)
                 {
                     Vmath::Svtvp(m_npoints, deltaT * A(k, stage, j), m_F[j][k],
                                  1, m_tmp[k], 1, m_tmp[k], 1);
@@ -600,9 +600,9 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             }
 
             // 2: The imported multi-step solution of the previous time level:
-            for (int j = 0; j < m_numsteps; j++)
+            for (size_t j = 0; j < m_numsteps; j++)
             {
-                for (int k = 0; k < m_nvars; k++)
+                for (size_t k = 0; k < m_nvars; k++)
                 {
                     Vmath::Svtvp(m_npoints, U(k, stage, j), y_old[j][k], 1,
                                  m_tmp[k], 1, m_tmp[k], 1);
@@ -631,7 +631,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
                 else
                 {
                     m_T = t_old[0];
-                    for (int j = 0; j <= stage; ++j)
+                    for (size_t j = 0; j <= stage; ++j)
                     {
                         m_T += A(stage, j) * deltaT;
                     }
@@ -639,7 +639,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
 
                 op.DoImplicitSolve(m_tmp, m_Y, m_T, A(stage, stage) * deltaT);
 
-                for (int k = 0; k < m_nvars; ++k)
+                for (size_t k = 0; k < m_nvars; ++k)
                 {
                     Vmath::Vsub(m_npoints, m_Y[k], 1, m_tmp[k], 1,
                                 m_F[stage][k], 1);
@@ -657,7 +657,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             else
             {
                 m_T = t_old[0];
-                for (int j = 0; j <= stage; ++j)
+                for (size_t j = 0; j <= stage; ++j)
                 {
                     m_T += A(stage, j) * deltaT;
                 }
@@ -667,7 +667,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             {
                 op.DoImplicitSolve(m_tmp, m_Y, m_T, A(stage, stage) * deltaT);
 
-                for (int k = 0; k < m_nvars; k++)
+                for (size_t k = 0; k < m_nvars; k++)
                 {
                     Vmath::Vsub(m_npoints, m_Y[k], 1, m_tmp[k], 1,
                                 m_F[stage][k], 1);
@@ -702,10 +702,10 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
     // If last stage equals the new solution, the new solution
     // needs not be calculated explicitly but can simply be
     // copied. This saves a solve.
-    int i_start = 0;
+    size_t i_start = 0;
     if (m_lastStageEqualsNewSolution)
     {
-        for (int k = 0; k < m_nvars; k++)
+        for (size_t k = 0; k < m_nvars; k++)
         {
             Vmath::Vcopy(m_npoints, m_Y[k], 1, y_new[0][k], 1);
         }
@@ -718,12 +718,12 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         {
             t_new[0] = B(0, 0) * deltaT;
 
-            for (int j = 1; j < m_numstages; j++)
+            for (size_t j = 1; j < m_numstages; j++)
             {
                 t_new[0] += B(0, j) * deltaT;
             }
 
-            for (int j = 0; j < m_numsteps; j++)
+            for (size_t j = 0; j < m_numsteps; j++)
             {
                 t_new[0] += V(0, j) * t_old[j];
             }
@@ -732,12 +732,12 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         i_start = 1;
     }
 
-    for (int i = i_start; i < m_numsteps; i++)
+    for (size_t i = i_start; i < m_numsteps; i++)
     {
         // The solution at the new time level is a linear
         // combination of:
         // 1: the stage derivatives
-        for (int k = 0; k < m_nvars; k++)
+        for (size_t k = 0; k < m_nvars; k++)
         {
             Vmath::Smul(m_npoints, deltaT * B(k, i, 0), m_F[0][k], 1,
                         y_new[i][k], 1);
@@ -754,9 +754,9 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             t_new[i] = B(i, 0) * deltaT;
         }
 
-        for (int j = 1; j < m_numstages; j++)
+        for (size_t j = 1; j < m_numstages; j++)
         {
-            for (int k = 0; k < m_nvars; k++)
+            for (size_t k = 0; k < m_nvars; k++)
             {
                 Vmath::Svtvp(m_npoints, deltaT * B(k, i, j), m_F[j][k], 1,
                              y_new[i][k], 1, y_new[i][k], 1);
@@ -777,9 +777,9 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
 
         // 2: the imported multi-step solution of the previous
         // time level
-        for (int j = 0; j < m_numsteps; j++)
+        for (size_t j = 0; j < m_numsteps; j++)
         {
-            for (int k = 0; k < m_nvars; k++)
+            for (size_t k = 0; k < m_nvars; k++)
             {
                 Vmath::Svtvp(m_npoints, V(k, i, j), y_old[j][k], 1, y_new[i][k],
                              1, y_new[i][k], 1);
@@ -808,9 +808,9 @@ void TimeIntegrationAlgorithmGLM::CheckIfFirstStageEqualsOldSolution()
     // 2. U[0][0] is equal to one and all other first row entries of U are zero
 
     // 1. Check first condition
-    for (int m = 0; m < m_A.size(); m++)
+    for (size_t m = 0; m < m_A.size(); m++)
     {
-        for (int i = 0; i < m_numstages; i++)
+        for (size_t i = 0; i < m_numstages; i++)
         {
             if (fabs(m_A[m][0][i]) > NekConstants::kNekZeroTol)
             {
@@ -827,7 +827,7 @@ void TimeIntegrationAlgorithmGLM::CheckIfFirstStageEqualsOldSolution()
         return;
     }
 
-    for (int i = 1; i < m_numsteps; i++)
+    for (size_t i = 1; i < m_numsteps; i++)
     {
         if (fabs(m_U[0][i]) > NekConstants::kNekZeroTol)
         {
@@ -848,9 +848,9 @@ void TimeIntegrationAlgorithmGLM::CheckIfLastStageEqualsNewSolution()
     // matrix V
 
     // 1. Check first condition
-    for (int m = 0; m < m_A.size(); m++)
+    for (size_t m = 0; m < m_A.size(); m++)
     {
-        for (int i = 0; i < m_numstages; i++)
+        for (size_t i = 0; i < m_numstages; i++)
         {
             if (fabs(m_A[m][m_numstages - 1][i] - m_B[m][0][i]) >
                 NekConstants::kNekZeroTol)
@@ -862,7 +862,7 @@ void TimeIntegrationAlgorithmGLM::CheckIfLastStageEqualsNewSolution()
     }
 
     // 2. Check second condition
-    for (int i = 0; i < m_numsteps; i++)
+    for (size_t i = 0; i < m_numsteps; i++)
     {
         if (fabs(m_U[m_numstages - 1][i] - m_V[0][i]) >
             NekConstants::kNekZeroTol)
@@ -878,17 +878,17 @@ void TimeIntegrationAlgorithmGLM::CheckIfLastStageEqualsNewSolution()
 void TimeIntegrationAlgorithmGLM::VerifyIntegrationSchemeType()
 {
 #ifdef NEKTAR_DEBUG
-    int IMEXdim = m_A.size();
-    int dim     = m_A[0].GetRows();
+    size_t IMEXdim = m_A.size();
+    size_t dim     = m_A[0].GetRows();
 
     Array<OneD, TimeIntegrationSchemeType> vertype(IMEXdim, eExplicit);
 
     if (m_schemeType == eExponential)
         vertype[0] = eExponential;
 
-    for (int m = 0; m < IMEXdim; m++)
+    for (size_t m = 0; m < IMEXdim; m++)
     {
-        for (int i = 0; i < dim; i++)
+        for (size_t i = 0; i < dim; i++)
         {
             if (fabs(m_A[m][i][i]) > NekConstants::kNekZeroTol)
             {
@@ -896,9 +896,9 @@ void TimeIntegrationAlgorithmGLM::VerifyIntegrationSchemeType()
             }
         }
 
-        for (int i = 0; i < dim; i++)
+        for (size_t i = 0; i < dim; i++)
         {
-            for (int j = i + 1; j < dim; j++)
+            for (size_t j = i + 1; j < dim; j++)
             {
                 if (fabs(m_A[m][i][j]) > NekConstants::kNekZeroTol)
                 {
@@ -967,12 +967,12 @@ std::ostream &operator<<(std::ostream &os,
 std::ostream &operator<<(std::ostream &os,
                          const TimeIntegrationAlgorithmGLM &rhs)
 {
-    int r                          = rhs.m_numsteps;
-    int s                          = rhs.m_numstages;
+    size_t r                       = rhs.m_numsteps;
+    size_t s                       = rhs.m_numstages;
     TimeIntegrationSchemeType type = rhs.m_schemeType;
 
-    int oswidth     = 9;
-    int osprecision = 6;
+    size_t oswidth     = 9;
+    size_t osprecision = 6;
 
     os << "Time Integration Scheme (Master): " << rhs.m_parent->GetFullName()
        << "\n"
@@ -981,9 +981,9 @@ std::ostream &operator<<(std::ostream &os,
        << "- number of stages: " << s << "\n"
        << "General linear method tableau:\n";
 
-    for (int i = 0; i < s; i++)
+    for (size_t i = 0; i < s; i++)
     {
-        for (int j = 0; j < s; j++)
+        for (size_t j = 0; j < s; j++)
         {
             os.width(oswidth);
             os.precision(osprecision);
@@ -992,7 +992,7 @@ std::ostream &operator<<(std::ostream &os,
         if (type == eIMEX)
         {
             os << " '";
-            for (int j = 0; j < s; j++)
+            for (size_t j = 0; j < s; j++)
             {
                 os.width(oswidth);
                 os.precision(osprecision);
@@ -1002,7 +1002,7 @@ std::ostream &operator<<(std::ostream &os,
 
         os << " |";
 
-        for (int j = 0; j < r; j++)
+        for (size_t j = 0; j < r; j++)
         {
             os.width(oswidth);
             os.precision(osprecision);
@@ -1011,17 +1011,17 @@ std::ostream &operator<<(std::ostream &os,
         os << std::endl;
     }
 
-    int imexflag = (type == eIMEX) ? 2 : 1;
-    for (int i = 0; i < (r + imexflag * s) * (oswidth + 1) + imexflag * 2 - 1;
-         i++)
+    size_t imexflag = (type == eIMEX) ? 2 : 1;
+    for (size_t i = 0;
+         i < (r + imexflag * s) * (oswidth + 1) + imexflag * 2 - 1; i++)
     {
         os << "-";
     }
     os << std::endl;
 
-    for (int i = 0; i < r; i++)
+    for (size_t i = 0; i < r; i++)
     {
-        for (int j = 0; j < s; j++)
+        for (size_t j = 0; j < s; j++)
         {
             os.width(oswidth);
             os.precision(osprecision);
@@ -1030,7 +1030,7 @@ std::ostream &operator<<(std::ostream &os,
         if (type == eIMEX)
         {
             os << " '";
-            for (int j = 0; j < s; j++)
+            for (size_t j = 0; j < s; j++)
             {
                 os.width(oswidth);
                 os.precision(osprecision);
@@ -1040,7 +1040,7 @@ std::ostream &operator<<(std::ostream &os,
 
         os << " |";
 
-        for (int j = 0; j < r; j++)
+        for (size_t j = 0; j < r; j++)
         {
             os.width(oswidth);
             os.precision(osprecision);
@@ -1067,15 +1067,15 @@ std::ostream &operator<<(std::ostream &os,
 
     if (type == eExponential)
     {
-        for (int k = 0; k < rhs.m_nvars; k++)
+        for (size_t k = 0; k < rhs.m_nvars; k++)
         {
             os << std::endl
                << "General linear method exponential tableau for variable " << k
                << ":\n";
 
-            for (int i = 0; i < s; i++)
+            for (size_t i = 0; i < s; i++)
             {
-                for (int j = 0; j < s; j++)
+                for (size_t j = 0; j < s; j++)
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
@@ -1084,7 +1084,7 @@ std::ostream &operator<<(std::ostream &os,
 
                 os << " |";
 
-                for (int j = 0; j < r; j++)
+                for (size_t j = 0; j < r; j++)
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
@@ -1093,17 +1093,17 @@ std::ostream &operator<<(std::ostream &os,
                 os << std::endl;
             }
 
-            int imexflag = (type == eIMEX) ? 2 : 1;
-            for (int i = 0;
+            size_t imexflag = (type == eIMEX) ? 2 : 1;
+            for (size_t i = 0;
                  i < (r + imexflag * s) * (oswidth + 1) + imexflag * 2 - 1; i++)
             {
                 os << "-";
             }
             os << std::endl;
 
-            for (int i = 0; i < r; i++)
+            for (size_t i = 0; i < r; i++)
             {
-                for (int j = 0; j < s; j++)
+                for (size_t j = 0; j < s; j++)
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
@@ -1112,7 +1112,7 @@ std::ostream &operator<<(std::ostream &os,
 
                 os << " |";
 
-                for (int j = 0; j < r; j++)
+                for (size_t j = 0; j < r; j++)
                 {
                     os.width(oswidth);
                     os.precision(osprecision);

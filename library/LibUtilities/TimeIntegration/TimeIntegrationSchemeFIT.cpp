@@ -53,7 +53,7 @@ namespace LibUtilities
  * currently implemented (Soon be expanded to forth order).
  */
 FractionalInTimeIntegrationScheme::FractionalInTimeIntegrationScheme(
-    std::string variant, unsigned int order, std::vector<NekDouble> freeParams)
+    std::string variant, size_t order, std::vector<NekDouble> freeParams)
     : TimeIntegrationScheme(variant, order, freeParams),
       m_name("FractionalInTime")
 {
@@ -132,15 +132,15 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
     // Storage of previous states and associated timesteps.
     m_u = TripleArray(m_order + 1);
 
-    for (unsigned int m = 0; m <= m_order; ++m)
+    for (size_t m = 0; m <= m_order; ++m)
     {
         m_u[m] = DoubleArray(m_nvars);
 
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        for (size_t i = 0; i < m_nvars; ++i)
         {
             m_u[m][i] = SingleArray(m_npoints, 0.0);
 
-            for (unsigned int j = 0; j < m_npoints; ++j)
+            for (size_t j = 0; j < m_npoints; ++j)
             {
                 // Store the initial values as the first previous state.
                 if (m == 0)
@@ -159,7 +159,7 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
     // Storage for the integral contribution.
     m_uInt = ComplexDoubleArray(m_nvars);
 
-    for (unsigned int i = 0; i < m_nvars; ++i)
+    for (size_t i = 0; i < m_nvars; ++i)
     {
         m_F[i]     = SingleArray(m_npoints, 0.0);
         m_uNext[i] = SingleArray(m_npoints, 0.0);
@@ -171,7 +171,7 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
 
     m_J[0] = pow(m_deltaT, m_alpha) / tgamma(m_alpha + 1.);
 
-    for (unsigned int m = 1, m_1 = 0; m < m_order; ++m, ++m_1)
+    for (size_t m = 1, m_1 = 0; m < m_order; ++m, ++m_1)
     {
         m_J[m] = m_J[m_1] * NekDouble(m) / (NekDouble(m) + m_alpha);
     }
@@ -180,11 +180,11 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
     // These are elements in a multi-step exponential integrator tableau
     m_Ahats = TripleArray(m_order + 1);
 
-    for (unsigned int m = 1; m <= m_order; ++m)
+    for (size_t m = 1; m <= m_order; ++m)
     {
         m_Ahats[m] = DoubleArray(m);
 
-        for (unsigned int n = 0; n < m; ++n)
+        for (size_t n = 0; n < m; ++n)
         {
             m_Ahats[m][n] = SingleArray(m, 0.0);
         }
@@ -240,9 +240,9 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
 
                 m_Ahats[m][0][0] = 1;
 
-                for (unsigned int j = 2; j <= m; ++j)
+                for (size_t j = 2; j <= m; ++j)
                 {
-                    for (unsigned int i = 0; i < m; ++i)
+                    for (size_t i = 0; i < m; ++i)
                     {
                         m_Ahats[m][j - 1][i] = pow((1 - j), i);
                     }
@@ -259,9 +259,9 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
     // Mulitply the last Ahat array, transposed, by J
     m_AhattJ = SingleArray(m_order, 0.0);
 
-    for (unsigned int i = 0; i < m_order; ++i)
+    for (size_t i = 0; i < m_order; ++i)
     {
-        for (unsigned int j = 0; j < m_order; ++j)
+        for (size_t j = 0; j < m_order; ++j)
         {
             m_AhattJ[i] += m_Ahats[m_order][j][i] * m_J[j];
         }
@@ -269,7 +269,7 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
 
     m_integral_classes = Array<OneD, Instance>(m_Lmax);
 
-    for (int l = 0; l < m_Lmax; ++l)
+    for (size_t l = 0; l < m_Lmax; ++l)
     {
         integralClassInitialize(l + 1, m_integral_classes[l]);
     }
@@ -279,7 +279,7 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
  * @brief Worker method that performs the time integration.
  */
 ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
-    const int timestep, const NekDouble delta_t,
+    const size_t timestep, const NekDouble delta_t,
     const TimeIntegrationSchemeOperators &op)
 {
     boost::ignore_unused(delta_t);
@@ -288,11 +288,11 @@ ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
              "Delta T has changed which is not permitted.");
 
     // The Fractional in Time works via the logical? time step value.
-    int timeStep = timestep + 1;
+    size_t timeStep = timestep + 1;
 
     // Update the storage and counters for integral classes.  Performs
     // staging for updating u.
-    for (int l = 0; l < m_Lmax; ++l)
+    for (size_t l = 0; l < m_Lmax; ++l)
     {
         updateStage(timeStep, m_integral_classes[l]);
     }
@@ -302,17 +302,17 @@ ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
     finalIncrement(timeStep, op);
 
     // Contributions to the current integral
-    int L = computeTaus(m_base, timeStep);
+    size_t L = computeTaus(m_base, timeStep);
 
-    for (int l = 0; l < L; ++l)
+    for (size_t l = 0; l < L; ++l)
     {
         // Integral contribution over [taus(i+1) taus(i)]. Stored in
         // m_uInt.
         integralContribution(timeStep, m_taus[l], m_integral_classes[l]);
 
-        for (int i = 0; i < m_nvars; ++i)
+        for (size_t i = 0; i < m_nvars; ++i)
         {
-            for (int j = 0; j < m_npoints; ++j)
+            for (size_t j = 0; j < m_npoints; ++j)
             {
                 m_uNext[i][j] += m_uInt[i][j].real();
             }
@@ -320,11 +320,11 @@ ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
     }
 
     // Shuffle the previous solutions back one in the history.
-    for (int m = m_order; m > 0; --m)
+    for (size_t m = m_order; m > 0; --m)
     {
-        for (int i = 0; i < m_nvars; ++i)
+        for (size_t i = 0; i < m_nvars; ++i)
         {
-            for (int j = 0; j < m_npoints; ++j)
+            for (size_t j = 0; j < m_npoints; ++j)
             {
                 m_u[m][i][j] = m_u[m - 1][i][j];
             }
@@ -332,9 +332,9 @@ ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
     }
 
     // Get the current solution.
-    for (int i = 0; i < m_nvars; ++i)
+    for (size_t i = 0; i < m_nvars; ++i)
     {
-        for (int j = 0; j < m_npoints; ++j)
+        for (size_t j = 0; j < m_npoints; ++j)
         {
             m_u[0][i][j] = m_uNext[i][j] + m_u0[i][j];
 
@@ -344,11 +344,11 @@ ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
 
     // Dump the current solution.
     // std::cout << "timeStep  " << timeStep << std::endl;
-    // for( int j=0; j<m_npoints; ++j )
+    // for( size_t j=0; j<m_npoints; ++j )
     // {
-    //     for( int i=0; i<m_nvars; ++i )
+    //     for( size_t i=0; i<m_nvars; ++i )
     //     {
-    //         for( int m=0; m<m_order+1; ++m )
+    //         for( size_t m=0; m<m_order+1; ++m )
     //         {
     //             std::cout << m_u[m][i][j] << "  ";
     //         }
@@ -360,7 +360,7 @@ ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
 
     // Update the storage and counters for integral classes to
     // time timeStep * m_deltaT. Also time-steps the sandboxes and stashes.
-    for (int i = 0; i < m_Lmax; ++i)
+    for (size_t i = 0; i < m_Lmax; ++i)
     {
         advanceSandbox(timeStep, op, m_integral_classes[i]);
     }
@@ -372,8 +372,8 @@ ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
  * @brief Method that increments the counter then performs mod
  * calculation.
  */
-unsigned int FractionalInTimeIntegrationScheme::modIncrement(
-    const int unsigned counter, const int unsigned base) const
+size_t FractionalInTimeIntegrationScheme::modIncrement(const size_t counter,
+                                                       const size_t base) const
 {
     return (counter + 1) % base;
 }
@@ -382,12 +382,12 @@ unsigned int FractionalInTimeIntegrationScheme::modIncrement(
  * @brief Method to compute the smallest integer L such that base < 2
  * * base^l.
  */
-unsigned int FractionalInTimeIntegrationScheme::computeL(
-    const unsigned int base, const unsigned int l) const
+size_t FractionalInTimeIntegrationScheme::computeL(const size_t base,
+                                                   const size_t l) const
 {
-    unsigned int L = ceil(log(l / 2.0) / log(base));
+    size_t L = ceil(log(l / 2.0) / log(base));
 
-    if (l % (unsigned int)(2 * pow(base, L)) == 0)
+    if (l % (size_t)(2 * pow(base, L)) == 0)
     {
         ++L;
     }
@@ -402,15 +402,15 @@ unsigned int FractionalInTimeIntegrationScheme::computeL(
  *  boundaries for a partition of [0, m h]. The value of h is not
  *  needed to compute this vector.
  */
-unsigned int FractionalInTimeIntegrationScheme::computeQML(
-    const unsigned int base, const unsigned int m)
+size_t FractionalInTimeIntegrationScheme::computeQML(const size_t base,
+                                                     const size_t m)
 {
-    int L = computeL(base, m);
+    size_t L = computeL(base, m);
 
     // m_qml is set in InitializeScheme to be the largest length expected.
-    // qml = Array<OneD, int>( L-1, 0 );
+    // qml = Array<OneD, size_t>( L-1, 0 );
 
-    for (unsigned int i = 0; i < L - 1; ++i)
+    for (size_t i = 0; i < L - 1; ++i)
     {
         m_qml[i] = floor(m / pow(base, i + 1)) - 1;
     }
@@ -425,8 +425,8 @@ unsigned int FractionalInTimeIntegrationScheme::computeQML(
  * boundaries for a partition of [0, m h]. The value of h is not
  * needed to compute this vector.
  */
-unsigned int FractionalInTimeIntegrationScheme::computeTaus(
-    const unsigned int base, const unsigned int m)
+size_t FractionalInTimeIntegrationScheme::computeTaus(const size_t base,
+                                                      const size_t m)
 {
     if (m == 1)
     {
@@ -436,14 +436,14 @@ unsigned int FractionalInTimeIntegrationScheme::computeTaus(
     }
     else
     {
-        unsigned int L = computeQML(base, m);
+        size_t L = computeQML(base, m);
 
         // m_taus is set in InitializeScheme to be the largest length
         // expected.
 
         m_taus[0] = m - 1;
 
-        for (unsigned int i = 1; i < L; ++i)
+        for (size_t i = 1; i < L; ++i)
         {
             m_taus[i] = m_qml[i - 1] * pow(base, i);
         }
@@ -466,14 +466,14 @@ unsigned int FractionalInTimeIntegrationScheme::computeTaus(
  * returned quadrature rule approximes an integral over the contour.
  */
 void FractionalInTimeIntegrationScheme::talbotQuadrature(
-    const unsigned int nQuadPts, const NekDouble mu, const NekDouble nu,
+    const size_t nQuadPts, const NekDouble mu, const NekDouble nu,
     const NekDouble sigma, ComplexSingleArray &lamb,
     ComplexSingleArray &w) const
 {
     lamb = ComplexSingleArray(nQuadPts, 0.0);
     w    = ComplexSingleArray(nQuadPts, 0.0);
 
-    for (unsigned int q = 0; q < nQuadPts; ++q)
+    for (size_t q = 0; q < nQuadPts; ++q)
     {
         NekDouble th =
             (NekDouble(q) + 0.5) / NekDouble(nQuadPts) * 2.0 * M_PI - M_PI;
@@ -489,7 +489,7 @@ void FractionalInTimeIntegrationScheme::talbotQuadrature(
     // number of quadrature points.
     if (nQuadPts % 2 == 1)
     {
-        unsigned int q = (nQuadPts + 1) / 2;
+        size_t q = (nQuadPts + 1) / 2;
 
         lamb[q] = std::complex<NekDouble>(sigma + mu, 0);
 
@@ -501,7 +501,7 @@ void FractionalInTimeIntegrationScheme::talbotQuadrature(
  * @brief Method to initialize the integral class
  */
 void FractionalInTimeIntegrationScheme::integralClassInitialize(
-    const unsigned int index, Instance &instance) const
+    const size_t index, Instance &instance) const
 {
     /**
      * /brief
@@ -548,7 +548,7 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
     instance.fstash_y   = ComplexTripleArray(m_nvars);
     instance.fsandbox_y = ComplexTripleArray(m_nvars);
 
-    for (unsigned int q = 0; q < m_nvars; ++q)
+    for (size_t q = 0; q < m_nvars; ++q)
     {
         instance.stage_y[q]    = ComplexDoubleArray(m_npoints);
         instance.cstash_y[q]   = ComplexDoubleArray(m_npoints);
@@ -556,7 +556,7 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
         instance.fstash_y[q]   = ComplexDoubleArray(m_npoints);
         instance.fsandbox_y[q] = ComplexDoubleArray(m_npoints);
 
-        for (unsigned int i = 0; i < m_npoints; ++i)
+        for (size_t i = 0; i < m_npoints; ++i)
         {
             instance.stage_y[q][i]    = ComplexSingleArray(m_nQuadPts, 0.0);
             instance.cstash_y[q][i]   = ComplexSingleArray(m_nQuadPts, 0.0);
@@ -567,9 +567,10 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
     }
 
     // Major storage for auxilliary ODE solutions.
-    instance.stage_ind = std::pair<int, int>(0, 0); // Time-step counters
-                                                    // indicating the interval
-                                                    // ymain is associated with
+    instance.stage_ind =
+        std::pair<size_t, size_t>(0, 0); // Time-step counters
+                                         // indicating the interval
+                                         // ymain is associated with
 
     // Staging allocation
     instance.stage_active   = false;
@@ -584,25 +585,26 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
     instance.cstash_counter = 0; // Counter used to determine
                                  // when to stash
 
-    instance.cstash_base = pow(m_base, index - 1);   // base for counter ind(1)
-    instance.cstash_ind = std::pair<int, int>(0, 0); // is never used: it always
-                                                     // matches main.ind(1)
+    instance.cstash_base = pow(m_base, index - 1); // base for counter ind(1)
+    instance.cstash_ind =
+        std::pair<size_t, size_t>(0, 0); // is never used: it always
+                                         // matches main.ind(1)
 
     // Ceiling sandbox allocation
     instance.csandbox_active = false; // Flag to determine when stash 2
                                       // is utilized
     instance.csandbox_counter = 0;
-    instance.csandbox_ind     = std::pair<int, int>(0, 0);
+    instance.csandbox_ind     = std::pair<size_t, size_t>(0, 0);
 
     // Floor stash
     instance.fstash_base = 2 * pow(m_base, index);
-    instance.fstash_ind  = std::pair<int, int>(0, 0);
+    instance.fstash_ind  = std::pair<size_t, size_t>(0, 0);
 
     // Floor sandbox
     instance.fsandbox_active         = false;
     instance.fsandbox_activebase     = pow(m_base, index);
     instance.fsandbox_stashincrement = (m_base - 1) * pow(m_base, index - 1);
-    instance.fsandbox_ind            = std::pair<int, int>(0, 0);
+    instance.fsandbox_ind            = std::pair<size_t, size_t>(0, 0);
 
     // Defining parameters of the Talbot contour quadrature rule
     NekDouble Tl =
@@ -634,11 +636,11 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
 
     As = TripleArray(m_order + 2);
 
-    for (unsigned int m = 1; m <= m_order + 1; ++m)
+    for (size_t m = 1; m <= m_order + 1; ++m)
     {
         As[m] = DoubleArray(m);
 
-        for (unsigned int n = 0; n < m; ++n)
+        for (size_t n = 0; n < m; ++n)
         {
             As[m][n] = SingleArray(m, 0.0);
         }
@@ -733,7 +735,7 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
                 // Ainv(1,:) = 1;
                 // Ainv(2,1) = 1;
 
-                // for( unsigned int j = 3; j<=counter; ++j )
+                // for( size_t j = 3; j<=counter; ++j )
                 // {
                 //          Ainv(j,:) = pow((j-2)., (0:counter));
                 //          Ainv(j,:) = Ainv(j,:). * pow((-1)., (0:counter));
@@ -747,18 +749,18 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
     // Initialize the exponenetial integrators.
     instance.E = ComplexSingleArray(m_nQuadPts, 0.0);
 
-    for (unsigned int q = 0; q < m_nQuadPts; ++q)
+    for (size_t q = 0; q < m_nQuadPts; ++q)
     {
         instance.E[q] = exp(instance.z[q] * m_deltaT);
     }
 
     instance.Eh = ComplexDoubleArray(m_order + 1);
 
-    for (unsigned int m = 0; m < m_order + 1; ++m)
+    for (size_t m = 0; m < m_order + 1; ++m)
     {
         instance.Eh[m] = ComplexSingleArray(m_nQuadPts, 0.0);
 
-        for (unsigned int q = 0; q < m_nQuadPts; ++q)
+        for (size_t q = 0; q < m_nQuadPts; ++q)
         {
             if (m == 0)
                 instance.Eh[0][q] =
@@ -775,13 +777,13 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
     // restored.
     instance.AtEh = ComplexDoubleArray(m_order + 1);
 
-    for (unsigned int m = 0; m <= m_order; ++m)
+    for (size_t m = 0; m <= m_order; ++m)
     {
         instance.AtEh[m] = ComplexSingleArray(m_nQuadPts, 0.0);
 
-        for (unsigned int q = 0; q < m_nQuadPts; ++q)
+        for (size_t q = 0; q < m_nQuadPts; ++q)
         {
-            for (unsigned int i = 0; i <= m_order; ++i)
+            for (size_t i = 0; i <= m_order; ++i)
             {
                 instance.AtEh[m][q] +=
                     instance.As[m_order + 1][m][i] * instance.Eh[i][q];
@@ -797,7 +799,7 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
  * (2) moves ceiling stash ---> stage
  * (3) moves floor stash --> stage (+ updates all ceiling data)
  */
-void FractionalInTimeIntegrationScheme::updateStage(const unsigned int timeStep,
+void FractionalInTimeIntegrationScheme::updateStage(const size_t timeStep,
                                                     Instance &instance)
 {
     // Counter to flip active bit
@@ -825,15 +827,15 @@ void FractionalInTimeIntegrationScheme::updateStage(const unsigned int timeStep,
             instance.fstash_base = pow(instance.base, instance.index);
 
             // Restart floor sandbox
-            instance.fsandbox_ind    = std::pair<int, int>(0, 0);
+            instance.fsandbox_ind    = std::pair<size_t, size_t>(0, 0);
             instance.fsandbox_active = false;
 
             // Clear the floor sandbox values.
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
-                for (unsigned int j = 0; j < m_npoints; ++j)
+                for (size_t j = 0; j < m_npoints; ++j)
                 {
-                    for (unsigned int q = 0; q < m_nQuadPts; ++q)
+                    for (size_t q = 0; q < m_nQuadPts; ++q)
                     {
                         instance.fsandbox_y[i][j][q] = 0;
                     }
@@ -862,17 +864,17 @@ void FractionalInTimeIntegrationScheme::updateStage(const unsigned int timeStep,
  * on alpha, the derivative order.
  */
 void FractionalInTimeIntegrationScheme::finalIncrement(
-    const unsigned int timeStep, const TimeIntegrationSchemeOperators &op)
+    const size_t timeStep, const TimeIntegrationSchemeOperators &op)
 {
     // Note: m_uNext is initialized to zero and then reset to zero
     // after it is used to update the current solution in TimeIntegrate.
-    for (unsigned int m = 0; m < m_order; ++m)
+    for (size_t m = 0; m < m_order; ++m)
     {
         op.DoOdeRhs(m_u[m], m_F, m_deltaT * (timeStep - m));
 
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        for (size_t i = 0; i < m_nvars; ++i)
         {
-            for (unsigned int j = 0; j < m_npoints; ++j)
+            for (size_t j = 0; j < m_npoints; ++j)
             {
                 m_uNext[i][j] += m_F[i][j] * m_AhattJ[m];
             }
@@ -885,24 +887,23 @@ void FractionalInTimeIntegrationScheme::finalIncrement(
  * taus(i)]. Stored in m_uInt.
  */
 void FractionalInTimeIntegrationScheme::integralContribution(
-    const unsigned int timeStep, const unsigned int tauml,
-    const Instance &instance)
+    const size_t timeStep, const size_t tauml, const Instance &instance)
 {
     // Assume y has already been updated to time level m
-    for (unsigned int q = 0; q < m_nQuadPts; ++q)
+    for (size_t q = 0; q < m_nQuadPts; ++q)
     {
         m_expFactor[q] =
             exp(instance.z[q] * m_deltaT * NekDouble(timeStep - tauml)) *
             pow(instance.z[q], -m_alpha) * instance.w[q];
     }
 
-    for (unsigned int i = 0; i < m_nvars; ++i)
+    for (size_t i = 0; i < m_nvars; ++i)
     {
-        for (unsigned int j = 0; j < m_npoints; ++j)
+        for (size_t j = 0; j < m_npoints; ++j)
         {
             m_uInt[i][j] = 0;
 
-            for (unsigned int q = 0; q < m_nQuadPts; ++q)
+            for (size_t q = 0; q < m_nQuadPts; ++q)
             {
                 m_uInt[i][j] += instance.stage_y[i][j][q] * m_expFactor[q];
             }
@@ -921,10 +922,10 @@ void FractionalInTimeIntegrationScheme::integralContribution(
  * interpolation of the f(u) term.
  */
 void FractionalInTimeIntegrationScheme::timeAdvance(
-    const unsigned int timeStep, const TimeIntegrationSchemeOperators &op,
+    const size_t timeStep, const TimeIntegrationSchemeOperators &op,
     Instance &instance, ComplexTripleArray &y)
 {
-    int order;
+    size_t order;
 
     // Try automated high-order method.
     if (timeStep <= m_order)
@@ -934,13 +935,13 @@ void FractionalInTimeIntegrationScheme::timeAdvance(
         order = timeStep;
 
         // Prep for the time step.
-        for (unsigned int m = 0; m <= order; ++m)
+        for (size_t m = 0; m <= order; ++m)
         {
-            for (unsigned int q = 0; q < m_nQuadPts; ++q)
+            for (size_t q = 0; q < m_nQuadPts; ++q)
             {
                 instance.AtEh[m][q] = 0;
 
-                for (unsigned int i = 0; i <= order; ++i)
+                for (size_t i = 0; i <= order; ++i)
                 {
                     instance.AtEh[m][q] +=
                         instance.As[order + 1][m][i] * instance.Eh[i][q];
@@ -954,15 +955,15 @@ void FractionalInTimeIntegrationScheme::timeAdvance(
     }
 
     // y = y * instance.E + F * instance.AtEh;
-    for (unsigned int m = 0; m <= order; ++m)
+    for (size_t m = 0; m <= order; ++m)
     {
         op.DoOdeRhs(m_u[m], m_F, m_deltaT * (timeStep - m));
 
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        for (size_t i = 0; i < m_nvars; ++i)
         {
-            for (unsigned int j = 0; j < m_npoints; ++j)
+            for (size_t j = 0; j < m_npoints; ++j)
             {
-                for (unsigned int q = 0; q < m_nQuadPts; ++q)
+                for (size_t q = 0; q < m_nQuadPts; ++q)
                 {
                     // y * instance.E
                     if (m == 0)
@@ -986,7 +987,7 @@ void FractionalInTimeIntegrationScheme::timeAdvance(
  * (5) moves floor sandbox ---> stash
  */
 void FractionalInTimeIntegrationScheme::advanceSandbox(
-    const unsigned int timeStep, const TimeIntegrationSchemeOperators &op,
+    const size_t timeStep, const TimeIntegrationSchemeOperators &op,
     Instance &instance)
 {
     // (1)
@@ -1008,11 +1009,11 @@ void FractionalInTimeIntegrationScheme::advanceSandbox(
         // Stash the c sandbox value. This step has to be a deep copy
         // because the values in the sandbox are still needed for the
         // time advance.
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        for (size_t i = 0; i < m_nvars; ++i)
         {
-            for (unsigned int j = 0; j < m_npoints; ++j)
+            for (size_t j = 0; j < m_npoints; ++j)
             {
-                for (unsigned int q = 0; q < m_nQuadPts; ++q)
+                for (size_t q = 0; q < m_nQuadPts; ++q)
                 {
                     instance.cstash_y[i][j][q] = instance.csandbox_y[i][j][q];
                 }
@@ -1038,11 +1039,11 @@ void FractionalInTimeIntegrationScheme::advanceSandbox(
             // Stash the f sandbox values. This step has to be a deep
             // copy because the values in the sandbox are still needed
             // for the time advance.
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
-                for (unsigned int j = 0; j < m_npoints; ++j)
+                for (size_t j = 0; j < m_npoints; ++j)
                 {
-                    for (unsigned int q = 0; q < m_nQuadPts; ++q)
+                    for (size_t q = 0; q < m_nQuadPts; ++q)
                     {
                         instance.fstash_y[i][j][q] =
                             instance.fsandbox_y[i][j][q];
@@ -1057,7 +1058,8 @@ void FractionalInTimeIntegrationScheme::advanceSandbox(
         if (timeStep % instance.fsandbox_activebase == 0)
         {
             instance.fsandbox_active = true;
-            instance.fsandbox_ind    = std::pair<int, int>(timeStep, timeStep);
+            instance.fsandbox_ind =
+                std::pair<size_t, size_t>(timeStep, timeStep);
         }
     }
 }

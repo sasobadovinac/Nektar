@@ -59,7 +59,7 @@ namespace LibUtilities
 class AdamsBashforthTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    AdamsBashforthTimeIntegrationScheme(std::string variant, unsigned int order,
+    AdamsBashforthTimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
@@ -70,7 +70,7 @@ public:
 
         m_integration_phases = TimeIntegrationAlgorithmGLMVector(order);
 
-        for (unsigned int n = 0; n < order; ++n)
+        for (size_t n = 0; n < order; ++n)
         {
             m_integration_phases[n] = TimeIntegrationAlgorithmGLMSharedPtr(
                 new TimeIntegrationAlgorithmGLM(this));
@@ -125,8 +125,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p = MemoryManager<
             AdamsBashforthTimeIntegrationScheme>::AllocateSharedPtr(variant,
@@ -139,7 +138,7 @@ public:
     static std::string className;
 
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
-                                    int order)
+                                    size_t order)
     {
         // clang-format off
         const NekDouble coefficients[5][4] =
@@ -193,13 +192,13 @@ public:
         phase->m_V[0][0] = 1.0;
 
         // V Coefficients for first row additional columns
-        for (int n = 1; n < phase->m_order; ++n)
+        for (size_t n = 1; n < phase->m_order; ++n)
         {
             phase->m_V[0][n] = coefficients[phase->m_order][n];
         }
 
         // V evaluation value shuffling row n column n-1
-        for (int n = 2; n < phase->m_order; ++n)
+        for (size_t n = 2; n < phase->m_order; ++n)
         {
             phase->m_V[n][n - 1] = 1.0;
         }
@@ -207,11 +206,11 @@ public:
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
         phase->m_numMultiStepDerivs         = phase->m_order - 1;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         // For order > 1 derivatives are needed.
-        for (int n = 1; n < phase->m_order; ++n)
+        for (size_t n = 1; n < phase->m_order; ++n)
         {
             phase->m_timeLevelOffset[n] = n;
         }
@@ -238,8 +237,7 @@ class AdamsBashforthOrder1TimeIntegrationScheme
     : public AdamsBashforthTimeIntegrationScheme
 {
 public:
-    AdamsBashforthOrder1TimeIntegrationScheme(std::string variant,
-                                              unsigned int order,
+    AdamsBashforthOrder1TimeIntegrationScheme(std::string variant, size_t order,
                                               std::vector<NekDouble> freeParams)
         : AdamsBashforthTimeIntegrationScheme("", 1, freeParams)
     {
@@ -248,8 +246,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -271,8 +268,7 @@ class AdamsBashforthOrder2TimeIntegrationScheme
     : public AdamsBashforthTimeIntegrationScheme
 {
 public:
-    AdamsBashforthOrder2TimeIntegrationScheme(std::string variant,
-                                              unsigned int order,
+    AdamsBashforthOrder2TimeIntegrationScheme(std::string variant, size_t order,
                                               std::vector<NekDouble> freeParams)
         : AdamsBashforthTimeIntegrationScheme("", 2, freeParams)
     {
@@ -281,8 +277,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -304,8 +299,7 @@ class AdamsBashforthOrder3TimeIntegrationScheme
     : public AdamsBashforthTimeIntegrationScheme
 {
 public:
-    AdamsBashforthOrder3TimeIntegrationScheme(std::string variant,
-                                              unsigned int order,
+    AdamsBashforthOrder3TimeIntegrationScheme(std::string variant, size_t order,
                                               std::vector<NekDouble> freeParams)
         : AdamsBashforthTimeIntegrationScheme("", 3, freeParams)
     {
@@ -314,8 +308,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -337,8 +330,7 @@ class AdamsBashforthOrder4TimeIntegrationScheme
     : public AdamsBashforthTimeIntegrationScheme
 {
 public:
-    AdamsBashforthOrder4TimeIntegrationScheme(std::string variant,
-                                              unsigned int order,
+    AdamsBashforthOrder4TimeIntegrationScheme(std::string variant, size_t order,
                                               std::vector<NekDouble> freeParams)
         : AdamsBashforthTimeIntegrationScheme("", 4, freeParams)
     {
@@ -347,8 +339,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);

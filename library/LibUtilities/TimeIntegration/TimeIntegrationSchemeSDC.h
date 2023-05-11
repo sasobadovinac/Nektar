@@ -56,7 +56,7 @@ namespace LibUtilities
 class TimeIntegrationSchemeSDC : public TimeIntegrationScheme
 {
 public:
-    TimeIntegrationSchemeSDC(std::string variant, unsigned int order,
+    TimeIntegrationSchemeSDC(std::string variant, size_t order,
                              std::vector<NekDouble> freeParams)
         : TimeIntegrationScheme(variant, order, freeParams),
           m_name("SpectralDeferredCorrection")
@@ -179,8 +179,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<TimeIntegrationSchemeSDC>::AllocateSharedPtr(
@@ -319,12 +318,12 @@ public:
 protected:
     LUE virtual std::string v_GetName() const override;
     LUE virtual std::string v_GetVariant() const override;
-    LUE virtual unsigned int v_GetOrder() const override;
+    LUE virtual size_t v_GetOrder() const override;
     LUE virtual std::vector<NekDouble> v_GetFreeParams() const override;
     LUE virtual TimeIntegrationSchemeType v_GetIntegrationSchemeType()
         const override;
     LUE virtual NekDouble v_GetTimeStability() const override;
-    LUE virtual unsigned int v_GetNumIntegrationPhases() const override;
+    LUE virtual size_t v_GetNumIntegrationPhases() const override;
 
     /**
      * \brief Gets the solution vector of the ODE
@@ -335,7 +334,7 @@ protected:
     /**
      * \brief Sets the solution vector of the ODE
      */
-    LUE virtual void v_SetSolutionVector(const int Offset,
+    LUE virtual void v_SetSolutionVector(const size_t Offset,
                                          const DoubleArray &y) override;
 
     // The worker methods from the base class that are virtual
@@ -344,7 +343,7 @@ protected:
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
+        const size_t timestep, const NekDouble delta_t,
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_ResidualEval(const NekDouble &delta_t, const size_t n,

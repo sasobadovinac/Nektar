@@ -57,7 +57,7 @@ namespace LibUtilities
 class DIRKTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    DIRKTimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKTimeIntegrationScheme(std::string variant, size_t order,
                               std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
@@ -93,8 +93,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<DIRKTimeIntegrationScheme>::AllocateSharedPtr(
@@ -105,7 +104,7 @@ public:
     static std::string className;
 
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
-                                    unsigned int order)
+                                    size_t order)
     {
         phase->m_schemeType = eDiagonallyImplicit;
         phase->m_order      = order;
@@ -186,7 +185,7 @@ public:
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
         phase->m_numMultiStepDerivs         = 0;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         phase->CheckAndVerify();
@@ -194,7 +193,7 @@ public:
 
     LUE static void SetupSchemeDataESDIRK(
         TimeIntegrationAlgorithmGLMSharedPtr &phase, std::string variant,
-        unsigned int order, std::vector<NekDouble> freeParams)
+        size_t order, std::vector<NekDouble> freeParams)
     {
         phase->m_schemeType = eDiagonallyImplicit;
         phase->m_order      = order;
@@ -344,7 +343,7 @@ public:
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
         phase->m_numMultiStepDerivs         = 0;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         phase->CheckAndVerify();
@@ -368,7 +367,7 @@ protected:
 class DIRKOrder1TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
-    DIRKOrder1TimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKOrder1TimeIntegrationScheme(std::string variant, size_t order,
                                     std::vector<NekDouble> freeParams)
         : DIRKTimeIntegrationScheme("", 1, freeParams)
     {
@@ -377,8 +376,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -400,7 +398,7 @@ protected:
 class DIRKOrder2TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
-    DIRKOrder2TimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKOrder2TimeIntegrationScheme(std::string variant, size_t order,
                                     std::vector<NekDouble> freeParams)
         : DIRKTimeIntegrationScheme("", 2, freeParams)
     {
@@ -409,8 +407,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -432,7 +429,7 @@ protected:
 class DIRKOrder3TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
-    DIRKOrder3TimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKOrder3TimeIntegrationScheme(std::string variant, size_t order,
                                     std::vector<NekDouble> freeParams)
         : DIRKTimeIntegrationScheme("", 3, freeParams)
     {
@@ -441,8 +438,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -464,7 +460,7 @@ protected:
 class DIRKOrder3_ES5TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
-    DIRKOrder3_ES5TimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKOrder3_ES5TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : DIRKTimeIntegrationScheme("ES5", 3, freeParams)
     {
@@ -473,8 +469,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -496,7 +491,7 @@ protected:
 class DIRKOrder4_ES6TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
-    DIRKOrder4_ES6TimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKOrder4_ES6TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : DIRKTimeIntegrationScheme("ES6", 4, freeParams)
     {
@@ -505,8 +500,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);

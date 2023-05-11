@@ -55,7 +55,7 @@ namespace LibUtilities
 class IMEXGearTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    IMEXGearTimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXGearTimeIntegrationScheme(std::string variant, size_t order,
                                   std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM("", 2, freeParams)
     {
@@ -78,8 +78,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(order);
         boost::ignore_unused(variant);
@@ -139,7 +138,7 @@ public:
         phase->m_numMultiStepValues         = 2;
         phase->m_numMultiStepImplicitDerivs = 0;
         phase->m_numMultiStepDerivs         = 2;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
         phase->m_timeLevelOffset[1] = 1;
         phase->m_timeLevelOffset[2] = 0;

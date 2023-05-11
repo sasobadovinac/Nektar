@@ -53,7 +53,7 @@ namespace LibUtilities
 class MCNABTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    MCNABTimeIntegrationScheme(std::string variant, unsigned int order,
+    MCNABTimeIntegrationScheme(std::string variant, size_t order,
                                std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM("", 2, freeParams)
     {
@@ -80,8 +80,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -145,7 +144,7 @@ public:
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 2;
         phase->m_numMultiStepDerivs         = 2;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
         phase->m_timeLevelOffset[1] = 0;
         phase->m_timeLevelOffset[2] = 1;

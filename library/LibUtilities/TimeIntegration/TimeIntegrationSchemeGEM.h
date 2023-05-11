@@ -52,7 +52,7 @@ namespace LibUtilities
 class TimeIntegrationSchemeGEM : public TimeIntegrationScheme
 {
 public:
-    TimeIntegrationSchemeGEM(std::string variant, unsigned int order,
+    TimeIntegrationSchemeGEM(std::string variant, size_t order,
                              std::vector<NekDouble> freeParams)
         : TimeIntegrationScheme(variant, order, freeParams),
           m_name("ExtrapolationMethod")
@@ -114,8 +114,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<TimeIntegrationSchemeGEM>::AllocateSharedPtr(
@@ -129,12 +128,12 @@ public:
 protected:
     LUE virtual std::string v_GetName() const override;
     LUE virtual std::string v_GetVariant() const override;
-    LUE virtual unsigned int v_GetOrder() const override;
+    LUE virtual size_t v_GetOrder() const override;
     LUE virtual std::vector<NekDouble> v_GetFreeParams() const override;
     LUE virtual TimeIntegrationSchemeType v_GetIntegrationSchemeType()
         const override;
     LUE virtual NekDouble v_GetTimeStability() const override;
-    LUE virtual unsigned int v_GetNumIntegrationPhases() const override;
+    LUE virtual size_t v_GetNumIntegrationPhases() const override;
 
     /**
      * \brief Gets the solution vector of the ODE
@@ -145,7 +144,7 @@ protected:
     /**
      * \brief Sets the solution vector of the ODE
      */
-    LUE virtual void v_SetSolutionVector(const int Offset,
+    LUE virtual void v_SetSolutionVector(const size_t Offset,
                                          const DoubleArray &y) override;
 
     // The worker methods from the base class that are virtual
@@ -154,21 +153,17 @@ protected:
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
+        const size_t timestep, const NekDouble delta_t,
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_print(std::ostream &os) const override;
     LUE virtual void v_printFull(std::ostream &os) const override;
 
     // Variables common to all schemes.
+    NekDouble m_time;
     std::string m_name;
     std::string m_variant;
-    std::string m_nQuadType;
-    unsigned int m_order{0};
-    bool m_initialized = false;
     std::vector<NekDouble> m_freeParams;
-    NekDouble m_time;
-
     TimeIntegrationSchemeType m_schemeType{eNoTimeIntegrationSchemeType};
 
     // Storage of previous states and associated timesteps.
@@ -178,8 +173,11 @@ protected:
     DoubleArray m_F;  /// Array corresponding to the stage Derivatives
     DoubleArray m_F0; /// Array corresponding to the stage Derivatives
 
-    int m_nvars{0};   // Number of variables in the integration scheme.
-    int m_npoints{0}; // Number of points    in the integration scheme.
+    // GEM parameter
+    size_t m_order{0};   // Order of the integration scheme
+    size_t m_nvars{0};   // Number of variables in the integration scheme.
+    size_t m_npoints{0}; // Number of points in the integration scheme.
+    bool m_initialized{false};
 
 }; // end class TimeIntegrationSchemeGEM
 

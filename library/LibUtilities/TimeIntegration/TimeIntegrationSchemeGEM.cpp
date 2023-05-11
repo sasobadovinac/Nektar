@@ -50,7 +50,7 @@ TripleArray &TimeIntegrationSchemeGEM::v_UpdateSolutionVector()
     return m_Y;
 }
 
-void TimeIntegrationSchemeGEM::v_SetSolutionVector(const int Offset,
+void TimeIntegrationSchemeGEM::v_SetSolutionVector(const size_t Offset,
                                                    const DoubleArray &y)
 {
     m_Y[Offset] = y;
@@ -66,7 +66,7 @@ std::string TimeIntegrationSchemeGEM::v_GetVariant() const
     return m_variant;
 }
 
-unsigned int TimeIntegrationSchemeGEM::v_GetOrder() const
+size_t TimeIntegrationSchemeGEM::v_GetOrder() const
 {
     return m_order;
 }
@@ -87,7 +87,7 @@ NekDouble TimeIntegrationSchemeGEM::v_GetTimeStability() const
     return 1.0;
 }
 
-unsigned int TimeIntegrationSchemeGEM::v_GetNumIntegrationPhases() const
+size_t TimeIntegrationSchemeGEM::v_GetNumIntegrationPhases() const
 {
     return 1;
 }
@@ -105,7 +105,8 @@ void TimeIntegrationSchemeGEM::v_InitializeScheme(
 
     if (m_initialized)
     {
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        m_time = time;
+        for (size_t i = 0; i < m_nvars; ++i)
         {
             // Store the initial values as the first previous state.
             Vmath::Vcopy(m_npoints, y_0[i], 1, m_Y[0][i], 1);
@@ -117,7 +118,7 @@ void TimeIntegrationSchemeGEM::v_InitializeScheme(
         m_nvars   = y_0.size();
         m_npoints = y_0[0].size();
 
-        int nodes = m_order;
+        size_t nodes = m_order;
         if (m_variant == "ExplicitMidpoint" || m_variant == "ImplicitMidpoint")
         {
             nodes /= 2;
@@ -128,11 +129,11 @@ void TimeIntegrationSchemeGEM::v_InitializeScheme(
         m_T  = TripleArray(nodes);
         m_T0 = TripleArray(nodes);
 
-        for (unsigned int m = 0; m <= m_order; ++m)
+        for (size_t m = 0; m <= m_order; ++m)
         {
             m_Y[m] = DoubleArray(m_nvars);
 
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
                 m_Y[m][i] = SingleArray(m_npoints, 0.0);
 
@@ -150,12 +151,12 @@ void TimeIntegrationSchemeGEM::v_InitializeScheme(
             op.DoProjection(m_Y[0], m_Y[0], m_time);
         }
 
-        for (unsigned int m = 0; m < nodes; ++m)
+        for (size_t m = 0; m < nodes; ++m)
         {
             m_T[m]  = DoubleArray(m_nvars);
             m_T0[m] = DoubleArray(m_nvars);
 
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
                 m_T[m][i]  = SingleArray(m_npoints, 0.0);
                 m_T0[m][i] = SingleArray(m_npoints, 0.0);
@@ -167,7 +168,7 @@ void TimeIntegrationSchemeGEM::v_InitializeScheme(
         m_F  = DoubleArray(m_nvars);
         m_F0 = DoubleArray(m_nvars);
 
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        for (size_t i = 0; i < m_nvars; ++i)
         {
             m_F[i]  = SingleArray(m_npoints, 0.0);
             m_F0[i] = SingleArray(m_npoints, 0.0);
@@ -181,7 +182,7 @@ void TimeIntegrationSchemeGEM::v_InitializeScheme(
  * @brief Worker method that performs the time integration.
  */
 ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
-    const int timestep, const NekDouble delta_t,
+    const size_t timestep, const NekDouble delta_t,
     const TimeIntegrationSchemeOperators &op)
 {
 
@@ -199,9 +200,9 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
         m_variant == "ImplicitEuler" || m_variant == "IMEXEuler")
     {
         // Compute first order approximation
-        for (unsigned int m = 1; m <= m_order; ++m)
+        for (size_t m = 1; m <= m_order; ++m)
         {
-            for (unsigned int k = 1; k <= m; ++k)
+            for (size_t k = 1; k <= m; ++k)
             {
                 // Implicit schemes
                 if (m_variant == "ImplicitEuler")
@@ -217,7 +218,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
                     // For the first stage, used pre-computed rhs
                     if (k == 1)
                     {
-                        for (unsigned int i = 0; i < m_nvars; ++i)
+                        for (size_t i = 0; i < m_nvars; ++i)
                         {
                             Vmath::Svtvp(m_npoints, delta_t / m, m_F0[i], 1,
                                          m_Y[k - 1][i], 1, m_Y[k][i], 1);
@@ -228,7 +229,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
                     {
                         op.DoOdeRhs(m_Y[k - 1], m_F,
                                     m_time + (k - 1) * (delta_t / m));
-                        for (unsigned int i = 0; i < m_nvars; ++i)
+                        for (size_t i = 0; i < m_nvars; ++i)
                         {
                             Vmath::Svtvp(m_npoints, delta_t / m, m_F[i], 1,
                                          m_Y[k - 1][i], 1, m_Y[k][i], 1);
@@ -249,7 +250,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
             }
 
             // Save solution to m_T0
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
                 Vmath::Vcopy(m_npoints, m_Y[m][i], 1, m_T0[m - 1][i], 1);
             }
@@ -258,7 +259,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
         // No extrapolation required for first-order
         if (m_order == 1)
         {
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
                 Vmath::Vcopy(m_npoints, m_Y[1][i], 1, m_Y[0][i], 1);
             }
@@ -267,12 +268,12 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
         }
 
         // Extrapolate solution
-        for (unsigned int m = 1; m < m_order; ++m)
+        for (size_t m = 1; m < m_order; ++m)
         {
             // Aitken - Neville formula
-            for (unsigned int k = m; k < m_order; ++k)
+            for (size_t k = m; k < m_order; ++k)
             {
-                for (unsigned int i = 0; i < m_nvars; ++i)
+                for (size_t i = 0; i < m_nvars; ++i)
                 {
                     Vmath::Vsub(m_npoints, m_T0[k][i], 1, m_T0[k - 1][i], 1,
                                 m_T[k][i], 1);
@@ -283,9 +284,9 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
             }
 
             // Copy new values to old values
-            for (unsigned int k = m; k < m_order; ++k)
+            for (size_t k = m; k < m_order; ++k)
             {
-                for (unsigned int i = 0; i < m_nvars; ++i)
+                for (size_t i = 0; i < m_nvars; ++i)
                 {
                     Vmath::Vcopy(m_npoints, m_T[k][i], 1, m_T0[k][i], 1);
                 }
@@ -293,7 +294,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
         }
 
         // Copy final solution
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        for (size_t i = 0; i < m_nvars; ++i)
         {
             Vmath::Vcopy(m_npoints, m_T[m_order - 1][i], 1, m_Y[0][i], 1);
         }
@@ -302,17 +303,17 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
     else if (m_variant == "ExplicitMidpoint" || m_variant == "ImplicitMidpoint")
     {
         // Compute second order approximation
-        for (unsigned int m = 1; m <= m_order / 2; ++m)
+        for (size_t m = 1; m <= m_order / 2; ++m)
         {
             // Implicit midpoint
             if (m_variant == "ImplicitMidpoint")
             {
-                for (unsigned int k = 1; k <= m; ++k)
+                for (size_t k = 1; k <= m; ++k)
                 {
                     op.DoImplicitSolve(m_Y[2 * k - 2], m_Y[2 * k - 1],
                                        m_time + (k - 1 + 0.25) * (delta_t / m),
                                        0.25 * delta_t / m);
-                    for (unsigned int i = 0; i < m_nvars; ++i)
+                    for (size_t i = 0; i < m_nvars; ++i)
                     {
                         Vmath::Svtsvtp(m_npoints, 2.0, m_Y[2 * k - 1][i], 1,
                                        -1.0, m_Y[2 * k - 2][i], 1,
@@ -321,7 +322,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
                     op.DoImplicitSolve(m_Y[2 * k], m_F,
                                        m_time + (k - 0.25) * (delta_t / m),
                                        0.25 * delta_t / m);
-                    for (unsigned int i = 0; i < m_nvars; ++i)
+                    for (size_t i = 0; i < m_nvars; ++i)
                     {
                         Vmath::Vsub(m_npoints, m_F[i], 1, m_Y[2 * k][i], 1,
                                     m_F[i], 1);
@@ -335,7 +336,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
             if (m_variant == "ExplicitMidpoint")
             {
                 // Use precomputed rhs for initial Euler stage
-                for (unsigned int i = 0; i < m_nvars; ++i)
+                for (size_t i = 0; i < m_nvars; ++i)
                 {
                     Vmath::Svtvp(m_npoints, delta_t / (2 * m), m_F0[i], 1,
                                  m_Y[0][i], 1, m_Y[1][i], 1);
@@ -343,11 +344,11 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
                 op.DoProjection(m_Y[1], m_Y[1], m_time + delta_t / (2 * m));
 
                 // Compute new rhs for midpoint stage
-                for (unsigned int k = 2; k <= 2 * m; ++k)
+                for (size_t k = 2; k <= 2 * m; ++k)
                 {
                     op.DoOdeRhs(m_Y[k - 1], m_F,
                                 m_time + (k - 1) * (delta_t / (2 * m)));
-                    for (unsigned int i = 0; i < m_nvars; ++i)
+                    for (size_t i = 0; i < m_nvars; ++i)
                     {
                         Vmath::Svtvp(m_npoints, delta_t / m, m_F[i], 1,
                                      m_Y[k - 2][i], 1, m_Y[k][i], 1);
@@ -358,7 +359,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
             }
 
             // Save solution to m_T0
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
                 Vmath::Vcopy(m_npoints, m_Y[2 * m][i], 1, m_T0[m - 1][i], 1);
             }
@@ -367,7 +368,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
         // No extrapolation required for second-order
         if (m_order == 2)
         {
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
                 Vmath::Vcopy(m_npoints, m_Y[2][i], 1, m_Y[0][i], 1);
             }
@@ -376,12 +377,12 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
         }
 
         // Extrapolate solution
-        for (unsigned int m = 1; m < m_order / 2; ++m)
+        for (size_t m = 1; m < m_order / 2; ++m)
         {
             // Aitken - Neville formula
-            for (unsigned int k = m; k < m_order / 2; ++k)
+            for (size_t k = m; k < m_order / 2; ++k)
             {
-                for (unsigned int i = 0; i < m_nvars; ++i)
+                for (size_t i = 0; i < m_nvars; ++i)
                 {
                     Vmath::Vsub(m_npoints, m_T0[k][i], 1, m_T0[k - 1][i], 1,
                                 m_T[k][i], 1);
@@ -394,9 +395,9 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
             }
 
             // Copy new values to old values
-            for (unsigned int k = m; k < m_order / 2; ++k)
+            for (size_t k = m; k < m_order / 2; ++k)
             {
-                for (unsigned int i = 0; i < m_nvars; ++i)
+                for (size_t i = 0; i < m_nvars; ++i)
                 {
                     Vmath::Vcopy(m_npoints, m_T[k][i], 1, m_T0[k][i], 1);
                 }
@@ -404,7 +405,7 @@ ConstDoubleArray &TimeIntegrationSchemeGEM::v_TimeIntegrate(
         }
 
         // Copy final solution
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        for (size_t i = 0; i < m_nvars; ++i)
         {
             Vmath::Vcopy(m_npoints, m_T[m_order / 2 - 1][i], 1, m_Y[0][i], 1);
         }
