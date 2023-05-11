@@ -62,8 +62,7 @@ namespace LibUtilities
 class EulerExponentialTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    EulerExponentialTimeIntegrationScheme(std::string variant,
-                                          unsigned int order,
+    EulerExponentialTimeIntegrationScheme(std::string variant, size_t order,
                                           std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
@@ -84,7 +83,7 @@ public:
 
         // Currently the next lowest order is used to seed the current
         // order. This is not correct but is an okay approximation.
-        for (unsigned int n = 0; n < order; ++n)
+        for (size_t n = 0; n < order; ++n)
         {
             m_integration_phases[n] = TimeIntegrationAlgorithmGLMSharedPtr(
                 new TimeIntegrationAlgorithmGLM(this));
@@ -99,8 +98,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<EulerExponentialTimeIntegrationScheme>::
@@ -112,7 +110,7 @@ public:
     static std::string className;
 
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
-                                    std::string variant, int order)
+                                    std::string variant, size_t order)
     {
         phase->m_schemeType = eExponential;
         phase->m_variant    = variant;
@@ -158,13 +156,13 @@ public:
         phase->m_V[0][0] = 1.0; // phi_func(0)
 
         // V Phi function for first row additional columns
-        for (int n = 1; n < phase->m_order; ++n)
+        for (size_t n = 1; n < phase->m_order; ++n)
         {
             phase->m_V[0][n] = 1.0 / phase->m_order; // phi_func(n+1)
         }
 
         // V evaluation value shuffling row n column n-1
-        for (int n = 2; n < phase->m_order; ++n)
+        for (size_t n = 2; n < phase->m_order; ++n)
         {
             phase->m_V[n][n - 1] = 1.0; // constant 1
         }
@@ -172,11 +170,11 @@ public:
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
         phase->m_numMultiStepDerivs         = phase->m_order - 1;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         // For order > 1 derivatives are needed.
-        for (int n = 1; n < phase->m_order; ++n)
+        for (size_t n = 1; n < phase->m_order; ++n)
         {
             phase->m_timeLevelOffset[n] = n;
         }
@@ -199,7 +197,7 @@ public:
          */
 
         // Assume that each phase is an exponential integrator.
-        for (int i = 0; i < m_integration_phases.size(); i++)
+        for (size_t i = 0; i < m_integration_phases.size(); i++)
         {
             m_integration_phases[i]->m_L = Lambda;
 
@@ -250,7 +248,7 @@ protected:
 
         Array<OneD, NekDouble> phi = Array<OneD, NekDouble>(phase->m_order);
 
-        for (unsigned int k = 0; k < phase->m_nvars; ++k)
+        for (size_t k = 0; k < phase->m_nvars; ++k)
         {
             // B Phi function for first row first column
             if (phase->m_variant == "Lawson")
@@ -298,7 +296,7 @@ protected:
 
                 phi_func[0] = phi[0];
 
-                for (unsigned int m = 1; m < phase->m_order; ++m)
+                for (size_t m = 1; m < phase->m_order; ++m)
                 {
                     phi_func[m] =
                         phi_function(m + 1, deltaT * phase->m_L[k]).real();
@@ -307,9 +305,9 @@ protected:
                 NekDouble W[3][3];
 
                 // Set up the wieghts and calculate the determinant.
-                for (unsigned int j = 0; j < phase->m_order; ++j)
+                for (size_t j = 0; j < phase->m_order; ++j)
                 {
-                    for (unsigned int i = 0; i < phase->m_order; ++i)
+                    for (size_t i = 0; i < phase->m_order; ++i)
                     {
                         W[j][i] = std::pow(i, j);
                     }
@@ -318,12 +316,12 @@ protected:
                 NekDouble W_det = Determinant<3>(W);
 
                 // Solve the series of equations using Cramer's rule.
-                for (unsigned int m = 0; m < phase->m_order; ++m)
+                for (size_t m = 0; m < phase->m_order; ++m)
                 {
                     // Assemble the working matrix for this solution.
-                    for (unsigned int j = 0; j < phase->m_order; ++j)
+                    for (size_t j = 0; j < phase->m_order; ++j)
                     {
-                        for (unsigned int i = 0; i < phase->m_order; ++i)
+                        for (size_t i = 0; i < phase->m_order; ++i)
                         {
                             // Fill in the mth column for the mth
                             // solution using the phi function value
@@ -343,7 +341,7 @@ protected:
 
                 phi_func[0] = phi[0];
 
-                for (unsigned int m = 1; m < phase->m_order; ++m)
+                for (size_t m = 1; m < phase->m_order; ++m)
                 {
                     phi_func[m] =
                         phi_function(m + 1, deltaT * phase->m_L[k]).real();
@@ -352,9 +350,9 @@ protected:
                 NekDouble W[4][4];
 
                 // Set up the weights and calculate the determinant.
-                for (unsigned int j = 0; j < phase->m_order; ++j)
+                for (size_t j = 0; j < phase->m_order; ++j)
                 {
-                    for (unsigned int i = 0; i < phase->m_order; ++i)
+                    for (size_t i = 0; i < phase->m_order; ++i)
                     {
                         W[j][i] = std::pow(i, j);
                     }
@@ -363,12 +361,12 @@ protected:
                 NekDouble W_det = Determinant<4>(W);
 
                 // Solve the series of equations using Cramer's rule.
-                for (unsigned int m = 0; m < phase->m_order; ++m)
+                for (size_t m = 0; m < phase->m_order; ++m)
                 {
                     // Assemble the working matrix for this solution.
-                    for (unsigned int j = 0; j < phase->m_order; ++j)
+                    for (size_t j = 0; j < phase->m_order; ++j)
                     {
-                        for (unsigned int i = 0; i < phase->m_order; ++i)
+                        for (size_t i = 0; i < phase->m_order; ++i)
                         {
                             // Fill in the mth column for the mth
                             // solution using the phi function value
@@ -413,13 +411,13 @@ protected:
                 phi_function(0, deltaT * phase->m_L[k]).real();
 
             // V Phi function for first row additional columns.
-            for (int n = 1; n < phase->m_order; ++n)
+            for (size_t n = 1; n < phase->m_order; ++n)
             {
                 phase->m_V_phi[k][0][n] = phi[n];
             }
 
             // V evaluation value shuffling row n column n-1.
-            for (int n = 2; n < phase->m_order; ++n)
+            for (size_t n = 2; n < phase->m_order; ++n)
             {
                 phase->m_V_phi[k][n][n - 1] = 1.0; // constant 1
             }
@@ -427,12 +425,12 @@ protected:
     }
 
 private:
-    inline NekDouble factorial(unsigned int n) const
+    inline NekDouble factorial(size_t n) const
     {
         return (n == 1 || n == 0) ? 1 : n * factorial(n - 1);
     }
 
-    std::complex<NekDouble> phi_function(const unsigned int order,
+    std::complex<NekDouble> phi_function(const size_t order,
                                          const std::complex<NekDouble> z) const
     {
         /**

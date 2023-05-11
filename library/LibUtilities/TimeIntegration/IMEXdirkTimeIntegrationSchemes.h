@@ -59,7 +59,7 @@ namespace LibUtilities
 class IMEXdirkTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    IMEXdirkTimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXdirkTimeIntegrationScheme(std::string variant, size_t order,
                                   std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
@@ -69,8 +69,8 @@ public:
                  "<implicit stages, explicit stages>, received " +
                      std::to_string(freeParams.size()));
 
-        int s     = freeParams[0];
-        int sigma = freeParams[1];
+        size_t s     = freeParams[0];
+        size_t sigma = freeParams[1];
 
         m_integration_phases    = TimeIntegrationAlgorithmGLMVector(1);
         m_integration_phases[0] = TimeIntegrationAlgorithmGLMSharedPtr(
@@ -94,8 +94,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<IMEXdirkTimeIntegrationScheme>::AllocateSharedPtr(
@@ -107,7 +106,7 @@ public:
     static std::string className;
 
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
-                                    unsigned int order,
+                                    size_t order,
                                     std::vector<NekDouble> freeParams)
     {
         ASSERTL1(freeParams.size() == 2,
@@ -116,8 +115,8 @@ public:
                  "<implicit stages, explicit stages>, received " +
                      std::to_string(freeParams.size()) + ".");
 
-        int s     = freeParams[0];
-        int sigma = freeParams[1];
+        size_t s     = freeParams[0];
+        size_t sigma = freeParams[1];
 
         phase->m_schemeType = eIMEX;
         phase->m_variant    = "DIRK";
@@ -189,7 +188,7 @@ public:
         phase->m_numMultiStepImplicitDerivs = 0;
         phase->m_numMultiStepDerivs         = 0;
 
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         phase->CheckAndVerify();
@@ -239,7 +238,7 @@ public:
         phase->m_numMultiStepImplicitDerivs = 0;
         phase->m_numMultiStepDerivs         = 1;
 
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
         phase->m_timeLevelOffset[1] = 0;
 
@@ -450,7 +449,7 @@ protected:
 class IMEXdirk_1_1_1TimeIntegrationScheme : public IMEXdirkTimeIntegrationScheme
 {
 public:
-    IMEXdirk_1_1_1TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXdirk_1_1_1TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : IMEXdirkTimeIntegrationScheme("", 1, std::vector<NekDouble>{1, 1})
     {
@@ -464,8 +463,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -489,7 +487,7 @@ protected:
 class IMEXdirk_1_2_1TimeIntegrationScheme : public IMEXdirkTimeIntegrationScheme
 {
 public:
-    IMEXdirk_1_2_1TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXdirk_1_2_1TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : IMEXdirkTimeIntegrationScheme("", 1, std::vector<NekDouble>{1, 2})
     {
@@ -503,8 +501,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -528,7 +525,7 @@ protected:
 class IMEXdirk_1_2_2TimeIntegrationScheme : public IMEXdirkTimeIntegrationScheme
 {
 public:
-    IMEXdirk_1_2_2TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXdirk_1_2_2TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : IMEXdirkTimeIntegrationScheme("", 2, std::vector<NekDouble>{1, 2})
     {
@@ -542,8 +539,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -567,7 +563,7 @@ protected:
 class IMEXdirk_2_2_2TimeIntegrationScheme : public IMEXdirkTimeIntegrationScheme
 {
 public:
-    IMEXdirk_2_2_2TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXdirk_2_2_2TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : IMEXdirkTimeIntegrationScheme("", 2, std::vector<NekDouble>{2, 2})
     {
@@ -581,8 +577,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -606,7 +601,7 @@ protected:
 class IMEXdirk_2_3_2TimeIntegrationScheme : public IMEXdirkTimeIntegrationScheme
 {
 public:
-    IMEXdirk_2_3_2TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXdirk_2_3_2TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : IMEXdirkTimeIntegrationScheme("", 2, std::vector<NekDouble>{2, 3})
     {
@@ -620,8 +615,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -646,7 +640,7 @@ protected:
 class IMEXdirk_2_3_3TimeIntegrationScheme : public IMEXdirkTimeIntegrationScheme
 {
 public:
-    IMEXdirk_2_3_3TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXdirk_2_3_3TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : IMEXdirkTimeIntegrationScheme("", 3, std::vector<NekDouble>{2, 3})
     {
@@ -660,8 +654,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -686,7 +679,7 @@ protected:
 class IMEXdirk_3_4_3TimeIntegrationScheme : public IMEXdirkTimeIntegrationScheme
 {
 public:
-    IMEXdirk_3_4_3TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXdirk_3_4_3TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : IMEXdirkTimeIntegrationScheme("", 3, std::vector<NekDouble>{3, 4})
     {
@@ -700,8 +693,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -726,7 +718,7 @@ protected:
 class IMEXdirk_4_4_3TimeIntegrationScheme : public IMEXdirkTimeIntegrationScheme
 {
 public:
-    IMEXdirk_4_4_3TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXdirk_4_4_3TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : IMEXdirkTimeIntegrationScheme("", 3, std::vector<NekDouble>{4, 4})
     {
@@ -740,8 +732,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(order);
         boost::ignore_unused(variant);

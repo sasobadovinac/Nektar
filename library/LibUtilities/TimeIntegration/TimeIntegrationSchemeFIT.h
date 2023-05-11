@@ -57,7 +57,7 @@ class FractionalInTimeIntegrationScheme : public TimeIntegrationScheme
 {
 public:
     /// Constructor
-    FractionalInTimeIntegrationScheme(std::string variant, unsigned int order,
+    FractionalInTimeIntegrationScheme(std::string variant, size_t order,
                                       std::vector<NekDouble> freeParams);
 
     /// Destructor
@@ -67,8 +67,7 @@ public:
 
     /// Creator
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<FractionalInTimeIntegrationScheme>::AllocateSharedPtr(
@@ -98,7 +97,7 @@ protected:
         return m_variant;
     }
 
-    LUE virtual unsigned int v_GetOrder() const override
+    LUE virtual size_t v_GetOrder() const override
     {
         return m_order;
     }
@@ -119,7 +118,7 @@ protected:
         return 1.0;
     }
 
-    LUE virtual unsigned int v_GetNumIntegrationPhases() const override
+    LUE virtual size_t v_GetNumIntegrationPhases() const override
     {
         return 1;
     }
@@ -140,7 +139,7 @@ protected:
     /**
      * \brief Sets the solution vector of the ODE
      */
-    virtual void v_SetSolutionVector(const int Offset,
+    virtual void v_SetSolutionVector(const size_t Offset,
                                      const DoubleArray &y) override
     {
         m_u[Offset] = y;
@@ -152,7 +151,7 @@ protected:
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
+        const size_t timestep, const NekDouble delta_t,
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_print(std::ostream &os) const override;
@@ -160,52 +159,53 @@ protected:
 
     struct Instance
     {
-        int base;
+        size_t base;
 
-        int index;         // Index of this instance
-        bool active;       // Used to determine if active
-        int activecounter; // counter used to flip active bit
-        int activebase;
+        size_t index;         // Index of this instance
+        bool active;          // Used to determine if active
+        size_t activecounter; // counter used to flip active bit
+        size_t activebase;
 
         // Major storage for auxilliary ODE solutions.
         // Storage for values of y currently used to update u
         ComplexTripleArray stage_y;
-        std::pair<int, int> stage_ind; // Time-step counters indicating the
-                                       // interval ymain is associated with
+        std::pair<size_t, size_t>
+            stage_ind; // Time-step counters indicating the
+                       // interval ymain is associated with
 
         // Staging allocation
         bool stage_active;
-        int stage_ccounter;
-        int stage_cbase; // This base is halved after the first cycle
-        int stage_fcounter;
-        int stage_fbase; // This base is halved after the first cycle
+        size_t stage_ccounter;
+        size_t stage_cbase; // This base is halved after the first cycle
+        size_t stage_fcounter;
+        size_t stage_fbase; // This base is halved after the first cycle
 
         // Ceiling stash allocation
-        int cstash_counter; // Counter used to determine
-                            // when to stash
-        int cstash_base;    // base for counter
+        size_t cstash_counter; // Counter used to determine
+                               // when to stash
+        size_t cstash_base;    // base for counter
         ComplexTripleArray cstash_y;
-        std::pair<int, int> cstash_ind; // ind(1) is never used:
-                                        // it always matches main.ind(1)
+        std::pair<size_t, size_t> cstash_ind; // ind(1) is never used:
+                                              // it always matches main.ind(1)
 
         // Ceiling sandbox allocation
         bool csandbox_active; // Flag to determine when
                               // stash 2 is utilized
-        int csandbox_counter;
+        size_t csandbox_counter;
         ComplexTripleArray csandbox_y;
-        std::pair<int, int> csandbox_ind;
+        std::pair<size_t, size_t> csandbox_ind;
 
         // Floor stash
-        int fstash_base;
+        size_t fstash_base;
         ComplexTripleArray fstash_y;
-        std::pair<int, int> fstash_ind;
+        std::pair<size_t, size_t> fstash_ind;
 
         // Floor sandbox
         bool fsandbox_active;
-        int fsandbox_activebase;
-        int fsandbox_stashincrement;
+        size_t fsandbox_activebase;
+        size_t fsandbox_stashincrement;
         ComplexTripleArray fsandbox_y;
-        std::pair<int, int> fsandbox_ind;
+        std::pair<size_t, size_t> fsandbox_ind;
 
         // Talbot quadrature rule
         ComplexSingleArray z;
@@ -218,66 +218,60 @@ protected:
         ComplexDoubleArray AtEh;
     };
 
-    inline unsigned int modIncrement(const unsigned int counter,
-                                     const unsigned int base) const;
+    inline size_t modIncrement(const size_t counter, const size_t base) const;
 
-    inline unsigned int computeL(const unsigned int base,
-                                 const unsigned int m) const;
+    inline size_t computeL(const size_t base, const size_t m) const;
 
-    inline unsigned int computeQML(const unsigned int base,
-                                   const unsigned int m);
+    inline size_t computeQML(const size_t base, const size_t m);
 
-    inline unsigned int computeTaus(const unsigned int base,
-                                    const unsigned int m);
+    inline size_t computeTaus(const size_t base, const size_t m);
 
-    void talbotQuadrature(const unsigned int nQuadPts, const NekDouble mu,
+    void talbotQuadrature(const size_t nQuadPts, const NekDouble mu,
                           const NekDouble nu, const NekDouble sigma,
                           ComplexSingleArray &lamb,
                           ComplexSingleArray &w) const;
 
-    void integralClassInitialize(const unsigned int index,
-                                 Instance &instance) const;
+    void integralClassInitialize(const size_t index, Instance &instance) const;
 
-    void updateStage(const unsigned int timeStep, Instance &instance);
+    void updateStage(const size_t timeStep, Instance &instance);
 
-    void finalIncrement(const unsigned int timeStep,
+    void finalIncrement(const size_t timeStep,
                         const TimeIntegrationSchemeOperators &op);
 
-    void integralContribution(const unsigned int timeStep,
-                              const unsigned int tauml,
+    void integralContribution(const size_t timeStep, const size_t tauml,
                               const Instance &instance);
 
-    void timeAdvance(const unsigned int timeStep,
+    void timeAdvance(const size_t timeStep,
                      const TimeIntegrationSchemeOperators &op,
                      Instance &instance, ComplexTripleArray &y);
 
-    void advanceSandbox(const unsigned int timeStep,
+    void advanceSandbox(const size_t timeStep,
                         const TimeIntegrationSchemeOperators &op,
                         Instance &instance);
 
     // Variables common to all schemes.
     std::string m_name;
     std::string m_variant;
-    unsigned int m_order{0};
+    size_t m_order{0};
     std::vector<NekDouble> m_freeParams;
 
     TimeIntegrationSchemeType m_schemeType{eFractionalInTime};
 
     // Varaibles and methods specific to FIT integration schemes.
     NekDouble m_deltaT{0};
-    NekDouble m_T{0};            // Finial time
-    unsigned int m_maxTimeSteps; // Number of time steps.
-    NekDouble m_alpha{0.3};      // Value for exp integration.
-    unsigned int m_base{4};      // "Base" of the algorithm.
-    unsigned int m_nQuadPts{20}; // Number of Talbot quadrature rule points
+    NekDouble m_T{0};       // Finial time
+    size_t m_maxTimeSteps;  // Number of time steps.
+    NekDouble m_alpha{0.3}; // Value for exp integration.
+    size_t m_base{4};       // "Base" of the algorithm.
+    size_t m_nQuadPts{20};  // Number of Talbot quadrature rule points
     NekDouble m_sigma{0};
     NekDouble m_mu0{8};
     NekDouble m_nu{0.6};
 
-    int m_nvars{0};   // Number of variables in the integration scheme.
-    int m_npoints{0}; // Number of points    in the integration scheme.
+    size_t m_nvars{0};   // Number of variables in the integration scheme.
+    size_t m_npoints{0}; // Number of points    in the integration scheme.
 
-    unsigned int m_Lmax{0}; // Maxium number of integral groups.
+    size_t m_Lmax{0}; // Maxium number of integral groups.
     Array<OneD, Instance> m_integral_classes;
 
     // Demarcation integers

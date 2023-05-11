@@ -66,11 +66,11 @@ public:
 protected:
     // Values stored by each integration phase.
     LUE virtual std::string v_GetVariant() const override;
-    LUE virtual unsigned int v_GetOrder() const override;
+    LUE virtual size_t v_GetOrder() const override;
     LUE virtual std::vector<NekDouble> v_GetFreeParams() const override;
     LUE virtual TimeIntegrationSchemeType v_GetIntegrationSchemeType()
         const override;
-    LUE virtual unsigned int v_GetNumIntegrationPhases() const override;
+    LUE virtual size_t v_GetNumIntegrationPhases() const override;
 
     // Gets the solution Vector
     virtual const TripleArray &v_GetSolutionVector() const override
@@ -84,7 +84,7 @@ protected:
     }
 
     // Sets the solution Vector
-    virtual void v_SetSolutionVector(const int Offset,
+    virtual void v_SetSolutionVector(const size_t Offset,
                                      const DoubleArray &y) override
     {
         m_solVector->SetSolutionVector(Offset, y);
@@ -96,7 +96,7 @@ protected:
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
+        const size_t timestep, const NekDouble delta_t,
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_InitializeSecondaryData(
@@ -106,7 +106,7 @@ protected:
     LUE virtual void v_printFull(std::ostream &os) const override;
 
     // These methods should never be used directly, only used by child classes.
-    LUE TimeIntegrationSchemeGLM(std::string variant, unsigned int order,
+    LUE TimeIntegrationSchemeGLM(std::string variant, size_t order,
                                  std::vector<NekDouble> freeParams)
         : TimeIntegrationScheme(variant, order, freeParams)
     {

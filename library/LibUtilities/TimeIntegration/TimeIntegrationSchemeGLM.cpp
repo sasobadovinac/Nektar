@@ -50,7 +50,7 @@ std::string TimeIntegrationSchemeGLM::v_GetVariant() const
     return m_integration_phases[m_integration_phases.size() - 1]->m_variant;
 }
 
-unsigned int TimeIntegrationSchemeGLM::v_GetOrder() const
+size_t TimeIntegrationSchemeGLM::v_GetOrder() const
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
 
@@ -72,7 +72,7 @@ TimeIntegrationSchemeType TimeIntegrationSchemeGLM::v_GetIntegrationSchemeType()
     return m_integration_phases[m_integration_phases.size() - 1]->m_schemeType;
 }
 
-unsigned int TimeIntegrationSchemeGLM::v_GetNumIntegrationPhases() const
+size_t TimeIntegrationSchemeGLM::v_GetNumIntegrationPhases() const
 {
     return m_integration_phases.size();
 }
@@ -92,10 +92,10 @@ void TimeIntegrationSchemeGLM::v_InitializeScheme(
  * @brief Worker method that actually does the time integration.
  */
 ConstDoubleArray &TimeIntegrationSchemeGLM::v_TimeIntegrate(
-    const int timestep, const NekDouble delta_t,
+    const size_t timestep, const NekDouble delta_t,
     const TimeIntegrationSchemeOperators &op)
 {
-    int nPhases = m_integration_phases.size();
+    size_t nPhases = m_integration_phases.size();
 
     TimeIntegrationAlgorithmGLMSharedPtr &algorithm =
         m_integration_phases[std::min(timestep, nPhases - 1)];
@@ -121,7 +121,7 @@ void TimeIntegrationSchemeGLM::v_print(std::ostream &os) const
        << "        Has " << m_integration_phases.size() << " phase(s)"
        << std::endl;
 
-    for (int i = 0; i < m_integration_phases.size(); i++)
+    for (size_t i = 0; i < m_integration_phases.size(); i++)
     {
         os << "            - " << m_integration_phases[i]->m_name << std::endl;
     }
@@ -133,7 +133,7 @@ void TimeIntegrationSchemeGLM::v_printFull(std::ostream &os) const
        << "        Has " << m_integration_phases.size() << " phase(s)"
        << std::endl;
 
-    for (int i = 0; i < m_integration_phases.size(); i++)
+    for (size_t i = 0; i < m_integration_phases.size(); i++)
     {
         os << "            - " << m_integration_phases[i]->m_name << std::endl;
 

@@ -60,15 +60,15 @@ namespace LibUtilities
 
 /// Datatype of the NekFactory used to instantiate classes derived from the
 /// EquationSystem class.
-typedef NekFactory<std::string, TimeIntegrationScheme, std::string,
-                   unsigned int, std::vector<NekDouble>>
+typedef NekFactory<std::string, TimeIntegrationScheme, std::string, size_t,
+                   std::vector<NekDouble>>
     TimeIntegrationSchemeFactory;
 
 // Allows a code to create a TimeIntegrator. Usually used like this:
 //
 //    LibUtilities::TimeIntegrationSchemeSharedPtr timeIntegrationScheme =
 //      LibUtilities::GetTimeIntegrationSchemeFactory().CreateInstance(
-//                  "IMEX", "dirk", 3, std::vector<unsigned int>{2,3} );
+//                  "IMEX", "dirk", 3, std::vector<size_t>{2,3} );
 LUE TimeIntegrationSchemeFactory &GetTimeIntegrationSchemeFactory();
 
 /**
@@ -90,7 +90,7 @@ public:
     {
         return v_GetVariant();
     }
-    LUE unsigned int GetOrder() const
+    LUE size_t GetOrder() const
     {
         return v_GetOrder();
     }
@@ -106,7 +106,7 @@ public:
     {
         return v_GetTimeStability();
     }
-    LUE unsigned int GetNumIntegrationPhases()
+    LUE size_t GetNumIntegrationPhases()
     {
         return v_GetNumIntegrationPhases();
     }
@@ -127,7 +127,7 @@ public:
     /**
      * \brief Sets the solution vector of the ODE
      */
-    void SetSolutionVector(const int Offset, const DoubleArray &y)
+    void SetSolutionVector(const size_t Offset, const DoubleArray &y)
     {
         v_SetSolutionVector(Offset, y);
     }
@@ -165,7 +165,7 @@ public:
     }
 
     LUE ConstDoubleArray &TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
+        const size_t timestep, const NekDouble delta_t,
         const TimeIntegrationSchemeOperators &op)
     {
         return v_TimeIntegrate(timestep, delta_t, op);
@@ -190,27 +190,27 @@ protected:
     LUE virtual std::string v_GetFullName() const;
     LUE virtual std::string v_GetName() const                  = 0;
     LUE virtual std::string v_GetVariant() const               = 0;
-    LUE virtual unsigned int v_GetOrder() const                = 0;
+    LUE virtual size_t v_GetOrder() const                      = 0;
     LUE virtual std::vector<NekDouble> v_GetFreeParams() const = 0;
     LUE virtual TimeIntegrationSchemeType v_GetIntegrationSchemeType()
-        const                                                  = 0;
-    LUE virtual NekDouble v_GetTimeStability() const           = 0;
-    LUE virtual unsigned int v_GetNumIntegrationPhases() const = 0;
-    virtual const TripleArray &v_GetSolutionVector() const     = 0;
-    virtual TripleArray &v_UpdateSolutionVector()              = 0;
-    virtual void v_SetSolutionVector(const int Offset,
-                                     const DoubleArray &y)     = 0;
+        const                                              = 0;
+    LUE virtual NekDouble v_GetTimeStability() const       = 0;
+    LUE virtual size_t v_GetNumIntegrationPhases() const   = 0;
+    virtual const TripleArray &v_GetSolutionVector() const = 0;
+    virtual TripleArray &v_UpdateSolutionVector()          = 0;
+    virtual void v_SetSolutionVector(const size_t Offset,
+                                     const DoubleArray &y) = 0;
     LUE virtual void v_InitializeScheme(
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) = 0;
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
+        const size_t timestep, const NekDouble delta_t,
         const TimeIntegrationSchemeOperators &op)        = 0;
     LUE virtual void v_print(std::ostream &os) const     = 0;
     LUE virtual void v_printFull(std::ostream &os) const = 0;
 
     // These methods should never be used directly, only used by child classes.
-    LUE TimeIntegrationScheme(std::string variant, unsigned int order,
+    LUE TimeIntegrationScheme(std::string variant, size_t order,
                               std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant, order, freeParams);

@@ -57,7 +57,7 @@ namespace LibUtilities
 class EulerTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    EulerTimeIntegrationScheme(std::string variant, unsigned int order,
+    EulerTimeIntegrationScheme(std::string variant, size_t order,
                                std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, 1, freeParams)
     {
@@ -80,8 +80,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(order);
 
@@ -134,7 +133,7 @@ public:
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
         phase->m_numMultiStepDerivs         = 0;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         phase->CheckAndVerify();
@@ -170,7 +169,7 @@ protected:
 class BackwardEulerTimeIntegrationScheme : public EulerTimeIntegrationScheme
 {
 public:
-    BackwardEulerTimeIntegrationScheme(std::string variant, unsigned int order,
+    BackwardEulerTimeIntegrationScheme(std::string variant, size_t order,
                                        std::vector<NekDouble> freeParams)
         : EulerTimeIntegrationScheme("Backward", 1, freeParams)
     {
@@ -179,8 +178,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -201,7 +199,7 @@ protected:
 class ForwardEulerTimeIntegrationScheme : public EulerTimeIntegrationScheme
 {
 public:
-    ForwardEulerTimeIntegrationScheme(std::string variant, unsigned int order,
+    ForwardEulerTimeIntegrationScheme(std::string variant, size_t order,
                                       std::vector<NekDouble> freeParams)
         : EulerTimeIntegrationScheme("Forward", 1, freeParams)
     {
@@ -210,8 +208,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
