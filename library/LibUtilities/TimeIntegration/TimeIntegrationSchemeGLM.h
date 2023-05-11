@@ -78,6 +78,11 @@ protected:
         return m_solVector->GetSolutionVector();
     }
 
+    virtual TripleArray &v_UpdateSolutionVector() override
+    {
+        return m_solVector->UpdateSolutionVector();
+    }
+
     // Sets the solution Vector
     virtual void v_SetSolutionVector(const int Offset,
                                      const DoubleArray &y) override

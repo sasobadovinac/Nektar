@@ -53,13 +53,9 @@ public:
                                      std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeSDC(variant, order, freeParams)
     {
-        ASSERTL0(variant == "GaussRadauLegendre",
-                 "only GaussRadauLegendre variant "
-                 "(quadrature) type available for ImplicitSDC");
-        ASSERTL0(0.0 < freeParams[0],
-                 "Spectral Deferred Correction Time integration "
-                 "scheme bad parameter numbers (> 0.0): " +
-                     std::to_string(freeParams[0]));
+        ASSERTL0(!m_first_quadrature,
+                 "Quadrature type that include the left end point (e.g. "
+                 "GaussLobattoLegendre) should not be used for ImplicitSDC");
 
         m_name       = "ImplicitSpectralDeferredCorrection";
         m_schemeType = eImplicit;
@@ -78,13 +74,15 @@ public:
 
     static std::string className;
 
+    DoubleArray m_tmp; /// Array for temporary storage
+
 protected:
     LUE virtual void v_InitializeScheme(
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_ResidualEval(
-        const NekDouble &delta_t, const int n,
+        const NekDouble &delta_t, const size_t n,
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_ResidualEval(
@@ -108,25 +106,61 @@ void ImplicitTimeIntegrationSchemeSDC::v_InitializeScheme(
     const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
     const TimeIntegrationSchemeOperators &op)
 {
-    TimeIntegrationSchemeSDC::v_InitializeScheme(deltaT, y_0, time, op);
+    if (m_initialized)
+    {
+        for (size_t i = 0; i < m_nvars; ++i)
+        {
+            // Store the initial values as the first previous state.
+            Vmath::Vcopy(m_npoints, y_0[i], 1, m_Y[0][i], 1);
+        }
+    }
+    else
+    {
+        TimeIntegrationSchemeSDC::v_InitializeScheme(deltaT, y_0, time, op);
+
+        m_tmp = DoubleArray(m_nvars);
+        for (size_t i = 0; i < m_nvars; ++i)
+        {
+            m_tmp[i] = SingleArray(m_npoints, 0.0);
+        }
+    }
 }
 
 /**
  * @brief Worker method to compute the residual.
  */
 void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(
-    const NekDouble &delta_t, const int n,
+    const NekDouble &delta_t, const size_t n,
     const TimeIntegrationSchemeOperators &op)
 {
-    // Compute residual
-    op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_points[n]);
+    if (n == 0)
+    {
+        // Not implemented, require implicit evaluation for m_F[0].
+        // Quadrature type that include the left end point (e.g.
+        // GaussLobattoLegendre) should not be used.
+    }
+    else
+    {
+        NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
+
+        // Update solution
+        op.DoImplicitSolve(m_Y[n - 1], m_tmp, m_time + delta_t * m_tau[n],
+                           m_theta * dtn);
+
+        // Compute residual from updated solution
+        for (size_t i = 0; i < m_nvars; ++i)
+        {
+            Vmath::Vsub(m_npoints, m_tmp[i], 1, m_Y[n - 1][i], 1, m_F[n][i], 1);
+            Vmath::Smul(m_npoints, 1.0 / (m_theta * dtn), m_F[n][i], 1,
+                        m_F[n][i], 1);
+        }
+    }
 }
 
 void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(
     const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
 {
-    // Compute residual
-    for (unsigned int n = 0; n < m_nQuadPts; ++n)
+    for (size_t n = 0; n < m_nQuadPts; ++n)
     {
         v_ResidualEval(delta_t, n, op);
     }
@@ -138,21 +172,29 @@ void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(
 void ImplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
     const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
 {
-    // Compute initial guess
-    for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
+    for (size_t n = 0; n < m_nQuadPts; ++n)
     {
-        // Use implicit Euler as a first guess
-        NekDouble dtn = delta_t * (m_points[n + 1] - m_points[n]);
-        op.DoImplicitSolve(m_Y[n], m_Y[n + 1],
-                           m_time + delta_t * m_points[n + 1], dtn);
-
-        // Compute residual from updated solution
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        if (n == 0)
         {
-            Vmath::Vsub(m_npoints, m_Y[n + 1][i], 1, m_Y[n][i], 1,
-                        m_F[n + 1][i], 1);
-            Vmath::Smul(m_npoints, 1.0 / dtn, m_F[n + 1][i], 1, m_F[n + 1][i],
-                        1);
+            // Not implemented, require implicit evaluation for m_F[0].
+            // Quadrature type that include the left end point (e.g.
+            // GaussLobattoLegendre) should not be used.
+        }
+        else
+        {
+            NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
+
+            // Update solution
+            op.DoImplicitSolve(m_Y[n - 1], m_Y[n], m_time + delta_t * m_tau[n],
+                               dtn);
+
+            // Compute residual from updated solution
+            for (size_t i = 0; i < m_nvars; ++i)
+            {
+                Vmath::Vsub(m_npoints, m_Y[n][i], 1, m_Y[n - 1][i], 1,
+                            m_F[n][i], 1);
+                Vmath::Smul(m_npoints, 1.0 / dtn, m_F[n][i], 1, m_F[n][i], 1);
+            }
         }
     }
 }
@@ -163,42 +205,39 @@ void ImplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
 void ImplicitTimeIntegrationSchemeSDC::v_SDCIterationLoop(
     const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
 {
-    unsigned int kstart = 1;
-    for (unsigned int k = kstart; k < m_order; ++k)
+    // Update integrated residual
+    UpdateIntegratedResidualSFint(delta_t);
+
+    // Add FAS correction to integrated residual
+    AddFASCorrectionToSFint();
+
+    // Loop over quadrature points
+    for (size_t n = 1; n < m_nQuadPts; ++n)
     {
-        // Update integrated residual
-        UpdateIntegratedResidual(delta_t);
+        NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
 
-        // Loop over quadrature points
-        for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
+        // Add rhs terms
+        for (size_t i = 0; i < m_nvars; ++i)
         {
-            NekDouble dtn = delta_t * (m_points[n + 1] - m_points[n]);
+            // Add SFint contribution
+            Vmath::Vadd(m_npoints, m_Y[n - 1][i], 1, m_SFint[n][i], 1, m_tmp[i],
+                        1);
 
-            // Update solution
-            for (unsigned int i = 0; i < m_nvars; ++i)
-            {
-                // Add Fint contribution
-                Vmath::Vadd(m_npoints, m_Y[n][i], 1, m_Fint[n][i], 1, m_tmp[i],
-                            1);
+            // Add implicit contribution
+            Vmath::Svtvp(m_npoints, -m_theta * dtn, m_F[n][i], 1, m_tmp[i], 1,
+                         m_tmp[i], 1);
+        }
 
-                // Add implicit contribution
-                Vmath::Svtvp(m_npoints, -m_theta * dtn, m_F[n + 1][i], 1,
-                             m_tmp[i], 1, m_tmp[i], 1);
-            }
+        // Solve implicit system
+        op.DoImplicitSolve(m_tmp, m_Y[n], m_time + delta_t * m_tau[n],
+                           m_theta * dtn);
 
-            // Solve implicit system
-            op.DoImplicitSolve(m_tmp, m_Y[n + 1],
-                               m_time + delta_t * m_points[n + 1],
-                               m_theta * dtn);
-
-            // Compute residual from updated solution
-            for (unsigned int i = 0; i < m_nvars; ++i)
-            {
-                Vmath::Vsub(m_npoints, m_Y[n + 1][i], 1, m_tmp[i], 1,
-                            m_F[n + 1][i], 1);
-                Vmath::Smul(m_npoints, 1.0 / (m_theta * dtn), m_F[n + 1][i], 1,
-                            m_F[n + 1][i], 1);
-            }
+        // Compute residual from updated solution
+        for (size_t i = 0; i < m_nvars; ++i)
+        {
+            Vmath::Vsub(m_npoints, m_Y[n][i], 1, m_tmp[i], 1, m_F[n][i], 1);
+            Vmath::Smul(m_npoints, 1.0 / (m_theta * dtn), m_F[n][i], 1,
+                        m_F[n][i], 1);
         }
     }
 }

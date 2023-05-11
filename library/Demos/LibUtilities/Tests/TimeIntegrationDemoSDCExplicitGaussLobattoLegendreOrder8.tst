@@ -5,7 +5,7 @@
     <parameters>--dof 800 --timesteps 400 --method ExplicitSDC --variant GaussLobattoLegendre --order 8 --param 1.0 5</parameters>
     <metrics>
         <metric type="L2" id="1">
-            <value tolerance="1e-08">6.4839e-05</value>
+            <value tolerance="1e-10">6.48390e-05</value>
         </metric>
     </metrics>
 </test>

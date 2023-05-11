@@ -76,7 +76,7 @@ protected:
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_ResidualEval(
-        const NekDouble &delta_t, const int n,
+        const NekDouble &delta_t, const size_t n,
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_ResidualEval(
@@ -101,27 +101,23 @@ void ExplicitTimeIntegrationSchemeSDC::v_InitializeScheme(
     const TimeIntegrationSchemeOperators &op)
 {
     TimeIntegrationSchemeSDC::v_InitializeScheme(deltaT, y_0, time, op);
-
-    op.DoProjection(m_Y[0], m_Y[0], m_time);
 }
 
 /**
  * @brief Worker method to compute the residual.
  */
 void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(
-    const NekDouble &delta_t, const int n,
+    const NekDouble &delta_t, const size_t n,
     const TimeIntegrationSchemeOperators &op)
 {
-    // Compute residual
-    op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_points[n]);
-    op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_points[n]);
+    op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_tau[n]);
+    op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_tau[n]);
 }
 
 void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(
     const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
 {
-    // Compute residual
-    for (unsigned int n = 0; n < m_nQuadPts; ++n)
+    for (size_t n = 0; n < m_nQuadPts; ++n)
     {
         v_ResidualEval(delta_t, n, op);
     }
@@ -133,24 +129,22 @@ void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(
 void ExplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
     const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
 {
-    // Compute initial guess
-    for (unsigned int n = 0; n < m_nQuadPts; ++n)
+    for (size_t n = 0; n < m_nQuadPts; ++n)
     {
-        // Compute residual
-        op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_points[n]);
-
         // Use explicit Euler as a first guess
-        if (n < m_nQuadPts - 1)
+        if (n > 0)
         {
-            NekDouble dtn = delta_t * (m_points[n + 1] - m_points[n]);
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
+            for (size_t i = 0; i < m_nvars; ++i)
             {
-                Vmath::Svtvp(m_npoints, dtn, m_F[n][i], 1, m_Y[n][i], 1,
-                             m_Y[n + 1][i], 1);
+                Vmath::Svtvp(m_npoints, dtn, m_F[n - 1][i], 1, m_Y[n - 1][i], 1,
+                             m_Y[n][i], 1);
             }
-            op.DoProjection(m_Y[n + 1], m_Y[n + 1],
-                            m_time + delta_t * m_points[n + 1]);
         }
+
+        // Compute residual
+        op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_tau[n]);
+        op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_tau[n]);
     }
 }
 
@@ -160,47 +154,42 @@ void ExplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
 void ExplicitTimeIntegrationSchemeSDC::v_SDCIterationLoop(
     const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
 {
-    unsigned int kstart = 1;
-    for (unsigned int k = kstart; k < m_order; ++k)
+    // Update integrated residual
+    UpdateIntegratedResidualSFint(delta_t);
+
+    // Add FAS correction to integrated residual
+    AddFASCorrectionToSFint();
+
+    // Loop over quadrature points
+    for (size_t n = 1; n < m_nQuadPts; ++n)
     {
-        // Update integrated residual
-        UpdateIntegratedResidual(delta_t);
-
-        // Loop over quadrature points
-        for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
+        // Update solution
+        for (size_t i = 0; i < m_nvars; ++i)
         {
-            NekDouble dtn = delta_t * (m_points[n + 1] - m_points[n]);
+            // Add SFint contribution to solution
+            Vmath::Vadd(m_npoints, m_Y[n - 1][i], 1, m_SFint[n][i], 1,
+                        m_Y[n][i], 1);
 
-            // Update residual if n > 0
-            if (n > 0)
+            // Add explicit contribution to solution
+            if (n > 1)
             {
-                op.DoOdeRhs(m_Y[n], m_Fn, m_time + delta_t * m_points[n]);
+                NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
+                Vmath::Svtvp(m_npoints, m_theta * dtn, m_F[n - 1][i], 1,
+                             m_Y[n][i], 1, m_Y[n][i], 1);
             }
 
-            // Update solution
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            // Add explicit contribution to SFint
+            if (n < m_nQuadPts - 1)
             {
-                // Add Fint contribution
-                Vmath::Vadd(m_npoints, m_Y[n][i], 1, m_Fint[n][i], 1,
-                            m_Y[n + 1][i], 1);
-
-                if (n > 0)
-                {
-                    // Add explicit contribution
-                    Vmath::Svtvp(m_npoints, m_theta * dtn, m_Fn[i], 1,
-                                 m_Y[n + 1][i], 1, m_Y[n + 1][i], 1);
-                    Vmath::Svtvp(m_npoints, -m_theta * dtn, m_F[n][i], 1,
-                                 m_Y[n + 1][i], 1, m_Y[n + 1][i], 1);
-
-                    // Copy new rhs value to old
-                    Vmath::Vcopy(m_npoints, m_Fn[i], 1, m_F[n][i], 1);
-                }
+                NekDouble dtnp = delta_t * (m_tau[n + 1] - m_tau[n]);
+                Vmath::Svtvp(m_npoints, -m_theta * dtnp, m_F[n][i], 1,
+                             m_SFint[n + 1][i], 1, m_SFint[n + 1][i], 1);
             }
-            op.DoProjection(m_Y[n + 1], m_Y[n + 1],
-                            m_time + delta_t * m_points[n + 1]);
         }
-        op.DoOdeRhs(m_Y[m_nQuadPts - 1], m_F[m_nQuadPts - 1],
-                    m_time + delta_t * m_points[m_nQuadPts - 1]);
+
+        // Compute residual
+        op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_tau[n]);
+        op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_tau[n]);
     }
 }
 

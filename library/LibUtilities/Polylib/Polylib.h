@@ -173,7 +173,7 @@ LIB_UTILITIES_EXPORT void JacZeros(const int, double *, double *, const double,
                                    const double);
 
 /* Integration operators */
-LIB_UTILITIES_EXPORT void Qg(double *, const double *, const int, const int);
+LIB_UTILITIES_EXPORT void Qg(double *, const double *, const int);
 
 /* Derivative operators */
 LIB_UTILITIES_EXPORT void Dgj(double *, const double *, const int, const double,

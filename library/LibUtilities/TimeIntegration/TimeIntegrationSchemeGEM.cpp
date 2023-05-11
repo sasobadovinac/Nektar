@@ -45,6 +45,11 @@ const TripleArray &TimeIntegrationSchemeGEM::v_GetSolutionVector() const
     return m_Y;
 }
 
+TripleArray &TimeIntegrationSchemeGEM::v_UpdateSolutionVector()
+{
+    return m_Y;
+}
+
 void TimeIntegrationSchemeGEM::v_SetSolutionVector(const int Offset,
                                                    const DoubleArray &y)
 {
