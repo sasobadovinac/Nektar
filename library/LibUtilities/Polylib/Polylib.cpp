@@ -581,7 +581,7 @@ void zwlk(double *z, double *w, const int npt, const double alpha,
 /**
 \brief Compute the Integration Matrix.
 */
-void Qg(double *Q, const double *z, const int np, const int offset)
+void Qg(double *Q, const double *z, const int np)
 {
 
     if (np <= 0)
@@ -600,11 +600,10 @@ void Qg(double *Q, const double *z, const int np, const int offset)
             polycoeffs(i, z, pd, np);
             for (j = 0; j < np; j++)
             {
-                Q[j * (np + offset) + i + offset] = 0.0;
+                Q[j * np + i] = 0.0;
                 for (k = 0; k < np; k++)
                 {
-                    Q[j * (np + offset) + i + offset] +=
-                        pd[k] / (k + 1) * pow(z[j], k + 1);
+                    Q[j * np + i] += pd[k] / (k + 1) * pow(z[j], k + 1);
                 }
             }
         }

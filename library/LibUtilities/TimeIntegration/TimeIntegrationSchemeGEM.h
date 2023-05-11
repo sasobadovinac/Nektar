@@ -140,6 +140,7 @@ protected:
      * \brief Gets the solution vector of the ODE
      */
     LUE virtual const TripleArray &v_GetSolutionVector() const override;
+    LUE virtual TripleArray &v_UpdateSolutionVector() override;
 
     /**
      * \brief Sets the solution vector of the ODE

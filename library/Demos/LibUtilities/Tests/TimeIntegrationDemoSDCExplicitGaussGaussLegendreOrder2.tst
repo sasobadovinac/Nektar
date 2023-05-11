@@ -2,10 +2,10 @@
 <test>
     <description>Test for time integration schemes</description>
     <executable>TimeIntegrationDemo</executable>
-    <parameters>--dof 200 --timesteps 200 --method ExplicitSDC --variant GaussLobattoChebyshev --order 4 --param 1.0 3</parameters>
+    <parameters>--dof 200 --timesteps 200 --method ExplicitSDC --variant GaussGaussLegendre --order 2 --param 1.0 1</parameters>
     <metrics>
         <metric type="L2" id="1">
-            <value tolerance="1e-08">0.00104917</value>
+            <value tolerance="1e-09">2.68065e-05</value>
         </metric>
     </metrics>
 </test>

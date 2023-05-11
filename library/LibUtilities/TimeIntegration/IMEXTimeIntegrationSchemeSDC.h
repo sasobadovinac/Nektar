@@ -53,13 +53,10 @@ public:
                                  std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeSDC(variant, order, freeParams)
     {
-        ASSERTL0(variant == "GaussRadauLegendre",
-                 "only GaussRadauLegendre variant "
-                 "(quadrature) type available for IMEXSDC");
-        ASSERTL0(0.0 < freeParams[0],
-                 "Spectral Deferred Correction Time integration "
-                 "scheme bad parameter numbers (> 0.0): " +
-                     std::to_string(freeParams[0]));
+
+        ASSERTL0(!m_first_quadrature,
+                 "Quadrature type that include the left end point (e.g. "
+                 "GaussLobattoLegendre) should not be used for IMEXSDC");
 
         std::cerr
             << "WARNING: IMEX Spectral Deferred Correction method has been "
@@ -84,10 +81,9 @@ public:
 
     static std::string className;
 
-    TripleArray m_Fexp;  /// Array corresponding to the stage Derivatives
-    TripleArray m_Fimp;  /// Array corresponding to the stage Derivatives
-    DoubleArray m_Fexpn; /// Array corresponding to the stage Derivatives
-    DoubleArray m_Fimpn; /// Array corresponding to the stage Derivatives
+    TripleArray m_Fexp; /// Array corresponding to the stage derivatives
+    TripleArray m_Fimp; /// Array corresponding to the stage derivatives
+    DoubleArray m_tmp;  /// Array for temporary storage
 
 protected:
     LUE virtual void v_InitializeScheme(
@@ -95,7 +91,7 @@ protected:
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_ResidualEval(
-        const NekDouble &delta_t, const int n,
+        const NekDouble &delta_t, const size_t n,
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual void v_ResidualEval(
@@ -110,6 +106,9 @@ protected:
         const NekDouble &delta_t,
         const TimeIntegrationSchemeOperators &op) override;
 
+private:
+    void ComputeTotalResidual(const size_t n);
+
 }; // end class IMEXTimeIntegrationSchemeSDC
 
 /**
@@ -119,38 +118,35 @@ void IMEXTimeIntegrationSchemeSDC::v_InitializeScheme(
     const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
     const TimeIntegrationSchemeOperators &op)
 {
-    if (!m_initialized)
+    if (m_initialized)
+    {
+        for (size_t i = 0; i < m_nvars; ++i)
+        {
+            // Store the initial values as the first previous state.
+            Vmath::Vcopy(m_npoints, y_0[i], 1, m_Y[0][i], 1);
+        }
+    }
+    else
     {
         TimeIntegrationSchemeSDC::v_InitializeScheme(deltaT, y_0, time, op);
 
         m_Fexp = TripleArray(m_nQuadPts);
         m_Fimp = TripleArray(m_nQuadPts);
-        for (unsigned int m = 0; m < m_nQuadPts; ++m)
+        for (size_t m = 0; m < m_nQuadPts; ++m)
         {
             m_Fexp[m] = DoubleArray(m_nvars);
             m_Fimp[m] = DoubleArray(m_nvars);
-
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
                 m_Fexp[m][i] = SingleArray(m_npoints, 0.0);
                 m_Fimp[m][i] = SingleArray(m_npoints, 0.0);
             }
         }
 
-        m_Fexpn = DoubleArray(m_nvars);
-        m_Fimpn = DoubleArray(m_nvars);
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        m_tmp = DoubleArray(m_nvars);
+        for (size_t i = 0; i < m_nvars; ++i)
         {
-            m_Fexpn[i] = SingleArray(m_npoints, 0.0);
-            m_Fimpn[i] = SingleArray(m_npoints, 0.0);
-        }
-    }
-    else
-    {
-        for (unsigned int i = 0; i < m_nvars; ++i)
-        {
-            // Store the initial values as the first previous state.
-            Vmath::Vcopy(m_npoints, y_0[i], 1, m_Y[0][i], 1);
+            m_tmp[i] = SingleArray(m_npoints, 0.0);
         }
     }
 }
@@ -159,20 +155,29 @@ void IMEXTimeIntegrationSchemeSDC::v_InitializeScheme(
  * @brief Worker method to compute the residual.
  */
 void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(
-    const NekDouble &delta_t, const int n,
+    const NekDouble &delta_t, const size_t n,
     const TimeIntegrationSchemeOperators &op)
 {
-    // Compute explicit residual
-    op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_points[n]);
-
     // Compute implicit residual
-    if (n > 0)
+    if (n == 0)
     {
-        NekDouble dtn = delta_t * (m_points[n] - m_points[n - 1]);
-        op.DoImplicitSolve(m_Y[n - 1], m_tmp, m_time + delta_t * m_points[n],
+        // Not implemented, require implicit evaluation for m_Fimp[0].
+        // Quadrature type that include the left end point (e.g.
+        // GaussLobattoLegendre) should not be used.
+
+        // Apply time-dependent boundary condition
+        op.DoProjection(m_Y[0], m_Y[0], m_time);
+    }
+    else
+    {
+        NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
+
+        // Update implicit solution
+        op.DoImplicitSolve(m_Y[n - 1], m_tmp, m_time + delta_t * m_tau[n],
                            m_theta * dtn);
 
-        for (unsigned int i = 0; i < m_nvars; ++i)
+        // Compute implicit residual from updated solution
+        for (size_t i = 0; i < m_nvars; ++i)
         {
             Vmath::Vsub(m_npoints, m_tmp[i], 1, m_Y[n - 1][i], 1, m_Fimp[n][i],
                         1);
@@ -180,37 +185,18 @@ void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(
                         m_Fimp[n][i], 1);
         }
     }
-    else
-    {
-        NekDouble dtn = delta_t * (m_points[n + 1] - m_points[n]);
-        op.DoImplicitSolve(m_Y[n], m_tmp, m_time + delta_t * m_points[n + 1],
-                           m_theta * dtn);
 
-        for (unsigned int i = 0; i < m_nvars; ++i)
-        {
-            Vmath::Vsub(m_npoints, m_tmp[i], 1, m_Y[n][i], 1, m_Fimp[n + 1][i],
-                        1);
-            Vmath::Smul(m_npoints, 1.0 / (m_theta * dtn), m_Fimp[n + 1][i], 1,
-                        m_Fimp[n + 1][i], 1);
-        }
-    }
+    // Compute explicit residual
+    op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_tau[n]);
 
     // Compute total residual
-    for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
-    {
-        for (unsigned int i = 0; i < m_nvars; ++i)
-        {
-            Vmath::Vadd(m_npoints, m_Fimp[n + 1][i], 1, m_Fexp[n + 1][i], 1,
-                        m_F[n + 1][i], 1);
-        }
-    }
+    ComputeTotalResidual(n);
 }
 
 void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(
     const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
 {
-    // Compute residual
-    for (unsigned int n = 0; n < m_nQuadPts; ++n)
+    for (size_t n = 0; n < m_nQuadPts; ++n)
     {
         v_ResidualEval(delta_t, n, op);
     }
@@ -222,47 +208,46 @@ void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(
 void IMEXTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
     const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
 {
-    // Compute initial guess
-    for (unsigned int n = 0; n < m_nQuadPts; ++n)
+    for (size_t n = 0; n < m_nQuadPts; ++n)
     {
-        // Compute explicit residual
-        op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_points[n]);
-
-        // Use first-order IMEX as a fist guess
-        if (n < m_nQuadPts - 1)
+        if (n == 0)
         {
-            NekDouble dtn = delta_t * (m_points[n + 1] - m_points[n]);
+            // Not implemented, require implicit evaluation for m_Fimp[0].
+            // Quadrature type that include the left end point (e.g.
+            // GaussLobattoLegendre) should not be used.
 
-            // Update explicit solution
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            // Apply time-dependent boundary condition
+            op.DoProjection(m_Y[0], m_Y[0], m_time);
+        }
+        else
+        {
+            NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
+
+            // Add explicit contribution to rhs
+            for (size_t i = 0; i < m_nvars; ++i)
             {
-                Vmath::Svtvp(m_npoints, dtn, m_Fexp[n][i], 1, m_Y[n][i], 1,
-                             m_tmp[i], 1);
+                Vmath::Svtvp(m_npoints, dtn, m_Fexp[n - 1][i], 1, m_Y[n - 1][i],
+                             1, m_tmp[i], 1);
             }
 
-            // Update implicit solution
-            op.DoImplicitSolve(m_tmp, m_Y[n + 1],
-                               m_time + delta_t * m_points[n + 1], dtn);
+            // Solve implicit system from rhs
+            op.DoImplicitSolve(m_tmp, m_Y[n], m_time + delta_t * m_tau[n], dtn);
 
             // Compute implicit flux from updated solution
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            for (size_t i = 0; i < m_nvars; ++i)
             {
-                Vmath::Vsub(m_npoints, m_Y[n + 1][i], 1, m_tmp[i], 1,
-                            m_Fimp[n + 1][i], 1);
-                Vmath::Smul(m_npoints, 1.0 / dtn, m_Fimp[n + 1][i], 1,
-                            m_Fimp[n + 1][i], 1);
+                Vmath::Vsub(m_npoints, m_Y[n][i], 1, m_tmp[i], 1, m_Fimp[n][i],
+                            1);
+                Vmath::Smul(m_npoints, 1.0 / dtn, m_Fimp[n][i], 1, m_Fimp[n][i],
+                            1);
             }
         }
-    }
 
-    // Compute total residual
-    for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
-    {
-        for (unsigned int i = 0; i < m_nvars; ++i)
-        {
-            Vmath::Vadd(m_npoints, m_Fimp[n + 1][i], 1, m_Fexp[n + 1][i], 1,
-                        m_F[n + 1][i], 1);
-        }
+        // Compute explicit residual
+        op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_tau[n]);
+
+        // Compute total residual
+        ComputeTotalResidual(n);
     }
 }
 
@@ -272,73 +257,72 @@ void IMEXTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
 void IMEXTimeIntegrationSchemeSDC::v_SDCIterationLoop(
     const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
 {
-    unsigned int kstart = 1;
-    for (unsigned int k = kstart; k < m_order; ++k)
+    // Update integrated residual
+    UpdateIntegratedResidualSFint(delta_t);
+
+    // Add FAS correction to integrated residual
+    AddFASCorrectionToSFint();
+
+    // Loop over quadrature points
+    for (size_t n = 1; n < m_nQuadPts; ++n)
     {
-        // Update integrated residual
-        UpdateIntegratedResidual(delta_t);
+        NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
 
-        // Loop over quadrature points
-        for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
+        // Add rhs terms
+        for (size_t i = 0; i < m_nvars; ++i)
         {
-            NekDouble dtn = delta_t * (m_points[n + 1] - m_points[n]);
+            // Add SFint contribution to rhs
+            Vmath::Vadd(m_npoints, m_Y[n - 1][i], 1, m_SFint[n][i], 1, m_tmp[i],
+                        1);
 
-            // Update explicit residual if n > 0
-            if (n > 0)
+            // Add explicit contribution to rhs
+            if (n > 1)
             {
-                op.DoOdeRhs(m_Y[n], m_Fexpn, m_time + delta_t * m_points[n]);
-            }
-
-            // Update solution
-            for (unsigned int i = 0; i < m_nvars; ++i)
-            {
-                // Add Fint contribution
-                Vmath::Vadd(m_npoints, m_Y[n][i], 1, m_Fint[n][i], 1, m_tmp[i],
-                            1);
-
-                if (n > 0)
-                {
-                    // Add explicit contribution
-                    Vmath::Svtvp(m_npoints, m_theta * dtn, m_Fexpn[i], 1,
-                                 m_tmp[i], 1, m_tmp[i], 1);
-                    Vmath::Svtvp(m_npoints, -m_theta * dtn, m_Fexp[n][i], 1,
-                                 m_tmp[i], 1, m_tmp[i], 1);
-
-                    // Copy new explicit residual value to old
-                    Vmath::Vcopy(m_npoints, m_Fexpn[i], 1, m_Fexp[n][i], 1);
-                }
-
-                // Add implicit contribution
-                Vmath::Svtvp(m_npoints, -m_theta * dtn, m_Fimp[n + 1][i], 1,
+                Vmath::Svtvp(m_npoints, m_theta * dtn, m_Fexp[n - 1][i], 1,
                              m_tmp[i], 1, m_tmp[i], 1);
             }
 
-            // Solve implicit system
-            op.DoImplicitSolve(m_tmp, m_Y[n + 1],
-                               m_time + delta_t * m_points[n + 1],
-                               m_theta * dtn);
-
-            // Compute implicit residual from updated solution
-            for (unsigned int i = 0; i < m_nvars; ++i)
+            // Add explicit contribution to SFint
+            if (n < m_nQuadPts - 1)
             {
-                Vmath::Vsub(m_npoints, m_Y[n + 1][i], 1, m_tmp[i], 1,
-                            m_Fimp[n + 1][i], 1);
-                Vmath::Smul(m_npoints, 1.0 / (m_theta * dtn), m_Fimp[n + 1][i],
-                            1, m_Fimp[n + 1][i], 1);
+                NekDouble dtnp = delta_t * (m_tau[n + 1] - m_tau[n]);
+                Vmath::Svtvp(m_npoints, -m_theta * dtnp, m_Fexp[n][i], 1,
+                             m_SFint[n + 1][i], 1, m_SFint[n + 1][i], 1);
             }
+
+            // Add implicit contribution to rhs
+            Vmath::Svtvp(m_npoints, -m_theta * dtn, m_Fimp[n][i], 1, m_tmp[i],
+                         1, m_tmp[i], 1);
         }
-        op.DoOdeRhs(m_Y[m_nQuadPts - 1], m_Fexp[m_nQuadPts - 1],
-                    m_time + delta_t * m_points[m_nQuadPts - 1]);
+
+        // Solve implicit system from rhs
+        op.DoImplicitSolve(m_tmp, m_Y[n], m_time + delta_t * m_tau[n],
+                           m_theta * dtn);
+
+        // Compute implicit residual from updated solution
+        for (size_t i = 0; i < m_nvars; ++i)
+        {
+            Vmath::Vsub(m_npoints, m_Y[n][i], 1, m_tmp[i], 1, m_Fimp[n][i], 1);
+            Vmath::Smul(m_npoints, 1.0 / (m_theta * dtn), m_Fimp[n][i], 1,
+                        m_Fimp[n][i], 1);
+        }
+
+        // Compute explicit residual
+        op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_tau[n]);
 
         // Compute total residual
-        for (unsigned int n = 0; n < m_nQuadPts - 1; ++n)
-        {
-            for (unsigned int i = 0; i < m_nvars; ++i)
-            {
-                Vmath::Vadd(m_npoints, m_Fimp[n + 1][i], 1, m_Fexp[n + 1][i], 1,
-                            m_F[n + 1][i], 1);
-            }
-        }
+        ComputeTotalResidual(n);
+    }
+}
+
+/**
+ * @brief Worker method to compute the total residual.
+ */
+void IMEXTimeIntegrationSchemeSDC::ComputeTotalResidual(const size_t n)
+{
+    for (size_t i = 0; i < m_nvars; ++i)
+    {
+        Vmath::Vadd(m_npoints, m_Fimp[n][i], 1, m_Fexp[n][i], 1, m_F[n][i], 1);
     }
 }
 

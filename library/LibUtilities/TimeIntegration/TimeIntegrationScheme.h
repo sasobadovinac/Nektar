@@ -119,6 +119,11 @@ public:
         return v_GetSolutionVector();
     }
 
+    TripleArray &UpdateSolutionVector()
+    {
+        return v_UpdateSolutionVector();
+    }
+
     /**
      * \brief Sets the solution vector of the ODE
      */
@@ -192,6 +197,7 @@ protected:
     LUE virtual NekDouble v_GetTimeStability() const           = 0;
     LUE virtual unsigned int v_GetNumIntegrationPhases() const = 0;
     virtual const TripleArray &v_GetSolutionVector() const     = 0;
+    virtual TripleArray &v_UpdateSolutionVector()              = 0;
     virtual void v_SetSolutionVector(const int Offset,
                                      const DoubleArray &y)     = 0;
     LUE virtual void v_InitializeScheme(

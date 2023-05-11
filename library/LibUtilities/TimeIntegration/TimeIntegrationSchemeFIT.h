@@ -132,6 +132,11 @@ protected:
         return m_u;
     }
 
+    virtual TripleArray &v_UpdateSolutionVector() override
+    {
+        return m_u;
+    }
+
     /**
      * \brief Sets the solution vector of the ODE
      */

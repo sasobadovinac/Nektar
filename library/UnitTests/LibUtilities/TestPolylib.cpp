@@ -206,7 +206,7 @@ inline void TestInterpolation(
 
 inline void TestIntegralMatrix(
     std::function<void(double *, double *, int, double, double)> func,
-    std::function<void(double *, double *, int, int)> funcQ)
+    std::function<void(double *, double *, int)> funcQ)
 {
     double alpha = -0.5;
     while (alpha <= 5.0)
@@ -217,7 +217,7 @@ inline void TestIntegralMatrix(
             for (int np = NPLOWER; np <= NPUPPER; ++np)
             {
                 func(&z[0], &w[0], np, alpha, beta);
-                funcQ(&q[0], &z[0], np, 0);
+                funcQ(&q[0], &z[0], np);
                 for (int n = 2; n < np - 1; ++n)
                 {
                     for (int i = 0; i < np; ++i)
