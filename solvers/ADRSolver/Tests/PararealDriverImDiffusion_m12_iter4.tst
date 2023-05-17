@@ -6,13 +6,14 @@
     <processes>10</processes>
     <files>
         <file description="Session File"> PararealDriverImDiffusion_m12_iter4.xml </file>
+        <file description="Session File"> PararealDriverImDiffusion_m12_iter4_coarseSolver.xml </file>
     </files>
     <metrics>
         <metric type="L2" id="1">
-            <value variable="u" tolerance="1e-08"> 7.55162e-05 </value>
+            <value variable="u" tolerance="5e-10">7.70078e-05</value>
         </metric>
         <metric type="Linf" id="2">
-            <value variable="u" tolerance="1e-08"> 7.55635e-05 </value>
+            <value variable="u" tolerance="5e-10">7.85498e-05</value>
         </metric>
     </metrics>
 </test>

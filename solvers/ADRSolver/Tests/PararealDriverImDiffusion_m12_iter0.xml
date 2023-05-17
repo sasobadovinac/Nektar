@@ -74,8 +74,9 @@
             <P> IO_InfoSteps    = 0                </P>
             <P> wavefreq        = PI               </P>
             <P> epsilon         = 1.0              </P>
-            <P> PararealIterMax = 0                </P>
-            <P> PararealToler   = 1e-15            </P>
+            <P> PITIterMax      = 0                </P>
+            <P> PITToler        = 1e-15            </P>
+            <P> NumWindows      = 2                </P>
         </PARAMETERS>
 
         <VARIABLES>

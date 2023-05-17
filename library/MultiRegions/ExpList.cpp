@@ -134,6 +134,31 @@ ExpList::ExpList(const ExpList &in, const bool DeclareCoeffPhysArrays)
     SetupCoeffPhys(DeclareCoeffPhysArrays, false);
 }
 
+ExpList::ExpList(const ExpListSharedPtr &in, const bool DeclareCoeffArrays,
+                 const bool DeclarePhysArrays)
+    : m_expType(in->m_expType),
+
+      m_comm(in->m_comm), m_session(in->m_session), m_graph(in->m_graph),
+      m_ncoeffs(in->m_ncoeffs), m_npoints(in->m_npoints),
+      m_physState(in->m_physState), m_exp(in->m_exp),
+      m_collections(in->m_collections),
+      m_collectionsDoInit(in->m_collectionsDoInit),
+      m_coll_coeff_offset(in->m_coll_coeff_offset),
+      m_coll_phys_offset(in->m_coll_phys_offset),
+      m_coeff_offset(in->m_coeff_offset), m_phys_offset(in->m_phys_offset),
+      m_coeffsToElmt(in->m_coeffsToElmt), m_blockMat(in->m_blockMat),
+      m_WaveSpace(in->m_WaveSpace), m_elmtToExpId(in->m_elmtToExpId)
+{
+    if (DeclareCoeffArrays)
+    {
+        m_coeffs = Array<OneD, NekDouble>(m_ncoeffs, 0.0);
+    }
+    if (DeclarePhysArrays)
+    {
+        m_phys = Array<OneD, NekDouble>(m_npoints, 0.0);
+    }
+}
+
 /**
  * Copies the eIds elements from an existing expansion list.
  * @param   in              Source expansion list.
