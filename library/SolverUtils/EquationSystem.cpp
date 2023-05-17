@@ -715,8 +715,8 @@ void EquationSystem::v_InitObject(bool DeclareFields)
              "should be set!");
     m_session->LoadParameter("TimeIncrementFactor", m_TimeIncrementFactor, 1.0);
 
-    m_nchk         = 0;
-    m_pararealIter = 0;
+    m_nchk    = 0;
+    m_iterPIT = 0;
 }
 
 /**
@@ -1132,6 +1132,7 @@ void EquationSystem::v_Output(void)
         }
         WriteFld(newdir + "/" + m_sessionName + "_" +
                  boost::lexical_cast<std::string>(
+                     m_windowPIT * m_comm->GetTimeComm()->GetSize() +
                      m_comm->GetTimeComm()->GetRank() + 1) +
                  ".fld");
     }
@@ -1178,7 +1179,7 @@ void EquationSystem::Checkpoint_Output(const int n)
     {
         // Parallel-in-time
         std::string paradir = m_sessionName + "_" +
-                              boost::lexical_cast<std::string>(m_pararealIter) +
+                              boost::lexical_cast<std::string>(m_iterPIT) +
                               ".pit";
         if (!fs::is_directory(paradir))
         {
@@ -1210,7 +1211,7 @@ void EquationSystem::Checkpoint_Output(
     {
         // Parallel-in-time
         std::string paradir = m_sessionName + "_" +
-                              boost::lexical_cast<std::string>(m_pararealIter) +
+                              boost::lexical_cast<std::string>(m_iterPIT) +
                               ".pit";
         if (!fs::is_directory(paradir))
         {

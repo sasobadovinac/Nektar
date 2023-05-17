@@ -38,8 +38,9 @@
             <P> epsilon         = 0.05   </P> <!-- Diffusion coefficent   -->
             <P> IO_InfoSteps    = 0      </P> <!-- Frequency of printing information for the user -->
             <P> IO_CheckSteps   = 0      </P> <!-- Frequency of writing the checkpoints, the results -->
-            <P> PararealIterMax = 1      </P> <!-- Max number of Parareal iteration -->
-            <P> PararealToler   = 1e-15  </P> <!-- Parareal iteration tolerance -->
+            <P> PITIterMax      = 1      </P> <!-- Max number of Parareal iteration -->
+            <P> PITToler        = 1e-15  </P> <!-- Parareal iteration tolerance -->
+            <P> NumWindows      = 2      </P> <!-- Number of Parareal windows -->
         </PARAMETERS>
 
         <!-- setting the variable -->

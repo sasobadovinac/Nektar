@@ -33,14 +33,11 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep        = 0.0001 </P> <!-- Time step -->
-            <P> NumSteps        = 3200   </P> <!-- Number of time step -->
+            <P> TimeStep        = 0.01   </P> <!-- Time step -->
+            <P> NumSteps        = 32     </P> <!-- Number of time step -->
             <P> epsilon         = 0.05   </P> <!-- Diffusion coefficent   -->
             <P> IO_InfoSteps    = 0      </P> <!-- Frequency of printing information for the user -->
             <P> IO_CheckSteps   = 0      </P> <!-- Frequency of writing the checkpoints, the results -->
-            <P> PITIterMax      = 0      </P> <!-- Max number of Parareal iteration -->
-            <P> PITToler        = 1e-15  </P> <!-- Parareal iteration tolerance -->
-            <P> NumWindows      = 2      </P> <!-- Number of Parareal windows -->
         </PARAMETERS>
 
         <!-- setting the variable -->

@@ -4,6 +4,7 @@ v5.4.0
 ------
 **Library**
 - Add unit tests for Polylib (!1533)
+- Redesign of Parareal driver (!1509) 
 - Add local p-refinement functionality (!508)
 - Fix compilation against TetGen 1.6 (!1547)
 - Tidy-up SDC schemes (!1550)
@@ -27,6 +28,7 @@ v5.4.0
 - Prevent file overwrite with restart for the IsentropicVortex solver (!1543)
 
 **Miscellaneous**
+- Fix compilation against TetGen 1.6 (!1547)
 - Tidy-up Parareal initial condition output (!1534)
 - Remove double entry in documentation and slightly tidy-up code (!1530)
 

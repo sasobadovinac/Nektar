@@ -1552,9 +1552,6 @@ void Expansion3D::v_AddFaceNormBoundaryInt(
 
     if (n_coeffs != order_e) // Going to orthogonal space
     {
-        Array<OneD, NekDouble> coeff(n_coeffs);
-        Array<OneD, NekDouble> array(n_coeffs);
-
         FaceExp->FwdTrans(Fn, faceCoeffs);
 
         int NumModesElementMax = FaceExp->GetBasis(0)->GetNumModes();

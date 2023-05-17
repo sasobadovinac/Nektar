@@ -373,8 +373,7 @@ void Interpolator<T>::InterpExp1ToExp2(const T exp1, T &exp2)
         else
         {
             // Transform solution from physical to coefficient space
-            exp1[n]->FwdTransLocalElmt(exp1[n]->GetPhys(),
-                                       exp1[n]->UpdateCoeffs());
+            exp1[n]->FwdTrans(exp1[n]->GetPhys(), exp1[n]->UpdateCoeffs());
 
             for (int i = 0; i < exp1[n]->GetExpSize(); ++i)
             {

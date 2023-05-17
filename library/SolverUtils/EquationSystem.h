@@ -309,14 +309,14 @@ public:
         m_infosteps = num;
     }
 
-    SOLVER_UTILS_EXPORT int GetPararealIterationNumber()
+    SOLVER_UTILS_EXPORT void SetIterationNumberPIT(int num)
     {
-        return m_pararealIter;
+        m_iterPIT = num;
     }
 
-    SOLVER_UTILS_EXPORT void SetPararealIterationNumber(int num)
+    SOLVER_UTILS_EXPORT void SetWindowNumberPIT(int num)
     {
-        m_pararealIter = num;
+        m_windowPIT = num;
     }
 
     SOLVER_UTILS_EXPORT Array<OneD, const Array<OneD, NekDouble>> GetTraceNormals()
@@ -397,8 +397,10 @@ protected:
     int m_checksteps;
     /// Number of time steps between outputting status information.
     int m_infosteps;
-    /// Number of parareal time iteration.
-    int m_pararealIter;
+    /// Number of parallel-in-time time iteration.
+    int m_iterPIT = 0;
+    /// Index of windows for parallel-in-time time iteration.
+    int m_windowPIT = 0;
     /// Spatial dimension (>= expansion dim).
     int m_spacedim;
     /// Expansion dimension.
@@ -797,6 +799,7 @@ inline void EquationSystem::CopyToPhysField(
 {
     Vmath::Vcopy(input.size(), input, 1, m_fields[i]->UpdatePhys(), 1);
 }
+
 } // namespace SolverUtils
 } // namespace Nektar
 

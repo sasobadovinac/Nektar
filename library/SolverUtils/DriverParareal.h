@@ -35,8 +35,7 @@
 #ifndef NEKTAR_SOLVERUTILS_DRIVERPARAREAL_H
 #define NEKTAR_SOLVERUTILS_DRIVERPARAREAL_H
 
-#include <FieldUtils/Interpolator.h>
-#include <SolverUtils/Driver.h>
+#include <SolverUtils/DriverParallelInTime.h>
 
 namespace Nektar
 {
@@ -44,7 +43,7 @@ namespace SolverUtils
 {
 
 /// Base class for the development of solvers.
-class DriverParareal : public Driver
+class DriverParareal : public DriverParallelInTime
 {
 public:
     friend class MemoryManager<DriverParareal>;
@@ -64,52 +63,6 @@ public:
     static std::string className;
 
 protected:
-    // Interpolator
-    FieldUtils::Interpolator<Array<OneD, MultiRegions::ExpListSharedPtr>>
-        m_interp;
-
-    /// Parareal (coarse solver) session reader object
-    LibUtilities::SessionReaderSharedPtr m_sessionCoarse;
-
-    /// Parareal (coarse solver) MeshGraph object
-    SpatialDomains::MeshGraphSharedPtr m_graphCoarse;
-
-    /// Timestep for fine solver.
-    NekDouble m_fineTimeStep;
-
-    /// Timestep for coarse solver.
-    NekDouble m_coarseTimeStep;
-
-    /// Total time integration interval.
-    NekDouble m_totalTime;
-
-    /// Time for chunks
-    NekDouble m_chunkTime;
-
-    /// Coarse solver time factor
-    NekDouble m_coarseSolveFactor = 100.0;
-
-    /// Number of steps for the fine solver
-    int m_fineSteps = 1;
-
-    /// Number of steps for the coarse solver
-    int m_coarseSteps = 1;
-
-    /// Number of time chunks
-    int m_numChunks = 1;
-
-    /// Rank in time
-    int m_chunkRank = 0;
-
-    /// Maximum number of parareal iteration
-    int m_pararealIterMax = 0;
-
-    /// Using exact solution to compute error norms
-    bool m_exactSolution = 0;
-
-    /// Parareal tolerance
-    NekDouble m_pararealToler = 1e-15;
-
     /// Constructor
     SOLVER_UTILS_EXPORT DriverParareal(
         const LibUtilities::SessionReaderSharedPtr pSession,
@@ -118,24 +71,51 @@ protected:
     /// Destructor
     SOLVER_UTILS_EXPORT virtual ~DriverParareal();
 
-    /// Second-stage initialisation
-    SOLVER_UTILS_EXPORT virtual void v_InitObject(
-        std::ostream &out = std::cout) override;
-
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(
         std::ostream &out = std::cout) override;
 
-    /// Set the Parareal (coarse solver) session file
-    void SetPararealSessionFile(void);
+    virtual NekDouble v_EstimateCommunicationTime(void) override;
 
-    void RunCoarseSolve(const NekDouble time, const int nstep, const int iter,
+    virtual NekDouble v_EstimateRestrictionTime(void) override;
+
+    virtual NekDouble v_EstimateInterpolationTime(void) override;
+
+    virtual NekDouble v_EstimateCoarseSolverTime(void) override;
+
+    virtual NekDouble v_EstimateFineSolverTime(void) override;
+
+    virtual NekDouble v_EstimatePredictorTime(void) override;
+
+    virtual NekDouble v_EstimateOverheadTime(void) override;
+
+    virtual NekDouble v_ComputeSpeedUp(
+        const size_t iter, NekDouble fineSolveTime, NekDouble coarseSolveTime,
+        NekDouble restTime, NekDouble interTime, NekDouble commTime,
+        NekDouble predictorOverheadTime, NekDouble overheadTime) override;
+
+    void AssertParameters(void);
+
+    void RunCoarseSolve(const NekDouble time, const size_t nstep,
                         const Array<OneD, const Array<OneD, NekDouble>> &input,
                         Array<OneD, Array<OneD, NekDouble>> &output);
 
-    void RunFineSolve(const NekDouble time, const int nstep, const int iter,
+    void RunFineSolve(const NekDouble time, const size_t nstep,
+                      const size_t iter, const size_t wd,
                       const Array<OneD, const Array<OneD, NekDouble>> &input,
                       Array<OneD, Array<OneD, NekDouble>> &output);
+
+    void PararealCorrection(
+        const Array<OneD, const Array<OneD, NekDouble>> &coarse_new,
+        const Array<OneD, const Array<OneD, NekDouble>> &coarse_old,
+        Array<OneD, Array<OneD, NekDouble>> &fine);
+
+    void PrintSolutionFile(void);
+
+    void ApplyWindowing(const Array<OneD, const Array<OneD, NekDouble>> &in,
+                        Array<OneD, Array<OneD, NekDouble>> &out);
+
+    void CopyConvergedCheckPoints(const size_t w, const size_t k, size_t kmax);
 
     static std::string driverLookupId;
 };
@@ -143,4 +123,4 @@ protected:
 } // namespace SolverUtils
 } // namespace Nektar
 
-#endif // NEKTAR_SOLVERUTILS_DRIVERSTANDARD_H
+#endif // NEKTAR_SOLVERUTILS_DRIVERPARAREAL_H
