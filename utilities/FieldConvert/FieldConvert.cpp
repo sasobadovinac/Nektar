@@ -470,7 +470,11 @@ int main(int argc, char *argv[])
         mod->SetDefaults();
     }
 
+<<<<<<< HEAD
     // Include equispacedoutput module if needed.
+=======
+    // Include equispacedoutput module if needed
+>>>>>>> 6507aa3fa (Removing redundant CreateExp module)
     Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < modules.size(); ++i)
     {
