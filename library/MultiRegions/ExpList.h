@@ -41,7 +41,6 @@
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/Communication/Transposition.h>
-#include <LibUtilities/Kernel/kernel.h>
 #include <LocalRegions/Expansion.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
