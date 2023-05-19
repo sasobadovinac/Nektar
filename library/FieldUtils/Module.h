@@ -179,6 +179,8 @@ struct ConfigOption
     std::string m_desc;
 };
 
+typedef std::pair<ModuleType, std::string> ModuleKey;
+
 /**
  * Abstract base class for mesh converter modules. Each subclass
  * implements the Process() function, which in some way alters the
@@ -219,6 +221,11 @@ public:
         return v_GetModulePriority();
     }
 
+    std::vector<ModuleKey> GetModulePrerequisites()
+    {
+        return v_GetModulePrerequisites();
+    }
+
     FIELD_UTILS_EXPORT void RegisterConfig(std::string key,
                                            std::string value = "");
     FIELD_UTILS_EXPORT void PrintConfig();
@@ -257,6 +264,11 @@ protected:
     {
         NEKERROR(ErrorUtil::efatal, "v_GetModulePriority not coded");
         return SIZE_ModulePriority;
+    }
+
+    virtual std::vector<ModuleKey> v_GetModulePrerequisites()
+    {
+        return std::vector<ModuleKey>();
     }
 
     /// List of configuration values.
@@ -314,7 +326,6 @@ protected:
     std::ofstream m_fldFile;
 };
 
-typedef std::pair<ModuleType, std::string> ModuleKey;
 FIELD_UTILS_EXPORT std::ostream &operator<<(std::ostream &os,
                                             const ModuleKey &rhs);
 
