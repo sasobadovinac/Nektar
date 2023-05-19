@@ -13,6 +13,7 @@ v5.4.0
 - Register TimeIntegrationMethod to SessionReader (!1539)
 - Remove unecessary for loop in NekLinSysIterGMRES (!1554)
 - Generalize the use of size_t in TimeIntegration (!1555)
+- Remove unused Kernel directory (!1560)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)

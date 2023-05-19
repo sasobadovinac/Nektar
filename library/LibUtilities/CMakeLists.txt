@@ -188,14 +188,6 @@ SET(InterpreterSources
 ./Interpreter/Interpreter.cpp
 )
 
-SET(KernelHeaders
-./Kernel/kernel.h
-)
-
-SET(KernelSources
-./Kernel/kernel.cpp
-)
-
 SET(LinearAlgebraHeaders
 ./LinearAlgebra/Arpack.hpp
 ./LinearAlgebra/BlasArray.hpp
