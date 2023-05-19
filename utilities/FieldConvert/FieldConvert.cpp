@@ -471,15 +471,32 @@ int main(int argc, char *argv[])
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     // Include equispacedoutput module if needed.
 =======
     // Include equispacedoutput module if needed
 >>>>>>> 6507aa3fa (Removing redundant CreateExp module)
+=======
+    // Loading modules prerequisites
+    for (int i = 0; i < modules.size(); ++i)
+    {
+        // Looping through prereqs and loading them
+        for (int j = 0; j < modules[i]->GetModulePrerequisites().size(); ++j)
+        {
+            mod = GetModuleFactory().CreateInstance(modules[i]->GetModulePrerequisites()[j], f);
+            modules.push_back(mod);
+            mod->SetDefaults();
+        }
+    }
+
+>>>>>>> 7860d6067 (Added member function GetModulePrerequisites() to class Module)
     Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < modules.size(); ++i)
     {
         ++modulesCount[modules[i]->GetModulePriority()];
     }
+
+    // Include equispacedoutput module if needed
     if (modulesCount[eModifyPts] != 0 && modulesCount[eCreatePts] == 0 &&
         modulesCount[eConvertExpToPts] == 0)
     {

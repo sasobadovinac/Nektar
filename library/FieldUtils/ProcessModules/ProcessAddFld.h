@@ -78,6 +78,11 @@ protected:
         return m_priority;
     }
 
+    virtual std::vector<ModuleKey> v_GetModulePrerequisites() override
+    {
+        return { {eProcessModule,  "createExp"} };
+    }
+
 private:
     ModulePriority m_priority;
 };
