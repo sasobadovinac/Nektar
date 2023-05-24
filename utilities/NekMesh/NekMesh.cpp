@@ -74,9 +74,6 @@ int main(int argc, char *argv[])
     po::options_description cmdline_options;
     cmdline_options.add(hidden).add(desc);
 
-    po::options_description visible("Allowed options");
-    visible.add(desc);
-
     po::positional_options_description p;
     p.add("input-file", -1);
 
@@ -131,7 +128,8 @@ int main(int argc, char *argv[])
 
         if (tmp1[0] != "in" && tmp1[0] != "out" && tmp1[0] != "proc")
         {
-            cerr << "ERROR: Invalid module type " << tmp1[0] << endl;
+            cerr << "ERROR: Invalid module type (in, out, or proc): " << tmp1[0]
+                 << endl;
             return 1;
         }
 
@@ -169,7 +167,7 @@ int main(int argc, char *argv[])
 
     vector<string> inout = vm["input-file"].as<vector<string>>();
 
-    if (inout.size() < 2)
+    if (inout.size() != 2)
     {
         cerr << "ERROR: You must specify an input and output file." << endl;
         return 1;

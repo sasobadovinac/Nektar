@@ -68,7 +68,7 @@ ENDIF()
 
 IF (NEKTAR_USE_MPI)
     ADD_NEKTAR_TEST(chan3D_tec_par)
-    #ADD_NEKTAR_TEST(chan3D_vtu_par)a
+    #ADD_NEKTAR_TEST(chan3D_vtu_par)
     ADD_NEKTAR_TEST(chan3D_interppointsplane_par)
     ADD_NEKTAR_TEST(chan3D_interppointsbox_par)
     ADD_NEKTAR_TEST(chan3DH1D_interppointsplane_par)
