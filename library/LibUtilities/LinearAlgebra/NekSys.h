@@ -69,6 +69,7 @@ public:
     NekSysOperators(void) : m_functors1(nfunctor1), m_functors2(nfunctor2)
     {
     }
+
     NekSysOperators(const NekSysOperators &in)
         : m_functors1(nfunctor1), m_functors2(nfunctor2)
     {
@@ -176,11 +177,14 @@ protected:
             Jacobian matrix for Newton method;
         DoNekSysPrecon      :
             Preconditioning operator of the system.
+    */
+    FunctorType1Array m_functors1;
+
+    /* Defines one operator
         DoNekSysFixPointIte  :
             Operator to calculate RHS of fixed point iterations
             (x^{n+1}=M^{-1}(b-N*x^{n}), with M+N=A).
     */
-    FunctorType1Array m_functors1;
     FunctorType2Array m_functors2;
 };
 

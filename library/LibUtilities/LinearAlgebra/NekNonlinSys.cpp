@@ -115,9 +115,6 @@ NekNonlinSys::NekNonlinSys(const LibUtilities::SessionReaderSharedPtr &pSession,
                                 pKey.m_LinSysRelativeTolInNonlin);
     }
 
-    // cout << " m_LinSysRelativeTolInNonlin = " << m_LinSysRelativeTolInNonlin
-    // << endl;
-
     m_LinSysIterSolverType = pKey.m_LinSysIterSolverTypeInNonlin;
     if (pSession->DefinesGlobalSysSolnInfo(variable,
                                            "LinSysIterSolverTypeInNonlin"))

@@ -84,7 +84,7 @@ bool NekSys::v_ConvergenceCheck(const int nIteration,
     NekDouble SysResNorm = Vmath::Dot(ntotal, Residual, Residual);
     m_Comm->AllReduce(SysResNorm, Nektar::LibUtilities::ReduceSum);
 
-    if (SysResNorm < tol)
+    if (SysResNorm < tol * tol)
     {
         converged = true;
     }
