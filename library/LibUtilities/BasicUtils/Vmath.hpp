@@ -99,7 +99,7 @@ template <class T>
 LIB_UTILITIES_EXPORT void Vsub(int n, const T *x, const int incx, const T *y,
                                const int incy, T *z, const int incz);
 
-/// \brief Add vector y = alpha - x
+/// \brief Substract vector y = alpha - x
 template <class T>
 LIB_UTILITIES_EXPORT void Ssub(int n, const T alpha, const T *x, const int incx,
                                T *y, const int incy);
@@ -161,7 +161,7 @@ LIB_UTILITIES_EXPORT void Vvtvp(int n, const T *w, const int incw, const T *x,
                                 const int incx, const T *y, const int incy,
                                 T *z, const int incz);
 
-/// \brief vvtvm (vector times vector plus vector): z = w*x - y
+/// \brief vvtvm (vector times vector minus vector): z = w*x - y
 template <class T>
 LIB_UTILITIES_EXPORT void Vvtvm(int n, const T *w, const int incw, const T *x,
                                 const int incx, const T *y, const int incy,
@@ -283,19 +283,19 @@ LIB_UTILITIES_EXPORT T Vmin(int n, const T *x, const int incx);
 template <class T>
 LIB_UTILITIES_EXPORT int Nnan(int n, const T *x, const int incx);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot (vector times vector): z = w*x
 template <class T> LIB_UTILITIES_EXPORT T Dot(int n, const T *w, const T *x);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot (vector times vector): z = w*x
 template <class T>
 LIB_UTILITIES_EXPORT T Dot(int n, const T *w, const int incw, const T *x,
                            const int incx);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot2 (vector times vector times vector): z = w*x*y
 template <class T>
 LIB_UTILITIES_EXPORT T Dot2(int n, const T *w, const T *x, const int *y);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot2 (vector times vector times vector): z = w*x*y
 template <class T>
 LIB_UTILITIES_EXPORT T Dot2(int n, const T *w, const int incw, const T *x,
                             const int incx, const int *y, const int incy);
