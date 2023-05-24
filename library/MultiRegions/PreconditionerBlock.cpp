@@ -32,7 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VDmathArray.hpp>
 #include <LocalRegions/MatrixKey.h>
 #include <LocalRegions/SegExp.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
