@@ -32,7 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VDmathArray.hpp>
 #include <LibUtilities/Communication/Xxt.hpp>
 #include <MultiRegions/GlobalLinSysXxtStaticCond.h>
 
