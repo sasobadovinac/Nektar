@@ -103,9 +103,6 @@ int main(int argc, char *argv[])
     po::options_description cmdline_options;
     cmdline_options.add(hidden).add(desc);
 
-    po::options_description visible("Allowed options");
-    visible.add(desc);
-
     po::positional_options_description p;
     p.add("input-file", -1);
 
@@ -156,7 +153,8 @@ int main(int argc, char *argv[])
 
         if (tmp1[0] != "in" && tmp1[0] != "out" && tmp1[0] != "proc")
         {
-            cerr << "ERROR: Invalid module type " << tmp1[0] << endl;
+            cerr << "ERROR: Invalid module type (in, out, or proc): " << tmp1[0]
+                 << endl;
             return 1;
         }
 
@@ -262,22 +260,42 @@ int main(int argc, char *argv[])
     // For parallel-in-time
     if (vm.count("npt"))
     {
-        for (auto &io : inout)
+        for (auto io = inout.end() - 2; io != inout.end(); io++)
         {
-            fs::path inpath  = io;
-            fs::path outpath = inpath.parent_path();
-            if (outpath.extension() == ".pit")
+            // First split each command by the colon separator.
+            vector<string> tmp;
+            boost::split(tmp, *io, boost::is_any_of(":"));
+
+            // Get original filename and extension.
+            fs::path path   = tmp[0];
+            fs::path dir    = path.parent_path();
+            string ftype    = path.extension().string();
+            string filename = path.stem().string();
+
+            // Determine original index from filename.
+            auto start = filename.find_last_of("_") + 1;
+            auto index = atoi(filename.substr(start, filename.size()).c_str());
+
+            // Create output directory if does not exit.
+            if (f->m_comm->TreatAsRankZero() && !fs::is_directory(dir) &&
+                io == inout.end() - 1)
             {
-                fs::path ftype  = inpath.extension();
-                string filename = inpath.stem().string();
-                size_t start    = filename.find_last_of("_") + 1;
-                int index =
-                    atoi(filename.substr(start, filename.size()).c_str());
-                outpath /= filename.substr(0, start) +
-                           std::to_string(index + f->m_comm->GetRank() %
-                                                      vm["npt"].as<int>()) +
-                           ftype.string();
-                io = outpath.string();
+                fs::create_directory(dir);
+            }
+
+            // Determine new index and filename for each processor for
+            // parallel-in-time processing.
+            auto index_new = index + f->m_comm->GetRank() % vm["npt"].as<int>();
+            fs::path path_new = dir;
+            path_new /=
+                filename.substr(0, start) + std::to_string(index_new) + ftype;
+
+            // Determine new command for each processor for parallel-in-time
+            // processing.
+            *io = path_new.string();
+            for (auto i = 1; i < tmp.size(); i++)
+            {
+                *io += ":" + tmp[i];
             }
         }
     }
@@ -299,7 +317,7 @@ int main(int argc, char *argv[])
 
     // Add input and output modules to beginning and end of this vector.
     modcmds.insert(modcmds.begin(), inout.begin(), inout.end() - 1);
-    modcmds.push_back(*(inout.end() - 1));
+    modcmds.push_back(inout.back());
 
     int nInput = inout.size() - 1;
 
@@ -424,6 +442,7 @@ int main(int argc, char *argv[])
                 mod->RegisterConfig("writemultiplefiles");
             }
         }
+
         // Set options for this module.
         for (int j = offset; j < tmp1.size(); ++j)
         {
@@ -582,9 +601,10 @@ int main(int argc, char *argv[])
         }
     }
 
+    timer.Stop();
+
     if (verbose)
     {
-        timer.Stop();
         NekDouble cpuTime = timer.TimePerTest(1);
 
         stringstream ss;

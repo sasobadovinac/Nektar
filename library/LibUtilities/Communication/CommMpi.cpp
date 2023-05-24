@@ -200,8 +200,6 @@ void CommMpi::v_Send(void *buf, int count, CommDataType dt, int dest)
 void CommMpi::v_Recv(void *buf, int count, CommDataType dt, int source)
 {
     MPI_Recv(buf, count, dt, source, 0, m_comm, MPI_STATUS_IGNORE);
-    // ASSERTL0(status.MPI_ERROR == MPI_SUCCESS,
-    //         "MPI error receiving data.");
 }
 
 /**
@@ -308,7 +306,7 @@ void CommMpi::v_AllGatherv(void *sendbuf, int sendcount, CommDataType sendtype,
     int retval = MPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf,
                                 recvcounts, rdispls, recvtype, m_comm);
 
-    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Allgather.");
+    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Allgatherv.");
 }
 
 void CommMpi::v_AllGatherv(void *recvbuf, int recvcounts[], int rdispls[],
@@ -323,6 +321,7 @@ void CommMpi::v_AllGatherv(void *recvbuf, int recvcounts[], int rdispls[],
 void CommMpi::v_Bcast(void *buffer, int count, CommDataType dt, int root)
 {
     int retval = MPI_Bcast(buffer, count, dt, root, m_comm);
+
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Bcast-v.");
 }
 
@@ -350,6 +349,7 @@ void CommMpi::v_Exscan(Array<OneD, unsigned long long> &pData,
 
     int retval = MPI_Exscan(pData.get(), ans.get(), n, MPI_UNSIGNED_LONG_LONG,
                             vOp, m_comm);
+
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Exscan-v.");
 }
 
@@ -369,6 +369,7 @@ void CommMpi::v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
 {
     int retval = MPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
                              recvtype, root, m_comm);
+
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Scatter.");
 }
 
@@ -377,6 +378,7 @@ void CommMpi::v_DistGraphCreateAdjacent(int indegree, const int sources[],
 {
 #if MPI_VERSION < 3
     boost::ignore_unused(indegree, sources, sourceweights, reorder);
+
     ASSERTL0(false, "MPI_Dist_graph_create_adjacent is not supported in your "
                     "installed MPI version.");
 #else
@@ -483,7 +485,7 @@ CommRequestSharedPtr CommMpi::v_CreateRequest(int num)
 void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
 {
     ASSERTL0(pRows * pColumns * pTime == m_size,
-             "Rows/Columns do not match comm size.");
+             "Rows/Columns/Time do not match comm size.");
 
     MPI_Comm newComm;
     MPI_Comm gridComm;

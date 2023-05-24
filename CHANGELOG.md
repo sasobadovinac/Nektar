@@ -16,6 +16,7 @@ v5.4.0
 - Remove unused Kernel directory (!1560)
 - Remove unused files in BasicUtils (!1564)
 - Fix convergence error in Fixed-point Jacobi algorithm (!1561)
+- Update parallel-in-time code base in fieldconvert (!1565)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
