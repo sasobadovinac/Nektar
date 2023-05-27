@@ -113,9 +113,6 @@ protected:
     LIB_UTILITIES_EXPORT virtual void v_Bcast(void *buffer, int count,
                                               CommDataType dt,
                                               int root) override final;
-    LIB_UTILITIES_EXPORT virtual void v_Exscan(
-        Array<OneD, unsigned long long> &pData, const enum ReduceOperator pOp,
-        Array<OneD, unsigned long long> &ans) override final;
     LIB_UTILITIES_EXPORT virtual void v_Gather(void *sendbuf, int sendcount,
                                                CommDataType sendtype,
                                                void *recvbuf, int recvcount,

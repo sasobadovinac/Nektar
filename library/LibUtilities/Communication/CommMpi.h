@@ -149,10 +149,6 @@ protected:
                               CommDataType recvtype) override final;
     virtual void v_Bcast(void *buffer, int count, CommDataType dt,
                          int root) override final;
-    virtual void v_Exscan(Array<OneD, unsigned long long> &pData,
-                          enum ReduceOperator pOp,
-                          Array<OneD, unsigned long long> &ans) override final;
-
     virtual void v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
                           void *recvbuf, int recvcount, CommDataType recvtype,
                           int root) override final;

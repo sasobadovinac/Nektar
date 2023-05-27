@@ -129,9 +129,6 @@ public:
                     Array<OneD, int> &pRecvDataOffsetMap);
 
     template <class T> void Bcast(T &pData, int pRoot);
-
-    template <class T> void Exscan(T &pData, enum ReduceOperator pOp, T &ans);
-
     template <class T> T Gather(int rootProc, T &val);
     template <class T> T Scatter(int rootProc, T &pData);
 
@@ -218,17 +215,12 @@ protected:
                               CommDataType recvtype)                       = 0;
     virtual void v_Bcast(void *buffer, int count, CommDataType dt,
                          int root)                                         = 0;
-
-    virtual void v_Exscan(Array<OneD, unsigned long long> &pData,
-                          enum ReduceOperator pOp,
-                          Array<OneD, unsigned long long> &ans) = 0;
-
     virtual void v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
                           void *recvbuf, int recvcount, CommDataType recvtype,
-                          int root)  = 0;
+                          int root)                                        = 0;
     virtual void v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
                            void *recvbuf, int recvcount, CommDataType recvtype,
-                           int root) = 0;
+                           int root)                                       = 0;
 
     virtual CommSharedPtr v_CommCreateIf(int flag) = 0;
 
@@ -467,18 +459,6 @@ template <class T> void Comm::Bcast(T &pData, int pRoot)
     v_Bcast(CommDataTypeTraits<T>::GetPointer(pData),
             CommDataTypeTraits<T>::GetCount(pData),
             CommDataTypeTraits<T>::GetDataType(), pRoot);
-}
-
-template <class T>
-void Comm::Exscan(T &pData, const enum ReduceOperator pOp, T &ans)
-{
-    ASSERTL0(CommDataTypeTraits<T>::GetCount(pData) ==
-                 CommDataTypeTraits<T>::GetCount(ans),
-             "Input and output array sizes don't match");
-    v_Exscan(CommDataTypeTraits<T>::GetPointer(pData),
-             CommDataTypeTraits<T>::GetPointer(ans),
-             CommDataTypeTraits<T>::GetCount(pData),
-             CommDataTypeTraits<T>::GetDataType(), pOp);
 }
 
 /**
