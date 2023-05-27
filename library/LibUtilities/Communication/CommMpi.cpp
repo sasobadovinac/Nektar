@@ -36,7 +36,6 @@
 #include "petscsys.h"
 #endif
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Communication/CommMpi.h>
 
 namespace Nektar
@@ -323,34 +322,6 @@ void CommMpi::v_Bcast(void *buffer, int count, CommDataType dt, int root)
     int retval = MPI_Bcast(buffer, count, dt, root, m_comm);
 
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Bcast-v.");
-}
-
-void CommMpi::v_Exscan(Array<OneD, unsigned long long> &pData,
-                       const enum ReduceOperator pOp,
-                       Array<OneD, unsigned long long> &ans)
-{
-    int n = pData.size();
-    ASSERTL0(n == ans.size(), "Array sizes differ in Exscan");
-
-    MPI_Op vOp;
-    switch (pOp)
-    {
-        case ReduceMax:
-            vOp = MPI_MAX;
-            break;
-        case ReduceMin:
-            vOp = MPI_MIN;
-            break;
-        case ReduceSum:
-        default:
-            vOp = MPI_SUM;
-            break;
-    }
-
-    int retval = MPI_Exscan(pData.get(), ans.get(), n, MPI_UNSIGNED_LONG_LONG,
-                            vOp, m_comm);
-
-    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Exscan-v.");
 }
 
 void CommMpi::v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,

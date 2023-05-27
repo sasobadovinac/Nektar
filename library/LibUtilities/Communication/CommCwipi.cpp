@@ -37,7 +37,6 @@
 #include "petscsys.h"
 #endif
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Communication/CommCwipi.h>
 
 #include <cwipi.h>

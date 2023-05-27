@@ -37,9 +37,6 @@
 
 #include <iostream>
 
-#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <LibUtilities/BasicUtils/VmathArray.hpp>
 #include <LibUtilities/Communication/Comm.h>
 #ifdef NEKTAR_USE_MPI
 #include <LibUtilities/Communication/CommMpi.h>

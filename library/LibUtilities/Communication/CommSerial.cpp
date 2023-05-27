@@ -210,13 +210,6 @@ void CommSerial::v_Bcast(void *buffer, int count, CommDataType dt, int root)
     boost::ignore_unused(buffer, count, dt, root);
 }
 
-void CommSerial::v_Exscan(Array<OneD, unsigned long long> &pData,
-                          const enum ReduceOperator pOp,
-                          Array<OneD, unsigned long long> &ans)
-{
-    boost::ignore_unused(pData, pOp, ans);
-}
-
 void CommSerial::v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
                           void *recvbuf, int recvcount, CommDataType recvtype,
                           int root)
