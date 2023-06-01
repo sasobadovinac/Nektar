@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 #include <LibUtilities/TimeIntegration/IMEXGearTimeIntegrationScheme.h>
@@ -133,9 +132,6 @@ public:
                 case 2:
                     IMEXTimeIntegrationScheme::SetupSchemeData(
                         m_integration_phases[0], 1);
-                    // IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-                    //     m_integration_phases[0], 2, std::vector<NekDouble>
-                    //     {2, 3});
                     break;
 
                 case 3:
@@ -190,16 +186,16 @@ public:
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     size_t order)
     {
-        const NekDouble ABcoefficients[5] = {0.,
-                                             1.,         // 1st Order
-                                             2. / 3.,    // 2nd Order
-                                             6. / 11.,   // 3rd Order
-                                             12. / 25.}; // 4th Order
+        constexpr NekDouble ABcoefficients[5] = {0.,
+                                                 1.,         // 1st Order
+                                                 2. / 3.,    // 2nd Order
+                                                 6. / 11.,   // 3rd Order
+                                                 12. / 25.}; // 4th Order
 
         // Nsteps = 2 * order
 
         // clang-format off
-        const NekDouble UVcoefficients[5][8] =
+        constexpr NekDouble UVcoefficients[5][8] =
             { {         0.,    0.,     0.,        0.,
                         0.,    0.,     0.,        0. },
               // 1st Order
@@ -261,7 +257,7 @@ public:
 
         phase->m_numMultiStepValues         = phase->m_order;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = phase->m_order;
+        phase->m_numMultiStepExplicitDerivs = phase->m_order;
 
         phase->m_timeLevelOffset = Array<OneD, size_t>(phase->m_numsteps);
 
@@ -278,7 +274,7 @@ public:
 protected:
     LUE virtual std::string v_GetFullName() const override
     {
-        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
+        return m_integration_phases.back()->m_name;
     }
 
     LUE virtual std::string v_GetName() const override

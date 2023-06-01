@@ -114,12 +114,12 @@ public:
     /**
      * \brief Gets the solution vector of the ODE
      */
-    const TripleArray &GetSolutionVector() const
+    LUE const TripleArray &GetSolutionVector() const
     {
         return v_GetSolutionVector();
     }
 
-    TripleArray &UpdateSolutionVector()
+    LUE TripleArray &UpdateSolutionVector()
     {
         return v_UpdateSolutionVector();
     }
@@ -127,7 +127,7 @@ public:
     /**
      * \brief Sets the solution vector of the ODE
      */
-    void SetSolutionVector(const size_t Offset, const DoubleArray &y)
+    LUE void SetSolutionVector(const size_t Offset, const DoubleArray &y)
     {
         v_SetSolutionVector(Offset, y);
     }
@@ -193,13 +193,13 @@ protected:
     LUE virtual size_t v_GetOrder() const                      = 0;
     LUE virtual std::vector<NekDouble> v_GetFreeParams() const = 0;
     LUE virtual TimeIntegrationSchemeType v_GetIntegrationSchemeType()
-        const                                              = 0;
-    LUE virtual NekDouble v_GetTimeStability() const       = 0;
-    LUE virtual size_t v_GetNumIntegrationPhases() const   = 0;
-    virtual const TripleArray &v_GetSolutionVector() const = 0;
-    virtual TripleArray &v_UpdateSolutionVector()          = 0;
-    virtual void v_SetSolutionVector(const size_t Offset,
-                                     const DoubleArray &y) = 0;
+        const                                                  = 0;
+    LUE virtual NekDouble v_GetTimeStability() const           = 0;
+    LUE virtual size_t v_GetNumIntegrationPhases() const       = 0;
+    LUE virtual const TripleArray &v_GetSolutionVector() const = 0;
+    LUE virtual TripleArray &v_UpdateSolutionVector()          = 0;
+    LUE virtual void v_SetSolutionVector(const size_t Offset,
+                                         const DoubleArray &y) = 0;
     LUE virtual void v_InitializeScheme(
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) = 0;
@@ -216,14 +216,7 @@ protected:
         boost::ignore_unused(variant, order, freeParams);
     }
 
-    LUE TimeIntegrationScheme(const TimeIntegrationScheme &in)
-    {
-        boost::ignore_unused(in);
-
-        NEKERROR(ErrorUtil::efatal, "Copy Constructor for the "
-                                    "TimeIntegrationScheme class should not be "
-                                    "called");
-    }
+    LUE TimeIntegrationScheme(const TimeIntegrationScheme &in) = delete;
 
     virtual ~TimeIntegrationScheme()
     {

@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 namespace Nektar
@@ -186,8 +185,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = 0;
-
+        phase->m_numMultiStepExplicitDerivs = 0;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
@@ -236,7 +234,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = 1;
+        phase->m_numMultiStepExplicitDerivs = 1;
 
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
@@ -279,8 +277,8 @@ public:
     LUE static void SetupSchemeData_2_2_2(
         TimeIntegrationAlgorithmGLMSharedPtr &phase)
     {
-        NekDouble glambda = 1.0 - sqrt(2.0) / 2.0;
-        NekDouble gdelta  = -sqrt(2.0) / 2.0;
+        const NekDouble glambda = 1.0 - sqrt(2.0) / 2.0;
+        const NekDouble gdelta  = -sqrt(2.0) / 2.0;
 
         phase->m_A[0][1][1] = glambda;
         phase->m_A[0][2][1] = 1.0 - glambda;
@@ -304,8 +302,8 @@ public:
     LUE static void SetupSchemeData_2_3_2(
         TimeIntegrationAlgorithmGLMSharedPtr &phase)
     {
-        NekDouble lambda = (2.0 - sqrt(2.0)) / 2.0;
-        NekDouble delta  = -2.0 * sqrt(2.0) / 3.0;
+        const NekDouble lambda = (2.0 - sqrt(2.0)) / 2.0;
+        const NekDouble delta  = -2.0 * sqrt(2.0) / 3.0;
 
         phase->m_A[0][1][1] = lambda;
         phase->m_A[0][2][1] = 1.0 - lambda;
@@ -329,7 +327,7 @@ public:
     LUE static void SetupSchemeData_2_3_3(
         TimeIntegrationAlgorithmGLMSharedPtr &phase)
     {
-        NekDouble glambda = (3.0 + sqrt(3.0)) / 6.0;
+        const NekDouble glambda = (3.0 + sqrt(3.0)) / 6.0;
 
         phase->m_A[0][1][1] = glambda;
         phase->m_A[0][2][1] = 1.0 - 2.0 * glambda;
@@ -353,7 +351,7 @@ public:
     LUE static void SetupSchemeData_3_4_3(
         TimeIntegrationAlgorithmGLMSharedPtr &phase)
     {
-        NekDouble lambda = 0.4358665215;
+        constexpr NekDouble lambda = 0.4358665215;
 
         phase->m_A[0][1][1] = lambda;
         phase->m_A[0][2][1] = 0.5 * (1.0 - lambda);
@@ -429,7 +427,7 @@ public:
 protected:
     LUE virtual std::string v_GetFullName() const override
     {
-        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
+        return m_integration_phases.back()->m_name;
     }
 
     LUE virtual std::string v_GetName() const override

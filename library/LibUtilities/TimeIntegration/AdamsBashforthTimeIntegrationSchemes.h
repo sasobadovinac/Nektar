@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 #include <LibUtilities/TimeIntegration/RungeKuttaTimeIntegrationSchemes.h>
@@ -141,7 +140,7 @@ public:
                                     size_t order)
     {
         // clang-format off
-        const NekDouble coefficients[5][4] =
+        constexpr NekDouble coefficients[5][4] =
             { {      0.,       0.,      0.,      0. },
               // 1st Order
               {      1.,       0.,      0.,      0. },
@@ -175,9 +174,6 @@ public:
 
         // Coefficients
 
-        // When multiple steps are taken B[0][0] and V[0][1...s] must be
-        // weighted so the time contribution is correct.
-
         // B Coefficient for first row first column
         phase->m_B[0][0][0] = coefficients[phase->m_order][0];
 
@@ -205,7 +201,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = phase->m_order - 1;
+        phase->m_numMultiStepExplicitDerivs = phase->m_order - 1;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 

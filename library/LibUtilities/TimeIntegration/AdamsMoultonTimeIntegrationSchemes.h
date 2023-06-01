@@ -43,11 +43,9 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 #include <LibUtilities/TimeIntegration/DIRKTimeIntegrationSchemes.h>
-#include <LibUtilities/TimeIntegration/EulerTimeIntegrationSchemes.h>
 
 namespace Nektar
 {
@@ -94,17 +92,13 @@ public:
                 break;
 
             case 2:
-                // Why forward euler and not backward euler???
-                EulerTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[0], "Forward");
+                // Intial phase set above
                 break;
 
             case 3:
                 // The first and second phases needed to be set correctly
                 DIRKTimeIntegrationScheme::SetupSchemeData(
                     m_integration_phases[0], 2);
-                DIRKTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[1], 3);
                 break;
 
             case 4:
@@ -141,10 +135,8 @@ public:
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     size_t order)
     {
-        // The 3rd and 4th order tableaus have not been validated!!!!!
-
         // clang-format off
-        const NekDouble coefficients[5][4] =
+        constexpr NekDouble coefficients[5][4] =
             { {      0.,       0.,      0.,     0. },
               // 1st Order
               {      1.,       0.,      0.,     0. },
@@ -178,9 +170,6 @@ public:
 
         // Coefficients
 
-        // When multiple steps are taken A/B[0][0] and U/V[0][1...s]
-        // must be weighted so the time contribution is correct.
-
         // A/B Coefficient for first row first column
         phase->m_A[0][0][0] = coefficients[phase->m_order][0];
         phase->m_B[0][0][0] = coefficients[phase->m_order][0];
@@ -208,8 +197,9 @@ public:
             phase->m_V[n][n - 1] = 1.0;
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = phase->m_order - 1;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = phase->m_order - 1;
+        phase->m_numMultiStepExplicitDerivs = 0;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 

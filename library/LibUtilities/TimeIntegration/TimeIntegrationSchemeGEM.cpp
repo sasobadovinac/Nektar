@@ -28,33 +28,16 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: implementation of time integration scheme GEM class
+// Description: Implementation of time integration scheme GEM class
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VmathArray.hpp>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGEM.h>
 
 namespace Nektar
 {
 namespace LibUtilities
 {
-
-const TripleArray &TimeIntegrationSchemeGEM::v_GetSolutionVector() const
-{
-    return m_Y;
-}
-
-TripleArray &TimeIntegrationSchemeGEM::v_UpdateSolutionVector()
-{
-    return m_Y;
-}
-
-void TimeIntegrationSchemeGEM::v_SetSolutionVector(const size_t Offset,
-                                                   const DoubleArray &y)
-{
-    m_Y[Offset] = y;
-}
 
 std::string TimeIntegrationSchemeGEM::v_GetName() const
 {
@@ -90,6 +73,22 @@ NekDouble TimeIntegrationSchemeGEM::v_GetTimeStability() const
 size_t TimeIntegrationSchemeGEM::v_GetNumIntegrationPhases() const
 {
     return 1;
+}
+
+const TripleArray &TimeIntegrationSchemeGEM::v_GetSolutionVector() const
+{
+    return m_Y;
+}
+
+TripleArray &TimeIntegrationSchemeGEM::v_UpdateSolutionVector()
+{
+    return m_Y;
+}
+
+void TimeIntegrationSchemeGEM::v_SetSolutionVector(const size_t Offset,
+                                                   const DoubleArray &y)
+{
+    m_Y[Offset] = y;
 }
 
 /**

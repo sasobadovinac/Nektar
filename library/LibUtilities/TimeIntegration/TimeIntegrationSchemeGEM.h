@@ -39,7 +39,7 @@
 
 #include <string>
 
-#include <LibUtilities/TimeIntegration/EulerTimeIntegrationSchemes.h>
+#include <LibUtilities/BasicUtils/VmathArray.hpp>
 #include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 
 namespace Nektar
@@ -91,6 +91,7 @@ public:
                      "scheme bad order numbers (even number): " +
                          std::to_string(order));
         }
+
         m_variant    = variant;
         m_order      = order;
         m_freeParams = freeParams;
@@ -134,28 +135,16 @@ protected:
         const override;
     LUE virtual NekDouble v_GetTimeStability() const override;
     LUE virtual size_t v_GetNumIntegrationPhases() const override;
-
-    /**
-     * \brief Gets the solution vector of the ODE
-     */
     LUE virtual const TripleArray &v_GetSolutionVector() const override;
     LUE virtual TripleArray &v_UpdateSolutionVector() override;
-
-    /**
-     * \brief Sets the solution vector of the ODE
-     */
     LUE virtual void v_SetSolutionVector(const size_t Offset,
                                          const DoubleArray &y) override;
-
-    // The worker methods from the base class that are virtual
     LUE virtual void v_InitializeScheme(
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) override;
-
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
         const size_t timestep, const NekDouble delta_t,
         const TimeIntegrationSchemeOperators &op) override;
-
     LUE virtual void v_print(std::ostream &os) const override;
     LUE virtual void v_printFull(std::ostream &os) const override;
 
@@ -183,6 +172,7 @@ protected:
 
 LUE std::ostream &operator<<(std::ostream &os,
                              const TimeIntegrationSchemeGEM &rhs);
+
 LUE std::ostream &operator<<(std::ostream &os,
                              const TimeIntegrationSchemeGEMSharedPtr &rhs);
 
