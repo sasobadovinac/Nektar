@@ -43,14 +43,12 @@ namespace Nektar
 {
 namespace NekConstants
 {
-static const int kNekLargeInt               = std::numeric_limits<int>::max();
-static const NekDouble kNekUnsetDouble      = -9999;
-static const NekDouble kNekMinResidInit     = 1.0e+16;
+static const NekDouble kNekUnsetDouble = -9999;
+
+// Tolerances
 static const NekDouble kVertexTheSameDouble = 1.0e-08;
 static const NekDouble kGeomFactorsTol      = 1.0e-08;
 static const NekDouble kNekZeroTol          = 1.0e-12;
-static const NekDouble kGeomRightAngleTol   = 1.0e-14;
-static const NekDouble kNekSqrtTol          = 1.0e-16;
 static const NekDouble kNekIterativeTol     = 1.0e-09;
 static const NekDouble kNekSparseNonZeroTol = 1.0e-16;
 static const NekDouble kNekMachineEpsilon =

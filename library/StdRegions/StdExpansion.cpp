@@ -137,15 +137,7 @@ NekDouble StdExpansion::L2(const Array<OneD, const NekDouble> &phys,
 
     val = v_Integral(wsp);
 
-    // if val too small, sqrt returns nan.
-    if (fabs(val) < NekConstants::kNekSqrtTol * NekConstants::kNekSqrtTol)
-    {
-        return 0.0;
-    }
-    else
-    {
-        return sqrt(val);
-    }
+    return (val < 0.0) ? 0.0 : sqrt(val);
 }
 
 NekDouble StdExpansion::H1(const Array<OneD, const NekDouble> &phys,

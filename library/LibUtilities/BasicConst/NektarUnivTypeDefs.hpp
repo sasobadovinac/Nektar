@@ -75,6 +75,7 @@ enum Direction
     zDir = 2
 };
 
+/// Enumeration a flags for output format.
 enum OutputFormat
 {
     eTecplot,

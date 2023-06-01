@@ -181,6 +181,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // Print help message.
     if (vm.count("help") || vm.count("input-file") != 1)
     {
         cerr << "Usage: FieldConvert [options] "
@@ -226,13 +227,13 @@ int main(int argc, char *argv[])
 
     if (LibUtilities::GetCommFactory().ModuleExists("ParallelMPI"))
     {
-        // get hold of parallel communicator first
+        // Get hold of parallel communicator first.
         MPIComm = LibUtilities::GetCommFactory().CreateInstance("ParallelMPI",
                                                                 argc, argv);
 
         if (vm.count("nparts"))
         {
-            // work out number of processors to run in serial over partitions
+            // Work out number of processors to run in serial over partitions.
             MPInprocs = MPIComm->GetSpaceComm()->GetSize();
             MPIrank   = MPIComm->GetSpaceComm()->GetRank();
 
@@ -257,7 +258,7 @@ int main(int argc, char *argv[])
             LibUtilities::GetCommFactory().CreateInstance("Serial", argc, argv);
     }
 
-    // For parallel-in-time
+    // For parallel-in-time.
     if (vm.count("npt"))
     {
         for (auto io = inout.end() - 2; io != inout.end(); io++)
@@ -343,7 +344,7 @@ int main(int argc, char *argv[])
 
         if (i < nInput || i == modcmds.size() - 1)
         {
-            // assume all modules are input unless last, or specified to be :out
+            // Assume all modules are input unless last, or specified to be :out
             module.first = (i < nInput ? eInputModule : eOutputModule);
             if (tmp1.size() > 1 && tmp1.back() == "out")
             {
@@ -437,8 +438,8 @@ int main(int argc, char *argv[])
             outfilename = tmp1[0];
             if (nParts > 1)
             {
-                // if nParts is specified then ensure output modules
-                // write out mutipile files
+                // If nParts is specified then ensure output modules
+                // write out mutipile files.
                 mod->RegisterConfig("writemultiplefiles");
             }
         }
@@ -469,7 +470,7 @@ int main(int argc, char *argv[])
         mod->SetDefaults();
     }
 
-    // Include equispacedoutput module if needed
+    // Include equispacedoutput module if needed.
     Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < modules.size(); ++i)
     {
@@ -485,9 +486,9 @@ int main(int argc, char *argv[])
         mod->SetDefaults();
     }
 
-    // Check if modules provided are compatible
+    // Check if modules provided are compatible.
     CheckModules(modules);
-    // Can't have ContField with range option (because of boundaries)
+    // Can't have ContField with range option (because of boundaries).
     if (vm.count("range") && f->m_declareExpansionAsContField)
     {
         ASSERTL0(false, "Can't use range option with module requiring "
@@ -500,13 +501,13 @@ int main(int argc, char *argv[])
         PrintExecutionSequence(modules);
     }
 
-    // Loop on partitions if required
+    // Loop on partitions if required.
     LibUtilities::CommSharedPtr defComm = f->m_comm;
     LibUtilities::CommSharedPtr partComm;
     for (int p = MPIrank; p < nParts; p += MPInprocs)
     {
-        // write out which partition is being processed and defined a
-        // new serial communicator
+        // Write out which partition is being processed and defined a
+        // new serial communicator.
         if (nParts > 1)
         {
             cout << endl << "Processing partition: " << p << endl;
@@ -544,11 +545,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    // write out Info file if required.
+    // Write out Info file if required.
     if (nParts > 1)
     {
         int i;
-        // check to see if we have created a fld file.
+        // Check to see if we have created a fld file.
         for (i = 0; i < modules.size(); ++i)
         {
             if (boost::iequals(modules[i]->GetModuleName(), "OutputFld"))
@@ -576,7 +577,7 @@ int main(int argc, char *argv[])
 
                 if (f->m_writeBndFld)
                 {
-                    // find ending of output file and insert _b1, _b2
+                    // Find ending of output file and insert _b1, _b2.
                     int dot = outfilename.find_last_of('.') + 1;
                     string ext =
                         outfilename.substr(dot, outfilename.length() - dot);
@@ -624,14 +625,14 @@ int main(int argc, char *argv[])
 // This function checks validity conditions for the list of modules provided
 void CheckModules(vector<ModuleSharedPtr> &modules)
 {
-    // Count number of modules by priority
+    // Count number of modules by priority.
     Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < modules.size(); ++i)
     {
         ++modulesCount[modules[i]->GetModulePriority()];
     }
 
-    // Modules of type eModifyFieldData require a eCreateFieldData module
+    // Modules of type eModifyFieldData require a eCreateFieldData module.
     if (modulesCount[eModifyFieldData] != 0 &&
         modulesCount[eCreateFieldData] == 0)
     {
@@ -648,7 +649,7 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
         ASSERTL0(false, ss.str());
     }
 
-    // Modules of type eFillExp require eCreateGraph without eCreateFieldData
+    // Modules of type eFillExp require eCreateGraph without eCreateFieldData.
     if (modulesCount[eFillExp] != 0)
     {
         if (modulesCount[eCreateGraph] == 0 ||
@@ -668,8 +669,8 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
         }
     }
 
-    // Modules of type eModifyExp and eBndExtraction
-    //      require a eCreateGraph module
+    // Modules of type eModifyExp and eBndExtraction require a eCreateGraph
+    // module.
     if ((modulesCount[eModifyExp] != 0 || modulesCount[eBndExtraction] != 0) &&
         modulesCount[eCreateGraph] == 0)
     {
@@ -687,7 +688,7 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
         ASSERTL0(false, ss.str());
     }
 
-    // Modules of type eCreatePts should not be used with xml or fld inputs
+    // Modules of type eCreatePts should not be used with xml or fld inputs.
     if (modulesCount[eCreatePts] != 0)
     {
         if (modulesCount[eCreateGraph] != 0 ||
@@ -708,7 +709,7 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
     }
 
     // Modules of type eConvertExpToPts require eCreateGraph, but are not
-    //    compatible with eBndExtraction
+    //    compatible with eBndExtraction.
     if (modulesCount[eConvertExpToPts] != 0)
     {
         if (modulesCount[eCreateGraph] == 0)
@@ -750,6 +751,7 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
     }
 }
 
+// This function print the execution sequence for the list of modules provided
 void PrintExecutionSequence(vector<ModuleSharedPtr> &modules)
 {
     bool first = true;
@@ -776,6 +778,7 @@ void PrintExecutionSequence(vector<ModuleSharedPtr> &modules)
     cout << endl;
 }
 
+// This function run the module provided
 void RunModule(ModuleSharedPtr module, po::variables_map &vm, bool verbose)
 {
     LibUtilities::Timer moduleTimer;
