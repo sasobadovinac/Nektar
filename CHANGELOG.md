@@ -19,6 +19,7 @@ v5.4.0
 - Update parallel-in-time code base in fieldconvert (!1565)
 - Remove unused function GetKey in NekFactory (!1567)
 - Fix v_Exscan compilation bug (!1566)
+- Tidy-up Nektar tolerances (!1570)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)

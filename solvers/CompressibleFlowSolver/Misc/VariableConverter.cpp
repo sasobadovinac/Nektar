@@ -616,7 +616,7 @@ void VariableConverter::GetSensor(
         denominator = Vmath::Dot(nElmtPoints, elmtPhys, elmtPhys);
 
         NekDouble elmtSensor = sqrt(numerator / denominator);
-        elmtSensor = log10(max(elmtSensor, NekConstants::kNekSqrtTol));
+        elmtSensor = log10(max(elmtSensor, NekConstants::kNekMachineEpsilon));
 
         Vmath::Fill(nElmtPoints, elmtSensor, tmp = Sensor + physOffset, 1);
 
