@@ -36,11 +36,9 @@
 
 #include <LibUtilities/Communication/Transposition.h>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>   // for ASSERTL0, etc
-#include <LibUtilities/BasicUtils/SharedArray.hpp> // for Array
-#include <LibUtilities/BasicUtils/Vmath.hpp>       // for Vcopy
-#include <LibUtilities/Foundations/Basis.h>        // for BasisKey
-#include <LibUtilities/Foundations/Foundations.hpp>
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp> // for ASSERTL0, etc
+#include <LibUtilities/BasicUtils/Vmath.hpp>     // for Vcopy
+#include <LibUtilities/Foundations/Basis.h>      // for BasisKey
 
 namespace Nektar
 {
@@ -625,6 +623,5 @@ void Transposition::TransposeZYtoYZ(const int npts,
     }
 }
 
-// TODO: Impelement 2D and 3D transposition routines
 } // namespace LibUtilities
 } // namespace Nektar

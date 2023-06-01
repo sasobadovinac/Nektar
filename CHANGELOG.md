@@ -5,8 +5,7 @@ v5.4.0
 **Library**
 - Add unit tests for Polylib (!1533)
 - Redesign of Parareal driver (!1509) 
-- Add local p-refinement functionality (!508)
-- Fix compilation against TetGen 1.6 (!1547)
+- Add local p-refinement functionality (!1508)
 - Tidy-up SDC schemes (!1550)
 - Add min/max and fmin/fmax function to the interpretor registry (!1552)
 - Fix a _m128d to _m128i conversion bug in sse2.hpp (!1551)
@@ -19,6 +18,7 @@ v5.4.0
 - Update parallel-in-time code base in fieldconvert (!1565)
 - Remove unused function GetKey in NekFactory (!1567)
 - Fix v_Exscan compilation bug (!1566)
+- Tidy-up of comm class (!1572)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
