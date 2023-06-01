@@ -104,6 +104,7 @@ typedef std::shared_ptr<TimeIntegrationSolutionGLM>
 typedef std::vector<TimeIntegrationSolutionGLMSharedPtr>
     TimeIntegrationSolutionGLMVector;
 
+//
 class TimeIntegrationSchemeGEM;
 
 typedef std::shared_ptr<TimeIntegrationSchemeGEM>
@@ -112,6 +113,7 @@ typedef std::shared_ptr<TimeIntegrationSchemeGEM>
 typedef std::vector<TimeIntegrationSchemeGEMSharedPtr>
     TimeIntegrationSchemeGEMVector;
 
+//
 class TimeIntegrationSchemeSDC;
 
 typedef std::shared_ptr<TimeIntegrationSchemeSDC>

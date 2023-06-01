@@ -44,7 +44,6 @@
 #define LUE LIB_UTILITIES_EXPORT
 using namespace std;
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 namespace Nektar
@@ -61,7 +60,7 @@ public:
                               std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
-        // Currently 2nd and 3rd order are implemented.
+        // Currently up to 4th order is implemented.
         ASSERTL0(1 <= order && order <= 4,
                  "Diagonally Implicit Runge Kutta integration scheme bad order "
                  "(1-4): " +
@@ -145,7 +144,7 @@ public:
                 // and is L-stable if and only if x equals one of the
                 // roots of the polynomial x^2 - 2x + 1/2, i.e. if
                 // x = 1 ± sqrt(2)/2.
-                NekDouble lambda = (2.0 - sqrt(2.0)) / 2.0;
+                const NekDouble lambda = (2.0 - sqrt(2.0)) / 2.0;
 
                 phase->m_A[0][0][0] = lambda;
                 phase->m_A[0][1][0] = 1.0 - lambda;
@@ -160,7 +159,7 @@ public:
             {
                 // Three-stage, 3rd order, L-stable Diagonally Implicit
                 // Runge Kutta method:
-                NekDouble lambda = 0.4358665215;
+                constexpr NekDouble lambda = 0.4358665215;
 
                 phase->m_A[0][0][0] = lambda;
                 phase->m_A[0][1][0] = 0.5 * (1.0 - lambda);
@@ -184,7 +183,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = 0;
+        phase->m_numMultiStepExplicitDerivs = 0;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
@@ -288,8 +287,6 @@ public:
                     lambda = 1.0 / 4.0;
                 }
 
-                const NekDouble ConstSqrt2 = sqrt(2.0);
-
                 phase->m_A[0][0][0] = 0.0;
                 phase->m_A[0][1][0] = lambda;
                 phase->m_A[0][2][0] = (1.0 - ConstSqrt2) / 8.0;
@@ -342,7 +339,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = 0;
+        phase->m_numMultiStepExplicitDerivs = 0;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 

@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 #include <NekMesh/Module/ProcessModules/ProcessVarOpti/Evaluator.hxx>
@@ -169,7 +168,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = phase->m_order - 1;
+        phase->m_numMultiStepExplicitDerivs = phase->m_order - 1;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 

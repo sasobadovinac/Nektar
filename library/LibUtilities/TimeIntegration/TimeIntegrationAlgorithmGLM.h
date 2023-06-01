@@ -155,9 +155,9 @@ public:
         return m_numMultiStepImplicitDerivs;
     }
 
-    inline size_t GetNmultiStepDerivs() const
+    inline size_t GetNmultiStepExplicitDerivs() const
     {
-        return m_numMultiStepDerivs;
+        return m_numMultiStepExplicitDerivs;
     }
 
     inline const Array<OneD, const size_t> &GetTimeLevelOffset() const
@@ -187,9 +187,10 @@ public:
         0}; // number of entries in input and
             // output vector that correspond
             // to implicit DERIVATIVES at previous levels
-    size_t m_numMultiStepDerivs{0}; // number of entries in input and
-                                    // output vector that correspond
-                                    // to DERIVATIVES at previous levels
+    size_t m_numMultiStepExplicitDerivs{
+        0}; // number of entries in input and
+            // output vector that correspond
+            // to explicit DERIVATIVES at previous levels
     Array<OneD, size_t>
         m_timeLevelOffset; // denotes to which time-level the entries in both
                            // input and output vector correspond, e.g.
@@ -216,7 +217,8 @@ public:
     Array<OneD, Array<TwoD, NekDouble>> m_U_phi;
     Array<OneD, Array<TwoD, NekDouble>> m_V_phi;
 
-    bool m_initialised{false}; /// bool to identify array initialization
+    // bool to identify array initialization
+    bool m_initialised{false};
 
     // Values uses for exponential integration
     NekDouble m_lastDeltaT{0}; /// Last delta T
@@ -253,7 +255,7 @@ private:
     void CheckIfLastStageEqualsNewSolution();
     void VerifyIntegrationSchemeType();
 
-    bool CheckTimeIntegrateArguments( // const NekDouble timestep,
+    bool CheckTimeIntegrateArguments(
         ConstTripleArray &y_old, ConstSingleArray &t_old, TripleArray &y_new,
         SingleArray &t_new, const TimeIntegrationSchemeOperators &op) const;
 
@@ -262,6 +264,7 @@ private:
     {
         return m_A[0][i][j];
     }
+
     // Overloaded accessor for GLM parameter A; both exponential and
     // conventional schemes are currently supported
     inline NekDouble A(const size_t k, const size_t i, const size_t j) const
@@ -277,10 +280,12 @@ private:
             return m_A[0][i][j];
         }
     }
+
     inline NekDouble B(const size_t i, const size_t j) const
     {
         return m_B[0][i][j];
     }
+
     // Overloaded accessor for GLM parameter B; both exponential and
     // conventional schemes are currently supported
     inline NekDouble B(const size_t k, const size_t i, const size_t j) const
@@ -296,10 +301,12 @@ private:
             return m_B[0][i][j];
         }
     }
+
     inline NekDouble U(const size_t i, const size_t j) const
     {
         return m_U[i][j];
     }
+
     // Overloaded accessor for GLM parameter U; both exponential and
     // conventional schemes are currently supported
     inline NekDouble U(const size_t k, const size_t i, const size_t j) const
@@ -315,10 +322,12 @@ private:
             return m_U[i][j];
         }
     }
+
     inline NekDouble V(const size_t i, const size_t j) const
     {
         return m_V[i][j];
     }
+
     // Overloaded accessor for GLM parameter V; both exponential and
     // conventional schemes are currently supported
     inline NekDouble V(const size_t k, const size_t i, const size_t j) const
@@ -339,6 +348,7 @@ private:
     {
         return m_A[1][i][j];
     }
+
     inline NekDouble B_IMEX(const size_t i, const size_t j) const
     {
         return m_B[1][i][j];
@@ -358,6 +368,7 @@ private:
     {
         return y[0].size();
     }
+
     inline size_t GetSecondDim(ConstTripleArray &y) const
     {
         return y[0][0].size();

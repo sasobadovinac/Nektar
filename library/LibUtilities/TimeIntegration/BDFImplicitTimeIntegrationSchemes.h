@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 #include <LibUtilities/TimeIntegration/DIRKTimeIntegrationSchemes.h>
@@ -136,14 +135,14 @@ public:
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     size_t order)
     {
-        const NekDouble ABcoefficients[5] = {0.,
-                                             1.,         // 1st Order
-                                             2. / 3.,    // 2nd Order
-                                             6. / 11.,   // 3rd Order
-                                             12. / 25.}; // 4th Order
+        constexpr NekDouble ABcoefficients[5] = {0.,
+                                                 1.,         // 1st Order
+                                                 2. / 3.,    // 2nd Order
+                                                 6. / 11.,   // 3rd Order
+                                                 12. / 25.}; // 4th Order
 
         // clang-format off
-        const NekDouble UVcoefficients[5][4] =
+        constexpr NekDouble UVcoefficients[5][4] =
             { {       0.,      0.,     0.,       0. },
               // 1st Order
               {       1.,      0.,     0.,       0. },
@@ -177,9 +176,6 @@ public:
 
         // Coefficients
 
-        // When multiple steps are taken A/B[0][0] and U/V[0][1...s]
-        // must be weighted so the time contribution is correct.
-
         // A/B Coefficient for first row first column
         phase->m_A[0][0][0] = ABcoefficients[phase->m_order];
         phase->m_B[0][0][0] = ABcoefficients[phase->m_order];
@@ -199,10 +195,8 @@ public:
 
         phase->m_numMultiStepValues         = phase->m_order;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = 0;
+        phase->m_numMultiStepExplicitDerivs = 0;
         phase->m_timeLevelOffset = Array<OneD, size_t>(phase->m_numsteps);
-
-        // For order >= 1 values are needed.
         for (size_t n = 0; n < phase->m_order; ++n)
         {
             phase->m_timeLevelOffset[n] = n;

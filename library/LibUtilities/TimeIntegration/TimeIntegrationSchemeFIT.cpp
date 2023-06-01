@@ -342,22 +342,6 @@ ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
         }
     }
 
-    // Dump the current solution.
-    // std::cout << "timeStep  " << timeStep << std::endl;
-    // for( size_t j=0; j<m_npoints; ++j )
-    // {
-    //     for( size_t i=0; i<m_nvars; ++i )
-    //     {
-    //         for( size_t m=0; m<m_order+1; ++m )
-    //         {
-    //             std::cout << m_u[m][i][j] << "  ";
-    //         }
-    //         std::cout << std::endl;
-    //     }
-    //     std::cout << std::endl;
-    // }
-    // std::cout << std::endl;
-
     // Update the storage and counters for integral classes to
     // time timeStep * m_deltaT. Also time-steps the sandboxes and stashes.
     for (size_t i = 0; i < m_Lmax; ++i)
@@ -730,18 +714,6 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
                 // scenarios.
             default:
                 ASSERTL1(false, "No matrix inverse.");
-
-                // Ainv = zeros(counter);
-                // Ainv(1,:) = 1;
-                // Ainv(2,1) = 1;
-
-                // for( size_t j = 3; j<=counter; ++j )
-                // {
-                //          Ainv(j,:) = pow((j-2)., (0:counter));
-                //          Ainv(j,:) = Ainv(j,:). * pow((-1)., (0:counter));
-                // }
-
-                // As[m] = inv(Ainv);
                 break;
         }
     }

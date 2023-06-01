@@ -39,7 +39,6 @@
 #define LUE LIB_UTILITIES_EXPORT
 
 #include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
-#include <LibUtilities/TimeIntegration/TimeIntegrationTypes.hpp>
 
 namespace Nektar
 {
@@ -49,15 +48,9 @@ namespace LibUtilities
 class TimeIntegrationSolutionGLM
 {
 public:
-    // Constructor for single step methods
     LUE TimeIntegrationSolutionGLM(
         const TimeIntegrationAlgorithmGLM *schemeAlgorithm,
         const DoubleArray &y, const NekDouble time, const NekDouble timestep);
-
-    // Constructor for multi-step methods
-    LUE TimeIntegrationSolutionGLM(
-        const TimeIntegrationAlgorithmGLM *schemeAlgorithm,
-        const TripleArray &y, const Array<OneD, NekDouble> &t);
 
     LUE TimeIntegrationSolutionGLM(
         const TimeIntegrationAlgorithmGLM *schemeAlgorithm, const size_t nvar,
@@ -75,6 +68,7 @@ public:
     {
         return m_solVector;
     }
+
     inline TripleArray &UpdateSolutionVector()
     {
         return m_solVector;
@@ -84,12 +78,12 @@ public:
     {
         return m_solVector[0];
     }
+
     inline DoubleArray &UpdateSolution()
     {
         return m_solVector[0];
     }
 
-    // Sets the solution Vector
     inline void SetSolutionVector(const size_t Offset, const DoubleArray &y)
     {
         m_solVector[Offset] = y;
@@ -99,6 +93,7 @@ public:
     {
         return m_t;
     }
+
     inline Array<OneD, NekDouble> &UpdateTimeVector()
     {
         return m_t;
@@ -108,6 +103,7 @@ public:
     {
         return m_t[0];
     }
+
     size_t GetNsteps()
     {
         return m_schemeAlgorithm->m_numsteps;
@@ -117,6 +113,7 @@ public:
     {
         return m_solVector[0].size();
     }
+
     inline size_t GetSecondDim() const
     {
         return m_solVector[0][0].size();
@@ -130,14 +127,17 @@ public:
     }
 
     // Return the number of entries in the solution vector that correspond to
-    // (multi-step) derivatives.
+    // implicit (multi-step) derivatives.
     inline size_t GetNimplicitderivs() const
     {
         return m_schemeAlgorithm->GetNmultiStepImplicitDerivs();
     }
-    inline size_t GetNderivs() const
+
+    // Return the number of entries in the solution vector that correspond to
+    // explicit (multi-step) derivatives.
+    inline size_t GetNexplicitderivs() const
     {
-        return m_schemeAlgorithm->GetNmultiStepDerivs();
+        return m_schemeAlgorithm->GetNmultiStepExplicitDerivs();
     }
 
     // Returns an array which indicates to which time-level the entries in the
@@ -159,6 +159,8 @@ public:
         {
             if (timeLevelOffset == offsetvec[i])
             {
+                ASSERTL0(m_setflag[i],
+                         "Solution vector is not set at this time level");
                 return m_solVector[i];
             }
         }
@@ -168,7 +170,7 @@ public:
     }
 
     // returns the entry in the solution vector which corresponds to the
-    // (multi-step) derivative at the time-level with specified offset
+    // implicit (multi-step) derivative at the time-level with specified offset
     inline DoubleArray &GetImplicitDerivative(const size_t timeLevelOffset)
     {
         size_t nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
@@ -182,6 +184,9 @@ public:
         {
             if (timeLevelOffset == offsetvec[i])
             {
+                ASSERTL0(m_setflag[i],
+                         "Implicit derivative solution vector is not set at "
+                         "this time level");
                 return m_solVector[i];
             }
         }
@@ -189,7 +194,10 @@ public:
                         "derivative at the requested time-level");
         return m_solVector[0];
     }
-    inline DoubleArray &GetDerivative(const size_t timeLevelOffset)
+
+    // returns the entry in the solution vector which corresponds to the
+    // explicit (multi-step) derivative at the time-level with specified offset
+    inline DoubleArray &GetExplicitDerivative(const size_t timeLevelOffset)
     {
         size_t nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
         size_t nMultiStepImplicitDerivs =
@@ -203,6 +211,9 @@ public:
         {
             if (timeLevelOffset == offsetvec[i])
             {
+                ASSERTL0(m_setflag[i],
+                         "Explicit derivative solution vector is not set at "
+                         "this time level");
                 return m_solVector[i];
             }
         }
@@ -231,9 +242,8 @@ public:
         return m_t[0];
     }
 
-    // sets the (multi-step) value and time in the solution
-    // vector which corresponds to
-    // the value at the time-level with specified offset
+    // sets the (multi-step) value and time in the solution vector which
+    // corresponds to the value at the time-level with specified offset
     inline void SetValue(const size_t timeLevelOffset, const DoubleArray &y,
                          const NekDouble t)
     {
@@ -247,14 +257,15 @@ public:
             {
                 m_solVector[i] = y;
                 m_t[i]         = t;
+                m_setflag[i]   = true;
                 return;
             }
         }
     }
 
-    // sets the (multi-step) derivative and time in the
-    // solution vector which corresponds to
-    // the derivative at the time-level with specified offset
+    // sets the (multi-step) derivative and time in the solution vector which
+    // corresponds to the implicit derivative at the time-level with specified
+    // offset
     inline void SetImplicitDerivative(const size_t timeLevelOffset,
                                       const DoubleArray &y,
                                       const NekDouble timestep)
@@ -272,12 +283,18 @@ public:
             {
                 m_solVector[i] = y;
                 m_t[i]         = timestep;
+                m_setflag[i]   = true;
                 return;
             }
         }
     }
-    inline void SetDerivative(const size_t timeLevelOffset,
-                              const DoubleArray &y, const NekDouble timestep)
+
+    // sets the (multi-step) derivative and time in the solution vector which
+    // corresponds to the explicit derivative at the time-level with specified
+    // offset
+    inline void SetExplicitDerivative(const size_t timeLevelOffset,
+                                      const DoubleArray &y,
+                                      const NekDouble timestep)
     {
         size_t nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
         size_t nMultiStepImplicitDerivs =
@@ -293,6 +310,7 @@ public:
             {
                 m_solVector[i] = y;
                 m_t[i]         = timestep;
+                m_setflag[i]   = true;
                 return;
             }
         }
@@ -309,18 +327,21 @@ public:
         for (size_t i = (nMultiStepVals - 1); i > 0; i--)
         {
             m_solVector[i] = m_solVector[i - 1];
+            m_setflag[i]   = m_setflag[i - 1];
         }
 
         for (size_t i = (nMultiStepVals + nMultiStepImpDerivs - 1);
              i > nMultiStepVals; i--)
         {
             m_solVector[i] = m_solVector[i - 1];
+            m_setflag[i]   = m_setflag[i - 1];
         }
 
         for (size_t i = (size - 1); i > nMultiStepVals + nMultiStepImpDerivs;
              i--)
         {
             m_solVector[i] = m_solVector[i - 1];
+            m_setflag[i]   = m_setflag[i - 1];
         }
     }
 
@@ -329,6 +350,7 @@ private:
 
     TripleArray m_solVector;
     Array<OneD, NekDouble> m_t;
+    Array<OneD, bool> m_setflag;
 
 }; // end class TimeIntegrationSolutionGLM
 
