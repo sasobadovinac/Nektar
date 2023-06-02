@@ -157,7 +157,7 @@ protected:
         }
         else
         {
-            return 2.784;
+            return 2.0;
         }
     }
 

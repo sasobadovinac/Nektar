@@ -226,7 +226,6 @@ protected:
 
 LUE std::ostream &operator<<(std::ostream &os,
                              const TimeIntegrationScheme &rhs);
-
 LUE std::ostream &operator<<(std::ostream &os,
                              const TimeIntegrationSchemeSharedPtr &rhs);
 

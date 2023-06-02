@@ -77,8 +77,10 @@ public:
 
         // Next to last phase
         if (order > 1)
+        {
             AdamsMoultonTimeIntegrationScheme::SetupSchemeData(
                 m_integration_phases[order - 2], order - 1);
+        }
 
         // Last phase
         AdamsMoultonTimeIntegrationScheme::SetupSchemeData(
@@ -96,15 +98,16 @@ public:
                 break;
 
             case 3:
-                // The first and second phases needed to be set correctly
+                // Order 2
                 DIRKTimeIntegrationScheme::SetupSchemeData(
                     m_integration_phases[0], 2);
                 break;
 
             case 4:
-                // The first and second phases needed to be set correctly
+                // Order 3
                 DIRKTimeIntegrationScheme::SetupSchemeData(
                     m_integration_phases[0], 3);
+                // Order 3
                 DIRKTimeIntegrationScheme::SetupSchemeData(
                     m_integration_phases[1], 3);
                 break;
@@ -177,7 +180,7 @@ public:
         // B evaluation value shuffling second row first column
         if (phase->m_order > 1)
         {
-            phase->m_B[0][1][0] = 1.0; // constant 1
+            phase->m_B[0][1][0] = 1.0;
         }
 
         // U/V Coefficient for first row first column

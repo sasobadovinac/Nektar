@@ -13,6 +13,7 @@ v5.4.0
 - Remove unecessary for loop in NekLinSysIterGMRES (!1554)
 - Generalize the use of size_t in TimeIntegration (!1555)
 - Tidy-up TimeIntegration (!1505)
+- Fix Adams-Bashforth time integration scheme (!1558)
 - Remove unused Kernel directory (!1560)
 - Remove unused files in BasicUtils (!1564)
 - Fix convergence error in Fixed-point Jacobi algorithm (!1561)

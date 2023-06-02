@@ -63,8 +63,6 @@ public:
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
         // Currently up to 4th order is implemented.
-
-        // Methods with order > 6 are not zero-stable.
         ASSERTL1(1 <= order && order <= 4,
                  "BDFImplicit Time integration scheme bad order (1-4): " +
                      std::to_string(order));
@@ -98,13 +96,16 @@ public:
                 break;
 
             case 3:
+                // Order 2
                 DIRKTimeIntegrationScheme::SetupSchemeData(
                     m_integration_phases[0], 2);
                 break;
 
             case 4:
+                // Order 3
                 DIRKTimeIntegrationScheme::SetupSchemeData(
                     m_integration_phases[0], 3);
+                // Order 3
                 DIRKTimeIntegrationScheme::SetupSchemeData(
                     m_integration_phases[1], 3);
                 break;

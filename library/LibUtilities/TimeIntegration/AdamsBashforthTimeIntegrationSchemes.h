@@ -77,8 +77,10 @@ public:
 
         // Next to last phase
         if (order > 1)
+        {
             AdamsBashforthTimeIntegrationScheme::SetupSchemeData(
                 m_integration_phases[order - 2], order - 1);
+        }
 
         // Last phase
         AdamsBashforthTimeIntegrationScheme::SetupSchemeData(
@@ -92,7 +94,7 @@ public:
                 break;
 
             case 2:
-                // Done above.
+                // Intial phase set above
                 break;
 
             case 3:
@@ -180,7 +182,7 @@ public:
         // B evaluation value shuffling second row first column
         if (phase->m_order > 1)
         {
-            phase->m_B[0][1][0] = 1.0; // constant 1
+            phase->m_B[0][1][0] = 1.0;
         }
 
         // U Curent time step evaluation first row first column
@@ -222,7 +224,26 @@ protected:
 
     LUE virtual NekDouble v_GetTimeStability() const override
     {
-        return 1.0;
+        if (GetOrder() == 1)
+        {
+            return 2.0;
+        }
+        else if (GetOrder() == 2)
+        {
+            return 1.0;
+        }
+        else if (GetOrder() == 3)
+        {
+            return 0.545454545454545;
+        }
+        else if (GetOrder() == 4)
+        {
+            return 0.3;
+        }
+        else
+        {
+            return 2.0;
+        }
     }
 
 }; // end class AdamsBashforthTimeIntegrationScheme
