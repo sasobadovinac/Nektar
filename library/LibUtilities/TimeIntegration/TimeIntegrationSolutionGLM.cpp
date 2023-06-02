@@ -55,9 +55,6 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
     size_t nvar           = y.size();
     size_t npoints        = y[0].size();
     size_t nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
-    const Array<OneD, const size_t> &timeLevels =
-        m_schemeAlgorithm->GetTimeLevelOffset();
-
     for (size_t i = 1; i < nsteps; i++)
     {
         m_solVector[i] = Array<OneD, Array<OneD, NekDouble>>(nvar);
@@ -68,7 +65,7 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
 
         if (i < nMultiStepVals)
         {
-            m_t[i] = time - i * timestep * timeLevels[i];
+            m_t[i] = time - i * timestep;
         }
         else
         {

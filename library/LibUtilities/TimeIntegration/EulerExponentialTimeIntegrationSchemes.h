@@ -67,7 +67,6 @@ public:
     {
         // Currently up to 4th order is implemented because the number
         // of steps is the same as the order.
-        // Currently up to 4th order is implemented.
         ASSERTL1(variant == "Lawson" || variant == "Norsett",
                  "EulerExponential Time integration scheme unknown variant: " +
                      variant + ". Must be 'Lawson' or 'Norsett'.");
@@ -135,9 +134,6 @@ public:
             Array<TwoD, NekDouble>(phase->m_numsteps, phase->m_numsteps, 0.0);
 
         // Coefficients
-
-        // When multiple steps are taken B[0][0] and V[0][1...s] must be
-        // weighted so the time contribution is correct.
 
         // B Phi function for first row first column
         phase->m_B[0][0][0] = 1.0 / phase->m_order; // phi_func(0 or 1)

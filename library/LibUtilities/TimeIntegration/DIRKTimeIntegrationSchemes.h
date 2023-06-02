@@ -227,15 +227,9 @@ public:
                          std::string("DIRKOrder3_ES" +
                                      std::to_string(phase->m_numstages) +
                                      " not defined"));
-                NekDouble lambda;
-                if (freeParams.size())
-                {
-                    lambda = freeParams[0];
-                }
-                else
-                {
-                    lambda = 9.0 / 40.0;
-                }
+
+                NekDouble lambda =
+                    (freeParams.size()) ? freeParams[0] : 9.0 / 40.0;
 
                 phase->m_A[0][0][0] = 0.0;
                 phase->m_A[0][1][0] = lambda;
@@ -277,15 +271,9 @@ public:
                          std::string("DIRKOrder4_ES" +
                                      std::to_string(phase->m_numstages) +
                                      " not defined"));
-                NekDouble lambda;
-                if (freeParams.size())
-                {
-                    lambda = freeParams[0];
-                }
-                else
-                {
-                    lambda = 1.0 / 4.0;
-                }
+
+                NekDouble lambda =
+                    (freeParams.size()) ? freeParams[0] : 1.0 / 4.0;
 
                 phase->m_A[0][0][0] = 0.0;
                 phase->m_A[0][1][0] = lambda;

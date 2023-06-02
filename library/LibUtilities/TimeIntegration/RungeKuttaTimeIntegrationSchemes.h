@@ -283,9 +283,22 @@ protected:
 
     LUE virtual NekDouble v_GetTimeStability() const override
     {
-        if (GetOrder() == 4 || GetOrder() == 5)
+        if (GetOrder() == 1 || GetOrder() == 2)
         {
+            return 2.0;
+        }
+        else if (GetOrder() == 3)
+        {
+            return 2.51274532661833;
+        }
+        else if (GetOrder() == 4)
+        {
+            // return 2.78529356340528;
             return 2.784;
+        }
+        else if (GetOrder() == 5)
+        {
+            return 3.21704786664011;
         }
         else
         {

@@ -275,9 +275,9 @@ protected:
     Array<OneD, Instance> m_integral_classes;
 
     // Demarcation integers
-    Array<OneD, int> m_qml;
+    Array<OneD, size_t> m_qml;
     // Demarcation interval markers
-    Array<OneD, int> m_taus;
+    Array<OneD, size_t> m_taus;
 
     // Storage of the initial values.
     DoubleArray m_u0;

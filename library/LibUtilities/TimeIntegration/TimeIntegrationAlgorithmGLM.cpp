@@ -329,6 +329,12 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
                 f_expn[j] = Array<OneD, NekDouble>(npoints);
             }
 
+            // Ensure solution is in correct space.
+            if (newExpDerivTimeLevel == 1)
+            {
+                op.DoProjection(y_n, y_n, t_n);
+            }
+
             // Calculate the derivative.
             op.DoOdeRhs(y_n, f_expn, t_n);
 
@@ -350,6 +356,12 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
         // Set solution.
         y_n = solvector_out->GetValue(0);
         t_n = solvector_out->GetValueTime(0);
+
+        // Ensure solution is in correct space.
+        if (newExpDerivTimeLevel == 1)
+        {
+            op.DoProjection(y_n, y_n, t_n);
+        }
 
         solvector->SetValue(0, y_n, t_n);
 
@@ -504,8 +516,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
     {
         if (m_lastDeltaT != deltaT || m_lastNVars != GetFirstDim(y_old))
         {
-            ((TimeIntegrationSchemeGLM *)m_parent)
-                ->InitializeSecondaryData(this, deltaT);
+            m_parent->InitializeSecondaryData(this, deltaT);
 
             m_lastDeltaT = deltaT;
             m_lastNVars  = GetFirstDim(y_old);

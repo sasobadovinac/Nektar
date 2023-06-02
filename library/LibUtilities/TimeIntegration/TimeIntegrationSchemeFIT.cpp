@@ -62,7 +62,7 @@ FractionalInTimeIntegrationScheme::FractionalInTimeIntegrationScheme(
     m_freeParams = freeParams;
 
     // Currently up to 4th order is implemented.
-    ASSERTL1(0 < order && order <= 4,
+    ASSERTL1(1 <= order && order <= 4,
              "FractionalInTime Time integration scheme bad order: " +
                  std::to_string(order));
 
@@ -118,9 +118,10 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
     m_Lmax = computeL(m_base, m_maxTimeSteps) + 2;
 
     // Demarcation integers - one array that is re-used
-    m_qml = Array<OneD, int>(m_Lmax - 1, 0);
+    m_qml = Array<OneD, size_t>(m_Lmax - 1, size_t(0));
+
     // Demarcation interval markers - one array that is re-used
-    m_taus = Array<OneD, int>(m_Lmax + 1, 0);
+    m_taus = Array<OneD, size_t>(m_Lmax + 1, size_t(0));
 
     // Storage of the initial values.
     m_u0 = y_0;
