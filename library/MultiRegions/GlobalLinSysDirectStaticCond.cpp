@@ -148,6 +148,7 @@ MatrixStorage GlobalLinSysDirectStaticCond::DetermineMatrixStorage(
             }
         }
         break;
+        case StdRegions::eLinearAdvection:
         case StdRegions::eLinearAdvectionReaction:
         case StdRegions::eLinearAdvectionDiffusionReaction:
         default:

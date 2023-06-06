@@ -130,15 +130,17 @@ void Extrapolate::v_CalcNeumannPressureBCs(
     Array<OneD, Array<OneD, NekDouble>> BndValues(m_bnd_dim);
     Array<OneD, Array<OneD, NekDouble>> Q(m_curl_dim);
 
+    // Loop all boundary conditions
     MultiRegions::ExpListSharedPtr BndElmtExp;
     for (n = cnt = 0; n < m_PBndConds.size(); ++n)
     {
-        // High order boundary condition;
+        // Detect higher order boundary conditions
         if ((m_hbcType[n] == eHBCNeumann) || (m_hbcType[n] == eConvectiveOBC))
         {
             m_fields[0]->GetBndElmtExpansion(n, BndElmtExp, false);
-            int nqb = m_PBndExp[n]->GetTotPoints();
-            int nq  = BndElmtExp->GetTotPoints();
+            int nqb     = m_PBndExp[n]->GetTotPoints();
+            int nq      = BndElmtExp->GetTotPoints();
+            int ncoeffs = m_PBndExp[n]->GetNcoeffs();
 
             for (int i = 0; i < m_bnd_dim; i++)
             {
@@ -185,7 +187,7 @@ void Extrapolate::v_CalcNeumannPressureBCs(
             m_PBndExp[n]->NormVectorIProductWRTBase(BndValues, Pvals);
 
             // Get offset for next terms
-            cnt += m_PBndExp[n]->GetNcoeffs();
+            cnt += ncoeffs;
         }
     }
 }

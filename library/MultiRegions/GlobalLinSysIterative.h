@@ -96,6 +96,8 @@ protected:
     Array<OneD, int> m_ipivot;
     int m_numSuccessiveRHS;
     bool m_isAconjugate;
+    std::string m_matrixType;
+    bool m_isNonSymmetricLinSys;
     int m_numPrevSols;
 
     LibUtilities::NekSysOperators m_NekSysOp;

@@ -837,14 +837,32 @@ void CouplingCwipi::ReceiveCwipi(const int step, const NekDouble time,
 
                 Vmath::Smul(m_nPoints, -m_filtWidth, rVals[i], 1, forcing, 1);
 
+                StdRegions::ConstFactorMap factors;
+                StdRegions::VarCoeffMap varcoeffs;
+                MultiRegions::VarFactorsMap varfactors =
+                    MultiRegions::NullVarFactorsMap;
+
+                factors[StdRegions::eFactorLambda] = -m_filtWidth;
+
+                // Set advection velocities
+                StdRegions::VarCoeffType varcoefftypes[] = {
+                    StdRegions::eVarCoeffVelX, StdRegions::eVarCoeffVelY,
+                    StdRegions::eVarCoeffVelZ};
+                for (int j = 0; j < m_spacedim; j++)
+                {
+                    varcoeffs[varcoefftypes[j]] = Velocity[j];
+                }
+
                 // Note we are using the
                 // LinearAdvectionDiffusionReaction solver here
                 // instead of HelmSolve since m_filtWidth is negative and
                 // so matrices are not positive definite. Ideally
                 // should allow for negative m_filtWidth coefficient in
                 // HelmSolve
+                // m_recvField->LinearAdvectionDiffusionReactionSolve(
+                //     Velocity, forcing, tmpC, -m_filtWidth);
                 m_recvField->LinearAdvectionDiffusionReactionSolve(
-                    Velocity, forcing, tmpC, -m_filtWidth);
+                    forcing, tmpC, factors, varcoeffs, varfactors);
 
                 m_evalField->BwdTrans(tmpC, field[i]);
                 timer3.Stop();

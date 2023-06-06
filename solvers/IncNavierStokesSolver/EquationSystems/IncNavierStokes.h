@@ -59,7 +59,9 @@ enum SolverType
     eVCSMapping,
     eVelocityCorrectionScheme,
     eVCSWeakPressure,
-    eWeakPressure
+    eWeakPressure,
+    eVCSImplicit,
+    eImplicit,
 };
 
 enum EquationType

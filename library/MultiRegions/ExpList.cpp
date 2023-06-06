@@ -1674,6 +1674,59 @@ void ExpList::v_PhysDeriv(Direction edir,
     }
 }
 
+/* Computes the curl of velocity = \nabla \times u
+ * if m_expType == 2D, Q = [omg_z, (nothing done)]
+ * if m_expType == 3D, Q = [omg_x, omg_y, omg_z]
+ */
+void ExpList::v_Curl(Array<OneD, Array<OneD, NekDouble>> &Vel,
+                     Array<OneD, Array<OneD, NekDouble>> &Q)
+{
+    int nq = GetTotPoints();
+    Array<OneD, NekDouble> Vx(nq);
+    Array<OneD, NekDouble> Uy(nq);
+    Array<OneD, NekDouble> Dummy(nq);
+
+    switch (m_expType)
+    {
+        case e2D:
+        {
+            PhysDeriv(xDir, Vel[yDir], Vx);
+            PhysDeriv(yDir, Vel[xDir], Uy);
+
+            Vmath::Vsub(nq, Vx, 1, Uy, 1, Q[0], 1);
+        }
+        break;
+
+        case e3D:
+        {
+            Array<OneD, NekDouble> Vz(nq);
+            Array<OneD, NekDouble> Uz(nq);
+            Array<OneD, NekDouble> Wx(nq);
+            Array<OneD, NekDouble> Wy(nq);
+
+            PhysDeriv(Vel[xDir], Dummy, Uy, Uz);
+            PhysDeriv(Vel[yDir], Vx, Dummy, Vz);
+            PhysDeriv(Vel[zDir], Wx, Wy, Dummy);
+
+            Vmath::Vsub(nq, Wy, 1, Vz, 1, Q[0], 1);
+            Vmath::Vsub(nq, Uz, 1, Wx, 1, Q[1], 1);
+            Vmath::Vsub(nq, Vx, 1, Uy, 1, Q[2], 1);
+        }
+        break;
+        default:
+            ASSERTL0(0, "Dimension not supported by ExpList::Curl");
+            break;
+    }
+}
+
+/* Computes the curl of vorticity = \nabla \times \nabla \times u
+ * if m_expType == 2D, Q = [dy omg_z, -dx omg_z, 0]
+ *
+ * if m_expType == 3D, Q = [dy omg_z - dz omg_y,
+ *                          dz omg_x - dx omg_z,
+ *                          dx omg_y - dy omg_x]
+ *
+ */
 void ExpList::v_CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
                          Array<OneD, Array<OneD, NekDouble>> &Q)
 {
@@ -4545,12 +4598,14 @@ GlobalLinSysKey ExpList::v_HelmSolve(
 }
 
 GlobalLinSysKey ExpList::v_LinearAdvectionDiffusionReactionSolve(
-    const Array<OneD, Array<OneD, NekDouble>> &velocity,
     const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const NekDouble lambda,
-    const Array<OneD, const NekDouble> &dirForcing)
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &varcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
-    boost::ignore_unused(velocity, inarray, outarray, lambda, dirForcing);
+    boost::ignore_unused(inarray, outarray, factors, varcoeff, varfactors,
+                         dirForcing, PhysSpaceForcing);
     NEKERROR(ErrorUtil::efatal,
              "LinearAdvectionDiffusionReactionSolve not implemented.");
     return NullGlobalLinSysKey;
