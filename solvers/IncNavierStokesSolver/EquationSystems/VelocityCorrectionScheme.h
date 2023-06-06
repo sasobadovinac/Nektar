@@ -96,7 +96,10 @@ public:
     void SolveUnsteadyStokesSystem(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
-        const NekDouble a_iixDt);
+        const NekDouble a_iixDt)
+    {
+        v_SolveUnsteadyStokesSystem(inarray, outarray, time, a_iixDt);
+    }
 
     void EvaluateAdvection_SetPressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
@@ -195,6 +198,11 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &Forcing,
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble aii_Dt);
+
+    virtual void v_SolveUnsteadyStokesSystem(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
+        const NekDouble a_iixDt);
 
     virtual void v_EvaluateAdvection_SetPressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,

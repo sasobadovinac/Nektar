@@ -79,6 +79,8 @@ public:
                                              const StdMatrixKey &rhs);
     STD_REGIONS_EXPORT friend bool operator==(const StdMatrixKey &lhs,
                                               const StdMatrixKey &rhs);
+    STD_REGIONS_EXPORT StdMatrixKey operator=(const StdMatrixKey &inKey);
+
     STD_REGIONS_EXPORT friend bool opLess::operator()(
         const StdMatrixKey &lhs, const StdMatrixKey &rhs) const;
 

@@ -48,7 +48,6 @@ using namespace MultiRegions;
 boost::filesystem::path pathGlobal;
 LibUtilities::SessionReaderSharedPtr lsession;
 MultiRegions::ContFieldSharedPtr contfield, forcefield;
-Array<OneD, Array<OneD, NekDouble>> velocity1, velocity2;
 
 StdRegions::ConstFactorMap factors;
 StdRegions::VarCoeffMap varcoeffs1, varcoeffs2;
@@ -188,9 +187,7 @@ void createSessionFile(boost::filesystem::path &ph)
 void setupContFieldSolve(boost::filesystem::path &ph,
                          LibUtilities::SessionReaderSharedPtr &Session,
                          MultiRegions::ContFieldSharedPtr &Exp,
-                         MultiRegions::ContFieldSharedPtr &Fce,
-                         Array<OneD, Array<OneD, NekDouble>> &vel1,
-                         Array<OneD, Array<OneD, NekDouble>> &vel2)
+                         MultiRegions::ContFieldSharedPtr &Fce)
 {
 #ifdef _WIN32
     // Prepare input file name - convert wstring to string to support Windows
@@ -225,8 +222,6 @@ void setupContFieldSolve(boost::filesystem::path &ph,
     Array<OneD, NekDouble> x0(npoints), x1(npoints), x2(npoints);
     Array<OneD, NekDouble> d00(npoints, 0.0), d00B(npoints, 0.0),
         fcePhys(npoints);
-    vel1 = Array<OneD, Array<OneD, NekDouble>>(coordim);
-    vel2 = Array<OneD, Array<OneD, NekDouble>>(coordim);
 
     // Define lambda
     factors[StdRegions::eFactorLambda] = Session->GetParameter("lambda");
@@ -244,11 +239,14 @@ void setupContFieldSolve(boost::filesystem::path &ph,
     ffunc->Evaluate(x0, x1, x2, fcePhys);
     Fce->SetPhys(fcePhys);
 
-    // Define Advection velocities
+    // Define Advection velocities and add to varcoeff1 or 2
+    StdRegions::VarCoeffType varcoefftypes[] = {StdRegions::eVarCoeffVelX,
+                                                StdRegions::eVarCoeffVelY,
+                                                StdRegions::eVarCoeffVelZ};
     for (int i = 0; i < coordim; i++)
     {
-        vel1[i] = Array<OneD, NekDouble>(npoints, 0.1);
-        vel2[i] = Array<OneD, NekDouble>(npoints, 0.2);
+        varcoeffs1[varcoefftypes[i]] = Array<OneD, NekDouble>(npoints, 0.1);
+        varcoeffs2[varcoefftypes[i]] = Array<OneD, NekDouble>(npoints, 0.2);
     }
 
     // Clear solution
@@ -259,36 +257,38 @@ BOOST_AUTO_TEST_CASE(TestVarcoeffHashing)
 {
     // Create session file and setup Contfield
     createSessionFile(pathGlobal);
-    setupContFieldSolve(pathGlobal, lsession, contfield, forcefield, velocity1,
-                        velocity2);
+    setupContFieldSolve(pathGlobal, lsession, contfield, forcefield);
 
-    // Check no initial GlobalLinSys
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      0); // Check count == 0
+    // Check no initial GlobalLinSys i.e. count == 0
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 0);
 
     // Create GlobalLinSys(varcoeff1)
     contfield->HelmSolve(forcefield->GetPhys(), contfield->UpdateCoeffs(),
                          factors, varcoeffs1);
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      1); // Check count == 1
+
+    // Check count == 1
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 1);
 
     // Create new GlobalLinSys(varcoeff2)
     contfield->HelmSolve(forcefield->GetPhys(), contfield->UpdateCoeffs(),
                          factors, varcoeffs2);
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      2); // Check count == 2
+
+    // Check count == 2
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 2);
 
     // Again use 2nd GlobalLinSys(varcoeff2)
     contfield->HelmSolve(forcefield->GetPhys(), contfield->UpdateCoeffs(),
                          factors, varcoeffs2);
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      2); // Check count still == 2
+
+    // Check count still == 2
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 2);
 
     // Again use 1st GlobalLinSys(varcoeff1)
     contfield->HelmSolve(forcefield->GetPhys(), contfield->UpdateCoeffs(),
                          factors, varcoeffs1);
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      2); // Check count still == 2
+
+    // Check count still == 2
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 2);
 
     // Clear for next tests
     contfield->ClearGlobalLinSysManager();
@@ -296,33 +296,34 @@ BOOST_AUTO_TEST_CASE(TestVarcoeffHashing)
 
 BOOST_AUTO_TEST_CASE(TestUnsetGlobalLinSys)
 {
-    // Check that the test setup is clear
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      0); // Check count == 0
+    // Check that the test setup is clear i.e. count == 0
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 0);
 
     // Create 1st GlobalLinSys
     auto gkey1 = contfield->LinearAdvectionDiffusionReactionSolve(
-        velocity1, forcefield->GetPhys(), contfield->UpdateCoeffs(),
-        factors[StdRegions::eFactorLambda]);
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      1); // Check count == 1
+        forcefield->GetPhys(), contfield->UpdateCoeffs(), factors, varcoeffs1);
+
+    // Check count == 1
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 1);
 
     // Create 2nd GlobalLinSys
     auto gkey2 = contfield->LinearAdvectionDiffusionReactionSolve(
-        velocity2, forcefield->GetPhys(), contfield->UpdateCoeffs(),
-        factors[StdRegions::eFactorLambda]);
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      2); // Check count == 2
+        forcefield->GetPhys(), contfield->UpdateCoeffs(), factors, varcoeffs2);
+
+    // Check count == 2
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 2);
 
     // Unset GlobalLinSys1
     contfield->UnsetGlobalLinSys(gkey1, true);
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      1); // Check count == 1
+
+    // Check count == 1
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 1);
 
     // Unset GlobalLinSys2
     contfield->UnsetGlobalLinSys(gkey2, true);
-    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"),
-                      0); // Check count == 0
+
+    // Check count == 0
+    BOOST_CHECK_EQUAL(contfield->GetPoolCount("GlobalLinSys"), 0);
 
     // Clear for next tests
     contfield->ClearGlobalLinSysManager();

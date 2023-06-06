@@ -182,6 +182,7 @@ protected:
 
     virtual void v_AddNormVelOnOBC(const int nbcoeffs, const int nreg,
                                    Array<OneD, Array<OneD, NekDouble>> &u);
+
     void CalcOutflowBCs(const Array<OneD, const Array<OneD, NekDouble>> &fields,
                         NekDouble kinvis);
 
@@ -406,7 +407,6 @@ inline void Extrapolate::AddNormVelOnOBC(const int nbcoeffs, const int nreg,
 {
     v_AddNormVelOnOBC(nbcoeffs, nreg, u);
 }
-
 } // namespace Nektar
 
 #endif

@@ -70,16 +70,6 @@ public:
 
     virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
-    // Solves the linear part of the velocity correction scheme incluiding
-    // the SPM method calculation for 'fs'
-    void SolveUnsteadyStokesSystem(
-        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
-        const NekDouble a_iixDt)
-    {
-        v_SolveUnsteadyStokesSystem(inarray, outarray, time, a_iixDt);
-    }
-
 protected:
     /// Correction pressure field for SPM
     MultiRegions::ExpListSharedPtr m_pressureP;
@@ -111,7 +101,7 @@ protected:
     virtual void v_SolveUnsteadyStokesSystem(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, NekDouble time,
-        NekDouble a_iixDt);
+        NekDouble a_iixDt) override;
     // Sets the parameters and BCs for the Poisson equation
     void SetUpCorrectionPressure(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,

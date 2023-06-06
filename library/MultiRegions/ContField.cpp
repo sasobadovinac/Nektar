@@ -903,18 +903,25 @@ GlobalLinSysKey ContField::v_HelmSolve(
 
 // could combine this with HelmholtzCG.
 GlobalLinSysKey ContField::v_LinearAdvectionDiffusionReactionSolve(
-    const Array<OneD, Array<OneD, NekDouble>> &velocity,
     const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const NekDouble lambda,
-    const Array<OneD, const NekDouble> &dirForcing)
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &varcoeffs,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
     // Inner product of forcing
     Array<OneD, NekDouble> wsp(m_ncoeffs);
-    IProductWRTBase(inarray, wsp);
-
-    // Note -1.0 term necessary to invert forcing function to
-    // be consistent with matrix definition
-    Vmath::Neg(m_ncoeffs, wsp, 1);
+    if (PhysSpaceForcing)
+    {
+        IProductWRTBase(inarray, wsp);
+        // Note -1.0 term necessary to invert forcing function to
+        // be consistent with matrix definition
+        Vmath::Neg(m_ncoeffs, wsp, 1);
+    }
+    else
+    {
+        Vmath::Smul(m_ncoeffs, -1.0, inarray, 1, wsp, 1);
+    }
 
     // Forcing function with weak boundary conditions
     int i, j;
@@ -955,19 +962,8 @@ GlobalLinSysKey ContField::v_LinearAdvectionDiffusionReactionSolve(
     }
 
     // Solve the system
-    StdRegions::ConstFactorMap factors;
-    factors[StdRegions::eFactorLambda] = lambda;
-    StdRegions::VarCoeffMap varcoeffs;
-    varcoeffs[StdRegions::eVarCoeffVelX] = velocity[0];
-    varcoeffs[StdRegions::eVarCoeffVelY] = velocity[1];
-    if (m_expType == e3D)
-    {
-        varcoeffs[StdRegions::eVarCoeffVelZ] = velocity[2];
-    }
-
     GlobalLinSysKey key(StdRegions::eLinearAdvectionDiffusionReaction,
-                        m_locToGloMap, factors, varcoeffs);
-
+                        m_locToGloMap, factors, varcoeffs, varfactors);
     GlobalSolve(key, wsp, outarray, dirForcing);
 
     return key;
