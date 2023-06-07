@@ -4,6 +4,7 @@ v5.4.0
 ------
 **Library**
 - Add unit tests for Polylib (!1533)
+- Add the absolution tolerance for the iterative linear system solver (!1549)
 - Redesign of Parareal driver (!1509) 
 - Add local p-refinement functionality (!1508)
 - Tidy-up SDC schemes (!1550)

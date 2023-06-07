@@ -97,6 +97,7 @@ protected:
     int m_numSuccessiveRHS;
     bool m_isAconjugate;
     int m_numPrevSols;
+    bool m_isAbsoluteTolerance;
 
     LibUtilities::NekSysOperators m_NekSysOp;
 

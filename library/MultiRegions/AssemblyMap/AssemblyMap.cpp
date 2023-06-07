@@ -32,6 +32,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <boost/algorithm/string.hpp>
 #include <boost/core/ignore_unused.hpp>
 
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
@@ -130,6 +131,18 @@ AssemblyMap::AssemblyMap(const LibUtilities::SessionReaderSharedPtr &pSession,
         pSession->LoadParameter("IterativeSolverTolerance",
                                 m_iterativeTolerance,
                                 NekConstants::kNekIterativeTol);
+    }
+
+    if (pSession->DefinesGlobalSysSolnInfo(variable, "AbsoluteTolerance"))
+    {
+        std::string abstol =
+            pSession->GetGlobalSysSolnInfo(variable, "AbsoluteTolerance");
+        m_isAbsoluteTolerance =
+            boost::iequals(boost::to_upper_copy(abstol), "TRUE");
+    }
+    else
+    {
+        m_isAbsoluteTolerance = false;
     }
 
     if (pSession->DefinesGlobalSysSolnInfo(variable, "MaxIterations"))
@@ -1341,6 +1354,11 @@ PreconditionerType AssemblyMap::GetPreconType() const
 NekDouble AssemblyMap::GetIterativeTolerance() const
 {
     return m_iterativeTolerance;
+}
+
+bool AssemblyMap::IsAbsoluteTolerance() const
+{
+    return m_isAbsoluteTolerance;
 }
 
 int AssemblyMap::GetMaxIterations() const
