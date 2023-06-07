@@ -122,12 +122,14 @@ void GlobalLinSysStaticCond::v_Solve(
     }
 
     Array<OneD, NekDouble> F_bnd, F_bnd1, F_int, V_bnd;
-    Array<OneD, NekDouble> tmp;
+    Array<OneD, NekDouble> tmp, unused;
 
-    F_bnd  = m_wsp;
-    F_bnd1 = m_wsp + nLocBndDofs;
-    V_bnd  = m_wsp + 2 * nLocBndDofs;
-    F_int  = m_wsp + 3 * nLocBndDofs;
+    F_bnd = m_wsp;
+    // unsued = Temporary storage required for DoMatrixMultiply, not used here
+    unused = m_wsp + 1 * nLocBndDofs;
+    F_bnd1 = m_wsp + 2 * nLocBndDofs;
+    V_bnd  = m_wsp + 3 * nLocBndDofs;
+    F_int  = m_wsp + 4 * nLocBndDofs;
 
     pLocToGloMap->LocalToLocalBnd(pLocOutput, V_bnd);
 
@@ -244,7 +246,7 @@ void GlobalLinSysStaticCond::v_Initialise(
 {
     int nLocalBnd = m_locToGloMap.lock()->GetNumLocalBndCoeffs();
     int nIntDofs  = m_locToGloMap.lock()->GetNumLocalCoeffs() - nLocalBnd;
-    m_wsp         = Array<OneD, NekDouble>(3 * nLocalBnd + nIntDofs, 0.0);
+    m_wsp         = Array<OneD, NekDouble>(4 * nLocalBnd + nIntDofs, 0.0);
 
     if (pLocToGloMap->AtLastLevel())
     {
