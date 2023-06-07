@@ -99,6 +99,7 @@ protected:
     std::string m_matrixType;
     bool m_isNonSymmetricLinSys;
     int m_numPrevSols;
+    bool m_isAbsoluteTolerance;
 
     LibUtilities::NekSysOperators m_NekSysOp;
 

@@ -67,9 +67,10 @@ GlobalLinSysIterative::GlobalLinSysIterative(
       m_precon(NullPreconditionerSharedPtr), m_totalIterations(0),
       m_useProjection(false), m_numPrevSols(0)
 {
-    m_tolerance        = pLocToGloMap->GetIterativeTolerance();
-    m_maxiter          = pLocToGloMap->GetMaxIterations();
-    m_linSysIterSolver = pLocToGloMap->GetLinSysIterSolver();
+    m_tolerance           = pLocToGloMap->GetIterativeTolerance();
+    m_isAbsoluteTolerance = pLocToGloMap->IsAbsoluteTolerance();
+    m_maxiter             = pLocToGloMap->GetMaxIterations();
+    m_linSysIterSolver    = pLocToGloMap->GetLinSysIterSolver();
 
     LibUtilities::CommSharedPtr vComm =
         m_expList.lock()->GetComm()->GetRowComm();
@@ -498,6 +499,11 @@ void GlobalLinSysIterative::UpdateKnownSolutions(
 
 void GlobalLinSysIterative::Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn)
 {
+    if (m_isAbsoluteTolerance)
+    {
+        m_rhs_magnitude = 1.;
+        return;
+    }
     Array<OneD, NekDouble> vExchange(1, 0.0);
     if (m_map.size() > 0)
     {
