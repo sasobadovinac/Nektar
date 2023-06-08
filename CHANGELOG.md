@@ -43,6 +43,7 @@ v5.4.0
 - Fix compilation against TetGen 1.6 (!1547)
 - Tidy-up Parareal initial condition output (!1534)
 - Remove double entry in documentation and slightly tidy-up code (!1530)
+- Fixed deadlock problem for the LowEnergyBlock preconditioner which appeared for specific combinations of meshes and boundary conditions (!1553)
 
 **NekMesh**
 - Changed CMake to set NEKTAR_USE_THREAD_SAFETY to ON when MeshGen is set to ON (!1546)
