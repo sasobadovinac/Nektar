@@ -115,8 +115,8 @@ void CFSImplicit::InitialiseNonlinSysSolver()
             locTraceToTraceMap->GetLocTracephysToTraceIDMap());
     }
 
-    m_preconCfs = GetPreconCfsOpFactory().CreateInstance(
-        "PreconCfsBRJ", m_fields, m_session, m_comm);
+    m_preconCfs = GetPreconCfsFactory().CreateInstance("PreconCfsBRJ", m_fields,
+                                                       m_session, m_comm);
     NekPreconCfsOperators tmpPreconOp;
     tmpPreconOp.DefineCalcPreconMatBRJCoeff(&CFSImplicit::CalcPreconMatBRJCoeff,
                                             this);

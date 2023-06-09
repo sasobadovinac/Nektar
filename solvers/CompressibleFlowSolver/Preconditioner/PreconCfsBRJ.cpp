@@ -46,7 +46,7 @@ namespace Nektar
  * Solves a linear system using iterative methods.
  */
 std::string PreconCfsBRJ::className =
-    GetPreconCfsOpFactory().RegisterCreatorFunction(
+    GetPreconCfsFactory().RegisterCreatorFunction(
         "PreconCfsBRJ", PreconCfsBRJ::create,
         "Block Relaxed Jacobi Preconditioner for CFS.");
 
@@ -54,7 +54,7 @@ PreconCfsBRJ::PreconCfsBRJ(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const LibUtilities::CommSharedPtr &vComm)
-    : PreconCfsOp(pFields, pSession, vComm)
+    : PreconCfs(pFields, pSession, vComm)
 {
     pSession->LoadParameter("PreconItsStep", m_PreconItsStep, 7);
     pSession->LoadParameter("BRJRelaxParam", m_BRJRelaxParam, 1.0);
@@ -73,11 +73,16 @@ PreconCfsBRJ::PreconCfsBRJ(
     AllocateSIMDPreconBlkMatDiag(pFields);
 }
 
+/**
+ *
+ */
 void PreconCfsBRJ::v_InitObject()
 {
-    PreconCfsOp::v_InitObject();
 }
 
+/**
+ *
+ */
 void PreconCfsBRJ::v_DoPreconCfs(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     const Array<OneD, NekDouble> &inarray, Array<OneD, NekDouble> &outarray,
@@ -185,6 +190,9 @@ void PreconCfsBRJ::v_DoPreconCfs(
     }
 }
 
+/**
+ *
+ */
 void PreconCfsBRJ::v_BuildPreconCfs(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     const Array<OneD, const Array<OneD, NekDouble>> &intmp,
@@ -273,6 +281,9 @@ void PreconCfsBRJ::v_BuildPreconCfs(
     m_PreconTimesCounter = 1;
 }
 
+/**
+ *
+ */
 bool PreconCfsBRJ::v_UpdatePreconMatCheck(
     const Array<OneD, const NekDouble> &res, const NekDouble dtLambda)
 {
@@ -294,6 +305,20 @@ bool PreconCfsBRJ::v_UpdatePreconMatCheck(
     return flag;
 }
 
+/**
+ *
+ */
+void PreconCfsBRJ::DoNullPrecon(const Array<OneD, NekDouble> &pInput,
+                                Array<OneD, NekDouble> &pOutput,
+                                const bool &flag)
+{
+    boost::ignore_unused(flag);
+    Vmath::Vcopy(pInput.size(), pInput, 1, pOutput, 1);
+}
+
+/**
+ *
+ */
 void PreconCfsBRJ::PreconBlkDiag(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     const Array<OneD, NekDouble> &inarray, Array<OneD, NekDouble> &outarray)
@@ -370,6 +395,9 @@ void PreconCfsBRJ::PreconBlkDiag(
     }
 }
 
+/**
+ *
+ */
 template <typename DataType>
 void PreconCfsBRJ::MinusOffDiag2Rhs(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
@@ -498,6 +526,9 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
     }
 }
 
+/**
+ *
+ */
 template <typename TypeNekBlkMatSharedPtr>
 void PreconCfsBRJ::AllocatePreconBlkDiagCoeff(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
