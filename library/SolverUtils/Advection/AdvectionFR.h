@@ -53,27 +53,8 @@ public:
 
     static std::string type[];
 
-    Array<OneD, NekDouble> m_jac;
-    Array<OneD, Array<OneD, NekDouble>> m_gmat;
-
-    Array<OneD, Array<OneD, NekDouble>> m_Q2D_e0;
-    Array<OneD, Array<OneD, NekDouble>> m_Q2D_e1;
-    Array<OneD, Array<OneD, NekDouble>> m_Q2D_e2;
-    Array<OneD, Array<OneD, NekDouble>> m_Q2D_e3;
-
-    Array<OneD, Array<OneD, NekDouble>> m_dGL_xi1;
-    Array<OneD, Array<OneD, NekDouble>> m_dGR_xi1;
-    Array<OneD, Array<OneD, NekDouble>> m_dGL_xi2;
-    Array<OneD, Array<OneD, NekDouble>> m_dGR_xi2;
-    Array<OneD, Array<OneD, NekDouble>> m_dGL_xi3;
-    Array<OneD, Array<OneD, NekDouble>> m_dGR_xi3;
-    DNekMatSharedPtr m_Ixm;
-    DNekMatSharedPtr m_Ixp;
-
 protected:
     AdvectionFR(std::string advType);
-
-    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
 
     std::string m_advType;
 
@@ -93,6 +74,25 @@ protected:
             NullNekDoubleArrayOfArray) override;
 
 private:
+    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
+
+    Array<OneD, NekDouble> m_jac;
+    Array<OneD, Array<OneD, NekDouble>> m_gmat;
+
+    Array<OneD, Array<OneD, NekDouble>> m_Q2D_e0;
+    Array<OneD, Array<OneD, NekDouble>> m_Q2D_e1;
+    Array<OneD, Array<OneD, NekDouble>> m_Q2D_e2;
+    Array<OneD, Array<OneD, NekDouble>> m_Q2D_e3;
+
+    Array<OneD, Array<OneD, NekDouble>> m_dGL_xi1;
+    Array<OneD, Array<OneD, NekDouble>> m_dGR_xi1;
+    Array<OneD, Array<OneD, NekDouble>> m_dGL_xi2;
+    Array<OneD, Array<OneD, NekDouble>> m_dGR_xi2;
+    Array<OneD, Array<OneD, NekDouble>> m_dGL_xi3;
+    Array<OneD, Array<OneD, NekDouble>> m_dGR_xi3;
+    DNekMatSharedPtr m_Ixm;
+    DNekMatSharedPtr m_Ixp;
+
     void SetupMetrics(LibUtilities::SessionReaderSharedPtr pSession,
                       Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
 

@@ -239,6 +239,9 @@ void Advection3DHomogeneous1D::v_Advect(
     }
 }
 
+/**
+ *
+ */
 void Advection3DHomogeneous1D::ModifiedFluxVector(
     const Array<OneD, Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &outarray)
