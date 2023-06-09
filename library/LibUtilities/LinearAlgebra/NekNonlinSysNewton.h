@@ -74,9 +74,9 @@ protected:
     NekDouble m_SysResNorm0;
     NekDouble m_SysResNorm;
 
-    int m_InexactNewtonForcing = 0;
-    NekDouble m_forcingGamma   = 1.0;
-    NekDouble m_forcingAlpha   = 0.5 * (1.0 + sqrt(5));
+    bool m_InexactNewtonForcing = 0;
+    NekDouble m_forcingGamma    = 1.0;
+    NekDouble m_forcingAlpha    = 0.5 * (1.0 + sqrt(5));
 
     virtual void v_InitObject() override;
 
@@ -95,8 +95,9 @@ protected:
         const Array<OneD, const NekDouble> &pSource, const int nDir) override;
 
 private:
-    void CalcInexactNewtonForcing(const int &k, NekDouble &resnormOld,
-                                  const NekDouble &resnorm, NekDouble &forcing);
+    NekDouble CalcInexactNewtonForcing(const int &k,
+                                       const NekDouble &resnormOld,
+                                       const NekDouble &resnorm);
 };
 } // namespace LibUtilities
 } // namespace Nektar
