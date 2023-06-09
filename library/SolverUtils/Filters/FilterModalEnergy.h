@@ -35,7 +35,6 @@
 #ifndef NEKTAR_SOLVERUTILS_FILTERS_FILTERMODALENERGY_H
 #define NEKTAR_SOLVERUTILS_FILTERS_FILTERMODALENERGY_H
 
-#include <LibUtilities/BasicUtils/Equation.h>
 #include <MultiRegions/ContField.h>
 #include <MultiRegions/ContField3DHomogeneous1D.h>
 #include <MultiRegions/ContField3DHomogeneous2D.h>

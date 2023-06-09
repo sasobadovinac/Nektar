@@ -79,7 +79,6 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &physfield,
         Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux) override;
 
-private:
     virtual void v_RiemannInvariantBC(
         int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
         Array<OneD, Array<OneD, NekDouble>> &BfFwd,

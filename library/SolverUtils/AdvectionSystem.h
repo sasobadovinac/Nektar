@@ -64,6 +64,7 @@ public:
 
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetElmtCFLVals(
         const bool FlagAcousticCFL = true);
+
     SOLVER_UTILS_EXPORT NekDouble GetCFLEstimate(int &elmtid);
 
 protected:
@@ -83,7 +84,7 @@ protected:
     }
 
 private:
-    /// dump cfl estimate
+    /// Dump cfl estimate
     int m_cflsteps;
     /// Write field if cfl is higher than IO_CFLWriteFld treshold
     NekDouble m_cflWriteFld;

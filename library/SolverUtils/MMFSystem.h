@@ -36,7 +36,6 @@
 #define NEKTAR_SOLVERUTILS_MMFSYSTEM_H
 
 #include <SolverUtils/UnsteadySystem.h>
-// #include <SolverUtils/Advection/Advection.h>
 
 namespace Nektar
 {
@@ -220,8 +219,6 @@ protected:
         m_dedxi_cdot_e;
 
     SpatialDomains::GeomMMF m_MMFdir;
-
-    Array<OneD, NekDouble> m_MFlength;
 
     void SetUpMovingFrames(
         const Array<OneD, const Array<OneD, NekDouble>> &Anisotropy,

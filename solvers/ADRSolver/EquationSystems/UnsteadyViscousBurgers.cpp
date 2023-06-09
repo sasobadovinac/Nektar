@@ -37,7 +37,6 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <ADRSolver/EquationSystems/UnsteadyViscousBurgers.h>
-#include <StdRegions/StdQuadExp.h>
 
 using namespace std;
 
@@ -279,11 +278,14 @@ void UnsteadyViscousBurgers::DoOdeProjection(
         case MultiRegions::eDiscontinuous:
         {
             // Just copy over array
-            int npoints = GetNpoints();
-
-            for (i = 0; i < nvariables; ++i)
+            if (inarray != outarray)
             {
-                Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                int npoints = GetNpoints();
+
+                for (i = 0; i < nvariables; ++i)
+                {
+                    Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                }
             }
             break;
         }

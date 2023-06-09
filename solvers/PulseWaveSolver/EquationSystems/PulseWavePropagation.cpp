@@ -207,9 +207,12 @@ void PulseWavePropagation::DoOdeProjection(
     boost::ignore_unused(time);
 
     // Just copy over array
-    for (size_t i = 0; i < m_nVariables; ++i)
+    if (inarray != outarray)
     {
-        Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1);
+        for (size_t i = 0; i < m_nVariables; ++i)
+        {
+            Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1);
+        }
     }
 }
 
