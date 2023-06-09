@@ -57,14 +57,6 @@ public:
 protected:
     DiffusionLDG();
 
-    std::string m_shockCaptureType;
-
-    /// Coefficient of penalty term
-    NekDouble m_C11;
-
-    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
-    LibUtilities::SessionReaderSharedPtr m_session;
-
     virtual void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,
         Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
@@ -108,6 +100,15 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd,
         Array<OneD, int> &nonZeroIndex) override;
+
+private:
+    std::string m_shockCaptureType;
+
+    /// Coefficient of penalty term
+    NekDouble m_C11;
+
+    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
+    LibUtilities::SessionReaderSharedPtr m_session;
 
     void NumFluxforScalar(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,

@@ -199,7 +199,7 @@ void DiffusionLFRNS::v_InitObject(
  * at the interfaces of each element from the physical space to
  * the standard space).
  *
- * This routine calls the function #GetEdgeQFactors to compute and
+ * This routine calls the function #GetTraceQFactors to compute and
  * store the metric factors following an anticlockwise conventions
  * along the edges/faces of each element. Note: for 1D problem
  * the transformation is not needed.
@@ -933,8 +933,6 @@ void DiffusionLFRNS::v_Diffuse(
     int i, j, n;
     int phys_offset;
 
-    Array<TwoD, const NekDouble> gmat;
-    Array<OneD, const NekDouble> jac;
     Array<OneD, NekDouble> auxArray1, auxArray2;
 
     Array<OneD, LibUtilities::BasisSharedPtr> Basis;
@@ -1822,20 +1820,11 @@ void DiffusionLFRNS::DerCFlux_2D(
             trace_offset = fields[0]->GetTrace()->GetPhys_Offset(
                 elmtToTrace[n][e]->GetElmtId());
 
-            // Get the normals of edge 'e'
-            // const Array<OneD, const Array<OneD, NekDouble> > &normals =
-            // fields[0]->GetExp(n)->GetTraceNormal(e);
-
             // Extract the edge values of the volumetric fluxes
             // on edge 'e' and order them accordingly to the order
             // of the trace space
             fields[0]->GetExp(n)->GetTracePhysVals(
                 e, elmtToTrace[n][e], flux + phys_offset, auxArray1 = tmparray);
-
-            // Splitting inarray into the 'j' direction
-            /*Vmath::Vmul(nEdgePts,
-             &m_traceNormals[direction][trace_offset], 1,
-             &tmparray[0], 1, &tmparray[0], 1);*/
 
             // Compute the fluxJumps per each edge 'e' and each
             // flux point
@@ -1861,6 +1850,7 @@ void DiffusionLFRNS::DerCFlux_2D(
             {
                 // Extract the Jacobians along edge 'e'
                 Array<OneD, NekDouble> jacEdge(nEdgePts, 0.0);
+
                 fields[0]->GetExp(n)->GetTracePhysVals(
                     e, elmtToTrace[n][e], jac, auxArray1 = jacEdge);
 
@@ -1895,9 +1885,6 @@ void DiffusionLFRNS::DerCFlux_2D(
                 case 0:
                     for (i = 0; i < nquad0; ++i)
                     {
-                        // Multiply fluxJumps by Q factors
-                        // fluxJumps[i] = -(m_Q2D_e0[n][i]) * fluxJumps[i];
-
                         for (j = 0; j < nquad1; ++j)
                         {
                             cnt             = i + j * nquad0;
@@ -1908,9 +1895,6 @@ void DiffusionLFRNS::DerCFlux_2D(
                 case 1:
                     for (i = 0; i < nquad1; ++i)
                     {
-                        // Multiply fluxJumps by Q factors
-                        // fluxJumps[i] = (m_Q2D_e1[n][i]) * fluxJumps[i];
-
                         for (j = 0; j < nquad0; ++j)
                         {
                             cnt             = (nquad0)*i + j;
@@ -1921,9 +1905,6 @@ void DiffusionLFRNS::DerCFlux_2D(
                 case 2:
                     for (i = 0; i < nquad0; ++i)
                     {
-                        // Multiply fluxJumps by Q factors
-                        // fluxJumps[i] = (m_Q2D_e2[n][i]) * fluxJumps[i];
-
                         for (j = 0; j < nquad1; ++j)
                         {
                             cnt             = j * nquad0 + i;
@@ -1934,8 +1915,6 @@ void DiffusionLFRNS::DerCFlux_2D(
                 case 3:
                     for (i = 0; i < nquad1; ++i)
                     {
-                        // Multiply fluxJumps by Q factors
-                        // fluxJumps[i] = -(m_Q2D_e3[n][i]) * fluxJumps[i];
                         for (j = 0; j < nquad0; ++j)
                         {
                             cnt             = j + i * nquad0;
@@ -1950,11 +1929,8 @@ void DiffusionLFRNS::DerCFlux_2D(
             }
         }
 
-        // Sum all the edge contributions since I am passing the
-        // component of the flux x and y already. So I should not
-        // need to sum E0-E2 to get the derivative wrt xi2 and E1-E3
-        // to get the derivative wrt xi1
-
+        // Summing the component of the flux for calculating the
+        // derivatives per each direction
         if (direction == 0)
         {
             Vmath::Vadd(nLocalSolutionPts, &divCFluxE1[0], 1, &divCFluxE3[0], 1,
@@ -1994,6 +1970,7 @@ void DiffusionLFRNS::DivCFlux_2D(
     int n, e, i, j, cnt;
 
     int nElements = fields[0]->GetExpSize();
+
     int nLocalSolutionPts;
     int nEdgePts;
     int trace_offset;

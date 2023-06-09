@@ -70,6 +70,7 @@ protected:
     Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
     LibUtilities::SessionReaderSharedPtr m_session;
     NekDouble m_Twall;
+
     /// Equation of system for computing temperature
     EquationOfStateSharedPtr m_eos;
 
@@ -91,6 +92,7 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
+
     virtual void v_DiffuseCoeffs(
         const std::size_t nConvective,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
@@ -112,6 +114,7 @@ protected:
         TensorOfArray3D<NekDouble> &qfields,
         TensorOfArray3D<NekDouble> &VolumeFlux,
         Array<OneD, int> &nonZeroIndex) override;
+
     virtual void v_DiffuseTraceFlux(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -122,6 +125,18 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pBwd,
         Array<OneD, int> &nonZeroIndex) override;
 
+    virtual void v_SetHomoDerivs(
+        Array<OneD, Array<OneD, NekDouble>> &deriv) override
+    {
+        m_homoDerivs = deriv;
+    }
+
+    virtual TensorOfArray3D<NekDouble> &v_GetFluxTensor() override
+    {
+        return m_viscTensor;
+    }
+
+private:
     void NumericalFluxO1(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -148,22 +163,6 @@ protected:
                     const Array<OneD, const NekDouble> &qFwd,
                     const Array<OneD, const NekDouble> &qBwd,
                     Array<OneD, NekDouble> &penaltyflux);
-
-    virtual void v_SetHomoDerivs(
-        Array<OneD, Array<OneD, NekDouble>> &deriv) override
-    {
-        m_homoDerivs = deriv;
-    }
-
-    virtual TensorOfArray3D<NekDouble> &v_GetFluxTensor() override
-    {
-        return m_viscTensor;
-    }
-
-    virtual void v_GetPrimVar(
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &primVar) override;
 };
 
 typedef std::shared_ptr<DiffusionLDGNS> DiffusionLDGNSSharedPtr;

@@ -318,73 +318,6 @@ void DiffusionIP::v_DiffuseCoeffs(
     timer.AccumulateRegion("DiffIP:Diffusion Coeff", 10);
 }
 
-void DiffusionIP::v_DiffuseCoeffs(
-    const std::size_t nConvectiveFields,
-    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const Array<OneD, Array<OneD, NekDouble>> &inarray,
-    Array<OneD, Array<OneD, NekDouble>> &outarray,
-    const Array<OneD, Array<OneD, NekDouble>> &vFwd,
-    const Array<OneD, Array<OneD, NekDouble>> &vBwd,
-    TensorOfArray3D<NekDouble> &qfield, Array<OneD, int> &nonZeroIndex)
-{
-    int i, j;
-    int nDim      = fields[0]->GetCoordim(0);
-    int nPts      = fields[0]->GetTotPoints();
-    int nCoeffs   = fields[0]->GetNcoeffs();
-    int nTracePts = fields[0]->GetTrace()->GetTotPoints();
-
-    TensorOfArray3D<NekDouble> elmtFlux(nDim);
-    for (j = 0; j < nDim; ++j)
-    {
-        elmtFlux[j] = Array<OneD, Array<OneD, NekDouble>>(nConvectiveFields);
-        for (i = 0; i < nConvectiveFields; ++i)
-        {
-            elmtFlux[j][i] = Array<OneD, NekDouble>(nPts, 0.0);
-        }
-    }
-
-    DiffuseVolumeFlux(fields, inarray, qfield, elmtFlux, nonZeroIndex);
-
-    Array<OneD, Array<OneD, NekDouble>> tmpFluxIprdct(nDim);
-    // volume intergration: the nonZeroIndex indicates which flux is nonzero
-    for (i = 0; i < nonZeroIndex.size(); ++i)
-    {
-        int j = nonZeroIndex[i];
-        for (int k = 0; k < nDim; ++k)
-        {
-            tmpFluxIprdct[k] = elmtFlux[k][j];
-        }
-        fields[j]->IProductWRTDerivBase(tmpFluxIprdct, outarray[j]);
-        Vmath::Neg(nCoeffs, outarray[j], 1);
-    }
-
-    Array<OneD, Array<OneD, NekDouble>> Traceflux(nConvectiveFields);
-    for (int j = 0; j < nConvectiveFields; ++j)
-    {
-        Traceflux[j] = Array<OneD, NekDouble>(nTracePts, 0.0);
-    }
-
-    DiffuseTraceFlux(fields, inarray, qfield, elmtFlux, Traceflux, vFwd, vBwd,
-                     nonZeroIndex);
-
-    // release qfield, elmtFlux and muvar;
-    for (j = 0; j < nDim; ++j)
-    {
-        elmtFlux[j] = NullNekDoubleArrayOfArray;
-    }
-
-    for (i = 0; i < nonZeroIndex.size(); ++i)
-    {
-        int j = nonZeroIndex[i];
-
-        fields[j]->AddTraceIntegral(Traceflux[j], outarray[j]);
-        fields[j]->SetPhysState(false);
-    }
-
-    AddDiffusionSymmFluxToCoeff(nConvectiveFields, fields, inarray, qfield,
-                                elmtFlux, outarray, vFwd, vBwd);
-}
-
 void DiffusionIP::v_DiffuseCalcDerivative(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -455,7 +388,7 @@ void DiffusionIP::v_DiffuseTraceFlux(
     ApplyFluxBndConds(nConvectiveFields, fields, TraceFlux);
 }
 
-void DiffusionIP::v_AddDiffusionSymmFluxToCoeff(
+void DiffusionIP::AddDiffusionSymmFluxToCoeff(
     const std::size_t nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -490,7 +423,7 @@ void DiffusionIP::v_AddDiffusionSymmFluxToCoeff(
     }
 }
 
-void DiffusionIP::v_AddDiffusionSymmFluxToPhys(
+void DiffusionIP::AddDiffusionSymmFluxToPhys(
     const std::size_t nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -695,23 +628,13 @@ void DiffusionIP::GetPenaltyFactor(
     }
 }
 
-void DiffusionIP::GetPenaltyFactorConst(
-    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    Array<OneD, NekDouble> &factor)
-{
-    boost::ignore_unused(fields);
-    Vmath::Fill(factor.size(), m_IPPenaltyCoeff, factor, 1);
-}
-
-void DiffusionIP::v_ConsVarAveJump(
+void DiffusionIP::ConsVarAveJump(
     const std::size_t nConvectiveFields, const size_t nPts,
     const Array<OneD, const Array<OneD, NekDouble>> &vFwd,
     const Array<OneD, const Array<OneD, NekDouble>> &vBwd,
     Array<OneD, Array<OneD, NekDouble>> &aver,
     Array<OneD, Array<OneD, NekDouble>> &jump)
 {
-    // ConsVarAve(nConvectiveFields, nPts, vFwd, vBwd, aver);
-
     std::vector<NekDouble> vFwdTmp(nConvectiveFields),
         vBwdTmp(nConvectiveFields), averTmp(nConvectiveFields);
     for (size_t p = 0; p < nPts; ++p)

@@ -22,6 +22,7 @@ v5.4.0
 - Fix v_Exscan compilation bug (!1566)
 - Tidy-up of comm class (!1572)
 - Tidy-up Nektar tolerances (!1570)
+- Tidy-up diffusion class and subclasses (!1581)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)

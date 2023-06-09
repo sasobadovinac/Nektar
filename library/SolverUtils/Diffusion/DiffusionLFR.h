@@ -51,6 +51,27 @@ public:
 
     static std::string type[];
 
+protected:
+    DiffusionLFR(std::string diffType);
+
+    std::string m_diffType;
+
+    virtual void v_InitObject(
+        LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
+
+    virtual void v_Diffuse(
+        const size_t nConvectiveFields,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
+
+private:
+    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
+    LibUtilities::SessionReaderSharedPtr m_session;
+
     Array<OneD, NekDouble> m_jac;
     Array<OneD, Array<OneD, NekDouble>> m_gmat;
 
@@ -68,12 +89,6 @@ public:
     DNekMatSharedPtr m_Ixm;
     DNekMatSharedPtr m_Ixp;
 
-protected:
-    DiffusionLFR(std::string diffType);
-
-    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
-    LibUtilities::SessionReaderSharedPtr m_session;
-
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_IF1;
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_DU1;
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_DFC1;
@@ -88,21 +103,6 @@ protected:
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_tmp1;
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_tmp2;
 
-    std::string m_diffType;
-
-    virtual void v_InitObject(
-        LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
-
-    virtual void v_Diffuse(
-        const std::size_t nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
-
-private:
     void SetupMetrics(LibUtilities::SessionReaderSharedPtr pSession,
                       Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
 

@@ -318,6 +318,7 @@ void DiffusionLFR::SetupMetrics(
  *      #eDG_DG_Left - #eDG_DG_Left which recovers a nodal DG scheme,
  *      #eDG_SD_Left - #eDG_SD_Left which recovers the SD scheme,
  *      #eDG_HU_Left - #eDG_HU_Left which recovers the Huynh scheme.
+ *
  * The values of the derivatives of the correction function are then
  * stored into global variables and reused into the Functions
  * #DivCFlux_1D, #DivCFlux_2D, #DivCFlux_3D to compute the
@@ -883,8 +884,6 @@ void DiffusionLFR::v_Diffuse(
 
     int i, j, n;
     int phys_offset;
-    // Array<TwoD, const NekDouble> gmat;
-    // Array<OneD, const NekDouble> jac;
     Array<OneD, NekDouble> auxArray1, auxArray2;
 
     Array<OneD, LibUtilities::BasisSharedPtr> Basis;
@@ -1368,25 +1367,6 @@ void DiffusionLFR::NumFluxforVector(
             Vmath::Vmul(nTracePts, m_traceNormals[j], 1, qfluxtemp, 1,
                         qfluxtemp, 1);
 
-            /*
-            // Generate Stability term = - C11 ( u- - u+ )
-            fields[i]->GetFwdBwdTracePhys(ufield[i], Fwd, Bwd);
-
-            Vmath::Vsub(nTracePts,
-                        Fwd, 1, Bwd, 1,
-                        uterm, 1);
-
-            Vmath::Smul(nTracePts,
-                        -1.0 * C11, uterm, 1,
-                        uterm, 1);
-
-            // Flux = {Fwd, Bwd} * (nx, ny, nz) + uterm * (nx, ny)
-            Vmath::Vadd(nTracePts,
-                        uterm, 1,
-                        qfluxtemp, 1,
-                        qfluxtemp, 1);
-            */
-
             // Imposing weak boundary condition with flux
             if (fields[0]->GetBndCondExpansions().size())
             {
@@ -1605,11 +1585,9 @@ void DiffusionLFR::DerCFlux_2D(
 
     int n, e, i, j, cnt;
 
-    Array<TwoD, const NekDouble> gmat;
     Array<OneD, const NekDouble> jac;
 
     int nElements = fields[0]->GetExpSize();
-
     int trace_offset, phys_offset;
     int nLocalSolutionPts;
     int nquad0, nquad1;
@@ -1657,10 +1635,6 @@ void DiffusionLFR::DerCFlux_2D(
             // Offset of the trace space correspondent to edge 'e'
             trace_offset = fields[0]->GetTrace()->GetPhys_Offset(
                 elmtToTrace[n][e]->GetElmtId());
-
-            // Get the normals of edge 'e'
-            // const Array<OneD, const Array<OneD, NekDouble> > &normals =
-            // fields[0]->GetExp(n)->GetTraceNormal(e);
 
             // Extract the edge values of the volumetric fluxes
             // on edge 'e' and order them accordingly to the order
@@ -1727,9 +1701,6 @@ void DiffusionLFR::DerCFlux_2D(
                 case 0:
                     for (i = 0; i < nquad0; ++i)
                     {
-                        // Multiply fluxJumps by Q factors
-                        // fluxJumps[i] = -(m_Q2D_e0[n][i]) * fluxJumps[i];
-
                         for (j = 0; j < nquad1; ++j)
                         {
                             cnt             = i + j * nquad0;
@@ -1740,9 +1711,6 @@ void DiffusionLFR::DerCFlux_2D(
                 case 1:
                     for (i = 0; i < nquad1; ++i)
                     {
-                        // Multiply fluxJumps by Q factors
-                        // fluxJumps[i] = (m_Q2D_e1[n][i]) * fluxJumps[i];
-
                         for (j = 0; j < nquad0; ++j)
                         {
                             cnt             = (nquad0)*i + j;
@@ -1753,9 +1721,6 @@ void DiffusionLFR::DerCFlux_2D(
                 case 2:
                     for (i = 0; i < nquad0; ++i)
                     {
-                        // Multiply fluxJumps by Q factors
-                        // fluxJumps[i] = (m_Q2D_e2[n][i]) * fluxJumps[i];
-
                         for (j = 0; j < nquad1; ++j)
                         {
                             cnt             = j * nquad0 + i;
@@ -1766,8 +1731,6 @@ void DiffusionLFR::DerCFlux_2D(
                 case 3:
                     for (i = 0; i < nquad1; ++i)
                     {
-                        // Multiply fluxJumps by Q factors
-                        // fluxJumps[i] = -(m_Q2D_e3[n][i]) * fluxJumps[i];
                         for (j = 0; j < nquad0; ++j)
                         {
                             cnt             = j + i * nquad0;
