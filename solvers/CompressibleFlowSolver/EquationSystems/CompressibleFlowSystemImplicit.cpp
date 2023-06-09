@@ -35,6 +35,7 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <CompressibleFlowSolver/EquationSystems/CompressibleFlowSystemImplicit.h>
+#include <SolverUtils/Advection/AdvectionWeakDG.h>
 
 #include <LibUtilities/BasicUtils/Timer.h>
 
@@ -306,8 +307,12 @@ void CFSImplicit::DoAdvectionCoeff(
     int nvariables = inarray.size();
     Array<OneD, Array<OneD, NekDouble>> advVel(m_spacedim);
 
-    m_advObject->AdvectCoeffs(nvariables, m_fields, advVel, inarray, outarray,
-                              time, pFwd, pBwd);
+    auto advWeakDGObject =
+        std::dynamic_pointer_cast<SolverUtils::AdvectionWeakDG>(m_advObject);
+    ASSERTL0(advWeakDGObject,
+             "Use WeakDG for implicit compressible flow solver!");
+    advWeakDGObject->AdvectCoeffs(nvariables, m_fields, advVel, inarray,
+                                  outarray, time, pFwd, pBwd);
 }
 
 void CFSImplicit::DoImplicitSolve(
@@ -1332,9 +1337,14 @@ void CFSImplicit::CalcTraceNumericalFlux(
 
     if (m_advectionJacFlag)
     {
-        m_advObject->AdvectTraceFlux(nConvectiveFields, m_fields, AdvVel,
-                                     inarray, traceflux, m_bndEvaluateTime,
-                                     vFwd, vBwd);
+        auto advWeakDGObject =
+            std::dynamic_pointer_cast<SolverUtils::AdvectionWeakDG>(
+                m_advObject);
+        ASSERTL0(advWeakDGObject,
+                 "Use WeakDG for implicit compressible flow solver!");
+        advWeakDGObject->AdvectTraceFlux(nConvectiveFields, m_fields, AdvVel,
+                                         inarray, traceflux, m_bndEvaluateTime,
+                                         vFwd, vBwd);
     }
     else
     {

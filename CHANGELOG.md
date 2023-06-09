@@ -24,6 +24,7 @@ v5.4.0
 - Tidy-up of comm class (!1572)
 - Tidy-up Nektar tolerances (!1570)
 - Fix StaticCond approach + GMRES when restarting (!1583)
+- Tidy-up Advection class (!1580)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)

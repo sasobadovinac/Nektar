@@ -99,13 +99,10 @@ void AdvectionWeakDG::v_Advect(
     }
     LibUtilities::Timer timer;
     timer.Start();
-    AdvectionWeakDG::v_AdvectCoeffs(nConvectiveFields, fields, advVel, inarray,
-                                    tmp, time, pFwd, pBwd);
+    AdvectCoeffs(nConvectiveFields, fields, advVel, inarray, tmp, time, pFwd,
+                 pBwd);
     timer.Stop();
-    timer.AccumulateRegion("AdvWeakDG:v_AdvectCoeffs", 2);
-
-    // why was this broken in many loops over convective fields?
-    // this is terrible for locality
+    timer.AccumulateRegion("AdvectCoeffs", 2);
 
     timer.Start();
     for (int i = 0; i < nConvectiveFields; ++i)
@@ -118,7 +115,10 @@ void AdvectionWeakDG::v_Advect(
     timer1.AccumulateRegion("AdvWeakDG:All", 10);
 }
 
-void AdvectionWeakDG::v_AdvectCoeffs(
+/**
+ *
+ */
+void AdvectionWeakDG::AdvectCoeffs(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &advVel,
@@ -145,8 +145,7 @@ void AdvectionWeakDG::v_AdvectCoeffs(
 
     LibUtilities::Timer timer;
     timer.Start();
-    v_AdvectVolumeFlux(nConvectiveFields, fields, advVel, inarray, fluxvector,
-                       time);
+    AdvectVolumeFlux(inarray, fluxvector);
     timer.Stop();
     timer.AccumulateRegion("AdvWeakDG:_fluxVector", 3);
 
@@ -167,8 +166,8 @@ void AdvectionWeakDG::v_AdvectCoeffs(
         numflux[i] = Array<OneD, NekDouble>{nTracePointsTot, 0.0};
     }
 
-    v_AdvectTraceFlux(nConvectiveFields, fields, advVel, inarray, numflux, time,
-                      pFwd, pBwd);
+    AdvectTraceFlux(nConvectiveFields, fields, advVel, inarray, numflux, time,
+                    pFwd, pBwd);
 
     // Evaulate <\phi, \hat{F}\cdot n> - OutField[i]
     for (int i = 0; i < nConvectiveFields; ++i)
@@ -187,7 +186,10 @@ void AdvectionWeakDG::v_AdvectCoeffs(
     }
 }
 
-void AdvectionWeakDG::v_AdvectTraceFlux(
+/**
+ *
+ */
+void AdvectionWeakDG::AdvectTraceFlux(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &advVel,
@@ -228,88 +230,6 @@ void AdvectionWeakDG::v_AdvectTraceFlux(
     m_riemann->Solve(m_spaceDim, Fwd, Bwd, TraceFlux);
     timer.Stop();
     timer.AccumulateRegion("AdvWeakDG:_Riemann", 10);
-}
-
-void AdvectionWeakDG::v_AddVolumJacToMat(
-    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-    const int &nConvectiveFields,
-    const TensorOfArray5D<NekDouble> &ElmtJacArray,
-    Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> &gmtxarray)
-{
-    MultiRegions::ExpListSharedPtr explist              = pFields[0];
-    std::shared_ptr<LocalRegions::ExpansionVector> pexp = explist->GetExp();
-    int nTotElmt                                        = (*pexp).size();
-    int nElmtPnt, nElmtCoef;
-
-    SNekMatSharedPtr tmpGmtx;
-    DNekMatSharedPtr ElmtMat;
-
-    Array<OneD, NekSingle> GMat_data;
-    Array<OneD, NekDouble> Elmt_data;
-    Array<OneD, NekSingle> Elmt_dataSingle;
-
-    Array<OneD, DNekMatSharedPtr> mtxPerVar(nTotElmt);
-    Array<OneD, int> elmtpnts(nTotElmt);
-    Array<OneD, int> elmtcoef(nTotElmt);
-    for (int nelmt = 0; nelmt < nTotElmt; nelmt++)
-    {
-        nElmtCoef       = (*pexp)[nelmt]->GetNcoeffs();
-        nElmtPnt        = (*pexp)[nelmt]->GetTotPoints();
-        elmtpnts[nelmt] = nElmtPnt;
-        elmtcoef[nelmt] = nElmtCoef;
-        mtxPerVar[nelmt] =
-            MemoryManager<DNekMat>::AllocateSharedPtr(nElmtCoef, nElmtPnt);
-    }
-
-    Array<OneD, DNekMatSharedPtr> mtxPerVarCoeff(nTotElmt);
-    for (int nelmt = 0; nelmt < nTotElmt; nelmt++)
-    {
-        nElmtCoef = elmtcoef[nelmt];
-        mtxPerVarCoeff[nelmt] =
-            MemoryManager<DNekMat>::AllocateSharedPtr(nElmtCoef, nElmtCoef);
-    }
-
-    for (int m = 0; m < nConvectiveFields; m++)
-    {
-        for (int n = 0; n < nConvectiveFields; n++)
-        {
-            for (int nelmt = 0; nelmt < nTotElmt; nelmt++)
-            {
-                (*mtxPerVarCoeff[nelmt]) = 0.0;
-                (*mtxPerVar[nelmt])      = 0.0;
-            }
-
-            explist->GetMatIpwrtDeriveBase(ElmtJacArray[m][n], mtxPerVar);
-            // Memory can be saved by reusing mtxPerVar
-            explist->AddRightIPTBaseMatrix(mtxPerVar, mtxPerVarCoeff);
-
-            for (int nelmt = 0; nelmt < nTotElmt; nelmt++)
-            {
-                nElmtCoef    = elmtcoef[nelmt];
-                nElmtPnt     = elmtpnts[nelmt];
-                int ntotDofs = nElmtCoef * nElmtCoef;
-
-                if (Elmt_dataSingle.size() < ntotDofs)
-                {
-                    Elmt_dataSingle = Array<OneD, NekSingle>(ntotDofs);
-                }
-
-                tmpGmtx = gmtxarray[m][n]->GetBlock(nelmt, nelmt);
-                ElmtMat = mtxPerVarCoeff[nelmt];
-
-                GMat_data = tmpGmtx->GetPtr();
-                Elmt_data = ElmtMat->GetPtr();
-
-                for (int i = 0; i < ntotDofs; i++)
-                {
-                    Elmt_dataSingle[i] = NekSingle(Elmt_data[i]);
-                }
-
-                Vmath::Vadd(ntotDofs, GMat_data, 1, Elmt_dataSingle, 1,
-                            GMat_data, 1);
-            }
-        }
-    }
 }
 
 } // end of namespace SolverUtils
