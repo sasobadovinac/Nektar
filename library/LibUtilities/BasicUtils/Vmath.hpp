@@ -68,7 +68,7 @@ template <class T>
 LIB_UTILITIES_EXPORT void Vmul(int n, const T *x, const int incx, const T *y,
                                const int incy, T *z, const int incz);
 
-/// \brief Scalar multiply  y = alpha*y
+/// \brief Scalar multiply  y = alpha*x
 
 template <class T>
 LIB_UTILITIES_EXPORT void Smul(int n, const T alpha, const T *x, const int incx,
@@ -79,7 +79,7 @@ template <class T>
 LIB_UTILITIES_EXPORT void Vdiv(int n, const T *x, const int incx, const T *y,
                                const int incy, T *z, const int incz);
 
-/// \brief Scalar multiply  y = alpha/y
+/// \brief Scalar multiply  y = alpha/x
 template <class T>
 LIB_UTILITIES_EXPORT void Sdiv(int n, const T alpha, const T *x, const int incx,
                                T *y, const int incy);
@@ -110,6 +110,7 @@ template <class T> LIB_UTILITIES_EXPORT void Zero(int n, T *x, const int incx);
 /// \brief Negate x = -x
 template <class T> LIB_UTILITIES_EXPORT void Neg(int n, T *x, const int incx);
 
+/// \brief log y = log(x)
 template <class T>
 void Vlog(int n, const T *x, const int incx, T *y, const int incy)
 {
@@ -121,6 +122,7 @@ void Vlog(int n, const T *x, const int incx, T *y, const int incy)
     }
 }
 
+/// \brief exp y = exp(x)
 template <class T>
 void Vexp(int n, const T *x, const int incx, T *y, const int incy)
 {
@@ -132,6 +134,7 @@ void Vexp(int n, const T *x, const int incx, T *y, const int incy)
     }
 }
 
+/// \brief pow y = pow(x, f)
 template <class T>
 void Vpow(int n, const T *x, const int incx, const T f, T *y, const int incy)
 {
@@ -181,8 +184,6 @@ LIB_UTILITIES_EXPORT void Svtvm(int n, const T alpha, const T *x,
 
 /// \brief  vvtvvtp (vector times vector plus vector times vector):
 // z = v*w + x*y
-//
-// @param n  Number of items in each vector.
 template <class T>
 LIB_UTILITIES_EXPORT void Vvtvvtp(int n, const T *v, int incv, const T *w,
                                   int incw, const T *x, int incx, const T *y,
@@ -194,6 +195,7 @@ template <class T>
 LIB_UTILITIES_EXPORT void Vvtvvtm(int n, const T *v, int incv, const T *w,
                                   int incw, const T *x, int incx, const T *y,
                                   int incy, T *z, int incz);
+
 /// \brief  Svtsvtp (scalar times vector plus scalar times vector):
 // z = alpha*x + beta*y
 template <class T>
@@ -202,7 +204,7 @@ LIB_UTILITIES_EXPORT void Svtsvtp(int n, const T alpha, const T *x, int incx,
                                   int incz);
 
 /// \brief  Vstvpp (scalar times vector plus vector plus vector):
-// z = v*w + x*y
+// z = alpha*w + x + y
 template <class T>
 LIB_UTILITIES_EXPORT void Vstvpp(int n, const T alpha, const T *v, int incv,
                                  const T *w, int incw, const T *x, int incx,
@@ -283,19 +285,19 @@ LIB_UTILITIES_EXPORT T Vmin(int n, const T *x, const int incx);
 template <class T>
 LIB_UTILITIES_EXPORT int Nnan(int n, const T *x, const int incx);
 
-/// \brief  dot (vector times vector): z = w*x
+/// \brief dot product
 template <class T> LIB_UTILITIES_EXPORT T Dot(int n, const T *w, const T *x);
 
-/// \brief  dot (vector times vector): z = w*x
+/// \brief dot product
 template <class T>
 LIB_UTILITIES_EXPORT T Dot(int n, const T *w, const int incw, const T *x,
                            const int incx);
 
-/// \brief  dot2 (vector times vector times vector): z = w*x*y
+/// \brief dot product
 template <class T>
 LIB_UTILITIES_EXPORT T Dot2(int n, const T *w, const T *x, const int *y);
 
-/// \brief  dot2 (vector times vector times vector): z = w*x*y
+/// \brief dot product
 template <class T>
 LIB_UTILITIES_EXPORT T Dot2(int n, const T *w, const int incw, const T *x,
                             const int incx, const int *y, const int incy);
@@ -307,7 +309,7 @@ template <class T>
 LIB_UTILITIES_EXPORT void Vcopy(int n, const T *x, const int incx, T *y,
                                 const int incy);
 
-// \brief reverse the ordering of  vector to another
+// \brief reverse the ordering of vector to another
 template <class T>
 LIB_UTILITIES_EXPORT void Reverse(int n, const T *x, const int incx, T *y,
                                   const int incy);

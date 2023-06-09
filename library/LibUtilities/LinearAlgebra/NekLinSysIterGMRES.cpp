@@ -121,8 +121,6 @@ int NekLinSysIterGMRES::v_SolveSystem(
     Array<OneD, NekDouble> &pOutput, const int nDir, const NekDouble tol,
     const NekDouble factor)
 {
-    boost::ignore_unused(tol);
-
     m_tolerance     = max(tol, 1.0E-16);
     m_prec_factor   = factor;
     int niterations = DoGMRES(nGlobal, pInput, pOutput, nDir);
@@ -172,8 +170,6 @@ int NekLinSysIterGMRES::DoGMRES(const int nGlobal,
         truncted = true;
     }
 
-    int nwidthcolm = 13;
-
     for (int nrestart = 0; nrestart < m_maxrestart; ++nrestart)
     {
         eps =
@@ -199,6 +195,8 @@ int NekLinSysIterGMRES::DoGMRES(const int nGlobal,
 
         if (m_root)
         {
+            int nwidthcolm = 13;
+
             cout << std::scientific << std::setw(nwidthcolm)
                  << std::setprecision(nwidthcolm - 8)
                  << "       GMRES iterations made = " << m_totalIterations
@@ -356,6 +354,7 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
 
     // Normlized by r0 norm V(:,1)=r0/norm(r0)
     alpha = 1.0 / eta[0];
+
     // Scalar multiplication
     Vmath::Smul(nNonDir, alpha, &r0[0] + nDir, 1, &V_total[0][0] + nDir, 1);
 
@@ -381,6 +380,7 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
         {
             Vsingle1 = V_total[nd];
         }
+
         // w here is no need to add nDir due to temporary Array
         idtem    = id[nd];
         starttem = id_start[idtem];

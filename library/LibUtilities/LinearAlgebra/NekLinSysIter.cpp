@@ -127,10 +127,10 @@ void NekLinSysIter::setUniversalUniqueMap()
 
 void NekLinSysIter::Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn)
 {
-    Array<OneD, NekDouble> vExchange(1, 0.0);
+    NekDouble vExchange(0.0);
     if (m_map.size() > 0)
     {
-        vExchange[0] =
+        vExchange =
             Vmath::Dot2(pIn.GetDimension(), &pIn[0], &pIn[0], &m_map[0]);
     }
     m_Comm->AllReduce(vExchange, LibUtilities::ReduceSum);
@@ -139,7 +139,7 @@ void NekLinSysIter::Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn)
     // used in subsequent solvers such as the velocit solve in
     // INC NS. If this works we then need to work out a better
     // way to control this.
-    NekDouble new_rhs_mag = (vExchange[0] > 1e-6) ? vExchange[0] : 1.0;
+    NekDouble new_rhs_mag = (vExchange > 1.0e-6) ? vExchange : 1.0;
 
     if (m_rhs_magnitude == NekConstants::kNekUnsetDouble)
     {
