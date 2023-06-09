@@ -121,8 +121,6 @@ int NekLinSysIterGMRES::v_SolveSystem(
     Array<OneD, NekDouble> &pOutput, const int nDir, const NekDouble tol,
     const NekDouble factor)
 {
-    boost::ignore_unused(tol);
-
     m_tolerance     = max(tol, 1.0E-16);
     m_prec_factor   = factor;
     int niterations = DoGMRES(nGlobal, pInput, pOutput, nDir);

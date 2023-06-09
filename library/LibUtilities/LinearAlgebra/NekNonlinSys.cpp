@@ -89,7 +89,7 @@ NekNonlinSys::NekNonlinSys(const LibUtilities::SessionReaderSharedPtr &pSession,
 
     if (pSession->DefinesGlobalSysSolnInfo(variable, "NonlinIterTolRelativeL2"))
     {
-        m_NonlinIterTolRelativeL2 = boost::lexical_cast<int>(
+        m_NonlinIterTolRelativeL2 = boost::lexical_cast<NekDouble>(
             pSession->GetGlobalSysSolnInfo(variable, "NonlinIterTolRelativeL2")
                 .c_str());
     }
@@ -103,7 +103,7 @@ NekNonlinSys::NekNonlinSys(const LibUtilities::SessionReaderSharedPtr &pSession,
     if (pSession->DefinesGlobalSysSolnInfo(variable,
                                            "LinSysRelativeTolInNonlin"))
     {
-        m_LinSysRelativeTolInNonlin = boost::lexical_cast<int>(
+        m_LinSysRelativeTolInNonlin = boost::lexical_cast<NekDouble>(
             pSession
                 ->GetGlobalSysSolnInfo(variable, "LinSysRelativeTolInNonlin")
                 .c_str());
@@ -114,9 +114,6 @@ NekNonlinSys::NekNonlinSys(const LibUtilities::SessionReaderSharedPtr &pSession,
                                 m_LinSysRelativeTolInNonlin,
                                 pKey.m_LinSysRelativeTolInNonlin);
     }
-
-    // cout << " m_LinSysRelativeTolInNonlin = " << m_LinSysRelativeTolInNonlin
-    // << endl;
 
     m_LinSysIterSolverType = pKey.m_LinSysIterSolverTypeInNonlin;
     if (pSession->DefinesGlobalSysSolnInfo(variable,

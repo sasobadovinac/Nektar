@@ -14,6 +14,7 @@ v5.4.0
 - Remove unecessary for loop in NekLinSysIterGMRES (!1554)
 - Generalize the use of size_t in TimeIntegration (!1555)
 - Remove unused Kernel directory (!1560)
+- Tidy-up NekNonlinSys and fix some issues (!1563)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
