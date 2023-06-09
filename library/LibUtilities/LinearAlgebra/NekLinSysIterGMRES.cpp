@@ -145,6 +145,7 @@ int NekLinSysIterGMRES::DoGMRES(const int nGlobal,
                                 const Array<OneD, const NekDouble> &pInput,
                                 Array<OneD, NekDouble> &pOutput, const int nDir)
 {
+
     m_prec_factor = NekConstants::kNekUnsetDouble;
 
     m_rhs_magnitude = 1.0;
@@ -282,20 +283,22 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
     Array<OneD, NekDouble> hsingle1;
     Array<OneD, NekDouble> hsingle2;
 
+    // Compute r0
     if (restarted)
     {
-        // This is tmp2=Ax
+        // This is A*x
         m_operator.DoNekSysLhsEval(pOutput, r0, m_DifferenceFlag0);
 
         // The first search direction
         beta = -1.0;
-        // This is r0=b-AX
+
+        // This is r0 = b-A*x
         Vmath::Svtvp(nNonDir, beta, &r0[0] + nDir, 1, &pInput[0] + nDir, 1,
                      &r0[0] + nDir, 1);
     }
     else
     {
-        // If not restarted, x0 should be zero
+        // This is r0 = b, x = x0 assumed to be zero
         Vmath::Vcopy(nNonDir, &pInput[0] + nDir, 1, &r0[0] + nDir, 1);
     }
 
@@ -315,20 +318,18 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
 
     if (!restarted)
     {
-        if (m_prec_factor == NekConstants::kNekUnsetDouble)
+        if (m_NekLinSysLeftPrecon &&
+            m_prec_factor == NekConstants::kNekUnsetDouble)
         {
-            if (m_NekLinSysLeftPrecon)
-            {
-                // Evaluate initial residual error for exit check
-                vExchange = Vmath::Dot2(nNonDir, &pInput[0] + nDir,
-                                        &pInput[0] + nDir, &m_map[0] + nDir);
-                m_Comm->AllReduce(vExchange, LibUtilities::ReduceSum);
-                m_prec_factor = vExchange / eps;
-            }
-            else
-            {
-                m_prec_factor = 1.0;
-            }
+            // Evaluate initial residual error for exit check
+            vExchange = Vmath::Dot2(nNonDir, &pInput[0] + nDir,
+                                    &pInput[0] + nDir, &m_map[0] + nDir);
+            m_Comm->AllReduce(vExchange, LibUtilities::ReduceSum);
+            m_prec_factor = vExchange / eps;
+        }
+        else
+        {
+            m_prec_factor = 1.0;
         }
     }
 
@@ -358,13 +359,13 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
     // Scalar multiplication
     Vmath::Smul(nNonDir, alpha, &r0[0] + nDir, 1, &V_total[0][0] + nDir, 1);
 
-    // restarted Gmres(m) process
-    int nswp = 0;
+    // Restarted Gmres(m) process
     if (m_NekLinSysRightPrecon)
     {
         Vsingle1 = Array<OneD, NekDouble>(nGlobal, 0.0);
     }
 
+    int nswp = 0;
     for (int nd = 0; nd < m_LinSysMaxStorage; ++nd)
     {
         Vsingle2 = V_total[nd + 1];
@@ -399,13 +400,12 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
                          eta);
 
         eps = eta[nd + 1] * eta[nd + 1];
+
         // This Gmres merge truncted Gmres to accelerate.
         // If truncted, cannot jump out because
         // the last term of eta is not residual
         if ((!truncted) || (nd < m_KrylovMaxHessMatBand))
         {
-            // If (eps * m_prec_factor < m_tolerance *
-            // m_tolerance * m_rhs_magnitude )
             if ((eps < m_tolerance * m_tolerance * m_rhs_magnitude) && nd > 0)
             {
                 m_converged = true;
@@ -426,22 +426,22 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
     }
 
     DoBackward(nswp, Upper, eta, y_total);
-    // calculate output y_total*V_total
-    Array<OneD, NekDouble> solution(nGlobal, 0.0);
+
+    // Calculate output V_total * y_total.
+    Array<OneD, NekDouble> solution(nNonDir, 0.0);
     for (int i = 0; i < nswp; ++i)
     {
-        beta = y_total[i];
-        Vmath::Svtvp(nNonDir, beta, &V_total[i][0] + nDir, 1,
-                     &solution[0] + nDir, 1, &solution[0] + nDir, 1);
+        Vmath::Svtvp(nNonDir, y_total[i], &V_total[i][0] + nDir, 1,
+                     solution.get(), 1, solution.get(), 1);
     }
 
     if (m_NekLinSysRightPrecon)
     {
-        tmp1 = solution + nDir;
-        tmp2 = solution + nDir;
-        m_operator.DoNekSysPrecon(tmp1, tmp2);
+        m_operator.DoNekSysPrecon(solution, solution);
     }
-    Vmath::Vadd(nNonDir, &solution[0] + nDir, 1, &pOutput[0] + nDir, 1,
+
+    // Update output.
+    Vmath::Vadd(nNonDir, solution.get(), 1, &pOutput[0] + nDir, 1,
                 &pOutput[0] + nDir, 1);
 
     return eps;
