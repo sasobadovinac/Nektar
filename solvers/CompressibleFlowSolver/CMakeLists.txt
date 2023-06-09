@@ -61,7 +61,6 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         RiemannSolvers/RoeSolver.cpp
         RiemannSolvers/RoeSolverSIMD.cpp
         Preconditioner/PreconCfs.cpp
-        Preconditioner/PreconCfsOp.cpp
         Preconditioner/PreconCfsBRJ.cpp
         )
     IF(NEKTAR_BUILD_UNIT_TESTS)

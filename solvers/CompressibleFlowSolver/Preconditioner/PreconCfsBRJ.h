@@ -35,7 +35,7 @@
 #ifndef NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_PRECONCFSBRJ
 #define NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_PRECONCFSBRJ
 
-#include <CompressibleFlowSolver/Preconditioner/PreconCfsOp.h>
+#include <CompressibleFlowSolver/Preconditioner/PreconCfs.h>
 
 namespace Nektar
 {
@@ -46,18 +46,18 @@ using namespace tinysimd;
  * Block Relaxed(weighted) Jacobi iterative (BRJ) Preconditioner for CFS
  *
  */
-class PreconCfsBRJ : public PreconCfsOp
+class PreconCfsBRJ : public PreconCfs
 {
 public:
     friend class MemoryManager<PreconCfsBRJ>;
 
     /// Creates an instance of this class
-    static PreconCfsOpSharedPtr create(
+    static PreconCfsSharedPtr create(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const LibUtilities::CommSharedPtr &vComm)
     {
-        PreconCfsOpSharedPtr p = MemoryManager<PreconCfsBRJ>::AllocateSharedPtr(
+        PreconCfsSharedPtr p = MemoryManager<PreconCfsBRJ>::AllocateSharedPtr(
             pFields, pSession, vComm);
         return p;
     }
@@ -69,9 +69,6 @@ public:
                  const LibUtilities::SessionReaderSharedPtr &pSession,
                  const LibUtilities::CommSharedPtr &vComm);
     ~PreconCfsBRJ(){};
-
-    virtual bool v_UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
-                                        const NekDouble dtLambda) override;
 
 protected:
     int m_PreconItsStep;
@@ -96,7 +93,6 @@ protected:
 
     virtual void v_InitObject() override;
 
-private:
     virtual void v_DoPreconCfs(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
@@ -106,6 +102,13 @@ private:
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const Array<OneD, const Array<OneD, NekDouble>> &intmp,
         const NekDouble time, const NekDouble lambda) override;
+
+    virtual bool v_UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
+                                        const NekDouble dtLambda) override;
+
+private:
+    void DoNullPrecon(const Array<OneD, NekDouble> &pInput,
+                      Array<OneD, NekDouble> &pOutput, const bool &flag);
 
     void PreconBlkDiag(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,

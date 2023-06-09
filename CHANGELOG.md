@@ -33,6 +33,7 @@ v5.4.0
 - Prevent file overwrite with restart for the Compressible flow solver (!1540)
 - Register Projection and GJPStabilisation in SessionReader (!1542)
 - Redesign of AUSM Riemann solver class (!1577)
+- Redesign of PreconCfs class (!1578)
 
 **FieldConvert**
 - Add option to use .csv files in pointdatatofld module (!1545)

@@ -35,6 +35,7 @@
 #ifndef NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_PRECONCFS
 #define NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_PRECONCFS
 
+#include <CompressibleFlowSolver/Preconditioner/PreconCfsOp.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Communication/Comm.h>
@@ -49,6 +50,19 @@ enum PrecType
     eSparse,
 };
 
+//  Forward declaration
+class PreconCfs;
+
+/// Declaration of the boundary condition factory
+typedef LibUtilities::NekFactory<
+    std::string, PreconCfs, const Array<OneD, MultiRegions::ExpListSharedPtr> &,
+    const LibUtilities::SessionReaderSharedPtr &,
+    const LibUtilities::CommSharedPtr &>
+    PreconCfsFactory;
+
+/// Declaration of the boundary condition factory singleton
+PreconCfsFactory &GetPreconCfsFactory();
+
 class PreconCfs
 {
 public:
@@ -60,6 +74,8 @@ public:
     {
     }
 
+    inline void InitObject();
+
     void DoPreconCfs(const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
                      const Array<OneD, NekDouble> &pInput,
                      Array<OneD, NekDouble> &pOutput, const bool &flag);
@@ -69,19 +85,20 @@ public:
         const Array<OneD, const Array<OneD, NekDouble>> &intmp,
         const NekDouble time, const NekDouble lambda);
 
-    inline void InitObject();
-
-    virtual bool v_UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
-                                        const NekDouble dtLambda);
-
     bool UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
                               const NekDouble dtLambda);
 
+    inline void SetOperators(const NekPreconCfsOperators &in)
+    {
+        m_operator = in;
+    }
+
 protected:
-    // PreconCfsType                       m_preconType;
     LibUtilities::CommSharedPtr m_Comm;
     bool m_verbose;
     int m_spacedim;
+
+    NekPreconCfsOperators m_operator;
 
     int m_PreconMatFreezNumb;
     int m_PreconTimesCounter;
@@ -91,21 +108,20 @@ protected:
 
     bool m_CalcPreconMatFlag = false;
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() = 0;
 
-    void DoNullPrecon(const Array<OneD, NekDouble> &pInput,
-                      Array<OneD, NekDouble> &pOutput, const bool &flag);
-
-private:
     virtual void v_DoPreconCfs(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
-        const bool &flag);
+        const bool &flag) = 0;
 
     virtual void v_BuildPreconCfs(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const Array<OneD, const Array<OneD, NekDouble>> &intmp,
-        const NekDouble time, const NekDouble lambda);
+        const NekDouble time, const NekDouble lambda) = 0;
+
+    virtual bool v_UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
+                                        const NekDouble dtLambda) = 0;
 };
 typedef std::shared_ptr<PreconCfs> PreconCfsSharedPtr;
 
@@ -120,10 +136,15 @@ inline void PreconCfs::InitObject()
 /**
  *
  */
-inline bool PreconCfs::UpdatePreconMatCheck(
-    const Array<OneD, const NekDouble> &res, const NekDouble dtLambda)
+inline void PreconCfs::DoPreconCfs(
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &flag)
 {
-    return v_UpdatePreconMatCheck(res, dtLambda);
+    ASSERTL0(pInput.size() == pOutput.size(),
+             "In and Out not the same size in DoPreconCfs");
+    v_DoPreconCfs(pFields, pInput, pOutput, flag);
+    m_PreconTimesCounter++;
 }
 
 /**
@@ -135,6 +156,15 @@ inline void PreconCfs::BuildPreconCfs(
     const NekDouble time, const NekDouble lambda)
 {
     v_BuildPreconCfs(pFields, intmp, time, lambda);
+}
+
+/**
+ *
+ */
+inline bool PreconCfs::UpdatePreconMatCheck(
+    const Array<OneD, const NekDouble> &res, const NekDouble dtLambda)
+{
+    return v_UpdatePreconMatCheck(res, dtLambda);
 }
 } // namespace Nektar
 
