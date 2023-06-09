@@ -13,6 +13,8 @@ v5.4.0
 - Register TimeIntegrationMethod to SessionReader (!1539)
 - Remove unecessary for loop in NekLinSysIterGMRES (!1554)
 - Generalize the use of size_t in TimeIntegration (!1555)
+- Fix convergence error in Fixed-point Jacobi algorithm (!1561)
+- Tidy-up NekLinSys (!1562)
 - Tidy-up TimeIntegration (!1505)
 - Fix Adams-Bashforth time integration scheme (!1558)
 - Remove unused Kernel directory (!1560)

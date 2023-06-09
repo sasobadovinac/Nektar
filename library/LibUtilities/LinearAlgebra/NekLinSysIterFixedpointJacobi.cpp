@@ -77,7 +77,7 @@ int NekLinSysIterFixedpointJacobi::v_SolveSystem(
     Array<OneD, NekDouble> &pSolution, const int nDir, const NekDouble tol,
     const NekDouble factor)
 {
-    boost::ignore_unused(tol, nDir);
+    boost::ignore_unused(nDir);
 
     int niterations = 0;
     m_tolerance     = max(tol, 1.0E-16);
