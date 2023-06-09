@@ -26,6 +26,7 @@ v5.4.0
 - Fix StaticCond approach + GMRES when restarting (!1583)
 - Slightly reduce memory allocation in GMRES (!1586)
 - Tidy-up Advection class (!1580)
+- Tidy-up diffusion class and subclasses (!1581)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)

@@ -51,6 +51,18 @@ namespace Nektar
 {
 namespace SolverUtils
 {
+
+class Diffusion;
+
+/// A shared pointer to an EquationSystem object
+typedef std::shared_ptr<Diffusion> DiffusionSharedPtr;
+
+/// Datatype of the NekFactory used to instantiate classes derived
+/// from the Diffusion class.
+typedef LibUtilities::NekFactory<std::string, Diffusion, std::string>
+    DiffusionFactory;
+SOLVER_UTILS_EXPORT DiffusionFactory &GetDiffusionFactory();
+
 typedef std::function<void(const Array<OneD, Array<OneD, NekDouble>> &,
                            const TensorOfArray3D<NekDouble> &,
                            TensorOfArray3D<NekDouble> &)>
@@ -127,11 +139,6 @@ typedef std::function<void(Array<OneD, Array<OneD, NekDouble>> &)>
 class Diffusion
 {
 public:
-    /// Params for Ducros sensor
-    Array<OneD, NekDouble> m_divVel;
-    Array<OneD, NekDouble> m_divVelSquare;
-    Array<OneD, NekDouble> m_curlVelSquare;
-
     SOLVER_UTILS_EXPORT virtual ~Diffusion(){};
 
     SOLVER_UTILS_EXPORT void InitObject(
@@ -146,17 +153,10 @@ public:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
-
-    SOLVER_UTILS_EXPORT void DiffuseCoeffs(
-        const std::size_t nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
-            NullNekDoubleArrayOfArray,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray)
+    {
+        v_Diffuse(nConvectiveFields, fields, inarray, outarray, pFwd, pBwd);
+    }
 
     SOLVER_UTILS_EXPORT void Diffuse(
         const std::size_t nConvectiveFields,
@@ -166,19 +166,24 @@ public:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray)
+    {
+        m_time = time;
+        v_Diffuse(nConvectiveFields, fields, inarray, outarray, pFwd, pBwd);
+    }
 
     SOLVER_UTILS_EXPORT void DiffuseCoeffs(
         const std::size_t nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd,
-        TensorOfArray3D<NekDouble> &qfield, Array<OneD, int> &nonZeroIndex)
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray)
     {
         v_DiffuseCoeffs(nConvectiveFields, fields, inarray, outarray, pFwd,
-                        pBwd, qfield, nonZeroIndex);
+                        pBwd);
     }
 
     SOLVER_UTILS_EXPORT void DiffuseCoeffs(
@@ -189,7 +194,12 @@ public:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray)
+    {
+        m_time = time;
+        v_DiffuseCoeffs(nConvectiveFields, fields, inarray, outarray, pFwd,
+                        pBwd);
+    }
 
     // Diffusion Calculate the physical derivatives
     SOLVER_UTILS_EXPORT void DiffuseCalcDerivative(
@@ -199,10 +209,12 @@ public:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray)
+    {
+        v_DiffuseCalcDerivative(fields, inarray, qfields, pFwd, pBwd);
+    }
 
     /// Diffusion Volume FLux
-
     SOLVER_UTILS_EXPORT void DiffuseVolumeFlux(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -230,64 +242,23 @@ public:
                            pFwd, pBwd, nonZeroIndex);
     }
 
-    SOLVER_UTILS_EXPORT void DiffuseTraceSymmFlux(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        const TensorOfArray3D<NekDouble> &qfield,
-        const TensorOfArray3D<NekDouble> &VolumeFlux,
-        TensorOfArray3D<NekDouble> &SymmFlux,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd,
-        Array<OneD, int> &nonZeroIndex,
-        Array<OneD, Array<OneD, NekDouble>> &solution_Aver =
-            NullNekDoubleArrayOfArray,
-        Array<OneD, Array<OneD, NekDouble>> &solution_jump =
-            NullNekDoubleArrayOfArray)
+    SOLVER_UTILS_EXPORT void SetHomoDerivs(
+        Array<OneD, Array<OneD, NekDouble>> &deriv)
     {
-        v_DiffuseTraceSymmFlux(nConvectiveFields, fields, inarray, qfield,
-                               VolumeFlux, SymmFlux, pFwd, pBwd, nonZeroIndex,
-                               solution_Aver, solution_jump);
+        v_SetHomoDerivs(deriv);
     }
 
-    /// Add symmetric flux to field in coeff space
-    SOLVER_UTILS_EXPORT void AddDiffusionSymmFluxToCoeff(
-        const std::size_t nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        TensorOfArray3D<NekDouble> &qfield,
-        TensorOfArray3D<NekDouble> &VolumeFlux,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd)
+    SOLVER_UTILS_EXPORT TensorOfArray3D<NekDouble> &GetFluxTensor()
     {
-        v_AddDiffusionSymmFluxToCoeff(nConvectiveFields, fields, inarray,
-                                      qfield, VolumeFlux, outarray, pFwd, pBwd);
+        return v_GetFluxTensor();
     }
 
-    /// Add symmetric flux to field in coeff physical space
-    SOLVER_UTILS_EXPORT void AddDiffusionSymmFluxToPhys(
-        const std::size_t nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        TensorOfArray3D<NekDouble> &qfield,
-        TensorOfArray3D<NekDouble> &VolumeFlux,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd)
+    /// Get trace normal
+    SOLVER_UTILS_EXPORT const Array<OneD, const Array<OneD, NekDouble>>
+        &GetTraceNormal()
     {
-        v_AddDiffusionSymmFluxToPhys(nConvectiveFields, fields, inarray, qfield,
-                                     VolumeFlux, outarray, pFwd, pBwd);
+        return v_GetTraceNormal();
     }
-
-    SOLVER_UTILS_EXPORT void AddSymmFluxIntegralToOffDiag(
-        const int nConvectiveFields, const int nDim, const int nPts,
-        const int nTracePts,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, const int> &nonZeroIndex,
-        TensorOfArray3D<NekDouble> &Fwdflux,
-        TensorOfArray3D<NekDouble> &Bwdflux,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
 
     template <typename FuncPointerT, typename ObjectPointerT>
     void SetFluxVector(FuncPointerT func, ObjectPointerT obj)
@@ -370,35 +341,12 @@ public:
                       std::placeholders::_5, std::placeholders::_6);
     }
 
-    inline void SetHomoDerivs(Array<OneD, Array<OneD, NekDouble>> &deriv)
-    {
-        v_SetHomoDerivs(deriv);
-    }
-
-    virtual TensorOfArray3D<NekDouble> &GetFluxTensor()
-    {
-        return v_GetFluxTensor();
-    }
-
-    /// Get the average and jump value of conservative variables on trace
-    SOLVER_UTILS_EXPORT void ConsVarAveJump(
-        const std::size_t nConvectiveFields, const size_t npnts,
-        const Array<OneD, const Array<OneD, NekDouble>> &vFwd,
-        const Array<OneD, const Array<OneD, NekDouble>> &vBwd,
-        Array<OneD, Array<OneD, NekDouble>> &aver,
-        Array<OneD, Array<OneD, NekDouble>> &jump)
-    {
-        v_ConsVarAveJump(nConvectiveFields, npnts, vFwd, vBwd, aver, jump);
-    }
-
-    /// Get trace normal
-    SOLVER_UTILS_EXPORT const Array<OneD, const Array<OneD, NekDouble>>
-        &GetTraceNormal()
-    {
-        return v_GetTraceNormal();
-    }
-
 protected:
+    /// Params for Ducros sensor
+    Array<OneD, NekDouble> m_divVel;
+    Array<OneD, NekDouble> m_divVelSquare;
+    Array<OneD, NekDouble> m_curlVelSquare;
+
     DiffusionFluxVecCB m_fluxVector;
     DiffusionFluxVecCBNS m_fluxVectorNS;
     DiffusionFluxPenaltyNS m_fluxPenaltyNS;
@@ -411,10 +359,7 @@ protected:
 
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
-    {
-        boost::ignore_unused(pSession, pFields);
-    };
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) = 0;
 
     SOLVER_UTILS_EXPORT virtual void v_Diffuse(
         const std::size_t nConvectiveFields,
@@ -422,7 +367,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) = 0;
 
     SOLVER_UTILS_EXPORT virtual void v_DiffuseCoeffs(
         const std::size_t nConvectiveFields,
@@ -431,22 +376,6 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd);
-
-    SOLVER_UTILS_EXPORT virtual void v_DiffuseCoeffs(
-        const std::size_t nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &vFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &vBwd,
-        TensorOfArray3D<NekDouble> &qfield, Array<OneD, int> &nonZeroIndex);
-
-    SOLVER_UTILS_EXPORT virtual void v_ConsVarAveJump(
-        const std::size_t nConvectiveFields, const size_t npnts,
-        const Array<OneD, const Array<OneD, NekDouble>> &vFwd,
-        const Array<OneD, const Array<OneD, NekDouble>> &vBwd,
-        Array<OneD, Array<OneD, NekDouble>> &aver,
-        Array<OneD, Array<OneD, NekDouble>> &jump);
 
     /// Diffusion Flux, calculate the physical derivatives
     SOLVER_UTILS_EXPORT virtual void v_DiffuseCalcDerivative(
@@ -474,52 +403,6 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pBwd,
         Array<OneD, int> &nonZeroIndex);
 
-    SOLVER_UTILS_EXPORT virtual void v_DiffuseTraceSymmFlux(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        const TensorOfArray3D<NekDouble> &qfield,
-        const TensorOfArray3D<NekDouble> &VolumeFlux,
-        TensorOfArray3D<NekDouble> &SymmFlux,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd,
-        Array<OneD, int> &nonZeroIndex,
-        Array<OneD, Array<OneD, NekDouble>> &solution_Aver,
-        Array<OneD, Array<OneD, NekDouble>> &solution_jump)
-    {
-        boost::ignore_unused(nConvectiveFields, fields, inarray, qfield,
-                             VolumeFlux, SymmFlux, pFwd, pBwd, nonZeroIndex,
-                             solution_Aver, solution_jump);
-        ASSERTL0(false, "Not defined function v_DiffuseTraceSymmFlux.");
-    }
-
-    SOLVER_UTILS_EXPORT virtual void v_AddDiffusionSymmFluxToCoeff(
-        const std::size_t nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        TensorOfArray3D<NekDouble> &qfield,
-        TensorOfArray3D<NekDouble> &VolumeFlux,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd)
-    {
-        boost::ignore_unused(nConvectiveFields, fields, inarray, qfield,
-                             VolumeFlux, outarray, pFwd, pBwd);
-    }
-    SOLVER_UTILS_EXPORT virtual void v_AddDiffusionSymmFluxToPhys(
-        const std::size_t nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        TensorOfArray3D<NekDouble> &qfield,
-        TensorOfArray3D<NekDouble> &VolumeFlux,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd)
-    {
-        boost::ignore_unused(nConvectiveFields, fields, inarray, qfield,
-                             VolumeFlux, outarray, pFwd, pBwd);
-    }
-
     virtual void v_SetHomoDerivs(Array<OneD, Array<OneD, NekDouble>> &deriv)
     {
         boost::ignore_unused(deriv);
@@ -533,27 +416,8 @@ protected:
 
     SOLVER_UTILS_EXPORT virtual const Array<OneD, const Array<OneD, NekDouble>>
         &v_GetTraceNormal();
-
-    /// Compute primary derivatives
-    SOLVER_UTILS_EXPORT virtual void v_GetPrimVar(
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &primVar);
-
-    /// Compute divergence and curl squared
-    SOLVER_UTILS_EXPORT void GetDivCurl(
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const TensorOfArray3D<NekDouble> &pVarDer);
 };
 
-/// A shared pointer to an EquationSystem object
-typedef std::shared_ptr<SolverUtils::Diffusion> DiffusionSharedPtr;
-
-/// Datatype of the NekFactory used to instantiate classes derived
-/// from the Diffusion class.
-typedef LibUtilities::NekFactory<std::string, Diffusion, std::string>
-    DiffusionFactory;
-SOLVER_UTILS_EXPORT DiffusionFactory &GetDiffusionFactory();
 } // namespace SolverUtils
 } // namespace Nektar
 

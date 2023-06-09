@@ -107,8 +107,7 @@ void Diffusion3DHomogeneous1D::v_InitObject(
     m_planeDiff->InitObject(pSession, pFields_plane0);
 
     m_numPoints      = pFields[0]->GetTotPoints();
-    m_planes         = pFields[0]->GetZIDs();
-    m_numPlanes      = m_planes.size();
+    m_numPlanes      = pFields[0]->GetZIDs().size();
     m_numPointsPlane = m_numPoints / m_numPlanes;
     m_homoLen        = pFields[0]->GetHomoLen();
     m_trans          = pFields[0]->GetTransposition();

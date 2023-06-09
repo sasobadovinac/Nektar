@@ -51,6 +51,40 @@ public:
 
     static std::string type[];
 
+protected:
+    DiffusionLFRNS(std::string diffType);
+
+    std::string m_diffType;
+
+    virtual void v_InitObject(
+        LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
+
+    virtual void v_Diffuse(
+        const std::size_t nConvective,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
+
+    virtual void v_SetHomoDerivs(
+        Array<OneD, Array<OneD, NekDouble>> &deriv) override
+    {
+        m_homoDerivs = deriv;
+    }
+
+    virtual Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &v_GetFluxTensor()
+        override
+    {
+        return m_viscTensor;
+    }
+
+private:
+    Array<OneD, Array<OneD, NekDouble>> m_traceVel;
+    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
+    LibUtilities::SessionReaderSharedPtr m_session;
+
     Array<OneD, NekDouble> m_jac;
     Array<OneD, Array<OneD, NekDouble>> m_gmat;
 
@@ -68,12 +102,6 @@ public:
     DNekMatSharedPtr m_Ixm;
     DNekMatSharedPtr m_Ixp;
 
-protected:
-    DiffusionLFRNS(std::string diffType);
-
-    Array<OneD, Array<OneD, NekDouble>> m_traceVel;
-    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
-    LibUtilities::SessionReaderSharedPtr m_session;
     NekDouble m_gamma;
     NekDouble m_gasConstant;
     NekDouble m_Twall;
@@ -103,33 +131,6 @@ protected:
     int m_spaceDim;
     int m_diffDim;
 
-    std::string m_diffType;
-
-    virtual void v_InitObject(
-        LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
-
-    virtual void v_Diffuse(
-        const std::size_t nConvective,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
-
-    virtual void v_SetHomoDerivs(
-        Array<OneD, Array<OneD, NekDouble>> &deriv) override
-    {
-        m_homoDerivs = deriv;
-    }
-
-    virtual Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &v_GetFluxTensor()
-        override
-    {
-        return m_viscTensor;
-    }
-
-private:
     void SetupMetrics(LibUtilities::SessionReaderSharedPtr pSession,
                       Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
 
