@@ -46,6 +46,9 @@ string ImageWarpingSystem::className =
         "ImageWarpingSystem", ImageWarpingSystem::create,
         "Image warping system.");
 
+/**
+ *
+ */
 ImageWarpingSystem::ImageWarpingSystem(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const SpatialDomains::MeshGraphSharedPtr &pGraph)
@@ -53,6 +56,9 @@ ImageWarpingSystem::ImageWarpingSystem(
 {
 }
 
+/**
+ *
+ */
 void ImageWarpingSystem::v_InitObject(bool DeclareField)
 {
     AdvectionSystem::v_InitObject(DeclareField);
@@ -112,10 +118,16 @@ void ImageWarpingSystem::v_InitObject(bool DeclareField)
     }
 }
 
+/**
+ *
+ */
 ImageWarpingSystem::~ImageWarpingSystem()
 {
 }
 
+/**
+ *
+ */
 void ImageWarpingSystem::DoOdeRhs(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
@@ -201,11 +213,14 @@ void ImageWarpingSystem::DoOdeProjection(
         case MultiRegions::eDiscontinuous:
         {
             // Just copy over array
-            int npoints = GetNpoints();
-
-            for (int i = 0; i < nvariables; ++i)
+            if (inarray != outarray)
             {
-                Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                int npoints = GetNpoints();
+
+                for (int i = 0; i < nvariables; ++i)
+                {
+                    Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                }
             }
         }
         break;
@@ -240,6 +255,9 @@ Array<OneD, NekDouble> &ImageWarpingSystem::GetNormalVelocity()
     return m_traceVn;
 }
 
+/**
+ *
+ */
 void ImageWarpingSystem::GetFluxVector(
     const Array<OneD, Array<OneD, NekDouble>> &physfield,
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux)
@@ -258,6 +276,9 @@ void ImageWarpingSystem::GetFluxVector(
     }
 }
 
+/**
+ *
+ */
 void ImageWarpingSystem::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
     AdvectionSystem::v_GenerateSummary(s);

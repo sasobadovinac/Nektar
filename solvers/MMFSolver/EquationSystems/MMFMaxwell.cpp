@@ -1325,12 +1325,13 @@ void MMFMaxwell::DoOdeProjection(
 
     int var = inarray.size();
 
-    // SetBoundaryConditions(time);
-
-    int nq = GetNpoints();
-    for (int i = 0; i < var; ++i)
+    if (inarray != outarray)
     {
-        Vmath::Vcopy(nq, inarray[i], 1, outarray[i], 1);
+        int nq = GetNpoints();
+        for (int i = 0; i < var; ++i)
+        {
+            Vmath::Vcopy(nq, inarray[i], 1, outarray[i], 1);
+        }
     }
 }
 

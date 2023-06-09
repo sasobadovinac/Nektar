@@ -261,9 +261,12 @@ void Dummy::DoOdeProjection(
     int nq         = m_fields[0]->GetNpoints();
 
     // deep copy
-    for (int i = 0; i < nvariables; ++i)
+    if (inarray != outarray)
     {
-        Vmath::Vcopy(nq, inarray[i], 1, outarray[i], 1);
+        for (int i = 0; i < nvariables; ++i)
+        {
+            Vmath::Vcopy(nq, inarray[i], 1, outarray[i], 1);
+        }
     }
 }
 

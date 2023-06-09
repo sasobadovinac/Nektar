@@ -38,7 +38,6 @@
 #include <SolverUtils/AdvectionSystem.h>
 #include <SolverUtils/Forcing/Forcing.h>
 #include <SolverUtils/RiemannSolvers/RiemannSolver.h>
-#include <SolverUtils/UnsteadySystem.h>
 
 namespace Nektar
 {

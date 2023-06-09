@@ -93,16 +93,21 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    virtual void v_GetFluxVector(
-        const Array<OneD, Array<OneD, NekDouble>> &physfield,
-        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux) = 0;
-
     virtual void v_AddLinTerm(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray)
     {
         boost::ignore_unused(inarray, outarray);
     }
+
+    virtual void v_GetFluxVector(
+        const Array<OneD, Array<OneD, NekDouble>> &physfield,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux) = 0;
+
+    virtual void v_RiemannInvariantBC(
+        int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
+        Array<OneD, Array<OneD, NekDouble>> &BfFwd,
+        Array<OneD, Array<OneD, NekDouble>> &physarray) = 0;
 
     virtual bool v_PreIntegrate(int step) override;
 
@@ -133,11 +138,6 @@ private:
 
     void WallBC(int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
                 Array<OneD, Array<OneD, NekDouble>> &physarray);
-
-    virtual void v_RiemannInvariantBC(
-        int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
-        Array<OneD, Array<OneD, NekDouble>> &BfFwd,
-        Array<OneD, Array<OneD, NekDouble>> &physarray) = 0;
 
     void WhiteNoiseBC(int bcRegion, int cnt,
                       Array<OneD, Array<OneD, NekDouble>> &Fwd,
