@@ -711,126 +711,20 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    int nT_pts = m_npoints; // number of total points = n. of Fourier
-                            // points * n. of points per plane (nT_pts)
-    int nP_pts =
-        nT_pts / m_planes.size(); // number of points per plane = n of
-                                  // Fourier transform required (nP_pts)
-    int nT_coeffs = m_planes[0]->GetNcoeffs() * m_planes.size();
-
-    int nP_coeffs = nT_coeffs / m_planes.size();
-
     int ndim = inarray.size(); // Dimension including homogeneous direction
                                // (e.g. 3DH1D, ndim=3D)
-    int cdim =
-        GetCoordim(0); // This is the shape dimension (e.g. 3DH1D, cdim=2D)
+    int nT_coeffs = m_planes[0]->GetNcoeffs() * m_planes.size();
 
-    Array<OneD, Array<OneD, NekDouble>> tmpIn(ndim);
-    Array<OneD, Array<OneD, NekDouble>> tmpPhys(cdim);
-    Array<OneD, NekDouble> tmp1, tmp2;
+    // Write x-direction into outarray
+    v_IProductWRTDerivBase(0, inarray[0], outarray);
 
-    // Check: input in Fourier space
-    if (m_WaveSpace)
+    // Add other directions on top
+    // requires temporary array
+    Array<OneD, NekDouble> tmp(nT_coeffs, 0.0);
+    for (int dir = 1; dir < ndim; dir++)
     {
-        for (int i = 0; i < ndim; i++)
-        {
-            tmpIn[i] = inarray[i];
-        }
-    }
-    else
-    {
-        for (int i = 0; i < ndim; i++)
-        {
-            tmpIn[i] = Array<OneD, NekDouble>(nT_pts);
-            HomogeneousFwdTrans(nP_pts, inarray[i], tmpIn[i]);
-        }
-    }
-
-    // Do 2D-IProductWRTDerivBase on each plane
-    for (int i = 0; i < m_planes.size(); i++)
-    {
-        // Set each vector component to values of i-th plane
-        for (int j = 0; j < cdim; j++)
-        {
-            tmpPhys[j] = tmpIn[j] + i * nP_pts;
-        }
-
-        // Call 2D routine on each plane
-        m_planes[i]->IProductWRTDerivBase(tmpPhys,
-                                          tmp1 = outarray + i * nP_coeffs);
-    }
-
-    // Add homogeneous derivative
-    if (m_homogeneousBasis->GetBasisType() == LibUtilities::eFourier ||
-        m_homogeneousBasis->GetBasisType() ==
-            LibUtilities::eFourierSingleMode ||
-        m_homogeneousBasis->GetBasisType() ==
-            LibUtilities::eFourierHalfModeRe ||
-        m_homogeneousBasis->GetBasisType() == LibUtilities::eFourierHalfModeIm)
-    {
-        // TODO Check that nT_coeffs is correct for HalfMode
-        Array<OneD, NekDouble> tmpHom(nT_coeffs, 0.0);
-
-        NekDouble sign = -1.0;
-        NekDouble beta;
-
-        // Half Modes
-        if (m_homogeneousBasis->GetBasisType() ==
-            LibUtilities::eFourierHalfModeRe)
-        {
-            // Do IProduct with 2D basis
-            m_planes[0]->IProductWRTBase(tmpIn[ndim - 1], tmpHom);
-
-            // Add fourier coefficient
-            beta = sign * 2 * M_PI * (m_transposition->GetK(0)) / m_lhom;
-            Vmath::Smul(nT_coeffs, beta, tmpHom, 1, tmpHom, 1);
-        }
-        else if (m_homogeneousBasis->GetBasisType() ==
-                 LibUtilities::eFourierHalfModeIm)
-        {
-            // Do IProduct with 2D basis
-            m_planes[0]->IProductWRTBase(tmpIn[ndim - 1], tmpHom);
-
-            // Add fourier coefficient
-            beta = -sign * 2 * M_PI * (m_transposition->GetK(0)) / m_lhom;
-            Vmath::Smul(nT_coeffs, beta, tmpHom, 1, tmpHom, 1);
-        }
-        // Fully complex (Fourier or FourierSingleMode)
-        else
-        {
-            Array<OneD, NekDouble> tmpHomTwo(nT_coeffs, 0.0);
-            for (int i = 0; i < m_planes.size(); i++)
-            {
-                if (i != 1 || m_transposition->GetK(i) != 0) // unchanged modes
-                {
-                    // Do IProduct with 2D basis ie \int_\Omega \phi_{pq}
-                    // inarray[ndim-1]
-                    m_planes[i]->IProductWRTBase((tmpIn[ndim - 1]) + i * nP_pts,
-                                                 tmp1 =
-                                                     tmpHomTwo + i * nP_coeffs);
-
-                    // Add fourier coefficient (switch Real and Imaginary parts
-                    // ie planes) Multiply by i changes real and imaginary parts
-                    beta =
-                        sign * 2 * M_PI * (m_transposition->GetK(i)) / m_lhom;
-                    Vmath::Smul(nP_coeffs, beta,
-                                tmp1 = tmpHomTwo + i * nP_coeffs, 1,
-                                tmp2 = tmpHom + (i - int(sign)) * nP_coeffs, 1);
-                }
-                sign = -1.0 * sign;
-            }
-        }
-
-        // Add last term to innerproduct
-        Vmath::Vadd(nT_coeffs, outarray, 1, tmpHom, 1, outarray, 1);
-    }
-    else
-    {
-        NEKERROR(ErrorUtil::efatal,
-                 "The IProductWRTDerivBase routine with one homogeneous "
-                 "direction is not implemented for the homogeneous basis "
-                 "if it is is not of type Fourier "
-                 "or FourierSingleMode/HalfModeRe/HalfModeIm");
+        v_IProductWRTDerivBase(dir, inarray[dir], tmp);
+        Vmath::Vadd(nT_coeffs, tmp, 1, outarray, 1, outarray, 1);
     }
 }
 
