@@ -268,7 +268,7 @@ public:
     /// \f$f(\boldsymbol{x})\f$ with respect to the derivative (in
     /// direction \param dir) of all \em local expansion modes
     /// \f$\phi_n^e(\boldsymbol{x})\f$.
-    inline void IProductWRTDerivBase(
+    MULTI_REGIONS_EXPORT inline void IProductWRTDerivBase(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
@@ -281,7 +281,7 @@ public:
     /// function \f$f(\boldsymbol{x})\f$ with respect to the
     /// derivative of all \em local expansion modes
     /// \f$\phi_n^e(\boldsymbol{x})\f$.
-    inline void IProductWRTDerivBase(
+    MULTI_REGIONS_EXPORT inline void IProductWRTDerivBase(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, NekDouble> &outarray);
     /// This function elementally evaluates the forward transformation
