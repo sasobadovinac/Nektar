@@ -314,6 +314,18 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
     m_Comm->AllReduce(vExchange, LibUtilities::ReduceSum);
     eps = vExchange;
 
+    // Detect zero input array
+    // Causes Arnoldi to breakdown, hence stop here
+    if (eps < m_tolerance * m_tolerance * m_rhs_magnitude)
+    {
+        m_converged = true;
+        if (m_prec_factor == NekConstants::kNekUnsetDouble)
+        {
+            m_prec_factor = 1.0;
+        }
+        return eps;
+    }
+
     if (!restarted)
     {
         if (m_NekLinSysLeftPrecon &&
