@@ -38,8 +38,8 @@
         <CURVED />
         <COMPOSITE>
             <C ID="0"> Q[0-3] </C>
-            <C ID="1"> E[0,7] </C> 
-            <C ID="2"> E[6,3] </C> 
+            <C ID="1"> E[0,7] </C>
+            <C ID="2"> E[6,3] </C>
             <C ID="3"> E[8,10] </C>
             <C ID="4"> E[11,5] </C>
         </COMPOSITE>
@@ -64,7 +64,7 @@
 
         <GLOBALSYSSOLNINFO>
             <V VAR="u,v,w,p">
-            <I PROPERTY="IterativeSolverTolerance"  VALUE="1e-14"/>
+                <I PROPERTY="IterativeSolverTolerance"  VALUE="1e-14"/>
             </V>
         </GLOBALSYSSOLNINFO>
 
