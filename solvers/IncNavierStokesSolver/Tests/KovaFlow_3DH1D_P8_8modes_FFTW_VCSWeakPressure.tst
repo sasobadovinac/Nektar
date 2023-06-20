@@ -2,7 +2,7 @@
 <test>
     <description>2.5D Kovasznay flow with non-trivial w-velocity</description>
     <executable>IncNavierStokesSolver</executable>
-    <parameters>KovaFlow_3DH1D_P8_8modes_FFTW_VCSWeakPressure.xml -I GlobalSysSoln=IterativeMultiLevelStaticCond</parameters>
+    <parameters>KovaFlow_3DH1D_P8_8modes_FFTW_VCSWeakPressure.xml</parameters>
     <files>
         <file description="Session File">KovaFlow_3DH1D_P8_8modes_FFTW_VCSWeakPressure.xml</file>
     </files>
