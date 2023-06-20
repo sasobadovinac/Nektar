@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<NEKTAR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://www.nektar.info/schema/nektar.xsd">
+
+    <GEOMETRY DIM="2" SPACE="2">
+        <VERTEX>
+            <V ID="0">-5.00000000e-01 -5.00000000e-01 0.00000000e+00</V>
+            <V ID="1">1.86079596e-09 -5.00000000e-01 0.00000000e+00</V>
+            <V ID="2">-9.31322242e-10 4.58383331e-13 0.00000000e+00</V>
+            <V ID="3">-5.00000000e-01 1.37512224e-12 0.00000000e+00</V>
+            <V ID="4">-3.72344044e-09 5.00000000e-01 0.00000000e+00</V>
+            <V ID="5">-5.00000000e-01 5.00000000e-01 0.00000000e+00</V>
+            <V ID="6">1.00000000e+00 -5.00000000e-01 0.00000000e+00</V>
+            <V ID="7">1.00000000e+00 -1.37512224e-12 0.00000000e+00</V>
+            <V ID="8">1.00000000e+00 5.00000000e-01 0.00000000e+00</V>
+        </VERTEX>
+        <EDGE>
+            <E ID="0">0 1</E>
+            <E ID="1">1 2</E>
+            <E ID="2">2 3</E>
+            <E ID="3">3 0</E>
+            <E ID="4">2 4</E>
+            <E ID="5">4 5</E>
+            <E ID="6">5 3</E>
+            <E ID="7">1 6</E>
+            <E ID="8">6 7</E>
+            <E ID="9">7 2</E>
+            <E ID="10">7 8</E>
+            <E ID="11">8 4</E>
+        </EDGE>
+        <ELEMENT>
+            <Q ID="0">0 1 2 3</Q>
+            <Q ID="1">2 4 5 6</Q>
+            <Q ID="2">7 8 9 1</Q>
+            <Q ID="3">9 10 11 4</Q>
+        </ELEMENT>
+        <CURVED />
+        <COMPOSITE>
+            <C ID="0"> Q[0-3] </C>
+            <C ID="1"> E[0,7] </C> <!-- Bottom -->
+            <C ID="2"> E[6,3] </C> <!-- Left -->
+            <C ID="3"> E[8,10] </C> <!-- Right -->
+            <C ID="4"> E[11,5] </C> <!-- Top -->
+        </COMPOSITE>
+        <DOMAIN> C[0] </DOMAIN>
+    </GEOMETRY>
+
+    <EXPANSIONS>
+        <E COMPOSITE="C[0]" NUMMODES="3" FIELDS="u,v,w,p" TYPE="MODIFIED" />
+    </EXPANSIONS>
+
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
+            <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes" />
+            <I PROPERTY="EvolutionOperator"     VALUE="Nonlinear" />
+            <I PROPERTY="Projection"            VALUE="Galerkin" />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1" />
+            <I PROPERTY="HOMOGENEOUS"           VALUE="1D"/>
+            <I PROPERTY="GlobalSysSoln"         VALUE="IterativeStaticCond" />
+        </SOLVERINFO>
+
+        <GLOBALSYSSOLNINFO>
+            <V VAR="u,v,w,p">
+                <I PROPERTY="IterativeSolverTolerance"  VALUE="1e-8"/>
+                <I PROPERTY="LinSysIterSolver"  VALUE="GMRES"/>
+            </V>
+        </GLOBALSYSSOLNINFO>
+
+        <PARAMETERS>
+            <P> TimeStep      = 0.01       </P>
+            <P> NumSteps      = 100          </P>
+            <P> IO_InfoSteps  = 1    </P>
+            <P> IO_CFLSteps   = 1    </P>
+            <P> Kinvis        = 0.025        </P>
+            <P> kovaLam       = 0.963740544195769 </P>
+            <P> HomModesZ     = 4                </P>
+            <P> Lz            = 1.0              </P>
+        </PARAMETERS>
+
+        <VARIABLES>
+            <V ID="0"> u </V>
+            <V ID="1"> v </V>
+            <V ID="2"> w </V>
+            <V ID="3"> p </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1] </B>
+            <B ID="1"> C[2] </B>
+            <B ID="2"> C[3] </B>
+            <B ID="3"> C[4] </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="(1-exp(-kovaLam*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-kovaLam/(2*PI))*exp(-kovaLam*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u" VALUE="(1-exp(-kovaLam*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-kovaLam/(2*PI))*exp(-kovaLam*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" VALUE="(1-exp(-kovaLam*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-kovaLam/(2*PI))*exp(-kovaLam*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="3">
+                <D VAR="u" VALUE="(1-exp(-kovaLam*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-kovaLam/(2*PI))*exp(-kovaLam*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <D VAR="p" VALUE="0.5*(1-exp(-2*kovaLam*x))" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="(1-exp(-kovaLam*x)*cos(2*PI*y))" />
+            <E VAR="v" VALUE="(-kovaLam/(2*PI))*exp(-kovaLam*x)*sin(2*PI*y)" />
+            <E VAR="w" VALUE="0" />
+            <E VAR="p" VALUE="0.5*(1-exp(-2*kovaLam*x))" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="(1-exp(-kovaLam*x)*cos(2*PI*y))" />
+            <E VAR="v" VALUE="(-kovaLam/(2*PI))*exp(-kovaLam*x)*sin(2*PI*y)" />
+            <E VAR="w" VALUE="0" />
+            <E VAR="p" VALUE="0.5*(1-exp(-2*kovaLam*x))" />
+        </FUNCTION>
+
+    </CONDITIONS>
+
+    <FILTERS>
+        <FILTER TYPE="Error">
+            <PARAM NAME="OutputFile">ErrorFile</PARAM>
+            <PARAM NAME="OutputFrequency">1</PARAM>
+        </FILTER>
+    </FILTERS>
+
+</NEKTAR>
