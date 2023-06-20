@@ -57,7 +57,6 @@
             <I PROPERTY="AdvectionForm"         VALUE="Convective" />
             <I PROPERTY="Projection"            VALUE="Galerkin" />
             <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2" />
-            <I PROPERTY="GlobalSysSoln"         VALUE="XxtMultiLevelStaticCond"/>
             <I PROPERTY="Preconditioner"        VALUE="Null"/>
             <I PROPERTY="HOMOGENEOUS"           VALUE="1D"/>
         </SOLVERINFO>
