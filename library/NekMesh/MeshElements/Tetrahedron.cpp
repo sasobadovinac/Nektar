@@ -143,6 +143,7 @@ Tetrahedron::Tetrahedron(ElmtConfig pConf, vector<NodeSharedPtr> pNodeList,
                 m_vertex[m_edgeVertMap[i][0]], m_vertex[m_edgeVertMap[i][1]],
                 edgeNodes, m_conf.m_edgeCurveType);
         }
+        m_edge[i]->m_id = i;
     }
 
     m_face.resize(4);
