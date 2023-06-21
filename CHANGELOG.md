@@ -46,6 +46,7 @@ v5.4.0
 **IncNavierStokesSolver**
 - Register SolverType in SessionReader (!1541)
 - Prevent file overwrite with restart for the IsentropicVortex solver (!1543)
+- Fix GJP stabilisation for curved 3D elements (!1593)
 
 **Miscellaneous**
 - Fix compilation against TetGen 1.6 (!1547)
