@@ -57,6 +57,7 @@ v5.4.0
 
 **NekMesh**
 - Changed CMake to set NEKTAR_USE_THREAD_SAFETY to ON when MeshGen is set to ON (!1546)
+- Fixed a bug where MeshElement/Tetrahedron did not assign edge IDs in the constructor (!1596)
 
 v5.3.0
 ------
