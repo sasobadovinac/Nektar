@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File:  NekLinSysIterGMRES.cpp
+// File: NekLinSysIterGMRES.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,7 +29,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description:  NekLinSysIterGMRES definition
+// Description: NekLinSysIterGMRES definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -146,12 +146,6 @@ int NekLinSysIterGMRES::DoGMRES(const int nGlobal,
                                 Array<OneD, NekDouble> &pOutput, const int nDir)
 {
     m_prec_factor = NekConstants::kNekUnsetDouble;
-
-    if (m_rhs_magnitude == NekConstants::kNekUnsetDouble)
-    {
-        NekVector<NekDouble> inGlob(nGlobal, pInput, eWrapper);
-        Set_Rhs_Magnitude(inGlob);
-    }
 
     m_rhs_magnitude = 1.0;
 

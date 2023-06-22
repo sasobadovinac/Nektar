@@ -44,7 +44,7 @@
     <EXPANSIONS>
         <E COMPOSITE="C[0]" FIELDS="u" TYPE="MODIFIED" NUMMODES="9"/>
     </EXPANSIONS>
-    
+
     <CONDITIONS>
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvectionDiffusion"  />
@@ -55,7 +55,7 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2"                  />
             <I PROPERTY="UpwindType"            VALUE="Upwind"                      />
         </SOLVERINFO>
-        
+
         <PARAMETERS>
             <P> TimeStep      = 1.0e-04             </P>
             <P> NumSteps      = 100                 </P>
@@ -65,46 +65,46 @@
             <P> ax            = 20.0                </P>
             <P> ay            = 20.0                </P>
         </PARAMETERS>
-        
+
         <VARIABLES>
             <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B>
             <B ID="1"> C[2] </B>
             <B ID="2"> C[3] </B>
             <B ID="3"> C[4] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-ax*t))*sin(wavefreq*(y-ay*t))" />
+                    VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-ax*t))*sin(wavefreq*(y-ay*t))" />
             </REGION>
             <REGION REF="1">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-ax*t))*sin(wavefreq*(y-ay*t))" />
+                    VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-ax*t))*sin(wavefreq*(y-ay*t))" />
             </REGION>
             <REGION REF="2">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-ax*t))*sin(wavefreq*(y-ay*t))" />
+                    VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-ax*t))*sin(wavefreq*(y-ay*t))" />
             </REGION>
             <REGION REF="3">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-ax*t))*sin(wavefreq*(y-ay*t))" />
+                    VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-ax*t))*sin(wavefreq*(y-ay*t))" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="Vx" VALUE="ax" />
             <E VAR="Vy" VALUE="ay" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="InitialConditions">
             <E VAR="u" VALUE="sin(wavefreq*x)*sin(wavefreq*y)" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="u" VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*(x-ax*t))*sin(wavefreq*(y-ay*t))" />
         </FUNCTION>

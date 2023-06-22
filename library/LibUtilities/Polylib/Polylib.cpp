@@ -1,3 +1,37 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// File: Polylib.cpp
+//
+// For more information, please see: http://www.nektar.info
+//
+// The MIT License
+//
+// Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+// Department of Aeronautics, Imperial College London (UK), and Scientific
+// Computing and Imaging Institute, University of Utah (USA).
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+
 #include "Polylib.h"
 #include <cfloat>
 #include <cmath>
@@ -545,6 +579,40 @@ void zwlk(double *z, double *w, const int npt, const double alpha,
 }
 
 /**
+\brief Compute the Integration Matrix.
+*/
+void Qg(double *Q, const double *z, const int np)
+{
+
+    if (np <= 0)
+    {
+        Q[0] = 0.0;
+    }
+    else
+    {
+        int i, j, k;
+        double *pd;
+
+        pd = (double *)malloc(np * sizeof(double));
+
+        for (i = 0; i < np; i++)
+        {
+            polycoeffs(i, z, pd, np);
+            for (j = 0; j < np; j++)
+            {
+                Q[j * np + i] = 0.0;
+                for (k = 0; k < np; k++)
+                {
+                    Q[j * np + i] += pd[k] / (k + 1) * pow(z[j], k + 1);
+                }
+            }
+        }
+        free(pd);
+    }
+    return;
+}
+
+/**
 \brief Compute the Derivative Matrix and its transpose associated
 with the Gauss-Jacobi zeros.
 
@@ -1031,6 +1099,44 @@ void Imglj(double *im, const double *zglj, const double *zm, const int nz,
     return;
 }
 
+void polycoeffs(const int i, const double *z, double *c, const int np)
+{
+    int j, k, m;
+
+    // Compute denominator
+    double d = 1.0;
+    for (j = 0; j < np; j++)
+    {
+        if (i != j)
+        {
+            d *= z[i] - z[j];
+        }
+        c[j] = 0.0;
+    }
+
+    // Compute coefficient
+    c[0] = 1.0;
+    m    = 0;
+    for (j = 0; j < np; j++)
+    {
+        if (i != j)
+        {
+            m += 1;
+            c[m] = c[m - 1];
+            for (k = m - 1; k > 0; k--)
+            {
+                c[k] *= -1.0 * z[j];
+                c[k] += c[k - 1];
+            }
+            c[0] *= -1.0 * z[j];
+        }
+    }
+    for (j = 0; j < np; j++)
+    {
+        c[j] /= d;
+    }
+}
+
 /**
 \brief Routine to calculate Jacobi polynomials, \f$
 P^{\alpha,\beta}_n(z) \f$, and their first derivative, \f$
@@ -1183,7 +1289,6 @@ void jacobfd(const int np, const double *z, double *poly_in, double *polyd,
 \li This formulation is valid for \f$ -1 \leq z \leq 1 \f$
 
 */
-
 void jacobd(const int np, const double *z, double *polyd, const int n,
             const double alpha, const double beta)
 {

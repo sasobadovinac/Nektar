@@ -43,6 +43,7 @@ std::string AUSM3Solver::solverName =
 AUSM3Solver::AUSM3Solver(const LibUtilities::SessionReaderSharedPtr &pSession)
     : CompressibleSolver(pSession)
 {
+    pSession->LoadParameter("Mco", m_Mco, 0.01);
 }
 
 /**
@@ -97,17 +98,16 @@ void AUSM3Solver::v_PointSolve(double rhoL, double rhouL, double rhovL,
 
     // Parameters for specify the upwinding
     // Note: if fa = 1 then AUSM3 = AUSM3
-    NekDouble Mco    = 0.01;
     NekDouble Mtilde = 0.5 * (ML * ML + MR * MR);
-    NekDouble Mo     = std::min(1.0, std::max(Mtilde, Mco * Mco));
-    NekDouble fa     = Mo * (2.0 - Mo);
-    NekDouble beta   = 0.125;
-    NekDouble alpha  = 0.1875;
-    NekDouble sigma  = 1.0;
-    NekDouble Kp     = 0.25;
-    NekDouble Ku     = 0.75;
-    NekDouble rhoA   = 0.5 * (rhoL + rhoR);
-    NekDouble Mp     = -(Kp / fa) * ((pR - pL) / (rhoA * cA * cA)) *
+    NekDouble Mo    = std::sqrt(std::min(1.0, std::max(Mtilde, m_Mco * m_Mco)));
+    NekDouble fa    = Mo * (2.0 - Mo);
+    NekDouble beta  = 0.125;
+    NekDouble alpha = 0.1875;
+    NekDouble sigma = 1.0;
+    NekDouble Kp    = 0.25;
+    NekDouble Ku    = 0.75;
+    NekDouble rhoA  = 0.5 * (rhoL + rhoR);
+    NekDouble Mp    = -(Kp / fa) * ((pR - pL) / (rhoA * cA * cA)) *
                    std::max(1.0 - sigma * Mtilde, 0.0);
 
     NekDouble Mbar = M4Function(0, beta, ML) + M4Function(1, beta, MR) + Mp;

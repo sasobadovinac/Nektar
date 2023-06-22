@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdSegExp.cpp
+// File: StdSegExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -43,6 +43,11 @@ namespace Nektar
 {
 namespace StdRegions
 {
+/** \brief defult constructor */
+StdSegExp::StdSegExp()
+{
+}
+
 /** \brief Constructor using BasisKey class for quadrature points and
  *  order definition
  *
@@ -60,6 +65,11 @@ StdSegExp::StdSegExp(const StdSegExp &T) : StdExpansion(T), StdExpansion1D(T)
 {
 }
 
+/** \brief Destructor */
+StdSegExp::~StdSegExp()
+{
+}
+
 /** \brief Return Shape of region, using  ShapeType enum list.
  *  i.e. Segment
  */
@@ -68,7 +78,7 @@ LibUtilities::ShapeType StdSegExp::v_DetShapeType() const
     return LibUtilities::eSegment;
 }
 
-bool StdSegExp::v_IsBoundaryInteriorExpansion()
+bool StdSegExp::v_IsBoundaryInteriorExpansion() const
 {
 
     bool returnval = false;
@@ -657,6 +667,12 @@ int StdSegExp::v_GetTraceNcoeffs(const int i) const
 {
     boost::ignore_unused(i);
     return 1;
+}
+
+int StdSegExp::v_GetTraceIntNcoeffs(const int i) const
+{
+    boost::ignore_unused(i);
+    return 0;
 }
 
 int StdSegExp::v_GetTraceNumPoints(const int i) const

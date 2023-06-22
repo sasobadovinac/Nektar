@@ -1,8 +1,6 @@
 // //////////////////////////////////////////////////////////////////////////////
 //
-//  File:  $Source:
-//  /usr/sci/projects/Nektar/cvs/Nektar++/library/SpatialDomains/InterfaceComponent.cpp,v
-//  $
+//  File: InterfaceComponent.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //

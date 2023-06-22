@@ -281,51 +281,51 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-      <E COMPOSITE="C[0-1]" NUMMODES="5" FIELDS="u" TYPE="MODIFIED" />
+        <E COMPOSITE="C[0-1]" NUMMODES="5" FIELDS="u" TYPE="MODIFIED" />
     </EXPANSIONS>
 
     <CONDITIONS>
 
-    <SOLVERINFO>
-      <I PROPERTY="EQTYPE" VALUE="MMFDiffusion" />
-      <I PROPERTY="Projection" VALUE="DisContinuous"/>
-      <I PROPERTY="DiffusionAdvancement" VALUE="Implicit" />
-      <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXdirk_3_4_3" />
-      <I PROPERTY="TestType" VALUE="TestPlane" />
-      <I PROPERTY="SurfaceType" VALUE="Plane" />
-      <I PROPERTY="MMFDir" VALUE="LOCAL" />      <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->   
-    </SOLVERINFO>  
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE" VALUE="MMFDiffusion" />
+            <I PROPERTY="Projection" VALUE="DisContinuous"/>
+            <I PROPERTY="DiffusionAdvancement" VALUE="Implicit" />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXdirk_3_4_3" />
+            <I PROPERTY="TestType" VALUE="TestPlane" />
+            <I PROPERTY="SurfaceType" VALUE="Plane" />
+            <I PROPERTY="MMFDir" VALUE="LOCAL" />      <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->
+        </SOLVERINFO>
 
-    <PARAMETERS>
-      <P> TimeStep       = 0.001             </P>
-      <P> NumSteps       = 100             </P>
-      <P> FinTime        = TimeStep*NumSteps </P>
-      <P> IO_CheckSteps  = 20               </P>
-      <P> IO_InfoSteps   = 20              </P>
-      <P> epsilon0 = 1.0             </P>
-      <P> epsilon1 = 1.0             </P>
-      <P> MMFCircCentreX  = -2.0   </P>
-      <P> MMFCircCentreY  = -2.0   </P>
-    </PARAMETERS>
-    
-    <VARIABLES>
-      <V ID="0"> u </V> 
-    </VARIABLES>
-    
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[2]  </B>
-      <B ID="1"> C[3]  </B>
-    </BOUNDARYREGIONS>
-    
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0">
-        <D VAR="u" VALUE="exp(-2.0*PI*PI*t)*sin(PI*x)*cos(PI*y)" />
-      </REGION>
-      <REGION REF="1">
-        <N VAR="u" VALUE="0" />
-      </REGION>
-    </BOUNDARYCONDITIONS>
-    
+        <PARAMETERS>
+            <P> TimeStep       = 0.001             </P>
+            <P> NumSteps       = 100             </P>
+            <P> FinTime        = TimeStep*NumSteps </P>
+            <P> IO_CheckSteps  = 20               </P>
+            <P> IO_InfoSteps   = 20              </P>
+            <P> epsilon0 = 1.0             </P>
+            <P> epsilon1 = 1.0             </P>
+            <P> MMFCircCentreX  = -2.0   </P>
+            <P> MMFCircCentreY  = -2.0   </P>
+        </PARAMETERS>
+
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[2]  </B>
+            <B ID="1"> C[3]  </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="exp(-2.0*PI*PI*t)*sin(PI*x)*cos(PI*y)" />
+            </REGION>
+            <REGION REF="1">
+                <N VAR="u" VALUE="0" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
     </CONDITIONS>
-    
-  </NEKTAR>
+
+</NEKTAR>

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CouplingCwipi.h
+// File: CouplingCwipi.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -118,23 +118,27 @@ protected:
 
     std::map<int, int> m_vertMap;
 
-    FieldUtils::InterpolatorSharedPtr m_sendInterpolator;
+    std::shared_ptr<
+        FieldUtils::Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>>
+        m_sendInterpolator;
 
-    FieldUtils::InterpolatorSharedPtr m_extrapInterpolator;
+    std::shared_ptr<
+        FieldUtils::Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>>
+        m_extrapInterpolator;
 
-    SOLVER_UTILS_EXPORT virtual void v_Init();
+    SOLVER_UTILS_EXPORT virtual void v_Init() override;
 
     SOLVER_UTILS_EXPORT virtual void v_Send(
         const int step, const NekDouble time,
         const Array<OneD, const Array<OneD, NekDouble>> &field,
-        std::vector<std::string> &varNames);
+        std::vector<std::string> &varNames) override;
 
     SOLVER_UTILS_EXPORT virtual void v_Receive(
         const int step, const NekDouble time,
         Array<OneD, Array<OneD, NekDouble>> &field,
-        std::vector<std::string> &varNames);
+        std::vector<std::string> &varNames) override;
 
-    SOLVER_UTILS_EXPORT virtual void v_Finalize();
+    SOLVER_UTILS_EXPORT virtual void v_Finalize() override;
 
     SOLVER_UTILS_EXPORT NekDouble GetSendField(const int i, const int j) const
     {

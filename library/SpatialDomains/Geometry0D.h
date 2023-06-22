@@ -62,8 +62,8 @@ public:
 protected:
     virtual bool v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                                  Array<OneD, NekDouble> &locCoord,
-                                 NekDouble tol, NekDouble &dist);
-    virtual int v_GetShapeDim() const;
+                                 NekDouble tol, NekDouble &dist) override;
+    virtual int v_GetShapeDim() const override;
 };
 
 } // namespace SpatialDomains

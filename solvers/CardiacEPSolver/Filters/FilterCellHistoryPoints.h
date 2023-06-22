@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterCellHistoryPoints.h
+// File: FilterCellHistoryPoints.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -75,7 +75,7 @@ public:
 protected:
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
 
     CellModelSharedPtr m_cell;
 };

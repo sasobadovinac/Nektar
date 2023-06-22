@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdNodalTetExp.cpp
+// File: StdNodalTetExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -41,6 +41,10 @@ namespace Nektar
 {
 namespace StdRegions
 {
+StdNodalTetExp::StdNodalTetExp()
+{
+}
+
 StdNodalTetExp::StdNodalTetExp(const LibUtilities::BasisKey &Ba,
                                const LibUtilities::BasisKey &Bb,
                                const LibUtilities::BasisKey &Bc,

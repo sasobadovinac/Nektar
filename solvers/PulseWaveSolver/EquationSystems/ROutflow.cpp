@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CommMpi.cpp
+// File: ROutflow.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -61,6 +61,8 @@ void ROutflow::v_DoBoundary(
     Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
     int offset, int n)
 {
+    boost::ignore_unused(time);
+
     NekDouble A_r  = 0.0;
     NekDouble u_r  = 0.0;
     NekDouble A_u  = 0.0;

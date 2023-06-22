@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PowerPressureArea.cpp
+// File: PowerPressureArea.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -63,6 +63,8 @@ void PowerPressureArea::v_GetPressure(NekDouble &P, const NekDouble &beta,
                                       const NekDouble &gamma,
                                       const NekDouble &alpha)
 {
+    boost::ignore_unused(alpha);
+
     NekDouble c0 = 0.0;
     GetC0(c0, beta, A0);
 
@@ -79,6 +81,8 @@ void PowerPressureArea::v_GetC(NekDouble &c, const NekDouble &beta,
                                const NekDouble &A, const NekDouble &A0,
                                const NekDouble &alpha)
 {
+    boost::ignore_unused(alpha);
+
     NekDouble c0 = 0.0;
     GetC0(c0, beta, A0);
 
@@ -114,6 +118,8 @@ void PowerPressureArea::v_GetAFromChars(NekDouble &A, const NekDouble &W1,
                                         const NekDouble &A0,
                                         const NekDouble &alpha)
 {
+    boost::ignore_unused(alpha);
+
     NekDouble c0 = 0.0;
     GetC0(c0, beta, A0);
 
@@ -134,6 +140,8 @@ void PowerPressureArea::v_GetCharIntegral(NekDouble &I, const NekDouble &beta,
                                           const NekDouble &A0,
                                           const NekDouble &alpha)
 {
+    boost::ignore_unused(alpha);
+
     NekDouble c  = 0.0;
     NekDouble c0 = 0.0;
 

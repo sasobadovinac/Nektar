@@ -58,12 +58,12 @@
 
 
         <DOMAIN>
-      	    <D ID="0"> C[0] </D>
-      	    <D ID="1"> C[3] </D>
-      	    <D ID="2"> C[6] </D>
-      	    <D ID="3"> C[9] </D>
-      	    <D ID="4"> C[12] </D>
-   	      </DOMAIN>
+            <D ID="0"> C[0] </D>
+            <D ID="1"> C[3] </D>
+            <D ID="2"> C[6] </D>
+            <D ID="3"> C[9] </D>
+            <D ID="4"> C[12] </D>
+        </DOMAIN>
     </GEOMETRY>
 
 
@@ -78,7 +78,7 @@
     <CONDITIONS>
 
         <PARAMETERS>
-	    <P> TimeStep       = 0.0001             </P>
+            <P> TimeStep       = 0.0001             </P>
             <P> FinTime        = 20                 </P>
             <P> NumSteps       = 8000               </P>
             <P> IO_CheckSteps  = 200                </P>
@@ -110,7 +110,7 @@
 
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B> <!-- Inflow -->
-	    <B ID="1"> C[8] </B> <!-- Outflow -->
+            <B ID="1"> C[8] </B> <!-- Outflow -->
             <B ID="2"> C[11] </B>
             <B ID="3"> C[14] </B>
 
@@ -137,17 +137,17 @@
             </REGION>
         </BOUNDARYCONDITIONS>
 
-      	<FUNCTION NAME="InitialConditions">
-      		<E VAR="A" DOMAIN="0" VALUE="A1" />
-      		<E VAR="u" DOMAIN="0" VALUE="0.0" />
-      		<E VAR="A" DOMAIN="1" VALUE="A2" />
-      		<E VAR="u" DOMAIN="1" VALUE="0.0" />
-      		<E VAR="A" DOMAIN="2" VALUE="A3" />
-      		<E VAR="u" DOMAIN="2" VALUE="0.0" />
-      		<E VAR="A" DOMAIN="3" VALUE="A4" />
-      		<E VAR="u" DOMAIN="3" VALUE="0.0" />
-      		<E VAR="A" DOMAIN="4" VALUE="A5" />
-      		<E VAR="u" DOMAIN="4" VALUE="0.0" />
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="A" DOMAIN="0" VALUE="A1" />
+            <E VAR="u" DOMAIN="0" VALUE="0.0" />
+            <E VAR="A" DOMAIN="1" VALUE="A2" />
+            <E VAR="u" DOMAIN="1" VALUE="0.0" />
+            <E VAR="A" DOMAIN="2" VALUE="A3" />
+            <E VAR="u" DOMAIN="2" VALUE="0.0" />
+            <E VAR="A" DOMAIN="3" VALUE="A4" />
+            <E VAR="u" DOMAIN="3" VALUE="0.0" />
+            <E VAR="A" DOMAIN="4" VALUE="A5" />
+            <E VAR="u" DOMAIN="4" VALUE="0.0" />
         </FUNCTION>
         <FUNCTION NAME="A_0">
             <E VAR="A_0" DOMAIN="0" VALUE="A1" />

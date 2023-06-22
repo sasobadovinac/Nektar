@@ -58,19 +58,20 @@ public:
     ProcessFieldFromString(FieldSharedPtr f);
     virtual ~ProcessFieldFromString();
 
-    virtual void Process(po::variables_map &vm);
+protected:
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessFieldFromString";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Calculating new field";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eModifyExp;
     }

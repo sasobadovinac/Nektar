@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWaveSystemOutput.cpp
+// File: PulseWaveSystemOutput.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -82,11 +82,11 @@ PulseWaveSystemOutput::~PulseWaveSystemOutput()
  * Duplicates PulseWaveSystem InitObject but does not set
  *
  */
-void PulseWaveSystemOutput::v_InitObject()
+void PulseWaveSystemOutput::v_InitObject(bool DeclareField)
 {
     m_session->RegisterCmdLineArgument("SetToOneSpaceDimension", "False",
                                        "Redefine mesh to be aligned to x-axis");
 
-    PulseWaveSystem::v_InitObject();
+    PulseWaveSystem::v_InitObject(DeclareField);
 }
 } // namespace Nektar

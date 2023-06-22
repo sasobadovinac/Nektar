@@ -327,16 +327,16 @@
         </SOLVERINFO>
 
         <GLOBALSYSSOLNINFO>
-          <V VAR="u,v,w">
-            <I PROPERTY="GlobalSysSoln"       VALUE="IterativeStaticCond" />
-            <I PROPERTY="Preconditioner"       VALUE="LowEnergyBlock"/>
-            <I PROPERTY="IterativeSolverTolerance"    VALUE="1e-9"/>
-          </V>
-          <V VAR="p">
-            <I PROPERTY="GlobalSysSoln"         VALUE="IterativeStaticCond" />
-            <I PROPERTY="Preconditioner"        VALUE="LowEnergyBlock"/>
-            <I PROPERTY="IterativeSolverTolerance"    VALUE="1e-6"/>
-          </V>
+            <V VAR="u,v,w">
+                <I PROPERTY="GlobalSysSoln"       VALUE="IterativeStaticCond" />
+                <I PROPERTY="Preconditioner"       VALUE="LowEnergyBlock"/>
+                <I PROPERTY="IterativeSolverTolerance"    VALUE="1e-9"/>
+            </V>
+            <V VAR="p">
+                <I PROPERTY="GlobalSysSoln"         VALUE="IterativeStaticCond" />
+                <I PROPERTY="Preconditioner"        VALUE="LowEnergyBlock"/>
+                <I PROPERTY="IterativeSolverTolerance"    VALUE="1e-6"/>
+            </V>
         </GLOBALSYSSOLNINFO>
 
 

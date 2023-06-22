@@ -59,10 +59,11 @@ public:
     virtual ~FauxComm()
     {
     }
-    void v_SplitComm(int pRows, int pColumns)
+    void v_SplitComm(int pRows, int pColumns, int pTime)
     {
         m_commRow    = std::shared_ptr<FauxComm>(new FauxComm(pColumns));
         m_commColumn = std::shared_ptr<FauxComm>(new FauxComm(pRows));
+        boost::ignore_unused(pTime);
     }
 };
 

@@ -3,13 +3,14 @@
 
 This directory consists of the following primary files:
 
-
 \begin{center}
 \begin{tabular}{|c | c | } \hline
 TimeIntegrationScheme.h & TimeIntegrationScheme.cpp \\ \hline 
 TimeIntegrationGLM.h & TimeIntegrationGLM.cpp \\ \hline
 *TimeIntegrationSchemes.h & Specific GLM schemes, e.g. AB, RK, IMEX, etc. \\ \hline
 TimeIntegrationFIT.h & TimeIntegrationFIT.cpp \\ \hline
+TimeIntegrationGEM.h & TimeIntegrationGEM.cpp \\ \hline
+TimeIntegrationSDC.h & TimeIntegrationSDC.cpp \\ \hline
 \end{tabular}
 \end{center}
 
@@ -25,11 +26,13 @@ more (linear multistep methods) phases using the
 TimeIntegrationAlgorithmGLM class, which is where the GLM algorithm is
 performed using the helper class TimeIntegrationSolutionGLM.
 
+More recently Extrapolation, Spectral-Deferred-Correction, and 
+Fractional-in-time schemes have been added as sibbling classes to the 
+GLM class (found in the child classes
+TimeIntegrationGEM, TimeIntegrationSDC, and TimeIntegrationFIT, 
+respectively). The Extrapolation, Spectral-Deferred-Correction, and 
+the Fractional-in-time schemes make use of their own separate algorithm.
 
-More recently Fractional-in-time schemes have been added as a sibbling
-class to the GLM class (found in the child class
-TimeIntegrationFIT). The Fractional-in-time schemes makes use of its
-own separate algorithm.
 
 \subsection{General Linear Methods}
 \label{subsectionGeneralLinearMethods}
@@ -234,13 +237,45 @@ methods. We distinguish the following types of general linear methods:
     \item \textbf{N{\o}rsett-Euler explicit method}: $y_n =
       \varphi_1(z)N(y_{n-1},t_{n-1}) + \varphi_0(z)y_{n-1}$
   \end{itemize}
-where $\varphi_0(z) = e^{z}$ for $k = 0$, $\varphi_{k}(z) =
-\frac{\varphi_{k-1}(z) - \varphi_{k-1}(0)}{z}$ for $k \geq 1$.
-\end{itemize}
+  where $\varphi_0(z) = e^{z}$ for $k = 0$, $\varphi_{k}(z) =
+  \frac{\varphi_{k-1}(z) - \varphi_{k-1}(0)}{z}$ for $k \geq 1$.
+  \end{itemize}
+  While implemented, exponential schemes are not currently seeded.
 
 The aim in {\nek} is to fully support the first three types of GLMs.
-Fully implicit methods are currently not implemented. {\nek} also
-fully supports Exponential Methods using GLMs.
+Fully implicit methods are currently not implemented.
+
+\subsection{Extrapolation Integration Schemes}
+
+In addition to the GLMs {\nek} also supports extrapolation methods:
+\begin{itemize}
+  \item \textbf{Extrapolation Methods}: Extrapolation methods allow 
+    the construction of arbitrarily high-order time-integration 
+    methods based on a series for low-order approximations.
+\end{itemize}
+
+The Extrapolation methods follow the same paradigm as the GLMs, that is
+both have the same parent class and as such have the same interface.
+
+For more details about Extrapolation methods, interested readers can refer
+to \cite{Deuflhard1985}.
+
+\subsection{Spectral Deferred Correction Integration Schemes}
+
+In addition to the GLMs {\nek} also supports spectral deferred correction 
+methods:
+\begin{itemize}
+  \item \textbf{Spectral Deferred Correction Methods}: Spectral Deferred 
+    Correction methods allow the construction of arbitrarily high-order 
+    time-integration methods based on a series for low-order approximations.
+\end{itemize}
+
+The Spectral Deferred Correction methods follow the same paradigm as the 
+GLMs, that is both have the same parent class and as such have the same 
+interface.
+
+For more details about Spectral Deferred Correction methods, interested
+readers can refer to \cite{Dutt2000, Minion2003, Ketcheson2014}.
 
 \subsection{Fractional-in-time Integration Schemes}
 
@@ -315,7 +350,8 @@ IMEX           & Gear & IMEX Gear variant of order 2\\
 IMEX           & dirk & IMEX DIRK variant with free parameters (s, sigma), 
                         where s is the number of implicit stage schemes,
                         sigma is the number of explicit stage scheme and
-                        p is the combined order of the scheme.\\
+                        p is the combined order of the scheme (Note: IMEX 
+                        DIRK schemes should not be used with IncNavierStokesSolver).\\
 
                & dirk & Forward-Backward Euler, first order, free parameters (1,1)\\
                & dirk & Forward-Backward Euler, first order, free parameters (1,2)\\
@@ -332,7 +368,36 @@ EulerExponential & Lawson  & Exponential Euler scheme using the
                  & N{\o}rsett & Exponential Euler scheme using the
                                 N{\o}rsett variant of order 1-4
                                 (Higher order not yet properly seeded) \\
-
+ExtrapolationMethod & ExplicitEuler & Extrapolation method of arbitrary order
+                                      using a series of first-order explict Euler
+                                      scheme\\
+                    & ExplicitMidpoint & Extrapolation method of arbitrary order
+                                      using a series of second-order explict midpoint
+                                      scheme\\
+                    & ImplicitEuler & Extrapolation method of arbitrary order
+                                      using a series of first-order implicit Euler
+                                      scheme\\
+                    & ImplicitMidpoint & Extrapolation method of arbitrary order
+                                         using a series of second-order implicit Euler
+                                         scheme\\
+ExplicitSDC & Equidistant & Explicit Spectral Deferred Correction method of arbitrary order
+                            using equidistant quadrature points and first-order explicit
+                            Euler schemes\\
+            & GaussLobattoChebyshev & Explicit Spectral Deferred Correction method of arbitrary order
+                                      using Gauss-Lobatto-Chebyshev quadrature points and first-order
+                                      explicit Euler schemes\\
+            & GaussLobattoLegendre & Explicit Spectral Deferred Correction method of arbitrary order
+                                     using Gauss-Lobatto-Legendre quadrature points and first-order
+                                     explicit Euler schemes\\
+            & GaussRadauChebyshev & Explicit Spectral Deferred Correction method of arbitrary order
+                                    using Gauss-Radau-Chebyshev quadrature points and first-order
+                                    explicit Euler schemes\\
+            & GaussRadauLegendre & Explicit Spectral Deferred Correction method of arbitrary order
+                                   using Gauss-Radau-Legendre quadrature points and first-order
+                                   explicit Euler schemes\\
+ImplicitSDC & GaussRadauLegendre & Implicit Spectral Deferred Correction method of arbitrary order
+                                   using Gauss-Radau-Legendre quadrature points and first-order
+                                   implicit Euler schemes\\
 FractionalInTime &            & Fractional-in-time scheme of order 1-4
                               (Higher order not yet properly seeded),
                               free parameters, none,
@@ -361,16 +426,21 @@ example:\\
  </TIMEINTEGRATIONSCHEME>
 
  <SOLVERINFO>
-   <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes" />
-   <I PROPERTY="SolverType" VALUE="VelocityCorrectionScheme" />
-   <I PROPERTY="AdvectionForm" VALUE="Convective" /> 
-   <I PROPERTY="Projection" VALUE="Galerkin" /> 
+   <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvectionDiffusion"  />
+   <I PROPERTY="Projection"            VALUE="DisContinuous"               />
+   <I PROPERTY="AdvectionAdvancement"  VALUE="Explicit"                    />
+   <I PROPERTY="AdvectionType"         VALUE="WeakDG"                      />
+   <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"                    />
+   <I PROPERTY="UpwindType"            VALUE="Upwind"                      />
  </SOLVERINFO>
  
  <PARAMETERS>
-   <P> TimeStep = 0.001 </P> 
-   <P> NumSteps = 1000 </P> 
-   <P> Kinvis = 1 </P>
+   <P> TimeStep      = 0.0005              </P>
+   <P> NumSteps      = 200                 </P>
+   <P> wavefreq      = PI                  </P>
+   <P> epsilon       = 1.0                 </P>
+   <P> ax            = 2.0                 </P>
+   <P> ay            = 2.0                 </P>
 </PARAMETERS>
 \end{lstlisting}
 

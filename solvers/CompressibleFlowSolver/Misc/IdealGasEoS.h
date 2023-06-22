@@ -62,25 +62,35 @@ public:
     static std::string className;
 
 protected:
-    NekDouble GetTemperature(const NekDouble &rho, const NekDouble &e) final;
+    virtual NekDouble v_GetTemperature(const NekDouble &rho,
+                                       const NekDouble &e) override final;
 
-    vec_t GetTemperature(const vec_t &rho, const vec_t &e) final;
+    virtual vec_t v_GetTemperature(const vec_t &rho,
+                                   const vec_t &e) override final;
 
-    NekDouble GetPressure(const NekDouble &rho, const NekDouble &e) final;
+    virtual NekDouble v_GetPressure(const NekDouble &rho,
+                                    const NekDouble &e) override final;
 
-    vec_t GetPressure(const vec_t &rho, const vec_t &e) final;
+    virtual vec_t v_GetPressure(const vec_t &rho,
+                                const vec_t &e) override final;
 
-    NekDouble v_GetSoundSpeed(const NekDouble &rho, const NekDouble &e) final;
+    virtual NekDouble v_GetSoundSpeed(const NekDouble &rho,
+                                      const NekDouble &e) override final;
 
-    NekDouble v_GetEntropy(const NekDouble &rho, const NekDouble &e) final;
+    virtual NekDouble v_GetEntropy(const NekDouble &rho,
+                                   const NekDouble &e) override final;
 
-    NekDouble v_GetDPDrho_e(const NekDouble &rho, const NekDouble &e) final;
+    virtual NekDouble v_GetDPDrho_e(const NekDouble &rho,
+                                    const NekDouble &e) override final;
 
-    NekDouble v_GetDPDe_rho(const NekDouble &rho, const NekDouble &e) final;
+    virtual NekDouble v_GetDPDe_rho(const NekDouble &rho,
+                                    const NekDouble &e) override final;
 
-    NekDouble v_GetEFromRhoP(const NekDouble &rho, const NekDouble &p) final;
+    virtual NekDouble v_GetEFromRhoP(const NekDouble &rho,
+                                     const NekDouble &p) override final;
 
-    NekDouble v_GetRhoFromPT(const NekDouble &rho, const NekDouble &p) final;
+    virtual NekDouble v_GetRhoFromPT(const NekDouble &rho,
+                                     const NekDouble &p) override final;
 
 private:
     IdealGasEoS(const LibUtilities::SessionReaderSharedPtr &pSession);

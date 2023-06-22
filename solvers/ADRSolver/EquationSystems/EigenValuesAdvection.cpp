@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EigenValuesAdvection.cpp
+// File: EigenValuesAdvection.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -142,8 +142,9 @@ Array<OneD, NekDouble> &EigenValuesAdvection::GetNormalVelocity()
     return m_traceVn;
 }
 
-void EigenValuesAdvection::v_DoInitialise()
+void EigenValuesAdvection::v_DoInitialise(bool dumpInitialConditions)
 {
+    boost::ignore_unused(dumpInitialConditions);
 }
 
 EigenValuesAdvection::~EigenValuesAdvection()

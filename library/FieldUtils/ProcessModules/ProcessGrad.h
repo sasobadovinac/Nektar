@@ -43,7 +43,7 @@ namespace FieldUtils
 {
 
 /**
- * @brief This processing module calculates the vorticity and adds it
+ * @brief This processing module calculates the gradient and adds it
  * as an extra-field to the output file.
  */
 class ProcessGrad : public ProcessModule
@@ -59,23 +59,31 @@ public:
     ProcessGrad(FieldSharedPtr f);
     virtual ~ProcessGrad();
 
+protected:
     /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessGrad";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Calculating gradients";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eModifyExp;
     }
+
+private:
+    void ParserOptions(std::set<int> &variables, std::set<int> &directions);
+    void ProcessCartesianFld(Array<OneD, Array<OneD, NekDouble>> &grad);
+    void ProcessMappingFld(Array<OneD, Array<OneD, NekDouble>> &grad);
+    std::set<int> m_selectedVars;
+    std::set<int> m_directions;
 };
 } // namespace FieldUtils
 } // namespace Nektar

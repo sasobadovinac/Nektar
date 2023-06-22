@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Expansion.h
+// File: Expansion.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -84,6 +84,9 @@ public:
 
     LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr
     GetLocMatrix(const LocalRegions::MatrixKey &mkey);
+
+    LOCAL_REGIONS_EXPORT void DropLocMatrix(
+        const LocalRegions::MatrixKey &mkey);
 
     LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr GetLocMatrix(
         const StdRegions::MatrixType mtype,
@@ -251,7 +254,7 @@ public:
         v_TraceNormLen(traceid, h, p);
     }
 
-    virtual void AddRobinTraceContribution(
+    inline void AddRobinTraceContribution(
         const int traceid, const Array<OneD, const NekDouble> &primCoeffs,
         const Array<OneD, NekDouble> &incoeffs, Array<OneD, NekDouble> &coeffs)
     {
@@ -290,9 +293,18 @@ protected:
                            const Array<OneD, const NekDouble> &direction,
                            Array<OneD, Array<OneD, NekDouble>> &dfdir);
 
+    Array<OneD, NekDouble> GetMF(const int dir, const int shapedim,
+                                 const StdRegions::VarCoeffMap &varcoeffs);
+
+    Array<OneD, NekDouble> GetMFDiv(const int dir,
+                                    const StdRegions::VarCoeffMap &varcoeffs);
+
+    Array<OneD, NekDouble> GetMFMag(const int dir,
+                                    const StdRegions::VarCoeffMap &varcoeffs);
+
     virtual void v_MultiplyByQuadratureMetric(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_DivideByQuadratureMetric(
         const Array<OneD, const NekDouble> &inarray,
@@ -302,21 +314,19 @@ protected:
     {
     }
 
+    virtual int v_GetCoordim() const override
+    {
+        return m_geom->GetCoordim();
+    }
+
     virtual void v_GetCoords(Array<OneD, NekDouble> &coords_1,
                              Array<OneD, NekDouble> &coords_2,
-                             Array<OneD, NekDouble> &coords_3);
-
-    Array<OneD, NekDouble> v_GetMF(const int dir, const int shapedim,
-                                   const StdRegions::VarCoeffMap &varcoeffs);
-
-    Array<OneD, NekDouble> v_GetMFDiv(const int dir,
-                                      const StdRegions::VarCoeffMap &varcoeffs);
-
-    Array<OneD, NekDouble> v_GetMFMag(const int dir,
-                                      const StdRegions::VarCoeffMap &varcoeffs);
+                             Array<OneD, NekDouble> &coords_3) override;
 
     virtual DNekScalMatSharedPtr v_GetLocMatrix(
         const LocalRegions::MatrixKey &mkey);
+
+    virtual void v_DropLocMatrix(const LocalRegions::MatrixKey &mkey);
 
     virtual DNekMatSharedPtr v_BuildTransformationMatrix(
         const DNekScalMatSharedPtr &r_bnd,
@@ -362,9 +372,9 @@ protected:
 
     virtual StdRegions::Orientation v_GetTraceOrient(int trace);
 
-    virtual void v_SetCoeffsToOrientation(StdRegions::Orientation dir,
-                                          Array<OneD, const NekDouble> &inarray,
-                                          Array<OneD, NekDouble> &outarray);
+    virtual void v_SetCoeffsToOrientation(
+        StdRegions::Orientation dir, Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_GetTraceQFactors(const int trace,
                                     Array<OneD, NekDouble> &outarray);
@@ -382,7 +392,7 @@ protected:
 
     virtual void v_ComputeTraceNormal(const int id);
 
-    virtual const Array<OneD, const NekDouble> &v_GetPhysNormals(void);
+    virtual const Array<OneD, const NekDouble> &v_GetPhysNormals();
 
     virtual void v_SetPhysNormals(Array<OneD, const NekDouble> &normal);
 

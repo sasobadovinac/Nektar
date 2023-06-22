@@ -2,15 +2,15 @@
 <NEKTAR>
     <EXPANSIONS>
         <E COMPOSITE="C[0]" BASISTYPE="Modified_A,Modified_A" NUMMODES="2,2"
-           POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="3,3"
-           FIELDS="rho,rhou,rhov,E" />
+            POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="3,3"
+            FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
 
-   <CONDITIONS>
+    <CONDITIONS>
         <PARAMETERS>
             <!-- Rarefaction shock-wave test case similar to
-                 M. Pini et al 2017 J. Phys.: Conf. Ser. 821 012013
-                 doi:10.1088/1742-6596/821/1/012013 -->
+                M. Pini et al 2017 J. Phys.: Conf. Ser. 821 012013
+                doi:10.1088/1742-6596/821/1/012013 -->
 
             <!-- Simulation parameters -->
             <P> TimeStep       = 5e-6           </P>
@@ -28,7 +28,7 @@
             <!-- Parameters for boundary conditions -->
             <P> pIn           = 1.06*Pcrit      </P>
             <P> TIn           = 1.01*Tcrit      </P>
-            
+
             <P> MachIn        = 1.70            </P>
 
             <P> rhoIn         = 0.79*256.82     </P>
@@ -46,8 +46,8 @@
             <P> FilterAlpha    = 36      </P>
             <P> FilterCutoff   = 0.0      </P>
             <P> FilterExponent = 16      </P>
-       </PARAMETERS>
-        
+        </PARAMETERS>
+
         <SOLVERINFO>
             <I PROPERTY="EquationOfState"       VALUE="VanDerWaals" />
             <I PROPERTY="EQTYPE"                VALUE="EulerCFE" />

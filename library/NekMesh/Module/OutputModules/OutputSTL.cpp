@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Outputstl.cpp
+//  File: OutputSTL.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -57,15 +57,19 @@ OutputSTL::~OutputSTL()
 
 void OutputSTL::Process()
 {
-    m_log(VERBOSE) << "Writing STL file '" << m_config["outfile"].as<string>()
-                   << "'." << endl;
+    std::string filename = m_config["outfile"].as<std::string>();
+    m_log(VERBOSE) << "Writing STL file '" << filename << "'." << endl;
 
     if (m_mesh->m_expDim != 2 && m_mesh->m_expDim != 3)
     {
         m_log(FATAL) << "Only 2D or 3D meshes are supported." << endl;
     }
 
-    OpenStream();
+    bool stream_open = OpenStream();
+    if (!stream_open)
+    {
+        return;
+    }
 
     m_mshFile << std::scientific << setprecision(8);
 

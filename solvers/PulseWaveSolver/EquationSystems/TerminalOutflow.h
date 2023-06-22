@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TerminalOutflow.h
+// File: TerminalOutflow.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -77,7 +77,7 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &A_0,
         Array<OneD, Array<OneD, NekDouble>> &beta,
         Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time,
-        int omega, int offset, int n);
+        int omega, int offset, int n) override;
 
 private:
 };

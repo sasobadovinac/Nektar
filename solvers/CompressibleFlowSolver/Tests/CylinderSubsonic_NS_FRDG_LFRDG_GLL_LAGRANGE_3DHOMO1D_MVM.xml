@@ -4060,110 +4060,110 @@
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
     <EXPANSIONS>
-     <E COMPOSITE="C[0]" NUMMODES="3" FIELDS="rho,rhou,rhov,rhow,E" TYPE="GLL_LAGRANGE" />
+        <E COMPOSITE="C[0]" NUMMODES="3" FIELDS="rho,rhou,rhov,rhow,E" TYPE="GLL_LAGRANGE" />
     </EXPANSIONS>
 
-  <CONDITIONS>
-    <!-- M = 0.2, Re = 200, Pr = 0.72 -->
-    <PARAMETERS>
-      <P> TimeStep              = 0.00001       </P>
-      <P> NumSteps              = 1            </P>
-      <P> FinTime               = 0             </P>
-      <P> IO_CheckSteps         = 500000        </P>
-      <P> IO_InfoSteps          = 500000        </P>
-      <P> GasConstant           = 287.058       </P>
-      <P> Gamma                 = 1.4           </P>
-      <P> pInf                  = 101325        </P>
-      <P> rhoInf                = 1.225         </P>
-      <P> uInf                  = 68.0588       </P>
-      <P> vInf                  = 0.0           </P>
-      <P> wInf                  = 0.0           </P>
-      <P> Twall                 = 300.15        </P>
-      <P> mu                    = 0.4169        </P>
-      <P> thermalConductivity   = 581.6936      </P>
-      <P> epsilon               = 1.0           </P>
-      <P> HomModesZ             = 6             </P>
-      <P> LZ                    = 1.0           </P>
-      <P> Noise                 = 0.00001       </P>
-    </PARAMETERS>
+    <CONDITIONS>
+        <!-- M = 0.2, Re = 200, Pr = 0.72 -->
+        <PARAMETERS>
+            <P> TimeStep              = 0.00001       </P>
+            <P> NumSteps              = 1            </P>
+            <P> FinTime               = 0             </P>
+            <P> IO_CheckSteps         = 500000        </P>
+            <P> IO_InfoSteps          = 500000        </P>
+            <P> GasConstant           = 287.058       </P>
+            <P> Gamma                 = 1.4           </P>
+            <P> pInf                  = 101325        </P>
+            <P> rhoInf                = 1.225         </P>
+            <P> uInf                  = 68.0588       </P>
+            <P> vInf                  = 0.0           </P>
+            <P> wInf                  = 0.0           </P>
+            <P> Twall                 = 300.15        </P>
+            <P> mu                    = 0.4169        </P>
+            <P> thermalConductivity   = 581.6936      </P>
+            <P> epsilon               = 1.0           </P>
+            <P> HomModesZ             = 6             </P>
+            <P> LZ                    = 1.0           </P>
+            <P> Noise                 = 0.00001       </P>
+        </PARAMETERS>
 
-    <SOLVERINFO>
-        <I PROPERTY="EQType"                VALUE="NavierStokesCFE"         />
-        <I PROPERTY="Projection"            VALUE="DisContinuous"           />
-        <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                      />
-        <I PROPERTY="AdvectionType"         VALUE="FRDG3DHomogeneous1D"   />
-        <I PROPERTY="DiffusionType"         VALUE="LFRDGNS3DHomogeneous1D"    />
-        <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"    />
-        <I PROPERTY="UpwindType"            VALUE="HLLC"                    />
-        <I PROPERTY="ProblemType"           VALUE="General"                 />
-        <I PROPERTY="ViscosityType"         VALUE="Constant"                />
-        <I PROPERTY="USEFFT"                VALUE="MVM"                    />
-    </SOLVERINFO>
+        <SOLVERINFO>
+            <I PROPERTY="EQType"                VALUE="NavierStokesCFE"         />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"           />
+            <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                      />
+            <I PROPERTY="AdvectionType"         VALUE="FRDG3DHomogeneous1D"   />
+            <I PROPERTY="DiffusionType"         VALUE="LFRDGNS3DHomogeneous1D"    />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"    />
+            <I PROPERTY="UpwindType"            VALUE="HLLC"                    />
+            <I PROPERTY="ProblemType"           VALUE="General"                 />
+            <I PROPERTY="ViscosityType"         VALUE="Constant"                />
+            <I PROPERTY="USEFFT"                VALUE="MVM"                    />
+        </SOLVERINFO>
 
-    <VARIABLES>
-      <V ID="0"> rho  </V>
-      <V ID="1"> rhou </V>
-      <V ID="2"> rhov </V>
-      <V ID="3"> rhow </V>
-      <V ID="4"> E    </V>
-    </VARIABLES>
+        <VARIABLES>
+            <V ID="0"> rho  </V>
+            <V ID="1"> rhou </V>
+            <V ID="2"> rhov </V>
+            <V ID="3"> rhow </V>
+            <V ID="4"> E    </V>
+        </VARIABLES>
 
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[100] </B>
-      <B ID="1"> C[101] </B>
-      <B ID="2"> C[102] </B>
-      <B ID="3"> C[103] </B>
-    </BOUNDARYREGIONS>
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[100] </B>
+            <B ID="1"> C[101] </B>
+            <B ID="2"> C[102] </B>
+            <B ID="3"> C[103] </B>
+        </BOUNDARYREGIONS>
 
-    <BOUNDARYCONDITIONS>
-      <!-- Wall -->
-      <REGION REF="0">
-        <D VAR="rho"  USERDEFINEDTYPE="WallViscous" VALUE="0" />
-        <D VAR="rhou" USERDEFINEDTYPE="WallViscous" VALUE="0" />
-        <D VAR="rhov" USERDEFINEDTYPE="WallViscous" VALUE="0" />
-        <D VAR="rhow" USERDEFINEDTYPE="WallViscous" VALUE="0" />  
-        <D VAR="E"    USERDEFINEDTYPE="WallViscous" VALUE="0" />
-      </REGION>
-        <REGION REF="1">
-        <D VAR="rho"  VALUE="rhoInf" />
-        <D VAR="rhou" VALUE="rhoInf * uInf" />
-        <D VAR="rhov" VALUE="rhoInf * vInf" />
-        <D VAR="rhow" VALUE="rhoInf * wInf" />    
-        <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
-      </REGION>
-      <!-- Inflow -->
-      <REGION REF="2">
-        <D VAR="rho"  VALUE="rhoInf" />
-        <D VAR="rhou" VALUE="rhoInf * uInf" />
-        <D VAR="rhov" VALUE="rhoInf * vInf" />
-        <D VAR="rhow" VALUE="rhoInf * wInf" />  
-        <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
-      </REGION>
-      <!-- Outflow -->
-      <REGION REF="3">
-        <D VAR="rho"  VALUE="rhoInf" />
-        <D VAR="rhou" VALUE="rhoInf * uInf" />
-        <D VAR="rhov" VALUE="rhoInf * vInf" />
-        <D VAR="rhow" VALUE="rhoInf * wInf" />   
-        <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
-      </REGION>
-    </BOUNDARYCONDITIONS>
+        <BOUNDARYCONDITIONS>
+            <!-- Wall -->
+            <REGION REF="0">
+                <D VAR="rho"  USERDEFINEDTYPE="WallViscous" VALUE="0" />
+                <D VAR="rhou" USERDEFINEDTYPE="WallViscous" VALUE="0" />
+                <D VAR="rhov" USERDEFINEDTYPE="WallViscous" VALUE="0" />
+                <D VAR="rhow" USERDEFINEDTYPE="WallViscous" VALUE="0" />
+                <D VAR="E"    USERDEFINEDTYPE="WallViscous" VALUE="0" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="rho"  VALUE="rhoInf" />
+                <D VAR="rhou" VALUE="rhoInf * uInf" />
+                <D VAR="rhov" VALUE="rhoInf * vInf" />
+                <D VAR="rhow" VALUE="rhoInf * wInf" />
+                <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+            </REGION>
+            <!-- Inflow -->
+            <REGION REF="2">
+                <D VAR="rho"  VALUE="rhoInf" />
+                <D VAR="rhou" VALUE="rhoInf * uInf" />
+                <D VAR="rhov" VALUE="rhoInf * vInf" />
+                <D VAR="rhow" VALUE="rhoInf * wInf" />
+                <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+            </REGION>
+            <!-- Outflow -->
+            <REGION REF="3">
+                <D VAR="rho"  VALUE="rhoInf" />
+                <D VAR="rhou" VALUE="rhoInf * uInf" />
+                <D VAR="rhov" VALUE="rhoInf * vInf" />
+                <D VAR="rhow" VALUE="rhoInf * wInf" />
+                <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
 
-    <FUNCTION NAME="InitialConditions">
-        <E VAR="rho"    VALUE="rhoInf"/>
-        <E VAR="rhou"   VALUE="rhoInf * uInf"   />
-        <E VAR="rhov"   VALUE="rhoInf * vInf"   />
-        <E VAR="rhow" VALUE="rhoInf * wInf" />
-        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>       
-    </FUNCTION>
-        
-    <FUNCTION NAME="ExactSolution">
-        <E VAR="rho"  VALUE="1" />
-        <E VAR="rhou" VALUE="1" />
-        <E VAR="rhov" VALUE="1" />
-        <E VAR="rhow" VALUE="1" />
-        <E VAR="E"    VALUE="1" />
-    </FUNCTION>
-    
-  </CONDITIONS>
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="rho"    VALUE="rhoInf"/>
+            <E VAR="rhou"   VALUE="rhoInf * uInf"   />
+            <E VAR="rhov"   VALUE="rhoInf * vInf"   />
+            <E VAR="rhow" VALUE="rhoInf * wInf" />
+            <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="rho"  VALUE="1" />
+            <E VAR="rhou" VALUE="1" />
+            <E VAR="rhov" VALUE="1" />
+            <E VAR="rhow" VALUE="1" />
+            <E VAR="E"    VALUE="1" />
+        </FUNCTION>
+
+    </CONDITIONS>
 </NEKTAR>

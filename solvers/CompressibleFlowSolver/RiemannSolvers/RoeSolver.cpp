@@ -97,9 +97,9 @@ void RoeSolver::v_ArraySolve(
     const Array<OneD, const Array<OneD, NekDouble>> &bwd,
     Array<OneD, Array<OneD, NekDouble>> &flux)
 {
-    static auto gamma    = m_params["gamma"]();
-    static auto nVars    = fwd.size();
-    static auto spaceDim = nVars - 2;
+    static auto gamma      = m_params["gamma"]();
+    static size_t nVars    = fwd.size();
+    static size_t spaceDim = nVars - 2;
 
     using namespace tinysimd;
     using vec_t = simd<NekDouble>;

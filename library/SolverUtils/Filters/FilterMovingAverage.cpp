@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterMovingAverage.cpp
+// File: FilterMovingAverage.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

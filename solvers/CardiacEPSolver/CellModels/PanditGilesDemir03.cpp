@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PanditGilesDemir03.cpp
+// File: PanditGilesDemir03.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -58,8 +58,7 @@ void PanditGilesDemir03::v_Update(
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     int nvariables = inarray.size();
-    int nq         = m_nq;
-    for (unsigned int i = 0; i < nq; ++i)
+    for (size_t i = 0; i < m_nq; ++i)
     {
         // Inputs:
         // Time units: millisecond

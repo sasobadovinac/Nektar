@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ProtocolSingle.h
+// File: ProtocolSingle.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -70,9 +70,9 @@ protected:
     NekDouble m_start;
     NekDouble m_dur;
 
-    virtual NekDouble v_GetAmplitude(const NekDouble time);
+    virtual NekDouble v_GetAmplitude(const NekDouble time) override;
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
     virtual void v_SetInitialConditions();
 

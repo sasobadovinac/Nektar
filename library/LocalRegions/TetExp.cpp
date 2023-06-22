@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TetExp.cpp
+// File: TetExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -553,11 +553,6 @@ StdRegions::StdExpansionSharedPtr TetExp::v_GetLinStdExp(void) const
                                                                    bkey2);
 }
 
-int TetExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
-}
-
 void TetExp::v_ExtractDataToCoeffs(
     const NekDouble *data, const std::vector<unsigned int> &nummodes,
     const int mode_offset, NekDouble *coeffs,
@@ -1056,6 +1051,11 @@ DNekMatSharedPtr TetExp::v_CreateStdMatrix(const StdRegions::StdMatrixKey &mkey)
 DNekScalMatSharedPtr TetExp::v_GetLocMatrix(const MatrixKey &mkey)
 {
     return m_matrixManager[mkey];
+}
+
+void TetExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
 }
 
 DNekScalBlkMatSharedPtr TetExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)

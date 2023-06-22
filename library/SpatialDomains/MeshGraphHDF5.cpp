@@ -66,9 +66,9 @@ std::string MeshGraphHDF5::className =
     GetMeshGraphFactory().RegisterCreatorFunction("HDF5", MeshGraphHDF5::create,
                                                   "IO with HDF5 geometry");
 
-void MeshGraphHDF5::ReadGeometry(DomainRangeShPtr rng, bool fillGraph)
+void MeshGraphHDF5::v_ReadGeometry(DomainRangeShPtr rng, bool fillGraph)
 {
-    boost::ignore_unused(rng);
+    m_domainRange = rng;
 
     ReadComposites();
     ReadDomain();
@@ -162,7 +162,8 @@ std::string MeshGraphHDF5::cmdSwitch =
 /**
  * @brief Partition the mesh
  */
-void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
+void MeshGraphHDF5::v_PartitionMesh(
+    LibUtilities::SessionReaderSharedPtr session)
 {
     LibUtilities::Timer all;
     all.Start();
@@ -1167,7 +1168,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_quadGeoms.find(i);
                     if (it != m_quadGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1177,7 +1181,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_triGeoms.find(i);
                     if (it != m_triGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1187,13 +1194,18 @@ void MeshGraphHDF5::ReadComposites()
                     auto it1 = m_quadGeoms.find(i);
                     if (it1 != m_quadGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it1->second);
-                        continue;
+                        if (CheckRange(*it1->second))
+                        {
+                            comp->m_geomVec.push_back(it1->second);
+                        }
                     }
                     auto it2 = m_triGeoms.find(i);
                     if (it2 != m_triGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it2->second);
+                        if (CheckRange(*it2->second))
+                        {
+                            comp->m_geomVec.push_back(it2->second);
+                        }
                     }
                 }
                 break;
@@ -1203,7 +1215,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_tetGeoms.find(i);
                     if (it != m_tetGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1213,7 +1228,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_pyrGeoms.find(i);
                     if (it != m_pyrGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1223,7 +1241,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_prismGeoms.find(i);
                     if (it != m_prismGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1233,7 +1254,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_hexGeoms.find(i);
                     if (it != m_hexGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1542,7 +1566,7 @@ void MeshGraphHDF5::WriteDomain(std::map<int, CompositeMap> &domain)
     dst->Write(d_map, ds);
 }
 
-void MeshGraphHDF5::WriteGeometry(
+void MeshGraphHDF5::v_WriteGeometry(
     std::string &outfilename, bool defaultExp,
     const LibUtilities::FieldMetaDataMap &metadata)
 {

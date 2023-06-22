@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: TestNekMatrixMultiplication.h
+// File: TestNekMatrixMultiplication.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

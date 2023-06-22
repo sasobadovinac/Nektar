@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <EXPANSIONS>
+        <E COMPOSITE="C[7]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u,v,theta,p" />
+    </EXPANSIONS>
+
+    <CONDITIONS>
+
+        <SOLVERINFO>
+            <I PROPERTY="SolverType"                    VALUE="VelocityCorrectionScheme"/>
+            <I PROPERTY="EQTYPE"                        VALUE="UnsteadyNavierStokes"    />
+            <I PROPERTY="EvolutionOperator"             VALUE="Direct"               />
+            <I PROPERTY="Projection"                    VALUE="Galerkin"                />
+            <I PROPERTY="TimeIntegrationMethod"         VALUE="IMEXOrder3"              />
+            <I PROPERTY="Driver"                        VALUE="ModifiedArnoldi"                />
+            <I PROPERTY="ArpackProblemType"             VALUE="LargestMag"                />
+        </SOLVERINFO>
+
+        <PARAMETERS>
+            <!-- Need to pick Delta t strategically, dont want CFL number to be too large! -->
+            <P> TimeStep       = 0.01                </P>
+
+            <!--  Final time -->
+            <P> TFinal         = 0.1            </P>
+            <P> NumSteps       = TFinal/TimeStep          </P>
+            <P> IO_CheckSteps  = 1/TimeStep          </P>
+            <P> IO_InfoSteps   = 1/TimeStep                   </P>
+            <P> IO_CFLSteps    = 1/TimeStep	             </P>
+
+            <!-- Quasi-3D Params -->
+            <!--P> HomModesz      = 16      </P>
+            <P> LZ             = PI     </P-->
+
+            <!-- Reynolds number -->
+            <P> Pr             = 0.71               </P>
+            <P> Kinvis         = Pr               </P>
+
+            <!-- Heating parameters  -->
+            <!-- Ra(Gage) = Ra(Mhm) * 8 -->
+            <!-- Ra(Gage)_stable < 1708, Ra(Mhm)_stable = 213.5-->
+            <P> Ra_p          = 3900              </P>
+            <P> alpha         = 4               </P>
+
+            <!-- SFD -->
+            <!--<P> ControlCoeff = 1        </P>
+            <P> FilterWidth  = 0.25        </P>
+            <P> TOL          = 1e-8    </P>-->
+
+            <!-- Stability analysis -->
+            <P> kdim         = 16       </P>
+            <P> nvec         = 1        </P>
+            <P> evtol        = 1e-8     </P>
+        </PARAMETERS>
+
+        <VARIABLES>
+            <V ID="0">u</V>
+            <V ID="1">v</V>
+            <V ID="2">theta</V>
+            <V ID="3">p</V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1]   </B>   <!-- Inlet    -->
+            <B ID="1"> C[2]   </B>   <!-- Outlet    -->
+            <B ID="2"> C[3]   </B>   <!-- UWall    -->
+            <B ID="3"> C[4]  </B>   <!-- Lwall    -->
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <P VAR="u"  VALUE="[1]" />
+                <P VAR="v" VALUE="[1]" />
+                <P VAR="theta" VALUE="[1]" />
+                <P VAR="p" VALUE="[1]" />
+            </REGION>
+            <REGION REF="1">
+                <P VAR="u" VALUE="[0]" />
+                <P VAR="v" VALUE="[0]" />
+                <P VAR="theta" VALUE="[0]" />
+                <P VAR="p" VALUE="[0]" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="theta" VALUE="0" />
+                <N VAR="p" VALUE="0" USERDEFINEDTYPE="H" />
+            </REGION>
+            <REGION REF="3">
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="theta" VALUE ="0" />
+                <N VAR="p" VALUE="0" USERDEFINEDTYPE="H" />
+            </REGION>
+
+        </BOUNDARYCONDITIONS>
+        <FUNCTION NAME="DiffusionCoefficient" >
+            <E VAR="theta" VALUE="1" />
+        </FUNCTION>
+
+        <FUNCTION NAME="BodyForce">
+            <E VAR="u"     VALUE="0"                 EVARS="u v theta" />
+            <E VAR="v"     VALUE="theta * Ra_p * Pr" EVARS="u v theta" />
+            <E VAR="theta" VALUE="0"                 EVARS="u v theta"/>
+        </FUNCTION>
+
+        <FUNCTION NAME="BaseFlow">
+            <F FILE="ThermStab_dir.bse" />
+        </FUNCTION>
+        <FUNCTION NAME="InitialConditions">
+            <F FILE="ThermStab_dir.rst" />
+        </FUNCTION>
+        <!--
+            <FUNCTION NAME="ExactSolution">
+                <E VAR="v"    VALUE="0" />
+                <E VAR="p"    VALUE="Ra_p / 2 / Pr / Re / Re * (y - y*y/2)" />
+                <E VAR="u"      VALUE="1-y^2" />
+                <E VAR="theta" VALUE ="1/2 * (1.0 - y)" />
+            </FUNCTION>
+        -->
+    </CONDITIONS>
+
+    <FORCING>
+        <FORCE TYPE="Body">
+            <BODYFORCE>BodyForce</BODYFORCE>
+        </FORCE>
+    </FORCING>
+
+    <FILTERS>
+        <FILTER TYPE="ModalEnergy">
+            <PARAM NAME="OutputFile">EnergyFile</PARAM>
+            <PARAM NAME="OutputFrequency">1</PARAM>
+        </FILTER>
+    </FILTERS>
+    <GEOMETRY DIM="2" SPACE="2">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxtl39M1GUcxzFFQivJNA6QgDPojJTgSI0KrsTC0kokMTE8SPkhlUSKYGtLZ2kNM8OiP45WobS2/mirtXXtdDrLbLWo3Npq/SHdqsl0VMoilIr7vL+fu8/7un9et732fO/1fO/7PM9dQsL/vYaPOO8mgc/m97YXZJwqY38ZuMsjfo9nsHpn6Tn1k+nKnfnWTwF7I+PDcddPBLtzxb+ea8dPBbPfHCo84TkXNz4JdPWK73fb8ZeDP14K/Hf983Hjk8E0+A+z7PhpYPr88qqxnNG48dPJH59jx18Bfu2W++f3VHbtCJ9Rf2WCfVV4rb8K/DJL7k9HpvUzwBU9Mv+XZ1qfAvaNyfz6k6y/mvoPX1xp/Eww5JL+37a6W/wjYfXXUP/2/dbPAl+aLf1r1lo/25nHXun/rNT6a8GMUelfONf6VOo/mGS9y5lnsvSnllz4YmzH9+rTqH99n/Xp4DuJ0v/twHnjM8C8Z6T/hUbr5zi8IP2+8T+Nz6T+vw5Yf53THxl/qmxivbamdoUcn0X9kfXc3KM+G1z9eyC6/oJt6nPAH5pi1lew7Q7Hu8Hpw9I/cf1sV5f6udSPz1d/PZh6Wvox/zLH51I/5q8+D5z2k/Tj/qq/AdxXJf0DA9Z7wJEz0p8m37/6edSP71/9jWDLN9JfLM+f+nzqx/On/iYw5yvpP15q/Xywv1z6sT7ULwAv/iL9WH/qC6gf60/9zWDVCek/KOtffSH1Y/2rLwJ/Pib92F/Ue8HGEulvz7S+GNwclv56j/W3UD/2P/ULwbeOSj/2Z/WLqB/7r/rFoCsk/Yfc1t8KBoqlvzfX+hJwdFD6cf6pv436cf6pvx3sOxyIPV/V60Ixr6gvBVOCgdjzU73z5kChOR/V+8BFg+b8U38n9bO/Cxyqnbj+eFkHzW8JuACex5eDk8tP7j7ZM8m3ncYvBYuWiOfxd4PBSP8U39M0/h7w7GnxPL4CTNvduvHVN6bGff4y8Mjz4nn8vaArcn+Sffz93keexy8HV/nl/vDzvQJ8banMn/39TmdY5sf+ATCE+bF/kPrYrwS/q5e+Tto/KsF1Ffj+yK8CE3+VPvZV4Nk9uP/kH6I+9qvBjxqkj/fnavDd5dK3gfwa5/4NSV8d+YfBoy9KXw35tdTHn18DvtcSff7fb4qef+vAvErpK/J6vRkx5+Mj4MfD0ec3JcbXgrP2Rp/PWL+e+vj89YNvt0of/76oA/uqpY99PegZkT72j4IN+6SP/QbqY78RfG6L9PHvtwbwjxrpY98Ibvpb+g6RbwIX75c+9s3Ux9ffBCZuk75j9Pu4BQzWSh//fn4MnHdJ+j4h/7jT+Yr0hcg/QX18/c1gW4f0fU7/P1rBZX7p+5T8k+AH49LHvg2c0S19/P/mKepjvwUs6DTng/qtYHqd2f/Vt4O7/jH7u/ptYHO32b/Vd1Af+38B5CBhygAA</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1mOm7zlUYhY+kZKxO1EEO1WlwRMd0GpAMjaZKUlJH5jlj0qBRRQqlEkWZQgoZM2cWIZLyz/jQuj+4r+t9v6xrPevZ+93r99v7efb7FhX9/6lWdPkHfkUBXr0ALxK/Usg8NYToV2le9Kulk1+zgH5NgfG1NI782hqHXkfj0esWmK+e5kOvr/Ho1+p78H2dvgf9+mB16cX6fnzfoPHoDbQu/DVUHvqNWi8+blIeeol84LeR8tAbB/HHepsEi6XfHLT/pkF846NU49GbBf08misP/ZYgzwkftyoP/bYgzw+/ZcpDvz3Ic2W9dwRLpN8ZLJZ+V5DnjY8WGo9eHuQ94KOl8tDvDvJ+8NFKeeitg7w3/N6jPPSKIO+T9bYJlkpvGyyR3i7YTD7aazx6hyDvHx+VykO/N8i+wMd9ykO/P8h+we8DykPvGGQfsd5OwTLpnYOl0h8Msr/w0UXj0R8Ksu/w0VV56N2C7Ed8dFceeo8g+xS/DysP/ZEg+5f1Phosl/5YsEz640H2NT6e0Hj0nkH2Oz56KQ+9d5BzgI8+ykPvG+R84PdJ5aE/FeTcsN6ngxXS+wXLpT8T5Dzho7/Goz8b5JzhY4Dy0J8Lcv7w8bzy0AcGOZf4fUF56IOCnFfW+2KwUvpLwQrpVUHOMT4Gazz6y0HONz6GKA99aJBzj49hykMfHqQe4HeE8tBHBqkTrHdUsJP00cFK6WOC1A98jNV49HFB6go+xisPfUKwi3y8ojz0iUHqEH4nKQ99svKoU1PEqVNTxZlnmvKpX6+KU7+mizPfa8qnrs0Qp669Ls58byifevemOPXuLXHmm6l86uDb4tTBd8SZ790g+5L6+J44z+99xambH4jznGYpTj39UJzn8ZHi1NmPxfE9W3Hq7xxxnscnQeoRdXmuOP4+VZx6/Zk4/uYpTh2fL46/BYpT3z8Xx98XilP3F4rj+8sgfYh+8JU4/r5WnD6xSBx/3yhO/1gsjr8litNXvhXH33eK02+WiuN7WZD7B33oe3H8/aA4/Wm5OP5WKE7fWimOv1WK089Wi+PvR8Xpc2vE8b02yL2zKrhOHH8/KU5fXC+Ov58Vp1/+Io6/DYrTRzeK42+T4vTXX8XxvTnI7w367hbxquBWxenH28Txt11x+vQOcfz9pjj9e6c4/nYpTl/fLY7vPUF+Z9Lv94rjb5/i3AP2i+Pvd8W5HxwQx99Bxbk3HBLH32HFuU8cEcf30SD/L3DPOCaOv+OKc//4Qxx/JxTnXnJSHH9/Ks595ZQ4/k4rzj3mjDi+/wryvxL3m7Pi+DunOPeev8Xxd15x7kP/iOPvguLck/4Vx99/inN/uiiO70tttMTd</EDGE>
+        <ELEMENT>
+            <Q COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx11+f7jnUcxnEzJBkNKyOSNGyyyd47ewuR3TDKrBShUFHIKLvSoOw9MiINI/+MJ+/3A+dx8OR1HB8+9+88r+t7XfdPgQL3/ymIhbBwzItgUXzoAXvFsDiWiD0/92EsiY/Enj+vFD6KpWPPz/Xnl8GyWC7y6mP4eOyZ39xP4JOxZ05zl8cKsefnmLsiVoo9r4e5K+NTWAXtbe6qWC32zGXu6vh07Hl9zV0Da8ae19/cz2Ct2LOnuZ/F2vgcer3NXQefjz2vh7lfwBdjz/ts7pewbux5/8xdD+vHntfX3A2wITZC77O5G2OT2PM+mLspvhx7ngdzN8Pmsef9MncLbBl7njdzt8LW2Aa9r+Zui+1iz/Nl7lewfex5/83dATvGnufa3J2wc+x5Xs3dBbtiN/Q8mbs79oi96pG7J/aKPc+duXtjn9jz/Ju7L/aLPc+nufvjAByIPl/mfhUHxZ7n2NyDcUjs+TyZeygOiz3Pu7mH44jY8zk290gchaPR59PcY3Bs7Pn8mHscjo89n2Nzv4YTYs/nzNwTcVLs+byb+3WcjFPQ59Hcb+DU2PN9Yu5pOD32fG7NPQNnxp7vD3PPwtmx1zD+/k18C9/GRjF/B+fgXGwc83k4H9/FJjF/DxfgQmwa80W4GJeg7xXv11J8H+3VLOYf4Idor+YxX4Yfob1axPxjXI72ahnzFfgJ2sv3pc/PSlyF9mod89X4KdqrTcw/wzVor7YxX4vr0F7tYv45foH28j3t++xLXI/2ah/zDfgV2qtDzL/GjWivjjHfhJvRXp1i/g1uQXt1jn+/FbehvbrEfDt+i/bqGvPvcAfaq1vMd+IutFf3mO/GPWgvvw88r3txH27FnjH/Hn9Ae/WK+Y+4H+3VO+Y/4c9orz4x/wV/RXt5nnxfHsCDaK9+Mf8Nf0d79Y/5ITyM9hoQ8yN4FO01MObH8Djay+9Xv69P4Em016CYn8LTaK/BMT+DZ9FeQ2J+Ds+jvYbG/AJeRHv5fervi3/gJbTX8Jhfxit4CkfE/Cr+ifYaGfNreB3tNSrmf+ENtJe/d/j/lb/xH7TXmJj/i/+hvcbG/CbeQnuNi/ltvIP2Gh/z//Eu2useH4a9swAA</Q>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="1"> E[3,18,29,40,51,62,73,84,95,106] </C>
+            <C ID="2"> E[219,209,199,189,179,169,159,149,139,128] </C>
+            <C ID="3"> E[105,108,110,112,114,117,120,123,126,129] </C>
+            <C ID="4"> E[13,10,7,4,0,218,216,214,212,210] </C>
+            <C ID="5"> E[113,102,91,80,69,58,47,36,25,14] </C>
+            <C ID="7"> Q[0-99] </C>
+        </COMPOSITE>
+        <DOMAIN> C[7] </DOMAIN>
+    </GEOMETRY>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/master</GitBranch>
+            <GitSHA1>648aa712924760e1ce5ca49495c03031b35909a2</GitSHA1>
+            <Hostname>chanbuntu</Hostname>
+            <NektarVersion>5.2.0</NektarVersion>
+            <Timestamp>16-Dec-2022 09:33:52</Timestamp>
+        </Provenance>
+        <NekMeshCommandLine>-m peralign:surf1=1:surf2=2:dir=x Nx10-Ny10-Lx1-split.xml Nx10-Ny10-Lx1-split.xml </NekMeshCommandLine>
+    </Metadata>
+</NEKTAR>

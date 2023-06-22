@@ -12,6 +12,7 @@ MACRO(ADD_SOLVER_EXECUTABLE name)
         ADD_LIBRARY(${name}-obj OBJECT ${SOLVER_LIBRARY_SOURCES})
         ADD_DEPENDENCIES(${name}-obj SolverUtils)
         LIST(APPEND SOLVER_SOURCES $<TARGET_OBJECTS:${name}-obj>)
+        SET_COMMON_PROPERTIES(${name}-obj)
     ENDIF()
 
     IF (NOT SOLVER_COMPONENT)

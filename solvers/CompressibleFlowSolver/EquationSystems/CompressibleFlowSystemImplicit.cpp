@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CFSImplicit.cpp
+// File: CompressibleFlowSystemImplicit.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -363,7 +363,7 @@ void CFSImplicit::DoImplicitSolveCoeff(
     NekDouble tol2 =
         m_inArrayNorm * m_newtonAbsoluteIteTol * m_newtonAbsoluteIteTol;
 
-    m_nonlinsol->v_SetupNekNonlinSystem(ntotal, inarray, inarray, 0);
+    m_nonlinsol->SetupNekNonlinSystem(ntotal, inarray, inarray, 0);
 
     m_TotNewtonIts += m_nonlinsol->SolveSystem(ntotal, inarray, out, 0, tol2);
 
@@ -413,7 +413,7 @@ void CFSImplicit::CalcRefValues(const Array<OneD, const NekDouble> &inarray)
     {
         m_magnitdEstimat[i] = sqrt(m_magnitdEstimat[i] * invTotalDOF);
     }
-    if (m_root && m_verbose)
+    if (m_comm->GetRank() == 0 && m_verbose)
     {
         for (int i = 0; i < nvariables; ++i)
         {
@@ -1919,7 +1919,7 @@ void CFSImplicit::PointFluxJacobianPoint(const Array<OneD, NekDouble> &Fwd,
     FJacData[4 + nVar4] = c5 + l1;
 }
 
-bool CFSImplicit::UpdateTimeStepCheck()
+bool CFSImplicit::v_UpdateTimeStepCheck()
 {
     bool flag =
         (m_time + m_timestep > m_fintime && m_fintime > 0.0) ||

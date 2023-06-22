@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: MetricPrecon.h
+// File: MetricEigenvalue.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Definition of the preconditioner metric.
+// Description: Definition of the eigen value metric.
 //
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -57,14 +57,14 @@ namespace LibUtilities
 class DIRKTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    DIRKTimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKTimeIntegrationScheme(std::string variant, size_t order,
                               std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
         // Currently 2nd and 3rd order are implemented.
-        ASSERTL1(2 <= order && order <= 4,
+        ASSERTL0(1 <= order && order <= 4,
                  "Diagonally Implicit Runge Kutta integration scheme bad order "
-                 "(2-4): " +
+                 "(1-4): " +
                      std::to_string(order));
 
         m_integration_phases    = TimeIntegrationAlgorithmGLMVector(1);
@@ -93,8 +93,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<DIRKTimeIntegrationScheme>::AllocateSharedPtr(
@@ -104,18 +103,8 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetName() const
-    {
-        return std::string("DIRK");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
-                                    unsigned int order)
+                                    size_t order)
     {
         phase->m_schemeType = eDiagonallyImplicit;
         phase->m_order      = order;
@@ -139,6 +128,16 @@ public:
 
         switch (phase->m_order)
         {
+            case 1:
+            {
+                // One-stage, 1st order, L-stable Diagonally Implicit
+                // Runge Kutta (backward Euler) method:
+
+                phase->m_A[0][0][0] = 1.0;
+
+                phase->m_B[0][0][0] = 1.0;
+            }
+            break;
             case 2:
             {
                 // Two-stage, 2nd order Diagonally Implicit Runge
@@ -183,9 +182,10 @@ public:
             break;
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 0;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 0;
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         phase->CheckAndVerify();
@@ -193,7 +193,7 @@ public:
 
     LUE static void SetupSchemeDataESDIRK(
         TimeIntegrationAlgorithmGLMSharedPtr &phase, std::string variant,
-        unsigned int order, std::vector<NekDouble> freeParams)
+        size_t order, std::vector<NekDouble> freeParams)
     {
         phase->m_schemeType = eDiagonallyImplicit;
         phase->m_order      = order;
@@ -221,6 +221,9 @@ public:
         {
             case 3:
             {
+                // See: Kennedy, Christopher A., and Mark H. Carpenter.
+                // Diagonally implicit Runge-Kutta methods for ordinary
+                // differential equations. A review. No. NF1676L-19716. 2016.
                 ASSERTL0(5 == phase->m_numstages,
                          std::string("DIRKOrder3_ES" +
                                      std::to_string(phase->m_numstages) +
@@ -239,9 +242,9 @@ public:
                 phase->m_A[0][1][0] = lambda;
                 phase->m_A[0][2][0] = 9.0 * (1.0 + ConstSqrt2) / 80.0;
                 phase->m_A[0][3][0] =
-                    (22.0 + 15.0 * ConstSqrt2) / (80.0 * (1 + ConstSqrt2));
+                    (22.0 + 15.0 * ConstSqrt2) / (80.0 * (1.0 + ConstSqrt2));
                 phase->m_A[0][4][0] = (2398.0 + 1205.0 * ConstSqrt2) /
-                                      (2835.0 * (4 + 3.0 * ConstSqrt2));
+                                      (2835.0 * (4.0 + 3.0 * ConstSqrt2));
 
                 phase->m_A[0][1][1] = phase->m_A[0][1][0];
                 phase->m_A[0][2][1] = phase->m_A[0][2][0];
@@ -250,8 +253,8 @@ public:
 
                 phase->m_A[0][2][2] = lambda;
                 phase->m_A[0][3][2] = -7.0 / (40.0 * (1.0 + ConstSqrt2));
-                phase->m_A[0][4][2] = -2374 * (2.0 + ConstSqrt2) /
-                                      (2835.0 * (4.0 + 3.0 * ConstSqrt2));
+                phase->m_A[0][4][2] = -2374.0 * (1.0 + 2.0 * ConstSqrt2) /
+                                      (2835.0 * (5.0 + 3.0 * ConstSqrt2));
 
                 phase->m_A[0][3][3] = lambda;
                 phase->m_A[0][4][3] = 5827.0 / 7560.0;
@@ -268,6 +271,9 @@ public:
 
             case 4:
             {
+                // See: Kennedy, Christopher A., and Mark H. Carpenter.
+                // Diagonally implicit Runge-Kutta methods for ordinary
+                // differential equations. A review. No. NF1676L-19716. 2016.
                 ASSERTL0(6 == phase->m_numstages,
                          std::string("DIRKOrder4_ES" +
                                      std::to_string(phase->m_numstages) +
@@ -289,7 +295,7 @@ public:
                 phase->m_A[0][2][0] = (1.0 - ConstSqrt2) / 8.0;
                 phase->m_A[0][3][0] = (5.0 - 7.0 * ConstSqrt2) / 64.0;
                 phase->m_A[0][4][0] =
-                    (-13796.0 - 54539 * ConstSqrt2) / 125000.0;
+                    (-13796.0 - 54539.0 * ConstSqrt2) / 125000.0;
                 phase->m_A[0][5][0] = (1181.0 - 987.0 * ConstSqrt2) / 13782.0;
 
                 phase->m_A[0][1][1] = phase->m_A[0][1][0];
@@ -316,6 +322,13 @@ public:
                     -15625.0 * (97.0 + 376.0 * ConstSqrt2) / 90749876.0;
 
                 phase->m_A[0][5][5] = lambda;
+
+                phase->m_B[0][0][0] = phase->m_A[0][5][0];
+                phase->m_B[0][0][1] = phase->m_A[0][5][1];
+                phase->m_B[0][0][2] = phase->m_A[0][5][2];
+                phase->m_B[0][0][3] = phase->m_A[0][5][3];
+                phase->m_B[0][0][4] = phase->m_A[0][5][4];
+                phase->m_B[0][0][5] = phase->m_A[0][5][5];
             }
             break;
             default:
@@ -327,22 +340,65 @@ public:
             }
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 0;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 0;
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         phase->CheckAndVerify();
+    }
+
+protected:
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("DIRK");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
     }
 
 }; // end class DIRKTimeIntegrationScheme
 
 ////////////////////////////////////////////////////////////////////////////////
 // Backwards compatibility
+class DIRKOrder1TimeIntegrationScheme : public DIRKTimeIntegrationScheme
+{
+public:
+    DIRKOrder1TimeIntegrationScheme(std::string variant, size_t order,
+                                    std::vector<NekDouble> freeParams)
+        : DIRKTimeIntegrationScheme("", 1, freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+    }
+
+    static TimeIntegrationSchemeSharedPtr create(
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+
+        TimeIntegrationSchemeSharedPtr p =
+            MemoryManager<DIRKTimeIntegrationScheme>::AllocateSharedPtr(
+                "", 1, freeParams);
+
+        return p;
+    }
+
+    static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
+}; // end class DIRKOrder1TimeIntegrationScheme
+
 class DIRKOrder2TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
-    DIRKOrder2TimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKOrder2TimeIntegrationScheme(std::string variant, size_t order,
                                     std::vector<NekDouble> freeParams)
         : DIRKTimeIntegrationScheme("", 2, freeParams)
     {
@@ -351,8 +407,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -366,12 +421,15 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class DIRKOrder2TimeIntegrationScheme
 
 class DIRKOrder3TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
-    DIRKOrder3TimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKOrder3TimeIntegrationScheme(std::string variant, size_t order,
                                     std::vector<NekDouble> freeParams)
         : DIRKTimeIntegrationScheme("", 3, freeParams)
     {
@@ -380,8 +438,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -395,12 +452,15 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class DIRKOrder3TimeIntegrationScheme
 
 class DIRKOrder3_ES5TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
-    DIRKOrder3_ES5TimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKOrder3_ES5TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : DIRKTimeIntegrationScheme("ES5", 3, freeParams)
     {
@@ -409,8 +469,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -424,12 +483,15 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class DIRKOrder3_ES5TimeIntegrationScheme
 
 class DIRKOrder4_ES6TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
-    DIRKOrder4_ES6TimeIntegrationScheme(std::string variant, unsigned int order,
+    DIRKOrder4_ES6TimeIntegrationScheme(std::string variant, size_t order,
                                         std::vector<NekDouble> freeParams)
         : DIRKTimeIntegrationScheme("ES6", 4, freeParams)
     {
@@ -438,8 +500,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -452,7 +513,10 @@ public:
     }
 
     static std::string className;
-};
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+}; // end class DIRKOrder4_ES6TimeIntegrationScheme
 
 } // end namespace LibUtilities
 } // end namespace Nektar

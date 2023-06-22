@@ -167,6 +167,18 @@ typedef std::map<std::string, std::string> GeomInfoMap;
 typedef std::shared_ptr<std::vector<std::pair<GeometrySharedPtr, int>>>
     GeometryLinkSharedPtr;
 
+struct RefRegionInfo
+{
+    NekDouble radius;
+    std::vector<NekDouble> coord1;
+    std::vector<NekDouble> coord2;
+    struct Discretisation
+    {
+        std::vector<unsigned int> numModes;
+        std::vector<unsigned int> numPoints;
+    } disc;
+};
+
 typedef std::map<std::string, std::string> MeshMetaDataMap;
 
 class MeshGraph;
@@ -187,10 +199,10 @@ public:
         LibUtilities::DomainRangeShPtr rng = LibUtilities::NullDomainRangeShPtr,
         bool fillGraph                     = true);
 
-    SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
+    SPATIAL_DOMAINS_EXPORT void WriteGeometry(
         std::string &outfilename, bool defaultExp = false,
         const LibUtilities::FieldMetaDataMap &metadata =
-            LibUtilities::NullFieldMetaDataMap) = 0;
+            LibUtilities::NullFieldMetaDataMap);
 
     void Empty(int dim, int space)
     {
@@ -208,6 +220,9 @@ public:
 
     ////////////////////
     SPATIAL_DOMAINS_EXPORT void ReadExpansionInfo();
+
+    // Read refinement info.
+    SPATIAL_DOMAINS_EXPORT void ReadRefinementInfo();
 
     /* ---- Helper functions ---- */
     /// Dimension of the mesh (can be a 1D curve in 3D space).
@@ -300,6 +315,24 @@ public:
     SPATIAL_DOMAINS_EXPORT void SetExpansionInfoToPointOrder(int npts);
     /// This function sets the expansion #exp in map with
     /// entry #variable
+
+    // Set refinement info.
+    SPATIAL_DOMAINS_EXPORT void SetRefinementInfo(
+        ExpansionInfoMapShPtr &expansionMap);
+
+    // Perform the p-refinement in the selected elements
+    SPATIAL_DOMAINS_EXPORT void PRefinementElmts(
+        ExpansionInfoMapShPtr &expansionMap, RefRegionInfo &region,
+        GeometrySharedPtr geomVecIter);
+
+    SPATIAL_DOMAINS_EXPORT bool CheckIfVertIsInsideLine(
+        const RefRegionInfo &region, const Array<OneD, NekDouble> &coords);
+
+    SPATIAL_DOMAINS_EXPORT bool CheckIfVertIsInsideParallelogram(
+        const RefRegionInfo &region, const Array<OneD, NekDouble> &coords);
+
+    SPATIAL_DOMAINS_EXPORT bool CheckIfVertIsInsideCylinder(
+        const RefRegionInfo &region, const Array<OneD, NekDouble> &coords);
 
     inline void SetExpansionInfo(const std::string variable,
                                  ExpansionInfoMapShPtr &exp);
@@ -425,16 +458,26 @@ public:
         return m_compOrder;
     }
 
+    void SetCompositeOrdering(CompositeOrdering p_compOrder)
+    {
+        m_compOrder = p_compOrder;
+    }
+
     BndRegionOrdering &GetBndRegionOrdering()
     {
         return m_bndRegOrder;
     }
 
+    void SetBndRegionOrdering(BndRegionOrdering p_bndRegOrder)
+    {
+        m_bndRegOrder = p_bndRegOrder;
+    }
+
     /*an inital read which loads a very light weight data structure*/
-    SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        LibUtilities::DomainRangeShPtr rng, bool fillGraph) = 0;
-    SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
-        LibUtilities::SessionReaderSharedPtr session) = 0;
+    SPATIAL_DOMAINS_EXPORT void ReadGeometry(LibUtilities::DomainRangeShPtr rng,
+                                             bool fillGraph);
+    SPATIAL_DOMAINS_EXPORT void PartitionMesh(
+        LibUtilities::SessionReaderSharedPtr session);
 
     SPATIAL_DOMAINS_EXPORT std::map<int, MeshEntity> CreateMeshEntities();
     SPATIAL_DOMAINS_EXPORT CompositeDescriptor CreateCompositeDescriptor();
@@ -445,6 +488,15 @@ public:
     }
 
 protected:
+    SPATIAL_DOMAINS_EXPORT virtual void v_WriteGeometry(
+        std::string &outfilename, bool defaultExp = false,
+        const LibUtilities::FieldMetaDataMap &metadata =
+            LibUtilities::NullFieldMetaDataMap) = 0;
+    SPATIAL_DOMAINS_EXPORT virtual void v_ReadGeometry(
+        LibUtilities::DomainRangeShPtr rng, bool fillGraph) = 0;
+    SPATIAL_DOMAINS_EXPORT virtual void v_PartitionMesh(
+        LibUtilities::SessionReaderSharedPtr session) = 0;
+
     void PopulateFaceToElMap(Geometry3DSharedPtr element, int kNfaces);
     ExpansionInfoMapShPtr SetUpExpansionInfoMap();
     std::string GetCompositeString(CompositeSharedPtr comp);
@@ -468,6 +520,13 @@ protected:
     int m_spaceDimension;
     int m_partition;
     bool m_meshPartitioned;
+    bool m_useExpansionType;
+
+    // Refinement attributes (class members)
+    std::map<int, CompositeMap> m_refComposite;
+    // std::map<int, LibUtilities::BasisKeyVector> m_refBasis;
+    std::map<int, RefRegionInfo> m_refRegion;
+    bool m_refFlag = false;
 
     CompositeMap m_meshComposites;
     std::map<int, std::string> m_compositesLabels;
@@ -493,6 +552,34 @@ typedef std::shared_ptr<MeshGraph> MeshGraphSharedPtr;
 typedef LibUtilities::NekFactory<std::string, MeshGraph> MeshGraphFactory;
 
 SPATIAL_DOMAINS_EXPORT MeshGraphFactory &GetMeshGraphFactory();
+
+/**
+ *
+ */
+inline void MeshGraph::WriteGeometry(
+    std::string &outfilename, bool defaultExp,
+    const LibUtilities::FieldMetaDataMap &metadata)
+{
+    v_WriteGeometry(outfilename, defaultExp, metadata);
+}
+
+/**
+ *
+ */
+inline void MeshGraph::ReadGeometry(LibUtilities::DomainRangeShPtr rng,
+                                    bool fillGraph)
+{
+    v_ReadGeometry(rng, fillGraph);
+}
+
+/**
+ *
+ */
+inline void MeshGraph::PartitionMesh(
+    LibUtilities::SessionReaderSharedPtr session)
+{
+    v_PartitionMesh(session);
+}
 
 /**
  *

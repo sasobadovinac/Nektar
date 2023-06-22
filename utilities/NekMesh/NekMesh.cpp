@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
     // clang-format off
     desc.add_options()
         ("help,h",         "Produce this help message.")
+        ("forceoutput,f",  "Force the output to be written without any checks")
         ("modules-list,l", "Print the list of available modules.")
         ("modules-opt,p",  po::value<string>(),
              "Print options for a module.")
@@ -97,6 +98,13 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // If NEKTAR_DISABLE_BACKUPS environment variable is set, enable the
+    // forceoutput option.
+    if (std::getenv("NEKTAR_DISABLE_BACKUPS") != nullptr)
+    {
+        vm.insert(std::make_pair("forceoutput", po::variable_value()));
+    }
+
     // Create a logger.
     auto logOutput = std::make_shared<StreamOutput>(std::cout);
     Logger log(logOutput, vm.count("verbose") ? VERBOSE : INFO);
@@ -127,7 +135,7 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        ModuleType t;
+        ModuleType t = eInputModule;
 
         if (tmp1[0] == "in")
         {
@@ -194,6 +202,8 @@ int main(int argc, char *argv[])
     {
         modcmds = vm["module"].as<vector<string>>();
     }
+
+    bool forceOutput = vm.count("forceoutput");
 
     // Add input and output modules to beginning and end of this vector.
     modcmds.insert(modcmds.begin(), inout[0]);
@@ -277,6 +287,11 @@ int main(int argc, char *argv[])
                      << "either :arg or :arg=val" << endl;
                 return 1;
             }
+        }
+
+        if (i == modcmds.size() - 1 && forceOutput)
+        {
+            mod->RegisterConfig("forceoutput", "true");
         }
 
         // Ensure configuration options have been set.

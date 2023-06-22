@@ -5,80 +5,80 @@
         <E COMPOSITE="C[0]" NUMMODES="11" FIELDS="u,v,w" TYPE="MODIFIED" />
     </EXPANSIONS>
 
-  <CONDITIONS>
-    <SOLVERINFO>
-      <I PROPERTY="SolverType"        VALUE="CoupledLinearisedNS"/>
-      <I PROPERTY="EQTYPE"            VALUE="SteadyLinearisedNS"/>
-      <I PROPERTY="Projection"        VALUE="Galerkin"/>
-      <I PROPERTY="HOMOGENEOUS"       VALUE="1D"/>
-      <I PROPERTY="INTEGRATIONSPACE"  VALUE="WaveSpace"/>
-      <I PROPERTY="SingleMode"        VALUE="True"/>
-      <I PROPERTY="Driver"            VALUE="ModifiedArnoldi"/>
-      <I PROPERTY="ArpackProblemType" VALUE="LargestImag"/>
-    </SOLVERINFO>
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="SolverType"        VALUE="CoupledLinearisedNS"/>
+            <I PROPERTY="EQTYPE"            VALUE="SteadyLinearisedNS"/>
+            <I PROPERTY="Projection"        VALUE="Galerkin"/>
+            <I PROPERTY="HOMOGENEOUS"       VALUE="1D"/>
+            <I PROPERTY="INTEGRATIONSPACE"  VALUE="WaveSpace"/>
+            <I PROPERTY="SingleMode"        VALUE="True"/>
+            <I PROPERTY="Driver"            VALUE="ModifiedArnoldi"/>
+            <I PROPERTY="ArpackProblemType" VALUE="LargestImag"/>
+        </SOLVERINFO>
 
-    <PARAMETERS>
-      <P> TimeStep      = 0.002  </P>
-      <P> NumSteps      = 5000     </P>
-      <P> IO_CheckSteps = 5000   </P>
-      <P> IO_InfoSteps  = 20     </P>
-      <P> Re            = 15000   </P>
-      <P> Kinvis        = 1.0/Re </P>
-      <P> kdim          = 50      </P> 
-      <P> nvec          = 6     </P> 
-      <P> evtol         = 1e-4      </P> 
-      <P> HomModesZ     = 2       </P>
-      <P> LZ            = 6*PI/sqrt(5)      </P>
-    </PARAMETERS>
+        <PARAMETERS>
+            <P> TimeStep      = 0.002  </P>
+            <P> NumSteps      = 5000     </P>
+            <P> IO_CheckSteps = 5000   </P>
+            <P> IO_InfoSteps  = 20     </P>
+            <P> Re            = 15000   </P>
+            <P> Kinvis        = 1.0/Re </P>
+            <P> kdim          = 50      </P>
+            <P> nvec          = 6     </P>
+            <P> evtol         = 1e-4      </P>
+            <P> HomModesZ     = 2       </P>
+            <P> LZ            = 6*PI/sqrt(5)      </P>
+        </PARAMETERS>
 
-    <VARIABLES>
-      <V ID="0"> u </V> 
-      <V ID="1"> v </V> 
-      <V ID="2"> w </V> 
-    </VARIABLES>
-    
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[1] </B>
-      <B ID="1"> C[2] </B>
-      <B ID="2"> C[3] </B>
-    </BOUNDARYREGIONS>
+        <VARIABLES>
+            <V ID="0"> u </V>
+            <V ID="1"> v </V>
+            <V ID="2"> w </V>
+        </VARIABLES>
 
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0">
-        <D VAR="u" VALUE="0" />
-        <D VAR="v" VALUE="0" />
-        <D VAR="w" VALUE="0" />
-      </REGION>
-      <REGION REF="1">
-        <P VAR="u" VALUE="[2]" />
-        <P VAR="v" VALUE="[2]" />
-        <P VAR="w" VALUE="[2]" />
-      </REGION>
-      <REGION REF="2">
-        <P VAR="u" VALUE="[1]" />
-        <P VAR="v" VALUE="[1]" />
-        <P VAR="w" VALUE="[1]" />
-      </REGION>
-    </BOUNDARYCONDITIONS>
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1] </B>
+            <B ID="1"> C[2] </B>
+            <B ID="2"> C[3] </B>
+        </BOUNDARYREGIONS>
 
-    <FUNCTION NAME="BodyForce">
-      <E VAR="u" VALUE="cos(y)" />
-      <E VAR="v" VALUE="sin(y)" />
-      <E VAR="w" VALUE="sin(y)" />
-    </FUNCTION>
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="w" VALUE="0" />
+            </REGION>
+            <REGION REF="1">
+                <P VAR="u" VALUE="[2]" />
+                <P VAR="v" VALUE="[2]" />
+                <P VAR="w" VALUE="[2]" />
+            </REGION>
+            <REGION REF="2">
+                <P VAR="u" VALUE="[1]" />
+                <P VAR="v" VALUE="[1]" />
+                <P VAR="w" VALUE="[1]" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
 
-    <!--FUNCTION NAME="InitialConditions">
-      <F FILE="ChanStability_Coupled_3D.rst" />
-    </FUNCTION-->
+        <FUNCTION NAME="BodyForce">
+            <E VAR="u" VALUE="cos(y)" />
+            <E VAR="v" VALUE="sin(y)" />
+            <E VAR="w" VALUE="sin(y)" />
+        </FUNCTION>
+
+        <!--FUNCTION NAME="InitialConditions">
+            <F FILE="ChanStability_Coupled_3D.rst" />
+        </FUNCTION-->
 
 
 
-    <FUNCTION NAME="AdvectionVelocity">
-      <E VAR="u" VALUE="1-y*y" />
-      <E VAR="v" VALUE="0" />
-      <E VAR="w" VALUE="0" />
-    </FUNCTION>
-  </CONDITIONS>
+        <FUNCTION NAME="AdvectionVelocity">
+            <E VAR="u" VALUE="1-y*y" />
+            <E VAR="v" VALUE="0" />
+            <E VAR="w" VALUE="0" />
+        </FUNCTION>
+    </CONDITIONS>
 
     <GEOMETRY DIM="2" SPACE="2">
         <VERTEX XSCALE="3*PI/3.142/2">
@@ -145,7 +145,7 @@
             <V ID="60">-3.142e+00 -5.000e-01 0.000e+00</V>
             <V ID="61">-3.142e+00 -8.000e-01 0.000e+00</V>
             <V ID="62">-3.142e+00 -1.000e+00 0.000e+00</V>
-                    </VERTEX>
+        </VERTEX>
         <EDGE>
             <E ID="0">    0  1   </E>
             <E ID="1">    1  2   </E>
@@ -309,14 +309,14 @@
             <Q ID="47">  107   108   109    95 </Q>
         </ELEMENT>
         <COMPOSITE>
-            
+
             <C ID="0"> Q[0-47] </C>
             <C ID="1"> E[17,31,44,57,70,83,96,109,0,19,32,45,58,71,84,97] </C> //wall
-            <C ID="2"> E[3,6,9,12,15,18] </C>//inflow 
+            <C ID="2"> E[3,6,9,12,15,18] </C>//inflow
             <C ID="3"> E[98,100,102,104,106,108] </C> //outflow
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
-    
+
 
 </NEKTAR>

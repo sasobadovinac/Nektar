@@ -79,10 +79,9 @@
             <E VAR="v" VALUE="0" />
             <E VAR="p" VALUE="-2*Kinvis*(x-1)" />
         </FUNCTION>
-a
     </CONDITIONS>
 
-     <FORCING>
+    <FORCING>
         <FORCE TYPE="Body">
             <BODYFORCE> BodyForce </BODYFORCE>
         </FORCE>

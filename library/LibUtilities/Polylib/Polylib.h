@@ -1,3 +1,37 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// File: Polylib.h
+//
+// For more information, please see: http://www.nektar.info
+//
+// The MIT License
+//
+// Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+// Department of Aeronautics, Imperial College London (UK), and Scientific
+// Computing and Imaging Institute, University of Utah (USA).
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+
 #ifndef H_PLYLIB
 
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
@@ -31,7 +65,7 @@ namespace Polylib
    - h    -   Lagrange Interpolant
    - I    -   Interpolation matrix
    - g    -   Gauss
-       - k	  -   Kronrod
+   - k	  -   Kronrod
    - gr   -   Gauss-Radau
    - gl   -   Gauss-Lobatto
    - j    -   Jacobi
@@ -52,6 +86,10 @@ namespace Polylib
        - zwrk        Compute Radau-Kronrod        points and weights
        - zwlk        Compute Lobatto-Kronrod      points and weights
        - JacZeros    Compute Gauss-Jacobi         points and weights
+
+   Integration Matrices:
+
+   - Qg          Compute Gauss               integration matrix
 
    Derivative Matrices:
 
@@ -76,6 +114,7 @@ namespace Polylib
 
    Polynomial Evaluation:
 
+   - polycoeff   Returns value and derivative of Jacobi poly.
    - jacobfd     Returns value and derivative of Jacobi poly. at point z
    - jacobd      Returns derivative of Jacobi poly. at point z (valid at z=-1,1)
 
@@ -133,6 +172,9 @@ LIB_UTILITIES_EXPORT void zwlk(double *, double *, const int, const double,
 LIB_UTILITIES_EXPORT void JacZeros(const int, double *, double *, const double,
                                    const double);
 
+/* Integration operators */
+LIB_UTILITIES_EXPORT void Qg(double *, const double *, const int);
+
 /* Derivative operators */
 LIB_UTILITIES_EXPORT void Dgj(double *, const double *, const int, const double,
                               const double);
@@ -168,6 +210,8 @@ LIB_UTILITIES_EXPORT void Imglj(double *, const double *, const double *,
                                 const double);
 
 /* Polynomial functions */
+LIB_UTILITIES_EXPORT void polycoeffs(const int, const double *, double *,
+                                     const int);
 LIB_UTILITIES_EXPORT void jacobfd(const int, const double *, double *, double *,
                                   const int, const double, const double);
 LIB_UTILITIES_EXPORT void jacobd(const int, const double *, double *, const int,

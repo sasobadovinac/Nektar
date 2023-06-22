@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CommMpi.cpp
+// File: UndefinedInOutflow.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -63,6 +63,7 @@ void UndefinedInOutflow::v_DoBoundary(
     Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
     int offset, int n)
 {
+    boost::ignore_unused(inarray, A_0, beta, alpha, time, omega, offset, n);
 }
 
 } // namespace Nektar

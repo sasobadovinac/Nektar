@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: DiffusionLDG3DHomogeneous1D.h
+// File: Diffusion3DHomogeneous1D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -73,7 +73,7 @@ protected:
 
     virtual void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
     virtual void v_Diffuse(
         const std::size_t nConvective,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
@@ -82,7 +82,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray) override;
 };
 } // namespace SolverUtils
 } // namespace Nektar

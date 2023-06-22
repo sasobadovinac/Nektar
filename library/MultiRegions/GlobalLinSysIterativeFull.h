@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSysIterativeFull.h
+// File: GlobalLinSysIterativeFull.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -68,21 +68,23 @@ public:
 
     MULTI_REGIONS_EXPORT virtual ~GlobalLinSysIterativeFull();
 
+protected:
+    /// Solve the linear system for given input and output vectors
+    /// using a specified local to global map.
+    virtual void v_Solve(const Array<OneD, const NekDouble> &in,
+                         Array<OneD, NekDouble> &out,
+                         const AssemblyMapSharedPtr &locToGloMap,
+                         const Array<OneD, const NekDouble> &dirForcing =
+                             NullNekDouble1DArray) override;
+
+    virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput) override;
+
+    virtual void v_UniqueMap() override;
+
 private:
     // Local to global map.
     std::weak_ptr<AssemblyMap> m_locToGloMap;
-
-    /// Solve the linear system for given input and output vectors
-    /// using a specified local to global map.
-    virtual void v_Solve(
-        const Array<OneD, const NekDouble> &in, Array<OneD, NekDouble> &out,
-        const AssemblyMapSharedPtr &locToGloMap,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
-
-    virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
-
-    virtual void v_UniqueMap();
 };
 } // namespace MultiRegions
 } // namespace Nektar

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/feature/PointDataToFldWithCSV</GitBranch>
+            <GitSHA1>c568af27228b29dead19fe88b2b3d48c3d5dc042</GitSHA1>
+            <Hostname>Daniels-MacBook-Pro.local</Hostname>
+            <NektarVersion>5.3.0</NektarVersion>
+            <Timestamp>18-Apr-2023 10:49:12</Timestamp>
+        </Provenance>
+    </Metadata>
+    <ELEMENTS FIELDS="u" SHAPE="Triangle" BASIS="Modified_A,Modified_B" NUMMODESPERDIR="UNIORDER:2,2" ID="0-7" COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxjYEAGD+xh9J//IHAfyv8A5/+C0v/A9Hv7/1Aapg5C/4DzSVUPU/dM3Ltu45PvUPXf7Rmh6iDu+A8XBwCyQmYL</ELEMENTS>
+</NEKTAR>

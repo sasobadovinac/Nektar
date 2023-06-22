@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  DomainRange.h
+//  File: DomainRange.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:  Finds Min and Max X,Y,Z points of a specific domain
+//  Description: Finds Min and Max X,Y,Z points of a specific domain
 //
 //
 ////////////////////////////////////////////////////////////////////////////////

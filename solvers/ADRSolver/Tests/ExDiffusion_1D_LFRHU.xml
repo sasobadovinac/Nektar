@@ -13,8 +13,8 @@
             <V ID="8">  0.6  0.0  0.0</V>
             <V ID="9">  0.8  0.0  0.0</V>
             <V ID="10"> 1.0  0.0  0.0</V>
-        </VERTEX> 
-        
+        </VERTEX>
+
         <ELEMENT>
             <S ID="0">    0     1 </S>
             <S ID="1">    1     2 </S>
@@ -27,22 +27,22 @@
             <S ID="8">    8     9 </S>
             <S ID="9">    9    10 </S>
         </ELEMENT>
-        
+
         <COMPOSITE>
             <C ID="0"> S[0-9] </C>
             <C ID="1"> V[0]   </C>
             <C ID="2"> V[10]  </C>
         </COMPOSITE>
-        
+
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
-    
+
     <EXPANSIONS>
         <E COMPOSITE="C[0]" FIELDS="u" TYPE="GLL_LAGRANGE_SEM" NUMMODES="3"/>
     </EXPANSIONS>
-    
+
     <CONDITIONS>
-    
+
         <PARAMETERS>
             <P> TimeStep        = 0.000001              </P>
             <P> NumSteps        = 100                 </P>
@@ -50,7 +50,7 @@
             <P> IO_CheckSteps   = 100000                </P>
             <P> IO_InfoSteps    = 100000                </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyDiffusion"   />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
@@ -71,22 +71,22 @@
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                 VALUE="exp(-2.0*PI*PI*t)*sin(PI*x)" />
+                    VALUE="exp(-2.0*PI*PI*t)*sin(PI*x)" />
             </REGION>
             <REGION REF="1">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                 VALUE="exp(-2.0*PI*PI*t)*sin(PI*x)" />
+                    VALUE="exp(-2.0*PI*PI*t)*sin(PI*x)" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="InitialConditions">
             <E VAR="u" VALUE="sin(PI*x)" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="u" VALUE="exp(-2.0*PI*PI*FinTime)*sin(PI*x)" />
         </FUNCTION>
 
     </CONDITIONS>
-    
+
 </NEKTAR>

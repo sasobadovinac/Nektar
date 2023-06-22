@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CommMpi.cpp
+// File: TimeDependentInflow.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -64,6 +64,8 @@ void TimeDependentInflow::v_DoBoundary(
     Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
     int offset, int n)
 {
+    boost::ignore_unused(inarray, A_0, beta, alpha, offset, n);
+
     Array<OneD, MultiRegions::ExpListSharedPtr> vessel(2);
 
     // Pointers to the domains

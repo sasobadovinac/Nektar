@@ -62,8 +62,7 @@ namespace LibUtilities
 class EulerExponentialTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    EulerExponentialTimeIntegrationScheme(std::string variant,
-                                          unsigned int order,
+    EulerExponentialTimeIntegrationScheme(std::string variant, size_t order,
                                           std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
@@ -84,7 +83,7 @@ public:
 
         // Currently the next lowest order is used to seed the current
         // order. This is not correct but is an okay approximation.
-        for (unsigned int n = 0; n < order; ++n)
+        for (size_t n = 0; n < order; ++n)
         {
             m_integration_phases[n] = TimeIntegrationAlgorithmGLMSharedPtr(
                 new TimeIntegrationAlgorithmGLM(this));
@@ -99,8 +98,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<EulerExponentialTimeIntegrationScheme>::
@@ -111,23 +109,8 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetName() const
-    {
-        return std::string("EulerExponential");
-    }
-
-    LUE virtual std::string GetFullName() const
-    {
-        return GetVariant() + GetName() + "Order" + std::to_string(GetOrder());
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
-                                    std::string variant, int order)
+                                    std::string variant, size_t order)
     {
         phase->m_schemeType = eExponential;
         phase->m_variant    = variant;
@@ -173,24 +156,25 @@ public:
         phase->m_V[0][0] = 1.0; // phi_func(0)
 
         // V Phi function for first row additional columns
-        for (int n = 1; n < phase->m_order; ++n)
+        for (size_t n = 1; n < phase->m_order; ++n)
         {
             phase->m_V[0][n] = 1.0 / phase->m_order; // phi_func(n+1)
         }
 
         // V evaluation value shuffling row n column n-1
-        for (int n = 2; n < phase->m_order; ++n)
+        for (size_t n = 2; n < phase->m_order; ++n)
         {
             phase->m_V[n][n - 1] = 1.0; // constant 1
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = phase->m_order - 1;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = phase->m_order - 1;
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         // For order > 1 derivatives are needed.
-        for (int n = 1; n < phase->m_order; ++n)
+        for (size_t n = 1; n < phase->m_order; ++n)
         {
             phase->m_timeLevelOffset[n] = n;
         }
@@ -198,8 +182,51 @@ public:
         phase->CheckAndVerify();
     }
 
-    virtual void InitializeSecondaryData(TimeIntegrationAlgorithmGLM *phase,
-                                         NekDouble deltaT) const
+    LUE void SetExponentialCoefficients(
+        Array<OneD, std::complex<NekDouble>> &Lambda)
+    {
+        ASSERTL0(!m_integration_phases.empty(), "No scheme")
+
+        /**
+         * \brief Lambda Matrix Assumption, parameter Lambda.
+         *
+         * The one-dimensional Lambda matrix is a diagonal
+         * matrix thus values are non zero if and only i=j. As such,
+         * the diagonal Lambda values are stored in an array of
+         * complex numbers.
+         */
+
+        // Assume that each phase is an exponential integrator.
+        for (size_t i = 0; i < m_integration_phases.size(); i++)
+        {
+            m_integration_phases[i]->m_L = Lambda;
+
+            // Anytime the coefficents are updated reset the nVars to
+            // be assured that the exponential matrices are
+            // recalculated (e.g. the number of variables may remain
+            // the same but the coefficients have changed).
+            m_integration_phases[i]->m_lastNVars = 0;
+        }
+    }
+
+protected:
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("EulerExponential");
+    }
+
+    LUE virtual std::string v_GetFullName() const override
+    {
+        return GetVariant() + GetName() + "Order" + std::to_string(GetOrder());
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
+    }
+
+    virtual void v_InitializeSecondaryData(TimeIntegrationAlgorithmGLM *phase,
+                                           NekDouble deltaT) const override
     {
         /**
          * \brief Lambda Matrix Assumption, member variable phase->m_L
@@ -221,7 +248,7 @@ public:
 
         Array<OneD, NekDouble> phi = Array<OneD, NekDouble>(phase->m_order);
 
-        for (unsigned int k = 0; k < phase->m_nvars; ++k)
+        for (size_t k = 0; k < phase->m_nvars; ++k)
         {
             // B Phi function for first row first column
             if (phase->m_variant == "Lawson")
@@ -269,7 +296,7 @@ public:
 
                 phi_func[0] = phi[0];
 
-                for (unsigned int m = 1; m < phase->m_order; ++m)
+                for (size_t m = 1; m < phase->m_order; ++m)
                 {
                     phi_func[m] =
                         phi_function(m + 1, deltaT * phase->m_L[k]).real();
@@ -278,9 +305,9 @@ public:
                 NekDouble W[3][3];
 
                 // Set up the wieghts and calculate the determinant.
-                for (unsigned int j = 0; j < phase->m_order; ++j)
+                for (size_t j = 0; j < phase->m_order; ++j)
                 {
-                    for (unsigned int i = 0; i < phase->m_order; ++i)
+                    for (size_t i = 0; i < phase->m_order; ++i)
                     {
                         W[j][i] = std::pow(i, j);
                     }
@@ -289,12 +316,12 @@ public:
                 NekDouble W_det = Determinant<3>(W);
 
                 // Solve the series of equations using Cramer's rule.
-                for (unsigned int m = 0; m < phase->m_order; ++m)
+                for (size_t m = 0; m < phase->m_order; ++m)
                 {
                     // Assemble the working matrix for this solution.
-                    for (unsigned int j = 0; j < phase->m_order; ++j)
+                    for (size_t j = 0; j < phase->m_order; ++j)
                     {
-                        for (unsigned int i = 0; i < phase->m_order; ++i)
+                        for (size_t i = 0; i < phase->m_order; ++i)
                         {
                             // Fill in the mth column for the mth
                             // solution using the phi function value
@@ -314,7 +341,7 @@ public:
 
                 phi_func[0] = phi[0];
 
-                for (unsigned int m = 1; m < phase->m_order; ++m)
+                for (size_t m = 1; m < phase->m_order; ++m)
                 {
                     phi_func[m] =
                         phi_function(m + 1, deltaT * phase->m_L[k]).real();
@@ -323,9 +350,9 @@ public:
                 NekDouble W[4][4];
 
                 // Set up the weights and calculate the determinant.
-                for (unsigned int j = 0; j < phase->m_order; ++j)
+                for (size_t j = 0; j < phase->m_order; ++j)
                 {
-                    for (unsigned int i = 0; i < phase->m_order; ++i)
+                    for (size_t i = 0; i < phase->m_order; ++i)
                     {
                         W[j][i] = std::pow(i, j);
                     }
@@ -334,12 +361,12 @@ public:
                 NekDouble W_det = Determinant<4>(W);
 
                 // Solve the series of equations using Cramer's rule.
-                for (unsigned int m = 0; m < phase->m_order; ++m)
+                for (size_t m = 0; m < phase->m_order; ++m)
                 {
                     // Assemble the working matrix for this solution.
-                    for (unsigned int j = 0; j < phase->m_order; ++j)
+                    for (size_t j = 0; j < phase->m_order; ++j)
                     {
-                        for (unsigned int i = 0; i < phase->m_order; ++i)
+                        for (size_t i = 0; i < phase->m_order; ++i)
                         {
                             // Fill in the mth column for the mth
                             // solution using the phi function value
@@ -384,53 +411,26 @@ public:
                 phi_function(0, deltaT * phase->m_L[k]).real();
 
             // V Phi function for first row additional columns.
-            for (int n = 1; n < phase->m_order; ++n)
+            for (size_t n = 1; n < phase->m_order; ++n)
             {
                 phase->m_V_phi[k][0][n] = phi[n];
             }
 
             // V evaluation value shuffling row n column n-1.
-            for (int n = 2; n < phase->m_order; ++n)
+            for (size_t n = 2; n < phase->m_order; ++n)
             {
                 phase->m_V_phi[k][n][n - 1] = 1.0; // constant 1
             }
         }
     }
 
-    LUE void SetExponentialCoefficients(
-        Array<OneD, std::complex<NekDouble>> &Lambda)
-    {
-        ASSERTL0(!m_integration_phases.empty(), "No scheme")
-
-        /**
-         * \brief Lambda Matrix Assumption, parameter Lambda.
-         *
-         * The one-dimensional Lambda matrix is a diagonal
-         * matrix thus values are non zero if and only i=j. As such,
-         * the diagonal Lambda values are stored in an array of
-         * complex numbers.
-         */
-
-        // Assume that each phase is an exponential integrator.
-        for (int i = 0; i < m_integration_phases.size(); i++)
-        {
-            m_integration_phases[i]->m_L = Lambda;
-
-            // Anytime the coefficents are updated reset the nVars to
-            // be assured that the exponential matrices are
-            // recalculated (e.g. the number of variables may remain
-            // the same but the coefficients have changed).
-            m_integration_phases[i]->m_lastNVars = 0;
-        }
-    }
-
 private:
-    inline NekDouble factorial(unsigned int n) const
+    inline NekDouble factorial(size_t n) const
     {
         return (n == 1 || n == 0) ? 1 : n * factorial(n - 1);
     }
 
-    std::complex<NekDouble> phi_function(const unsigned int order,
+    std::complex<NekDouble> phi_function(const size_t order,
                                          const std::complex<NekDouble> z) const
     {
         /**

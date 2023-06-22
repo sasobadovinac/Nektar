@@ -57,12 +57,15 @@ protected:
                               double rhowL, double EL, double rhoR,
                               double rhouR, double rhovR, double rhowR,
                               double ER, double &rhof, double &rhouf,
-                              double &rhovf, double &rhowf, double &Ef);
+                              double &rhovf, double &rhowf,
+                              double &Ef) override;
 
     double M1Function(int A, double M);
     double M2Function(int A, double M);
     double M4Function(int A, double beta, double M);
     double P5Function(int A, double alpha, double M);
+
+    NekDouble m_Mco;
 };
 } // namespace Nektar
 

@@ -78,54 +78,54 @@ protected:
     GLOBAL_MAPPING_EXPORT
     virtual void v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const TiXmlElement *pMapping);
+        const TiXmlElement *pMapping) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_ContravarToCartesian(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_CovarToCartesian(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_ContravarFromCartesian(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_CovarFromCartesian(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_GetJacobian(
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_DotGradJacobian(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_GetMetricTensor(
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_GetInvMetricTensor(
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_LowerIndex(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_RaiseIndex(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_ApplyChristoffelContravar(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     GLOBAL_MAPPING_EXPORT virtual void v_ApplyChristoffelCovar(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
-    GLOBAL_MAPPING_EXPORT virtual void v_UpdateGeomInfo();
+    GLOBAL_MAPPING_EXPORT virtual void v_UpdateGeomInfo() override;
 
 private:
 };

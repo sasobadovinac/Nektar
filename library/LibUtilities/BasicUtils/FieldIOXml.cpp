@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: FieldIO.cpp
+//  File: FieldIOXml.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -351,7 +351,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
     }
     doc.SaveFile(filename);
 
-    m_comm->Block();
+    m_comm->GetSpaceComm()->Block();
 
     // all data has been written
     if (m_comm->TreatAsRankZero())
@@ -673,6 +673,12 @@ DataSourceSharedPtr FieldIOXml::v_ImportFieldMetaData(
     return doc;
 }
 
+/// Returns the class name.
+const std::string &FieldIOXml::v_GetClassName() const
+{
+    return className;
+}
+
 /**
  * @brief Set up field meta data map.
  *
@@ -693,8 +699,8 @@ void FieldIOXml::SetUpFieldMetaData(
 {
     ASSERTL0(!outname.empty(), "Empty path given to SetUpFieldMetaData()");
 
-    unsigned int nprocs = m_comm->GetSize();
-    unsigned int rank   = m_comm->GetRank();
+    unsigned int nprocs = m_comm->GetSpaceComm()->GetSize();
+    unsigned int rank   = m_comm->GetSpaceComm()->GetRank();
 
     fs::path specPath(outname);
 
@@ -709,7 +715,7 @@ void FieldIOXml::SetUpFieldMetaData(
         idlist.insert(idlist.end(), fielddefs[i]->m_elementIDs.begin(),
                       fielddefs[i]->m_elementIDs.end());
     }
-    m_comm->AllReduce(elmtnums, LibUtilities::ReduceMax);
+    m_comm->GetSpaceComm()->AllReduce(elmtnums, LibUtilities::ReduceMax);
 
     // Collate per-process element lists on root process to generate
     // the info file.
@@ -724,7 +730,7 @@ void FieldIOXml::SetUpFieldMetaData(
             if (elmtnums[i] > 0)
             {
                 std::vector<unsigned int> tmp(elmtnums[i]);
-                m_comm->Recv(i, tmp);
+                m_comm->GetSpaceComm()->Recv(i, tmp);
                 ElementIDs[i] = tmp;
             }
         }
@@ -749,7 +755,7 @@ void FieldIOXml::SetUpFieldMetaData(
         // Send this process's ID list to the root process
         if (elmtnums[rank] > 0)
         {
-            m_comm->Send(0, idlist);
+            m_comm->GetSpaceComm()->Send(0, idlist);
         }
     }
 }

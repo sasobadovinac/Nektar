@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyInviscidBurger.cpp
+// File: UnsteadyInviscidBurger.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

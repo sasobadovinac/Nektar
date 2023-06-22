@@ -53,7 +53,7 @@ CompressibleSolver::CompressibleSolver(
 }
 
 CompressibleSolver::CompressibleSolver()
-    : RiemannSolver(), m_idealGas(true), m_pointSolve(true)
+    : RiemannSolver(), m_pointSolve(true), m_idealGas(true)
 {
     m_requiresRotation = true;
 }
@@ -63,41 +63,14 @@ void CompressibleSolver::v_Solve(
     const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
     Array<OneD, Array<OneD, NekDouble>> &flux)
 {
-    /*
-    //------------------------------
-    auto vgt = m_vectors["vgt"]();
-    auto normals = m_vectors["N"]();
-
-    int nFields = Fwd.size();
-    int nPts = Fwd[0].size();
-
-    std::cout << "nFields = " << nFields << std::endl;
-    std::cout << "nPts = " << nPts << std::endl;
-    std::cout << "normals.size() = (" << normals[0].size() << ", " <<
-    normals[1].size() << ")" << std::endl;
-
-    Array<OneD, Array<OneD, NekDouble>> veclocs(1);
-    veclocs[0] = Array<OneD, NekDouble>(2);
-    veclocs[0][0] = 0.0;
-    veclocs[0][1] = 1.0;
-
-    Array<OneD, Array<OneD, NekDouble>> vgtRot(nFields - 2);
-    for (int i = 0; i < nFields - 2; ++i)
-    {
-        vgtRot[i] = Array<OneD, NekDouble>(nPts);
-    }
-
-    rotateToNormal(vgt, normals, veclocs, vgtRot);
-     //-------------------------------
-     */
     if (m_pointSolve)
     {
-        int expDim = nDim;
+        size_t expDim = nDim;
         NekDouble rhouf{}, rhovf{};
 
         if (expDim == 1)
         {
-            for (int i = 0; i < Fwd[0].size(); ++i)
+            for (size_t i = 0; i < Fwd[0].size(); ++i)
             {
                 v_PointSolve(Fwd[0][i], Fwd[1][i], 0.0, 0.0, Fwd[2][i],
                              Bwd[0][i], Bwd[1][i], 0.0, 0.0, Bwd[2][i],
@@ -106,7 +79,7 @@ void CompressibleSolver::v_Solve(
         }
         else if (expDim == 2)
         {
-            for (int i = 0; i < Fwd[0].size(); ++i)
+            for (size_t i = 0; i < Fwd[0].size(); ++i)
             {
                 v_PointSolve(Fwd[0][i], Fwd[1][i], Fwd[2][i], 0.0, Fwd[3][i],
                              Bwd[0][i], Bwd[1][i], Bwd[2][i], 0.0, Bwd[3][i],
@@ -116,7 +89,7 @@ void CompressibleSolver::v_Solve(
         }
         else if (expDim == 3)
         {
-            for (int i = 0; i < Fwd[0].size(); ++i)
+            for (size_t i = 0; i < Fwd[0].size(); ++i)
             {
                 v_PointSolve(Fwd[0][i], Fwd[1][i], Fwd[2][i], Fwd[3][i],
                              Fwd[4][i], Bwd[0][i], Bwd[1][i], Bwd[2][i],

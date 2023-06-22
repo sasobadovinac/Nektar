@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterModalEnergy.cpp
+// File: FilterModalEnergy.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

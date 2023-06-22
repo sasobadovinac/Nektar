@@ -270,9 +270,12 @@ class OutputModule : public Module
 {
 public:
     NEKMESH_EXPORT OutputModule(MeshSharedPtr p_m);
-    NEKMESH_EXPORT void OpenStream();
+    NEKMESH_EXPORT bool OpenStream();
 
 protected:
+    /// Check to see whether we would overwrite this file and prompt
+    /// the user, unless forceoverwrite option is enabled.
+    bool CheckOverwrite(const std::string &filename);
     /// Output stream
     io::filtering_ostream m_mshFile;
     /// Input stream

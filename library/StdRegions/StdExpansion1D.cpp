@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdExpansion1D.cpp
+// File: StdExpansion1D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -40,6 +40,10 @@ namespace Nektar
 {
 namespace StdRegions
 {
+StdExpansion1D::StdExpansion1D()
+{
+}
+
 StdExpansion1D::StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba)
     : StdExpansion(numcoeffs, 1, Ba)
 {

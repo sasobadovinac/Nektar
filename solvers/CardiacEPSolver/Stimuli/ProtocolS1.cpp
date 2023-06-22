@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ProtocolS1.cpp
+// File: ProtocolS1.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -113,6 +113,7 @@ NekDouble ProtocolS1::v_GetAmplitude(const NekDouble time)
  */
 void ProtocolS1::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
+    boost::ignore_unused(s);
 }
 
 /**

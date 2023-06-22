@@ -70,7 +70,7 @@ public:
 protected:
     virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
                          Array<OneD, Array<OneD, NekDouble>> &physarray,
-                         const NekDouble &time);
+                         const NekDouble &time) override;
 
 private:
     StagnationInflowBC(
@@ -84,9 +84,6 @@ private:
 
     // Field storage for StagnationInflowBC
     Array<OneD, Array<OneD, NekDouble>> m_fieldStorage;
-
-    // Flag determining if we have an axi-symmetric case with swirl
-    bool m_swirl;
 };
 
 } // namespace Nektar

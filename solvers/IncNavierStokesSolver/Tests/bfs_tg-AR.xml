@@ -1740,7 +1740,7 @@
             <F VAR="u,v,p" FILE="bfs_tg-AR.bse" />
         </FUNCTION>
 
-       <FUNCTION NAME="InitialConditions">
+        <FUNCTION NAME="InitialConditions">
             <F VAR="u,v,p" FILE="bfs_tg-AR.rst" />
         </FUNCTION>
 

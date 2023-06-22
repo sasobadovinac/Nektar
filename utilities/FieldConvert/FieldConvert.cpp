@@ -55,38 +55,46 @@ int main(int argc, char *argv[])
     timer.Start();
 
     po::options_description desc("Available options");
-    desc.add_options()("help,h", "Produce this help message.")(
-        "modules-list,l", "Print the list of available modules.")(
-        "output-points,n", po::value<int>(),
-        "Output at n equipspaced points along the "
-        "collapsed coordinates (for .dat, .vtu).")(
-        "output-points-hom-z", po::value<int>(),
-        "Number of planes in the z-direction for output of "
-        "Homogeneous 1D expansion(for .dat, .vtu).")(
-        "error,e", "Write error of fields for regression checking")(
-        "forceoutput,f", "Force the output to be written without any checks")(
-        "range,r", po::value<string>(),
-        "Define output range i.e. (-r xmin,xmax,ymin,ymax,zmin,zmax) "
-        "in which any vertex is contained.")("noequispaced",
-                                             "Do not use equispaced output.")(
-        "nparts", po::value<int>(),
-        "Define nparts if running serial problem to mimic "
-        "parallel run with many partitions.")(
-        "npz", po::value<int>(),
-        "Used to define number of partitions in z for Homogeneous1D "
-        "expansions for parallel runs.")(
-        "onlyshape", po::value<string>(),
-        "Only use element with defined shape type i.e. -onlyshape "
-        " Tetrahedron")("part-only", po::value<int>(),
-                        "Partition into specified npart partitions and exit")(
-        "part-only-overlapping", po::value<int>(),
-        "Partition into specified npart overlapping partitions and exit")(
-        "modules-opt,p", po::value<string>(),
-        "Print options for a module.")("module,m", po::value<vector<string>>(),
-                                       "Specify modules which are to be used.")(
-        "useSessionVariables", "Use variables defined in session for output")(
-        "useSessionExpansion", "Use expansion defined in session.")(
-        "verbose,v", "Enable verbose mode.");
+
+    // clang-format off
+    desc.add_options()
+        ("help,h", "Produce this help message.")
+        ("modules-list,l", "Print the list of available modules.")
+        ("output-points,n", po::value<int>(),
+         "Output at n equipspaced points along the "
+         "collapsed coordinates (for .dat, .vtu).")
+        ("output-points-hom-z", po::value<int>(),
+         "Number of planes in the z-direction for output of "
+         "Homogeneous 1D expansion(for .dat, .vtu).")
+        ("error,e", "Write error of fields for regression checking")
+        ("forceoutput,f", "Force the output to be written without any checks")
+        ("range,r", po::value<string>(),
+         "Define output range i.e. (-r xmin,xmax,ymin,ymax,zmin,zmax) "
+         "in which any vertex is contained.")
+        ("noequispaced", "Do not use equispaced output.")
+        ("nparts", po::value<int>(),
+         "Define nparts if running serial problem to mimic "
+         "parallel run with many partitions.")
+        ("npz", po::value<int>(),
+         "Used to define number of partitions in z for Homogeneous1D "
+         "expansions for parallel runs.")
+        ("npt", po::value<int>(),
+         "Used to define number of partitions in time for Parareal runs. ")
+        ("onlyshape", po::value<string>(),
+         "Only use element with defined shape type i.e. -onlyshape "
+         " Tetrahedron")
+        ("part-only", po::value<int>(),
+         "Partition into specified npart partitions and exit")
+        ("part-only-overlapping", po::value<int>(),
+         "Partition into specified npart overlapping partitions and exit")
+        ("modules-opt,p", po::value<string>(),
+         "Print options for a module.")
+        ("module,m", po::value<vector<string>>(),
+         "Specify modules which are to be used.")
+        ("useSessionVariables", "Use variables defined in session for output")
+        ("useSessionExpansion", "Use expansion defined in session.")
+        ("verbose,v", "Enable verbose mode.");
+    // clang-format on
 
     po::options_description hidden("Hidden options");
     hidden.add_options()("input-file", po::value<vector<string>>(),
@@ -119,9 +127,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-#ifdef NEKTAR_DISABLE_BACKUPS
-    vm.insert(std::make_pair("forceoutput", po::variable_value()));
-#endif
+    // If NEKTAR_DISABLE_BACKUPS environment variable is set, enable the
+    // forceoutput option.
+    if (std::getenv("NEKTAR_DISABLE_BACKUPS") != nullptr)
+    {
+        vm.insert(std::make_pair("forceoutput", po::variable_value()));
+    }
 
     // Print available modules.
     if (vm.count("modules-list"))
@@ -149,7 +160,7 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        ModuleType t;
+        ModuleType t = eInputModule;
 
         if (tmp1[0] == "in")
         {
@@ -174,7 +185,8 @@ int main(int argc, char *argv[])
 
     if (vm.count("help") || vm.count("input-file") != 1)
     {
-        cerr << "Usage: FieldConvert [options] inputfile.ext1 outputfile.ext2"
+        cerr << "Usage: FieldConvert [options] "
+                "[inputfile.xml] inputfile.ext1 outputfile.ext2"
              << endl;
         cout << desc;
         cout << endl;
@@ -182,12 +194,14 @@ int main(int argc, char *argv[])
         cout << "\t FieldConvert -m vorticity file.xml file.fld file_vort.fld "
              << endl;
         cout << "(This will add vorticity to file file.fld and put it in a "
-                "new file file_vort.fld) "
+                "new file file_vort.fld. \n file.xml is a Nektar XML input "
+                "file containing the geometry.) "
              << endl;
         cout << endl;
         cout << "\t FieldConvert file.xml file_vort.fld file_vort.dat " << endl;
         cout << "(process file_vort.fld and make a tecplot output "
-                "file_vort.dat) "
+                "file_vort.dat. file.xml is a\n Nektar XML input file "
+                "containing the geometry.) "
              << endl;
 
         return 1;
@@ -221,8 +235,8 @@ int main(int argc, char *argv[])
         if (vm.count("nparts"))
         {
             // work out number of processors to run in serial over partitions
-            MPInprocs = MPIComm->GetSize();
-            MPIrank   = MPIComm->GetRank();
+            MPInprocs = MPIComm->GetSpaceComm()->GetSize();
+            MPIrank   = MPIComm->GetSpaceComm()->GetRank();
 
             nParts = vm["nparts"].as<int>();
 
@@ -243,6 +257,29 @@ int main(int argc, char *argv[])
 
         f->m_comm =
             LibUtilities::GetCommFactory().CreateInstance("Serial", argc, argv);
+    }
+
+    // For parallel-in-time
+    if (vm.count("npt"))
+    {
+        for (auto &io : inout)
+        {
+            fs::path inpath  = io;
+            fs::path outpath = inpath.parent_path();
+            if (outpath.extension() == ".pit")
+            {
+                fs::path ftype  = inpath.extension();
+                string filename = inpath.stem().string();
+                size_t start    = filename.find_last_of("_") + 1;
+                int index =
+                    atoi(filename.substr(start, filename.size()).c_str());
+                outpath /= filename.substr(0, start) +
+                           std::to_string(index + f->m_comm->GetRank() %
+                                                      vm["npt"].as<int>()) +
+                           ftype.string();
+                io = outpath.string();
+            }
+        }
     }
 
     vector<ModuleSharedPtr> modules;
@@ -505,7 +542,7 @@ int main(int argc, char *argv[])
         {
             if (MPInprocs > 1)
             {
-                MPIComm->Block();
+                MPIComm->GetSpaceComm()->Block();
             }
 
             if (MPIrank == 0)
@@ -557,8 +594,8 @@ int main(int argc, char *argv[])
 
     if (MPInprocs > 1)
     {
-        MPIComm->Block();
-        MPIComm->Finalise();
+        MPIComm->GetSpaceComm()->Block();
+        MPIComm->GetSpaceComm()->Finalise();
     }
 
     return 0;

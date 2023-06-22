@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyViscousBurgers.cpp
+// File: UnsteadyViscousBurgers.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

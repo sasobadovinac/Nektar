@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadySystem.h
+// File: UnsteadySystem.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -73,8 +73,6 @@ public:
     static std::string cmdSetStartChkNum;
 
 protected:
-    /// Number of time steps between outputting status information.
-    int m_infosteps;
     /// Number of steps between checks for abort conditions.
     int m_abortSteps;
     /// Number of time steps between outputting filters information.
@@ -152,23 +150,21 @@ protected:
         const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     /// Init object for UnsteadySystem class.
-    SOLVER_UTILS_EXPORT virtual void v_InitObject(bool DeclareField = true);
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        bool DeclareField = true) override;
 
     /// Get the maximum timestep estimator for cfl control.
     SOLVER_UTILS_EXPORT NekDouble MaxTimeStepEstimator();
 
     /// Solves an unsteady problem.
-    SOLVER_UTILS_EXPORT virtual void v_DoSolve();
+    SOLVER_UTILS_EXPORT virtual void v_DoSolve() override;
 
     /// Sets up initial conditions.
-    SOLVER_UTILS_EXPORT virtual void v_DoInitialise();
+    SOLVER_UTILS_EXPORT virtual void v_DoInitialise(
+        bool dumpInitialConditions = true) override;
 
     /// Print a summary of time stepping parameters.
-    SOLVER_UTILS_EXPORT virtual void v_GenerateSummary(SummaryList &s);
-
-    /// Print the solution at each solution point in a txt file
-    SOLVER_UTILS_EXPORT virtual void v_AppendOutput1D(
-        Array<OneD, Array<OneD, NekDouble>> &solution1D);
+    SOLVER_UTILS_EXPORT virtual void v_GenerateSummary(SummaryList &s) override;
 
     SOLVER_UTILS_EXPORT virtual NekDouble v_GetTimeStep(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray);
@@ -193,16 +189,25 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> vel,
         StdRegions::VarCoeffMap &varCoeffMap);
 
-    SOLVER_UTILS_EXPORT virtual bool UpdateTimeStepCheck();
+    SOLVER_UTILS_EXPORT virtual bool v_UpdateTimeStepCheck();
+
+    /// Perform dummy projection
+    SOLVER_UTILS_EXPORT void DoDummyProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
 private:
     void InitializeSteadyState();
+
+    /// Print the solution at each solution point in a txt file
+    SOLVER_UTILS_EXPORT void AppendOutput1D(
+        Array<OneD, Array<OneD, NekDouble>> &solution1D);
 
     bool CheckSteadyState(int step);
     bool CheckSteadyState(int step, NekDouble totCPUTime);
 };
 
-inline bool UnsteadySystem::UpdateTimeStepCheck()
+inline bool UnsteadySystem::v_UpdateTimeStepCheck()
 {
     return true;
 }

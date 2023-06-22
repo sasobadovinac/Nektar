@@ -44,12 +44,12 @@
             <P> IO_CheckSteps   = 100000                </P>
             <P> IO_InfoSteps    = 100000                </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyInviscidBurger"  />
             <I PROPERTY="Projection"            VALUE="DisContinuous"           />
             <I PROPERTY="AdvectionType"         VALUE="FRHU"                      />
-            <I PROPERTY="UpwindType"            VALUE="Upwind"                  />           
+            <I PROPERTY="UpwindType"            VALUE="Upwind"                  />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"    />
         </SOLVERINFO>
 

@@ -117,11 +117,11 @@
     </GEOMETRY>
 
     <FILTERS>
-      <FILTER TYPE="AverageFields">
-        <PARAM NAME="OutputFile"> AverageField </PARAM>
-        <PARAM NAME="OutputFrequency">1000</PARAM>
-        <PARAM NAME="SampleFrequency"> 10 </PARAM>
-      </FILTER>
+        <FILTER TYPE="AverageFields">
+            <PARAM NAME="OutputFile"> AverageField </PARAM>
+            <PARAM NAME="OutputFrequency">1000</PARAM>
+            <PARAM NAME="SampleFrequency"> 10 </PARAM>
+        </FILTER>
     </FILTERS>
 </NEKTAR>
 

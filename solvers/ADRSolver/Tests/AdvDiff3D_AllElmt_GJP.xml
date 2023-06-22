@@ -2,63 +2,63 @@
 <NEKTAR>
     <CONDITIONS>
 
-      <PARAMETERS>
-        <P> NumSteps       = 100         </P>
-        <P> TimeStep       = 0.001     </P>
-        <P> IO_CheckSteps  = 100        </P>
-        <P> IO_InfoSteps   = 50          </P>
-        <P> advx           = 1          </P>
-        <P> advy           = 1          </P>
-        <P> advz           = 1          </P>
-        <P> offset         = 0.25       </P>
-        <P> epsilon         = 0.000001               </P>
-      </PARAMETERS>
-      
-      <SOLVERINFO>
-        <I PROPERTY="EQTYPE" VALUE="UnsteadyAdvectionDiffusion"  />
-        <I PROPERTY="Projection"  VALUE="Continuous" />
-        <I PROPERTY="GJPStabilisation"  VALUE="SemiImplicit"     />
-        <I PROPERTY="DiffusionAdvancement"     VALUE="Implicit"  />
-        <I PROPERTY="AdvectionAdvancement"     VALUE="Explicit"  />
-        <I PROPERTY="TimeIntegrationMethod"    VALUE="IMEXOrder1"/>
-        <!--I PROPERTY="GlobalSysSoln" VALUE="IterativeMultiLevelStaticCond"/-->
-      </SOLVERINFO>
+        <PARAMETERS>
+            <P> NumSteps       = 100         </P>
+            <P> TimeStep       = 0.001     </P>
+            <P> IO_CheckSteps  = 100        </P>
+            <P> IO_InfoSteps   = 50          </P>
+            <P> advx           = 1          </P>
+            <P> advy           = 1          </P>
+            <P> advz           = 1          </P>
+            <P> offset         = 0.25       </P>
+            <P> epsilon         = 0.000001               </P>
+        </PARAMETERS>
+
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE" VALUE="UnsteadyAdvectionDiffusion"  />
+            <I PROPERTY="Projection"  VALUE="Continuous" />
+            <I PROPERTY="GJPStabilisation"  VALUE="SemiImplicit"     />
+            <I PROPERTY="DiffusionAdvancement"     VALUE="Implicit"  />
+            <I PROPERTY="AdvectionAdvancement"     VALUE="Explicit"  />
+            <I PROPERTY="TimeIntegrationMethod"    VALUE="IMEXOrder1"/>
+            <!--I PROPERTY="GlobalSysSoln" VALUE="IterativeMultiLevelStaticCond"/-->
+        </SOLVERINFO>
 
 
-      <VARIABLES>
-        <V ID="0"> u </V>
-      </VARIABLES>
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
 
-      <BOUNDARYREGIONS>
-        <B ID="0"> C[1-6]       </B>
-      </BOUNDARYREGIONS>
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1-6]       </B>
+        </BOUNDARYREGIONS>
 
-      <BOUNDARYCONDITIONS>
-        <REGION REF="0">
-          <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-             VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent"
+                    VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
                     exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
-                    exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" /> 
-        </REGION>
-      </BOUNDARYCONDITIONS>
-      
-      <FUNCTION NAME="AdvectionVelocity">
-        <E VAR="Vx" VALUE="1" />
-        <E VAR="Vy" VALUE="1" />
-        <E VAR="Vz" VALUE="1" />
-      </FUNCTION>
-      
-      <FUNCTION NAME="ExactSolution">
-        <E VAR="u" VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
-                          exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
-                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" /> 
-      </FUNCTION>
-      
-      <FUNCTION NAME="InitialConditions">
-        <E VAR="u" VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
-                          exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
-                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" /> 
-      </FUNCTION>
+                    exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="AdvectionVelocity">
+            <E VAR="Vx" VALUE="1" />
+            <E VAR="Vy" VALUE="1" />
+            <E VAR="Vz" VALUE="1" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
+                exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
+                exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" />
+        </FUNCTION>
+
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
+                exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
+                exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" />
+        </FUNCTION>
     </CONDITIONS>
 
     <EXPANSIONS>

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StimulusPoint.cpp
+// File: StimulusPoint.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -100,5 +100,6 @@ void StimulusPoint::v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
  */
 void StimulusPoint::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
+    boost::ignore_unused(s);
 }
 } // namespace Nektar

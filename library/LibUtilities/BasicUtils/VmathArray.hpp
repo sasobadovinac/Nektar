@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VmathArray.hpp
+// File: VmathArray.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -399,7 +399,16 @@ void Vvtvvtm(int n, const Array<OneD, const T> &v, int incv,
     ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
     ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
 
+#ifdef NEKTAR_ENABLE_SIMD_VMATH
+    boost::ignore_unused(incv, incw, incx, incy, incz);
+    ASSERTL1(incw == 1, "Simd vmath requires inc = 1");
+    ASSERTL1(incx == 1, "Simd vmath requires inc = 1");
+    ASSERTL1(incy == 1, "Simd vmath requires inc = 1");
+    ASSERTL1(incz == 1, "Simd vmath requires inc = 1");
+    SIMD::Vvtvvtm(n, &v[0], &w[0], &x[0], &y[0], &z[0]);
+#else
     Vvtvvtm(n, &v[0], incv, &w[0], incw, &x[0], incx, &y[0], incy, &z[0], incz);
+#endif
 }
 
 /// \brief svtsvtp (scalar times vector plus scalar times vector): z = alpha*x +

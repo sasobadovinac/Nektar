@@ -120,6 +120,7 @@ void StandardExtrapolate::v_SubStepSetPressureBCs(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray, NekDouble Aii_DT,
     NekDouble kinvis)
 {
+    boost::ignore_unused(inarray, Aii_DT, kinvis);
 }
 
 /**
@@ -127,6 +128,7 @@ void StandardExtrapolate::v_SubStepSetPressureBCs(
  */
 void StandardExtrapolate::v_SubStepAdvance(int nstep, NekDouble time)
 {
+    boost::ignore_unused(nstep, time);
 }
 
 /**
@@ -134,6 +136,7 @@ void StandardExtrapolate::v_SubStepAdvance(int nstep, NekDouble time)
  */
 void StandardExtrapolate::v_SubStepSaveFields(int nstep)
 {
+    boost::ignore_unused(nstep);
 }
 
 /**

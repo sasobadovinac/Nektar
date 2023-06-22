@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LinearSWE.h
+// File: LinearSWE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -69,7 +69,7 @@ protected:
     LinearSWE(const LibUtilities::SessionReaderSharedPtr &pSession,
               const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
     /// Still water depth traces
     Array<OneD, NekDouble> m_dFwd;
@@ -87,11 +87,11 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
-    virtual void v_PrimitiveToConservative();
+    virtual void v_PrimitiveToConservative() override;
 
-    virtual void v_ConservativeToPrimitive();
+    virtual void v_ConservativeToPrimitive() override;
 
     const Array<OneD, NekDouble> &GetDepthFwd()
     {

@@ -90,7 +90,7 @@ protected:
         boost::ignore_unused(pLoctoGloMap);
     }
 
-    virtual int v_GetNumBlocks();
+    virtual int v_GetNumBlocks() override;
 
     virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
         const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
@@ -116,15 +116,17 @@ protected:
 
     /// Solve the linear system for given input and output vectors
     /// using a specified local to global map.
-    virtual void v_Solve(
-        const Array<OneD, const NekDouble> &in, Array<OneD, NekDouble> &out,
-        const AssemblyMapSharedPtr &locToGloMap,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+    virtual void v_Solve(const Array<OneD, const NekDouble> &in,
+                         Array<OneD, NekDouble> &out,
+                         const AssemblyMapSharedPtr &locToGloMap,
+                         const Array<OneD, const NekDouble> &dirForcing =
+                             NullNekDouble1DArray) override;
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     /// Initialise this object
-    virtual void v_Initialise(const std::shared_ptr<AssemblyMap> &locToGloMap);
+    virtual void v_Initialise(
+        const std::shared_ptr<AssemblyMap> &locToGloMap) override;
 
     /// Set up the storage for the Schur complement or the top level
     /// of the multi-level Schur complement.

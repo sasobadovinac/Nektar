@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  Geometry.h
+//  File: MeshGraphXml.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -29,7 +29,7 @@
 //  DEALINGS IN THE SOFTWARE.
 //
 //  Description:  This file contains the base class specification for the
-//                Geometry class.
+//                MeshGraphXml class.
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,11 +55,6 @@ public:
     {
     }
 
-    SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
-        std::string &outfilename, bool defaultExp = false,
-        const LibUtilities::FieldMetaDataMap &metadata =
-            LibUtilities::NullFieldMetaDataMap);
-
     SPATIAL_DOMAINS_EXPORT void WriteXMLGeometry(
         std::string outname, std::vector<std::set<unsigned int>> elements,
         std::vector<unsigned int> partitions);
@@ -71,28 +66,32 @@ public:
 
     static std::string className;
 
-    SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        LibUtilities::DomainRangeShPtr rng, bool fillGraph);
-    SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
-        LibUtilities::SessionReaderSharedPtr session);
-
 protected:
     // some of these functions are going to be virtual because they will be
     // inherited by the XmlCompressed version
 
-    virtual void ReadVertices();
-    virtual void ReadCurves();
+    SPATIAL_DOMAINS_EXPORT virtual void v_WriteGeometry(
+        std::string &outfilename, bool defaultExp = false,
+        const LibUtilities::FieldMetaDataMap &metadata =
+            LibUtilities::NullFieldMetaDataMap) override;
+    SPATIAL_DOMAINS_EXPORT virtual void v_ReadGeometry(
+        LibUtilities::DomainRangeShPtr rng, bool fillGraph) override;
+    SPATIAL_DOMAINS_EXPORT virtual void v_PartitionMesh(
+        LibUtilities::SessionReaderSharedPtr session) override;
+
+    virtual void v_ReadVertices();
+    virtual void v_ReadCurves();
     void ReadDomain();
 
-    virtual void ReadEdges();
-    virtual void ReadFaces();
+    virtual void v_ReadEdges();
+    virtual void v_ReadFaces();
 
     void ReadElements();
     void ReadComposites();
 
-    virtual void ReadElements1D();
-    virtual void ReadElements2D();
-    virtual void ReadElements3D();
+    virtual void v_ReadElements1D();
+    virtual void v_ReadElements2D();
+    virtual void v_ReadElements3D();
 
     void ResolveGeomRef(const std::string &prevToken, const std::string &token,
                         CompositeSharedPtr &composite);
@@ -106,16 +105,16 @@ protected:
                           const std::string &token,
                           CompositeSharedPtr &composite);
 
-    virtual void WriteVertices(TiXmlElement *geomTag, PointGeomMap &verts);
-    virtual void WriteEdges(TiXmlElement *geomTag, SegGeomMap &edges);
-    virtual void WriteTris(TiXmlElement *faceTag, TriGeomMap &tris);
-    virtual void WriteQuads(TiXmlElement *faceTag, QuadGeomMap &quads);
-    virtual void WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs);
-    virtual void WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris);
-    virtual void WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs);
-    virtual void WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets);
-    virtual void WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
-                             CurveMap &faces);
+    virtual void v_WriteVertices(TiXmlElement *geomTag, PointGeomMap &verts);
+    virtual void v_WriteEdges(TiXmlElement *geomTag, SegGeomMap &edges);
+    virtual void v_WriteTris(TiXmlElement *faceTag, TriGeomMap &tris);
+    virtual void v_WriteQuads(TiXmlElement *faceTag, QuadGeomMap &quads);
+    virtual void v_WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs);
+    virtual void v_WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris);
+    virtual void v_WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs);
+    virtual void v_WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets);
+    virtual void v_WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
+                               CurveMap &faces);
     void WriteComposites(TiXmlElement *geomTag, CompositeMap &comps,
                          std::map<int, std::string> &compLabels);
     void WriteDomain(TiXmlElement *geomTag,

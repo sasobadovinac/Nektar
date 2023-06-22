@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File:  NekNonlinSys.cpp
+// File: NekNonlinSys.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,7 +29,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description:  NekNonlinSys definition
+// Description: NekNonlinSys definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -151,14 +151,6 @@ void NekNonlinSys::v_InitObject()
 
 NekNonlinSys::~NekNonlinSys()
 {
-}
-
-void NekNonlinSys::v_SetupNekNonlinSystem(
-    const int nGlobal, const Array<OneD, const NekDouble> &pInput,
-    const Array<OneD, const NekDouble> &pSource, const int nDir)
-{
-    boost::ignore_unused(nGlobal, pInput, pSource, nDir);
-    NEKERROR(ErrorUtil::efatal, "v_SetupNekNonlinSystem not defined");
 }
 
 } // namespace LibUtilities

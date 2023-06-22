@@ -74,8 +74,8 @@ DiffusionLFRNS::DiffusionLFRNS(std::string diffType) : m_diffType(diffType)
  * @brief Initiliase DiffusionLFRNS objects and store them before
  * starting the time-stepping.
  *
- * This routine calls the virtual functions #v_SetupMetrics and
- * #v_SetupCFunctions to initialise the objects needed
+ * This routine calls the functions #SetupMetrics and
+ * #SetupCFunctions to initialise the objects needed
  * by DiffusionLFRNS.
  *
  * @param pSession  Pointer to session reader.
@@ -95,8 +95,8 @@ void DiffusionLFRNS::v_InitObject(
                              0.0257);
     m_session->LoadParameter("rhoInf", m_rhoInf, 1.225);
     m_session->LoadParameter("pInf", m_pInf, 101325);
-    v_SetupMetrics(pSession, pFields);
-    v_SetupCFunctions(pSession, pFields);
+    SetupMetrics(pSession, pFields);
+    SetupCFunctions(pSession, pFields);
 
     // Initialising arrays
     int i, j;
@@ -209,7 +209,7 @@ void DiffusionLFRNS::v_InitObject(
  *
  * \todo Add the metric terms for 3D Hexahedra.
  */
-void DiffusionLFRNS::v_SetupMetrics(
+void DiffusionLFRNS::SetupMetrics(
     LibUtilities::SessionReaderSharedPtr pSession,
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
 {
@@ -372,7 +372,7 @@ void DiffusionLFRNS::v_SetupMetrics(
  * @param pSession  Pointer to session reader.
  * @param pFields   Pointer to fields.
  */
-void DiffusionLFRNS::v_SetupCFunctions(
+void DiffusionLFRNS::SetupCFunctions(
     LibUtilities::SessionReaderSharedPtr pSession,
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
 {
@@ -953,7 +953,7 @@ void DiffusionLFRNS::v_Diffuse(
     }
 
     // Compute interface numerical fluxes for inarray in physical space
-    v_NumericalFluxO1(fields, inarray, m_IF1);
+    NumericalFluxO1(fields, inarray, m_IF1);
 
     switch (nDim)
     {
@@ -975,8 +975,8 @@ void DiffusionLFRNS::v_Diffuse(
 
                 // Computing the standard first-order correction
                 // derivative
-                v_DerCFlux_1D(nConvectiveFields, fields, inarray[i],
-                              m_IF1[i][0], m_DFC1[i][0]);
+                DerCFlux_1D(nConvectiveFields, fields, inarray[i], m_IF1[i][0],
+                            m_DFC1[i][0]);
 
                 // Back to the physical space using global operations
                 Vmath::Vdiv(nSolutionPts, &m_DFC1[i][0][0], 1, &m_jac[0], 1,
@@ -997,7 +997,7 @@ void DiffusionLFRNS::v_Diffuse(
 
             // Compute u from q_{\eta} and q_{\xi}
             // Obtain numerical fluxes
-            v_NumericalFluxO2(fields, inarray, m_viscTensor, m_viscFlux);
+            NumericalFluxO2(fields, inarray, m_viscTensor, m_viscFlux);
 
             for (i = 0; i < nConvectiveFields; ++i)
             {
@@ -1014,8 +1014,8 @@ void DiffusionLFRNS::v_Diffuse(
 
                 // Computing the standard second-order correction
                 // derivative
-                v_DerCFlux_1D(nConvectiveFields, fields, m_viscTensor[0][i],
-                              m_viscFlux[i], m_DFC2[i][0]);
+                DerCFlux_1D(nConvectiveFields, fields, m_viscTensor[0][i],
+                            m_viscFlux[i], m_DFC2[i][0]);
 
                 // Back to the physical space using global operations
                 Vmath::Vdiv(nSolutionPts, &m_DFC2[i][0][0], 1, &m_jac[0], 1,
@@ -1098,8 +1098,8 @@ void DiffusionLFRNS::v_Diffuse(
 
                     // Computing the standard first-order correction
                     // derivatives
-                    v_DerCFlux_2D(nConvectiveFields, j, fields, inarray[i],
-                                  m_IF1[i][j], m_DFC1[i][j]);
+                    DerCFlux_2D(nConvectiveFields, j, fields, inarray[i],
+                                m_IF1[i][j], m_DFC1[i][j]);
                 }
 
                 // Multiplying derivatives by B matrix to get auxiliary
@@ -1158,7 +1158,7 @@ void DiffusionLFRNS::v_Diffuse(
 
             // Compute u from q_{\eta} and q_{\xi}
             // Obtain numerical fluxes
-            v_NumericalFluxO2(fields, inarray, m_viscTensor, m_viscFlux);
+            NumericalFluxO2(fields, inarray, m_viscTensor, m_viscFlux);
 
             // Computing the standard second-order discontinuous
             // derivatives
@@ -1202,14 +1202,13 @@ void DiffusionLFRNS::v_Diffuse(
                     Basis[1]->GetPointsType() ==
                         LibUtilities::eGaussGaussLegendre)
                 {
-                    v_DivCFlux_2D_Gauss(nConvectiveFields, fields, f_hat, g_hat,
-                                        m_viscFlux[i], m_divFC[i]);
+                    DivCFlux_2D_Gauss(nConvectiveFields, fields, f_hat, g_hat,
+                                      m_viscFlux[i], m_divFC[i]);
                 }
                 else
                 {
-                    v_DivCFlux_2D(nConvectiveFields, fields, m_viscTensor[0][i],
-                                  m_viscTensor[1][i], m_viscFlux[i],
-                                  m_divFC[i]);
+                    DivCFlux_2D(nConvectiveFields, fields, m_viscTensor[0][i],
+                                m_viscTensor[1][i], m_viscFlux[i], m_divFC[i]);
                 }
 
                 // Divergence of the standard final flux
@@ -1243,7 +1242,7 @@ void DiffusionLFRNS::v_Diffuse(
  * @brief Builds the numerical flux for the 1st order derivatives
  *
  */
-void DiffusionLFRNS::v_NumericalFluxO1(
+void DiffusionLFRNS::NumericalFluxO1(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &numericalFluxO1)
@@ -1281,7 +1280,7 @@ void DiffusionLFRNS::v_NumericalFluxO1(
     // Modify the values in case of boundary interfaces
     if (fields[0]->GetBndCondExpansions().size())
     {
-        v_WeakPenaltyO1(fields, inarray, numflux);
+        WeakPenaltyO1(fields, inarray, numflux);
     }
 
     // Splitting the numerical flux into the dimensions
@@ -1298,7 +1297,7 @@ void DiffusionLFRNS::v_NumericalFluxO1(
  * @brief Imposes appropriate bcs for the 1st order derivatives
  *
  */
-void DiffusionLFRNS::v_WeakPenaltyO1(
+void DiffusionLFRNS::WeakPenaltyO1(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &penaltyfluxO1)
@@ -1513,7 +1512,7 @@ void DiffusionLFRNS::v_WeakPenaltyO1(
  * @brief Build the numerical flux for the 2nd order derivatives
  *
  */
-void DiffusionLFRNS::v_NumericalFluxO2(
+void DiffusionLFRNS::NumericalFluxO2(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &ufield,
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &qfield,
@@ -1561,7 +1560,7 @@ void DiffusionLFRNS::v_NumericalFluxO2(
             // Impose weak boundary condition with flux
             if (fields[0]->GetBndCondExpansions().size())
             {
-                v_WeakPenaltyO2(fields, i, j, qfield[j][i], qfluxtemp);
+                WeakPenaltyO2(fields, i, j, qfield[j][i], qfluxtemp);
             }
 
             // Store the final flux into qflux
@@ -1574,7 +1573,7 @@ void DiffusionLFRNS::v_NumericalFluxO2(
  * @brief Imposes appropriate bcs for the 2nd order derivatives
  *
  */
-void DiffusionLFRNS::v_WeakPenaltyO2(
+void DiffusionLFRNS::WeakPenaltyO2(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields, const int var,
     const int dir, const Array<OneD, const NekDouble> &qfield,
     Array<OneD, NekDouble> &penaltyflux)
@@ -1666,7 +1665,7 @@ void DiffusionLFRNS::v_WeakPenaltyO2(
  * @param derCFlux          Derivative of the corrective flux.
  *
  */
-void DiffusionLFRNS::v_DerCFlux_1D(
+void DiffusionLFRNS::DerCFlux_1D(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, const NekDouble> &flux,
@@ -1762,7 +1761,7 @@ void DiffusionLFRNS::v_DerCFlux_1D(
  *
  * \todo: Switch on shapes eventually here.
  */
-void DiffusionLFRNS::v_DerCFlux_2D(
+void DiffusionLFRNS::DerCFlux_2D(
     const int nConvectiveFields, const int direction,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, const NekDouble> &flux,
@@ -1982,7 +1981,7 @@ void DiffusionLFRNS::v_DerCFlux_2D(
  *
  * \todo: Switch on shapes eventually here.
  */
-void DiffusionLFRNS::v_DivCFlux_2D(
+void DiffusionLFRNS::DivCFlux_2D(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, const NekDouble> &fluxX1,
@@ -2171,7 +2170,7 @@ void DiffusionLFRNS::v_DivCFlux_2D(
  * \todo: Switch on shapes eventually here.
  */
 
-void DiffusionLFRNS::v_DivCFlux_2D_Gauss(
+void DiffusionLFRNS::DivCFlux_2D_Gauss(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, const NekDouble> &fluxX1,

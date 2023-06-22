@@ -56,7 +56,7 @@ OutputXml::~OutputXml()
 {
 }
 
-void OutputXml::Process(po::variables_map &vm)
+void OutputXml::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

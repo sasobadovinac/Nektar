@@ -60,19 +60,21 @@ public:
 
     ProcessPhiFromFile(FieldSharedPtr f);
     virtual ~ProcessPhiFromFile();
-    virtual void Process(po::variables_map &vm);
 
-    virtual std::string GetModuleName()
+protected:
+    virtual void v_Process(po::variables_map &vm) override;
+
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessPhiFromFile";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Processing input STL file to calculate Phi";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eModifyExp;
     }

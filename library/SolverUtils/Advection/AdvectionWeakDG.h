@@ -59,7 +59,7 @@ protected:
 
     virtual void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
 
     virtual void v_Advect(
         const int nConvective,
@@ -70,7 +70,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray) override;
 
     virtual void v_AdvectCoeffs(
         const int nConvective,
@@ -81,14 +81,14 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray) override;
 
     virtual void v_AdvectVolumeFlux(
         const int nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &advVel,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        TensorOfArray3D<NekDouble> &VolumeFlux, const NekDouble &time)
+        TensorOfArray3D<NekDouble> &VolumeFlux, const NekDouble &time) override
     {
         boost::ignore_unused(nConvectiveFields, fields, advVel, inarray,
                              VolumeFlux, time);
@@ -104,13 +104,13 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray) override;
 
     virtual void v_AddVolumJacToMat(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const int &nConvectiveFields,
         const TensorOfArray5D<NekDouble> &ElmtJacArray,
-        Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> &gmtxarray);
+        Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> &gmtxarray) override;
 };
 } // namespace SolverUtils
 } // namespace Nektar

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdExpansion3D.cpp
+// File: StdExpansion3D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -54,6 +54,10 @@ StdExpansion3D::StdExpansion3D(int numcoeffs, const LibUtilities::BasisKey &Ba,
 }
 
 StdExpansion3D::StdExpansion3D(const StdExpansion3D &T) : StdExpansion(T)
+{
+}
+
+StdExpansion3D::~StdExpansion3D()
 {
 }
 

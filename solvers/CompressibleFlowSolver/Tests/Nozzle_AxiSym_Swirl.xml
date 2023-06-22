@@ -24,13 +24,13 @@
     </GEOMETRY>
     <EXPANSIONS>
         <E COMPOSITE="C[1]" BASISTYPE="Modified_A,Modified_A" NUMMODES="2,2"
-           POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="3,3"
-           FIELDS="rho,rhou,rhov,rhow,E" />
+            POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="3,3"
+            FIELDS="rho,rhou,rhov,rhow,E" />
     </EXPANSIONS>
 
-   <!-- <COLLECTIONS DEFAULT="Auto" /> -->
+    <!-- <COLLECTIONS DEFAULT="Auto" /> -->
 
-   <CONDITIONS>
+    <CONDITIONS>
         <PARAMETERS>
             <!-- Simulation parameters -->
             <P> CFL            = 0.2               </P>
@@ -71,7 +71,7 @@
             <P> FilterAlpha    = 36      </P>
             <P> FilterCutoff   = 0.0      </P>
             <P> FilterExponent = 16      </P>
-       </PARAMETERS>
+        </PARAMETERS>
 
         <SOLVERINFO>
             <I PROPERTY="EQTYPE" VALUE="EulerCFE" />
@@ -139,9 +139,9 @@
 
     </CONDITIONS>
 
-   <FORCING>
-       <FORCE TYPE="AxiSymmetric">
-       </FORCE>
+    <FORCING>
+        <FORCE TYPE="AxiSymmetric">
+        </FORCE>
     </FORCING>
 
 </NEKTAR>

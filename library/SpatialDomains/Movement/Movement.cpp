@@ -469,3 +469,6 @@ void Movement::PerformMovement(NekDouble timeStep)
 
 } // namespace SpatialDomains
 } // namespace Nektar
+
+} // namespace SpatialDomains
+} // namespace Nektar

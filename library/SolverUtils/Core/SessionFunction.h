@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SessionFunction.h
+// File: SessionFunction.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -51,7 +51,7 @@ namespace Nektar
 {
 namespace FieldUtils
 {
-class Interpolator;
+template <typename T> class Interpolator;
 }
 
 namespace SolverUtils
@@ -119,7 +119,9 @@ private:
     /// Last time the cache for this variable & domain combo was updated
     std::map<std::pair<std::string, int>, NekDouble> m_lastCached;
     /// Interpolator for pts file input for a variable & domain combination
-    std::map<std::string, FieldUtils::Interpolator> m_interpolators;
+    std::map<std::string, FieldUtils::Interpolator<
+                              std::vector<MultiRegions::ExpListSharedPtr>>>
+        m_interpolators;
     /// Cached result arrays
     std::map<std::pair<std::string, int>, Array<OneD, NekDouble>> m_arrays;
 

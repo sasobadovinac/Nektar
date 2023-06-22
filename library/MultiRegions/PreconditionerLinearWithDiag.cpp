@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PreconditionerLinearWithDiag.cpp
+// File: PreconditionerLinearWithDiag.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

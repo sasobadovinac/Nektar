@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PreconditionerBlock.h
+// File: PreconditionerBlock.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -78,14 +78,14 @@ protected:
     bool m_isFull;
     DNekBlkMatSharedPtr m_blkMat;
 
+    virtual void v_InitObject() override;
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput) override;
+    virtual void v_BuildPreconditioner() override;
+
 private:
     void BlockPreconditionerCG(void);
     void BlockPreconditionerHDG(void);
-
-    virtual void v_InitObject();
-    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
-    virtual void v_BuildPreconditioner();
 };
 } // namespace MultiRegions
 } // namespace Nektar

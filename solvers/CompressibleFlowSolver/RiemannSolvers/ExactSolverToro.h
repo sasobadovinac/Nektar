@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: ExactSolver.h
+// File: ExactSolverToro.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -58,7 +58,7 @@ protected:
                               NekDouble rhouR, NekDouble rhovR, NekDouble rhowR,
                               NekDouble ER, NekDouble &rhof, NekDouble &rhouf,
                               NekDouble &rhovf, NekDouble &rhowf,
-                              NekDouble &Ef);
+                              NekDouble &Ef) override;
 };
 } // namespace Nektar
 

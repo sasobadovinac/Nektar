@@ -103,8 +103,14 @@ int OutputVtk::GetVtkCellType(std::string pType)
 
 void OutputVtk::Process()
 {
-    m_log(VERBOSE) << "Writing VTK file '" << m_config["outfile"].as<string>()
-                   << "'." << endl;
+    std::string filename = m_config["outfile"].as<string>();
+    m_log(VERBOSE) << "Writing VTK file '" << filename << "'." << endl;
+
+    // Check whether file exists.
+    if (!CheckOverwrite(filename))
+    {
+        return;
+    }
 
     vtkSmartPointer<vtkUnstructuredGrid> vtkMesh =
         vtkSmartPointer<vtkUnstructuredGrid>::New();
@@ -144,7 +150,7 @@ void OutputVtk::Process()
     {
         vtkSmartPointer<vtkUnstructuredGridWriter> vtkMeshWriter =
             vtkSmartPointer<vtkUnstructuredGridWriter>::New();
-        vtkMeshWriter->SetFileName(m_config["outfile"].as<string>().c_str());
+        vtkMeshWriter->SetFileName(filename.c_str());
 
 #if VTK_MAJOR_VERSION <= 5
         vtkMeshWriter->SetInput(vtkMesh);
@@ -158,7 +164,7 @@ void OutputVtk::Process()
 
         vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtkMeshWriter =
             vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
-        vtkMeshWriter->SetFileName(m_config["outfile"].as<string>().c_str());
+        vtkMeshWriter->SetFileName(filename.c_str());
 
 #if VTK_MAJOR_VERSION <= 5
         vtkMeshWriter->SetInput(vtkMesh);

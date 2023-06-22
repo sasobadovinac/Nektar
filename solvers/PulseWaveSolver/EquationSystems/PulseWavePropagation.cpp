@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWavePropagation.cpp
+// File: PulseWavePropagation.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -71,6 +71,8 @@ PulseWavePropagation::PulseWavePropagation(
 
 void PulseWavePropagation::v_InitObject(bool DeclareField)
 {
+    boost::ignore_unused(DeclareField);
+
     // Will set up an array of vessels/fields in PulseWaveSystem::v_InitObject
     // so set DeclareField to false so that the fields are not set up in
     // EquationSystem unnecessarily. Note the number of fields in Equation
@@ -149,7 +151,7 @@ void PulseWavePropagation::DoOdeRhs(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
-    int i;
+    size_t i;
 
     Array<OneD, Array<OneD, NekDouble>> physarray(m_nVariables);
 
@@ -159,7 +161,7 @@ void PulseWavePropagation::DoOdeRhs(
     // Output array for advection
     Array<OneD, Array<OneD, NekDouble>> out(m_nVariables);
 
-    int cnt = 0;
+    size_t cnt = 0;
 
     // Set up Inflow and Outflow boundary conditions.
     SetPulseWaveBoundaryConditions(inarray, outarray, time);
@@ -168,11 +170,11 @@ void PulseWavePropagation::DoOdeRhs(
     EnforceInterfaceConditions(inarray);
 
     // do advection evaluation in all domains
-    for (int omega = 0; omega < m_nDomains; ++omega)
+    for (size_t omega = 0; omega < m_nDomains; ++omega)
     {
         LibUtilities::Timer timer;
         m_currentDomain = omega;
-        int nq          = m_vessels[omega * m_nVariables]->GetTotPoints();
+        size_t nq       = m_vessels[omega * m_nVariables]->GetTotPoints();
 
         timer.Start();
         for (i = 0; i < m_nVariables; ++i)
@@ -202,8 +204,10 @@ void PulseWavePropagation::DoOdeProjection(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
+    boost::ignore_unused(time);
+
     // Just copy over array
-    for (int i = 0; i < m_nVariables; ++i)
+    for (size_t i = 0; i < m_nVariables; ++i)
     {
         Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1);
     }
@@ -219,11 +223,13 @@ void PulseWavePropagation::SetPulseWaveBoundaryConditions(
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 
 {
-    int omega;
+    boost::ignore_unused(outarray);
+
+    size_t omega;
 
     Array<OneD, MultiRegions::ExpListSharedPtr> vessel(2);
 
-    int offset = 0;
+    size_t offset = 0;
 
     // This will be moved to the RCR boundary condition once factory is setup
     if (time == 0)
@@ -235,7 +241,7 @@ void PulseWavePropagation::SetPulseWaveBoundaryConditions(
             vessel[0] = m_vessels[2 * omega];
             vessel[1] = m_vessels[2 * omega + 1];
 
-            for (int j = 0; j < 2; ++j)
+            for (size_t j = 0; j < 2; ++j)
             {
                 std::string BCType;
 
@@ -281,7 +287,7 @@ void PulseWavePropagation::SetPulseWaveBoundaryConditions(
     for (omega = 0; omega < m_nDomains; ++omega)
     {
         timer.Start();
-        for (int n = 0; n < 2; ++n)
+        for (size_t n = 0; n < 2; ++n)
         {
             m_Boundary[2 * omega + n]->DoBoundary(
                 inarray, m_A_0, m_beta, m_alpha, time, omega, offset, n);
@@ -306,7 +312,7 @@ void PulseWavePropagation::GetFluxVector(
     const Array<OneD, Array<OneD, NekDouble>> &physfield,
     Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux)
 {
-    int nq = m_vessels[m_currentDomain * m_nVariables]->GetTotPoints();
+    size_t nq = m_vessels[m_currentDomain * m_nVariables]->GetTotPoints();
     NekDouble domain   = m_currentDomain;
     m_pressure[domain] = Array<OneD, NekDouble>(nq);
     Array<OneD, NekDouble> dAUdx(nq);
@@ -314,7 +320,7 @@ void PulseWavePropagation::GetFluxVector(
 
     LibUtilities::Timer timer;
 
-    for (int j = 0; j < nq; ++j)
+    for (size_t j = 0; j < nq; ++j)
     {
         timer.Start();
         flux[0][0][j] = physfield[0][j] * physfield[1][j];
@@ -325,7 +331,7 @@ void PulseWavePropagation::GetFluxVector(
     // d/dx of AU, for the viscoelastic tube law and extra fields
     m_fields[0]->PhysDeriv(flux[0][0], dAUdx);
 
-    for (int j = 0; j < nq; ++j)
+    for (size_t j = 0; j < nq; ++j)
     {
         if ((j == 0) || (j == nq - 1))
         {
@@ -355,13 +361,13 @@ void PulseWavePropagation::GetFluxVector(
         Ideally this should be moved to PulseWaveSystem, but it's easiest to
         implement here.
         */
-        int counter = 0;
+        size_t counter = 0;
 
         m_PWV[domain] = Array<OneD, NekDouble>(nq);
         m_W1[domain]  = Array<OneD, NekDouble>(nq);
         m_W2[domain]  = Array<OneD, NekDouble>(nq);
 
-        for (int j = 0; j < nq; ++j)
+        for (size_t j = 0; j < nq; ++j)
         {
             m_pressureArea->GetC(m_PWV[domain][j], m_beta[domain][j],
                                  physfield[0][counter + j], m_A_0[domain][j],

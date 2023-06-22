@@ -69,7 +69,7 @@ ProcessFieldFromString::~ProcessFieldFromString(void)
 {
 }
 
-void ProcessFieldFromString::Process(po::variables_map &vm)
+void ProcessFieldFromString::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -148,7 +148,6 @@ void ProcessFieldFromString::Process(po::variables_map &vm)
 
     // Evaluate function
     strEval.Evaluate(exprId, interpfields, m_f->m_exp[fieldID]->UpdatePhys());
-
     // Update coeffs
     m_f->m_exp[fieldID]->FwdTransLocalElmt(m_f->m_exp[fieldID]->GetPhys(),
                                            m_f->m_exp[fieldID]->UpdateCoeffs());

@@ -34,7 +34,6 @@
 
 #include <iostream>
 #include <string>
-using namespace std;
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/geometry.hpp>
@@ -49,6 +48,8 @@ using namespace std;
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include "ProcessInterpPoints.h"
+
+using namespace std;
 
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
@@ -105,7 +106,7 @@ ProcessInterpPoints::~ProcessInterpPoints()
 {
 }
 
-void ProcessInterpPoints::Process(po::variables_map &vm)
+void ProcessInterpPoints::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -218,18 +219,13 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
     {
         fromField->m_exp[i] = fromField->AppendExpList(NumHomogeneousDir);
     }
+
     // load field into expansion in fromfield.
     set<int> sinmode;
     if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
     {
-        vector<int> value;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     m_config["realmodetoimag"].as<string>(), value),
-                 "Failed to interpret realmodetoimag string");
-        for (int j : value)
-        {
-            sinmode.insert(j);
-        }
+        ParseUtils::GenerateVariableSet(m_config["realmodetoimag"].as<string>(),
+                                        m_f->m_variables, sinmode);
     }
     for (int j = 0; j < nfields; ++j)
     {
@@ -256,6 +252,7 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
         }
         fromField->m_exp[j]->BwdTrans(fromField->m_exp[j]->GetCoeffs(),
                                       fromField->m_exp[j]->UpdatePhys());
+
         Array<OneD, NekDouble> newPts(m_f->m_fieldPts->GetNpoints());
         m_f->m_fieldPts->AddField(newPts,
                                   fromField->m_fielddef[0]->m_fields[j]);
@@ -279,8 +276,8 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
-    int rank   = m_f->m_comm->GetRank();
-    int nprocs = m_f->m_comm->GetSize();
+    int rank   = m_f->m_comm->GetSpaceComm()->GetRank();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
     // Check for command line point specification
 
     if (m_config["topts"].as<string>().compare("NotSet") != 0)
@@ -511,13 +508,14 @@ void ProcessInterpPoints::InterpolateFieldToPts(
 
     int nfields = field0.size();
 
-    Interpolator interp;
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>> interp;
     if (m_f->m_comm->GetRank() == 0)
     {
         interp.SetProgressCallback(&ProcessInterpPoints::PrintProgressbar,
                                    this);
     }
     interp.Interpolate(field0, pts);
+
     if (m_f->m_comm->GetRank() == 0)
     {
         cout << endl;

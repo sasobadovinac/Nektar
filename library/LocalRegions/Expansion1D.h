@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Expansion1D.h
+// File: Expansion1D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -62,9 +62,7 @@ public:
     {
     }
 
-    LOCAL_REGIONS_EXPORT virtual ~Expansion1D()
-    {
-    }
+    LOCAL_REGIONS_EXPORT virtual ~Expansion1D() override = default;
 
     LOCAL_REGIONS_EXPORT void AddNormTraceInt(
         const int dir, Array<OneD, const NekDouble> &inarray,
@@ -77,31 +75,32 @@ public:
     inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
 
 protected:
-    virtual DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey);
+    virtual DNekMatSharedPtr v_GenMatrix(
+        const StdRegions::StdMatrixKey &mkey) override;
 
     virtual void v_AddRobinMassMatrix(
         const int vert, const Array<OneD, const NekDouble> &primCoeffs,
-        DNekMatSharedPtr &inoutmat);
+        DNekMatSharedPtr &inoutmat) override;
 
-    virtual void v_AddRobinEdgeContribution(
+    virtual void v_AddRobinTraceContribution(
         const int vert, const Array<OneD, const NekDouble> &primCoeffs,
-        const Array<OneD, NekDouble> &incoeffs, Array<OneD, NekDouble> &coeffs);
+        const Array<OneD, NekDouble> &incoeffs,
+        Array<OneD, NekDouble> &coeffs) override;
 
     virtual NekDouble v_VectorFlux(
-        const Array<OneD, Array<OneD, NekDouble>> &vec);
+        const Array<OneD, Array<OneD, NekDouble>> &vec) override;
 
     virtual void v_NormalTraceDerivFactors(
         Array<OneD, Array<OneD, NekDouble>> &factors,
         Array<OneD, Array<OneD, NekDouble>> &d0factors,
-        Array<OneD, Array<OneD, NekDouble>> &d1factors);
-
-    virtual const NormalVector &v_GetTraceNormal(const int edge) const final;
+        Array<OneD, Array<OneD, NekDouble>> &d1factors) override;
 
     virtual void v_ReOrientTracePhysMap(const StdRegions::Orientation orient,
                                         Array<OneD, int> &idmap, const int nq0,
-                                        const int nq1);
+                                        const int nq1) override;
 
-    virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
+    virtual void v_TraceNormLen(const int traceid, NekDouble &h,
+                                NekDouble &p) override;
 
 private:
 };

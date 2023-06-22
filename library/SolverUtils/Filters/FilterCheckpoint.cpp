@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterCheckpoint.cpp
+// File: FilterCheckpoint.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -67,6 +67,18 @@ FilterCheckpoint::FilterCheckpoint(
     LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
     m_outputFrequency = round(equ.Evaluate());
 
+    // Time after which we need to write checkfiles
+    it = pParams.find("OutputStartTime");
+    if (it == pParams.end())
+    {
+        m_outputStartTime = 0;
+    }
+    else
+    {
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
+        m_outputStartTime = equ.Evaluate();
+    }
+
     m_fld = LibUtilities::FieldIO::CreateDefault(pSession);
 }
 
@@ -87,9 +99,8 @@ void FilterCheckpoint::v_Update(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
-    boost::ignore_unused(time);
 
-    if (m_index++ % m_outputFrequency > 0)
+    if (m_index++ % m_outputFrequency > 0 || time < m_outputStartTime)
     {
         return;
     }

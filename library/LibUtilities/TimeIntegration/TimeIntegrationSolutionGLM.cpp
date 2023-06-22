@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationSolutionGLM.cpp
+// File: TimeIntegrationSolutionGLM.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -51,19 +51,19 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
     m_solVector[0] = y;
     m_t[0]         = time;
 
-    int nsteps = m_schemeAlgorithm->m_numsteps;
+    size_t nsteps = m_schemeAlgorithm->m_numsteps;
 
-    int nvar           = y.size();
-    int npoints        = y[0].size();
-    int nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
+    size_t nvar           = y.size();
+    size_t npoints        = y[0].size();
+    size_t nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
 
-    const Array<OneD, const unsigned int> &timeLevels =
+    const Array<OneD, const size_t> &timeLevels =
         m_schemeAlgorithm->GetTimeLevelOffset();
 
-    for (int i = 1; i < nsteps; i++)
+    for (size_t i = 1; i < nsteps; i++)
     {
         m_solVector[i] = Array<OneD, Array<OneD, NekDouble>>(nvar);
-        for (int j = 0; j < nvar; j++)
+        for (size_t j = 0; j < nvar; j++)
         {
             m_solVector[i][j] = Array<OneD, NekDouble>(npoints, 0.0);
         }
@@ -88,15 +88,15 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
 }
 
 TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
-    const TimeIntegrationAlgorithmGLM *schemeAlgorithm, const unsigned int nvar,
-    const unsigned int npoints)
+    const TimeIntegrationAlgorithmGLM *schemeAlgorithm, const size_t nvar,
+    const size_t npoints)
     : m_schemeAlgorithm(schemeAlgorithm),
       m_solVector(schemeAlgorithm->m_numsteps), m_t(schemeAlgorithm->m_numsteps)
 {
-    for (int i = 0; i < m_schemeAlgorithm->m_numsteps; i++)
+    for (size_t i = 0; i < m_schemeAlgorithm->m_numsteps; i++)
     {
         m_solVector[i] = Array<OneD, Array<OneD, NekDouble>>(nvar);
-        for (int j = 0; j < nvar; j++)
+        for (size_t j = 0; j < nvar; j++)
         {
             m_solVector[i][j] = Array<OneD, NekDouble>(npoints);
         }

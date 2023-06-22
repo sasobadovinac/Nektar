@@ -16659,8 +16659,8 @@
     </GEOMETRY>
     <EXPANSIONS>
         <E COMPOSITE="C[1]" BASISTYPE="GLL_Lagrange,GLL_Lagrange" NUMMODES="4,4"
-        POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="4,4"
-        FIELDS="rho,rhou,rhov,E" />
+            POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="4,4"
+            FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
     <CONDITIONS>
         <!-- Airbus Test Case -->
@@ -16689,7 +16689,7 @@
             <P> thermalConductivity = Cp * mu / Pr                      </P>
             <P> sigma               = 0.001                             </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQType"                VALUE="EulerCFE"     />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
@@ -16700,28 +16700,28 @@
             <I PROPERTY="ProblemType"           VALUE="General"             />
             <I PROPERTY="ViscosityType"         VALUE="Constant"            />
         </SOLVERINFO>
-        
+
         <VARIABLES>
             <V ID="0"> rho  </V>
             <V ID="1"> rhou </V>
             <V ID="2"> rhov </V>
             <V ID="3"> E    </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[100] </B>
             <B ID="1"> C[200] </B>
             <B ID="2"> C[300] </B>
             <B ID="3"> C[400] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <!--REGION REF="0">
-             <D VAR="rho"  VALUE="rhoInf" />
-             <D VAR="rhou" VALUE="rhoInf * uInf" />
-             <D VAR="rhov" VALUE="rhoInf * vInf" />
-             <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
-             </REGION-->
+                <D VAR="rho"  VALUE="rhoInf" />
+                <D VAR="rhou" VALUE="rhoInf * uInf" />
+                <D VAR="rhov" VALUE="rhoInf * vInf" />
+                <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+            </REGION-->
             <REGION REF="0">
                 <D VAR="rho"  USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
                 <D VAR="rhou" USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
@@ -16729,12 +16729,12 @@
                 <D VAR="E"    USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
             </REGION>
             <!--REGION REF="1">
-             <D VAR="rho"  VALUE="rhoInf" />
-             <D VAR="rhou" VALUE="rhoInf * uInf" />
-             <D VAR="rhov" VALUE="rhoInf * vInf" />
-             <D VAR="E"    VALUE="pInf / (Gamma - 1) +
-                0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
-             </REGION-->
+                <D VAR="rho"  VALUE="rhoInf" />
+                <D VAR="rhou" VALUE="rhoInf * uInf" />
+                <D VAR="rhov" VALUE="rhoInf * vInf" />
+                <D VAR="E"    VALUE="pInf / (Gamma - 1) +
+                    0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+            </REGION-->
             <REGION REF="1">
                 <D VAR="rho"  USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
                 <D VAR="rhou" USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
@@ -16742,11 +16742,11 @@
                 <D VAR="E"    USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
             </REGION>
             <!--REGION REF="2">
-             <D VAR="rho"  VALUE="rhoInf" />
-             <D VAR="rhou" VALUE="rhoInf * uInf" />
-             <D VAR="rhov" VALUE="rhoInf * vInf" />
-             <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
-             </REGION-->
+                <D VAR="rho"  VALUE="rhoInf" />
+                <D VAR="rhou" VALUE="rhoInf * uInf" />
+                <D VAR="rhov" VALUE="rhoInf * vInf" />
+                <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+            </REGION-->
             <REGION REF="2">
                 <D VAR="rho"  USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
                 <D VAR="rhou" USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
@@ -16754,11 +16754,11 @@
                 <D VAR="E"    USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
             </REGION>
             <!--REGION REF="3">
-             <D VAR="rho"  VALUE="rhoInf" />
-             <D VAR="rhou" VALUE="rhoInf * uInf" />
-             <D VAR="rhov" VALUE="rhoInf * vInf" />
-             <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
-             </REGION-->
+                <D VAR="rho"  VALUE="rhoInf" />
+                <D VAR="rhou" VALUE="rhoInf * uInf" />
+                <D VAR="rhov" VALUE="rhoInf * vInf" />
+                <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
+            </REGION-->
             <REGION REF="3">
                 <D VAR="rho"  USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
                 <D VAR="rhou" USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
@@ -16766,25 +16766,25 @@
                 <D VAR="E"    USERDEFINEDTYPE="RiemannInvariant" VALUE="0" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <!--FUNCTION NAME="InitialConditions">
-	    <E VAR="rho"    VALUE="rhoInf * (1+0.01*exp(-(x^2 + y^2)/(2*0.002^2)))"          />
+            <E VAR="rho"    VALUE="rhoInf * (1+0.01*exp(-(x^2 + y^2)/(2*0.002^2)))"          />
             <E VAR="rhou"   VALUE="rhoInf * uInf"   />
             <E VAR="rhov"   VALUE="rhoInf * vInf"   />
-            <E VAR="E"      VALUE="(pInf / (Gamma - 1))*(1+0.01*exp(-(x^2 + y^2)/(2*0.002^2))) + 
-            0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>         
+            <E VAR="E"      VALUE="(pInf / (Gamma - 1))*(1+0.01*exp(-(x^2 + y^2)/(2*0.002^2))) +
+                0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>
         </FUNCTION-->
-        
+
         <FUNCTION NAME="InitialConditions">
             <F VAR="rho,rhou,rhov,E"    FILE="Perturbation_M15_square_CBC_back_par.rst"/>
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="rho"  VALUE="rhoInf" />
             <E VAR="rhou" VALUE="rhoInf * uInf" />
             <E VAR="rhov" VALUE="rhoInf * vInf" />
             <E VAR="E"    VALUE="pInf" />
         </FUNCTION>
-        
+
     </CONDITIONS>
 </NEKTAR>

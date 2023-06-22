@@ -2826,9 +2826,9 @@
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="3" FIELDS="rho,rhou,rhov,E" TYPE="MODIFIED" />
     </EXPANSIONS>
-    
+
     <CONDITIONS>
-        
+
         <PARAMETERS>
             <P> TimeStep        = 0.01     </P>
             <P> FinTime         = 0.0       </P>
@@ -2841,7 +2841,7 @@
             <P> uInf            = 0.1       </P>
             <P> vInf            = 0.0       </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="EulerImplicitCFE"    />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
@@ -2849,21 +2849,21 @@
             <I PROPERTY="AdvectioType"          VALUE="WeakDG"              />
             <I PROPERTY="DiffusionType"         VALUE="InteriorPenalty"     />
             <I PROPERTY="UpwindType"            VALUE="Roe"                 />
-         </SOLVERINFO>
-        
+        </SOLVERINFO>
+
         <VARIABLES>
             <V ID="0"> rho  </V>
             <V ID="1"> rhou </V>
             <V ID="2"> rhov </V>
             <V ID="3"> E    </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B>
             <B ID="1"> C[2] </B>
             <B ID="2"> C[3] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="rho"    VALUE="rhoInf"          />
@@ -2884,13 +2884,13 @@
                 <D VAR="E"      USERDEFINEDTYPE="Wall" VALUE="0"/>
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="InitialConditions">
             <E VAR="rho"    VALUE="rhoInf"          />
             <E VAR="rhou"   VALUE="rhoInf * uInf"   />
             <E VAR="rhov"   VALUE="rhoInf * vInf"   />
-            <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>       
+            <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>
         </FUNCTION>
     </CONDITIONS>
-    
+
 </NEKTAR>

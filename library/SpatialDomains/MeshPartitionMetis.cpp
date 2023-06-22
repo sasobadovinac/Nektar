@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MeshPartitionMetis.cpp
+// File: MeshPartitionMetis.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -61,7 +61,7 @@ MeshPartitionMetis::~MeshPartitionMetis()
 {
 }
 
-void MeshPartitionMetis::PartitionGraphImpl(
+void MeshPartitionMetis::v_PartitionGraphImpl(
     int &nVerts, int &nVertConds, Nektar::Array<Nektar::OneD, int> &xadj,
     Nektar::Array<Nektar::OneD, int> &adjcy,
     Nektar::Array<Nektar::OneD, int> &vertWgt,

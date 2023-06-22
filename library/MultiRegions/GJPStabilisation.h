@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GJPStabilisation.h
+// File: GJPStabilisation.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -76,6 +76,7 @@ private:
     int m_coordDim;
     int m_traceDim;
     bool m_useGJPSemiImplicit;
+    static std::string GJPStabilisationLookupIds[];
 
     // Trace normals
     Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
@@ -104,4 +105,4 @@ private:
 typedef std::shared_ptr<GJPStabilisation> GJPStabilisationSharedPtr;
 } // namespace MultiRegions
 } // namespace Nektar
-#endif
+#endif // GJP

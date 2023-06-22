@@ -58,7 +58,7 @@ OutputFileBase::~OutputFileBase()
 {
 }
 
-void OutputFileBase::Process(po::variables_map &vm)
+void OutputFileBase::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -69,7 +69,7 @@ void OutputFileBase::Process(po::variables_map &vm)
         ASSERTL0(!m_f->m_writeBndFld, "Boundary can't be obtained from pts.");
         if (WriteFile(filename, vm))
         {
-            OutputFromPts(vm);
+            v_OutputFromPts(vm);
 
             if (vm.count("error"))
             {
@@ -87,7 +87,8 @@ void OutputFileBase::Process(po::variables_map &vm)
         }
         if (m_f->m_writeBndFld)
         {
-            if (m_f->m_verbose && m_f->m_comm->TreatAsRankZero())
+            if (m_f->m_verbose &&
+                m_f->m_comm->GetSpaceComm()->TreatAsRankZero())
             {
                 cout << "\t" << GetModuleName()
                      << ": Writing boundary file(s): ";
@@ -110,7 +111,6 @@ void OutputFileBase::Process(po::variables_map &vm)
             {
                 // Prepare for creating expansions for normals
                 m_f->m_exp.resize(nfields + normdim);
-                ;
 
                 // Include normal name in m_variables
                 string normstr[3] = {"Norm_x", "Norm_y", "Norm_z"};
@@ -176,6 +176,12 @@ void OutputFileBase::Process(po::variables_map &vm)
 
                     int Border = BndRegionMap[m_f->m_bndRegionsToWrite[i]];
 
+                    // set up m_exp to point to boundary expansion
+                    for (int j = 0; j < exp.size(); ++j)
+                    {
+                        m_f->m_exp[j] = BndExp[j][Border];
+                    }
+
                     for (int j = 0; j < exp.size(); ++j)
                     {
                         m_f->m_exp[j] = BndExp[j][Border];
@@ -203,7 +209,7 @@ void OutputFileBase::Process(po::variables_map &vm)
                                 m_f->m_exp[nfields + j]->UpdateCoeffs());
                         }
                     }
-                    OutputFromExp(vm);
+                    v_OutputFromExp(vm);
                     // output error for regression checking.
                     if (vm.count("error"))
                     {
@@ -224,7 +230,7 @@ void OutputFileBase::Process(po::variables_map &vm)
         {
             if (WriteFile(filename, vm))
             {
-                OutputFromExp(vm);
+                v_OutputFromExp(vm);
                 // output error for regression checking.
                 if (vm.count("error"))
                 {
@@ -238,7 +244,7 @@ void OutputFileBase::Process(po::variables_map &vm)
         ASSERTL0(!m_f->m_writeBndFld, "Boundary extraction requires xml file.");
         if (WriteFile(filename, vm))
         {
-            OutputFromData(vm);
+            v_OutputFromData(vm);
         }
     }
 }
@@ -268,17 +274,16 @@ bool OutputFileBase::WriteFile(std::string &filename, po::variables_map &vm)
     }
 
     int count = fs::exists(outFile) ? 1 : 0;
-    comm->AllReduce(count, LibUtilities::ReduceSum);
+    comm->GetSpaceComm()->AllReduce(count, LibUtilities::ReduceSum);
 
     int writeFile = 1;
     if (count && (vm.count("forceoutput") == 0))
     {
         if (vm.count("nparts") == 0) // do not do check if --nparts is enabled.
         {
-
             writeFile = 0; // set to zero for reduce all to be correct.
 
-            if (comm->TreatAsRankZero())
+            if (comm->GetSpaceComm()->TreatAsRankZero())
             {
                 string answer;
                 cout << "Did you wish to overwrite " << outFile << " (y/n)? ";
@@ -289,11 +294,11 @@ bool OutputFileBase::WriteFile(std::string &filename, po::variables_map &vm)
                 }
                 else
                 {
-                    cout << "Not writing file " << filename
-                         << " because it already exists" << endl;
+                    cout << "Not writing file '" << filename
+                         << "' because it already exists" << endl;
                 }
             }
-            comm->AllReduce(writeFile, LibUtilities::ReduceSum);
+            comm->GetSpaceComm()->AllReduce(writeFile, LibUtilities::ReduceSum);
         }
     }
     return (writeFile == 0) ? false : true;
@@ -315,12 +320,14 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
 
     // Save original expansion
     vector<MultiRegions::ExpListSharedPtr> expOld = m_f->m_exp;
+
     // Create new expansion
     m_f->m_exp[0] = m_f->SetUpFirstExpList(m_f->m_numHomogeneousDir, true);
     for (int i = 1; i < numFields; ++i)
     {
         m_f->m_exp[i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
     }
+
     // Extract result to new expansion
     for (int i = 0; i < numFields; ++i)
     {
@@ -334,13 +341,13 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
     {
         Array<OneD, const MultiRegions::ExpListSharedPtr> BndExpOld;
         MultiRegions::ExpListSharedPtr BndExp;
+
         for (int i = 0; i < numFields; ++i)
         {
             BndExpOld = expOld[i]->GetBndCondExpansions();
             for (int j = 0; j < BndExpOld.size(); ++j)
             {
                 BndExp = m_f->m_exp[i]->UpdateBndCondExpansion(j);
-
                 BndExp->ExtractCoeffsToCoeffs(BndExpOld[j],
                                               BndExpOld[j]->GetCoeffs(),
                                               BndExp->UpdateCoeffs());
@@ -376,14 +383,15 @@ void OutputFileBase::PrintErrorFromPts()
             linferr = max(linferr, fabs(fields[i][j]));
         }
 
-        m_f->m_comm->AllReduce(l2err, LibUtilities::ReduceSum);
-        m_f->m_comm->AllReduce(npts, LibUtilities::ReduceSum);
-        m_f->m_comm->AllReduce(linferr, LibUtilities::ReduceMax);
+        m_f->m_comm->GetSpaceComm()->AllReduce(l2err, LibUtilities::ReduceSum);
+        m_f->m_comm->GetSpaceComm()->AllReduce(npts, LibUtilities::ReduceSum);
+        m_f->m_comm->GetSpaceComm()->AllReduce(linferr,
+                                               LibUtilities::ReduceMax);
 
         l2err /= npts;
         l2err = sqrt(l2err);
 
-        if (m_f->m_comm->TreatAsRankZero())
+        if (m_f->m_comm->GetSpaceComm()->TreatAsRankZero())
         {
             cout << "L 2 error (variable " << variables[i] << ") : " << l2err
                  << endl;
@@ -427,7 +435,7 @@ void OutputFileBase::PrintErrorFromExp()
         NekDouble l2err   = m_f->m_exp[0]->L2(coords[j]);
         NekDouble linferr = m_f->m_exp[0]->Linf(coords[j]);
 
-        if (m_f->m_comm->TreatAsRankZero())
+        if (m_f->m_comm->GetSpaceComm()->TreatAsRankZero())
         {
             cout << "L 2 error (variable " << coordVars[j] << ") : " << l2err
                  << endl;
@@ -442,7 +450,8 @@ void OutputFileBase::PrintErrorFromExp()
         NekDouble l2err   = m_f->m_exp[j]->L2(m_f->m_exp[j]->GetPhys());
         NekDouble linferr = m_f->m_exp[j]->Linf(m_f->m_exp[j]->GetPhys());
 
-        if (m_f->m_comm->TreatAsRankZero() && m_f->m_variables.size() > 0)
+        if (m_f->m_comm->GetSpaceComm()->TreatAsRankZero() &&
+            m_f->m_variables.size() > 0)
         {
             cout << "L 2 error (variable " << m_f->m_variables[j]
                  << ") : " << l2err << endl;

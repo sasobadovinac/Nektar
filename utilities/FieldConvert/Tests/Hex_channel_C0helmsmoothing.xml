@@ -117,5 +117,6 @@
             <E VAR="v" VALUE="sin(2.*PI*x) + cos(6.*PI*x)" />
             <E VAR="w" VALUE="sin(2.*PI*z) + cos(6.*PI*z)" />
             <E VAR="p" VALUE="sin(2.*PI*x) + sin(2.*PI*y) + sin(2.*PI*z) + cos(6.*PI*x) + cos(6.*PI*y) + cos(6.*PI*z)" />
+        </FUNCTION>
     </CONDITIONS>
 </NEKTAR>

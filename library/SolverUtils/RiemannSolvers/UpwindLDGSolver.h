@@ -56,10 +56,10 @@ public:
 protected:
     UpwindLDGSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
 
-    void v_Solve(const int nDim,
-                 const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
-                 const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
-                 Array<OneD, Array<OneD, NekDouble>> &flux) final;
+    virtual void v_Solve(
+        const int nDim, const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
+        const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
+        Array<OneD, Array<OneD, NekDouble>> &flux) override final;
 };
 } // namespace SolverUtils
 } // namespace Nektar

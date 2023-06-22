@@ -1,4 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
+//
+// File: TestSimdLibSingle.cpp
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -71,6 +74,8 @@
 #define USING_SVE
 #undef NUM_LANES_32BITS
 #define NUM_LANES_32BITS __ARM_FEATURE_SVE_BITS / 32
+#undef ALIGNMENT
+#define ALIGNMENT __ARM_FEATURE_SVE_BITS / 4
 #undef USING_SCALAR
 #endif
 
@@ -94,6 +99,9 @@ BOOST_AUTO_TEST_CASE(SimdLibSingle_width_alignment)
 #if defined(USING_AVX512)
     std::cout << "avx512 float" << std::endl;
 #endif
+#if defined(USING_SVE)
+    std::cout << "sve float" << std::endl;
+#endif
 
     // float
     width     = simd<float>::width;
@@ -110,30 +118,6 @@ BOOST_AUTO_TEST_CASE(SimdLibSingle_width_alignment)
     alignment = simd<std::int32_t>::alignment;
     BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
     BOOST_CHECK_EQUAL(alignment, ALIGNMENT);
-
-#if defined(USING_SVE)
-    std::cout << "sve float" << std::endl;
-    //
-    // these are going to be machine/compilation dependent
-    // we are forcing VLA -> VLST
-    // so we can still check consistency with __ARM_FEATURE_SVE_BITS
-    //
-    // // int 32 bit on number of lanes for int 64 bit
-    // width = simd<int>::width;
-    // alignment = simd<int>::alignment;
-    // BOOST_CHECK_EQUAL(width, __ARM_FEATURE_SVE_BITS/sizeof(std::int32_t));
-    // BOOST_CHECK_EQUAL(alignment, 32);
-    // int
-    width     = simd<int>::width;
-    alignment = simd<int>::alignment;
-    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
-    BOOST_CHECK_EQUAL(alignment, __ARM_FEATURE_SVE_BITS / sizeof(std::int64_t));
-    // float
-    width     = simd<float>::width;
-    alignment = simd<float>::alignment;
-    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
-    BOOST_CHECK_EQUAL(alignment, __ARM_FEATURE_SVE_BITS / sizeof(float));
-#endif
 }
 
 BOOST_AUTO_TEST_CASE(SimdLibFloat_type_traits)

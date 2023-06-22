@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MeshPartitionScotch.cpp
+// File: MeshPartitionScotch.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -62,7 +62,7 @@ MeshPartitionScotch::~MeshPartitionScotch()
 {
 }
 
-void MeshPartitionScotch::PartitionGraphImpl(
+void MeshPartitionScotch::v_PartitionGraphImpl(
     int &nVerts, int &nVertConds, Nektar::Array<Nektar::OneD, int> &xadj,
     Nektar::Array<Nektar::OneD, int> &adjcy,
     Nektar::Array<Nektar::OneD, int> &vertWgt,

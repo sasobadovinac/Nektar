@@ -43,16 +43,8 @@ PreconCfs::PreconCfs(const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
                      const LibUtilities::SessionReaderSharedPtr &pSession,
                      const LibUtilities::CommSharedPtr &vComm)
 {
-    m_Comm    = vComm;
-    m_verbose = false;
-    m_root    = false;
-
-    if (0 == m_Comm->GetRank())
-    {
-        m_root = true;
-    }
-    m_verbose = pSession->DefinesCmdLineArgument("verbose");
-
+    m_Comm     = vComm;
+    m_verbose  = pSession->DefinesCmdLineArgument("verbose");
     m_spacedim = pFields[0]->GetGraph()->GetSpaceDimension();
     pSession->LoadParameter("PreconMatFreezNumb", m_PreconMatFreezNumb, 200);
 }
@@ -99,10 +91,11 @@ void PreconCfs::v_BuildPreconCfs(
     NEKERROR(ErrorUtil::efatal, "v_BuildPreconCfs not defined");
 }
 
-bool PreconCfs::UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
-                                     const NekDouble dtLambda)
+bool PreconCfs::v_UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
+                                       const NekDouble dtLambda)
 {
-    NEKERROR(ErrorUtil::efatal, "UpdatePreconMatCheck not defined");
+    boost::ignore_unused(res, dtLambda);
+    NEKERROR(ErrorUtil::efatal, "v_UpdatePreconMatCheck not defined");
     return false;
 }
 

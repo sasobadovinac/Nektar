@@ -1,7 +1,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MoveMeshToCriticalLayer.cpp
+// File: MeshMove.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -1887,14 +1887,12 @@ int main(int argc, char *argv[])
             ASSERTL0(Vmath::Vmax(nVertTot, xold, 1) ==
                          Vmath::Vmax(np_lay, layers_x[m], 1),
                      "  different layer xmax val");
-
-        } // close layers!!! m index
+        }
 
         // MoveOutsidePointsfixedxpos(npedge, graphShPt,xold_c, yold_c,
         // xold_low, yold_low, 	         xold_up, yold_up, layers_y[0],
         // layers_y[nlays-1],
         // xnew, ynew);
-
         // lastIregion -1 = laydown
         // lastIregion -2 = layup
         MoveOutsidePointsNnormpos(
@@ -2235,16 +2233,17 @@ void GenerateAddPointsNewtonIt(NekDouble xi, NekDouble yi, NekDouble &xout,
                                Array<OneD, NekDouble> derfunction, NekDouble cr)
 {
     int elmtid, offset;
-    NekDouble F, U, dU;
-    Array<OneD, NekDouble> coords(2);
+    NekDouble F  = 1000;
+    NekDouble U  = 0.0;
+    NekDouble dU = 0.0;
 
-    coords[0]   = xi;
-    coords[1]   = yi;
-    F           = 1000;
-    int attempt = 0;
-    int its     = 0;
-    NekDouble ytmp;
-    ytmp = coords[1];
+    Array<OneD, NekDouble> coords(2);
+    coords[0] = xi;
+    coords[1] = yi;
+
+    int attempt    = 0;
+    int its        = 0;
+    NekDouble ytmp = coords[1];
     while (abs(F) > 0.00000001)
     {
 

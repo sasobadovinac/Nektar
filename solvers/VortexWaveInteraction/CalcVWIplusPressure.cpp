@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CalcVWIPlusPressure.cpp
+// File: CalcVWIplusPressure.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

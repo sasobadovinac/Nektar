@@ -48,8 +48,8 @@
             <P> IO_InfoSteps  = 1   </P>
             <P> IO_CFLSteps   = 10   </P>
             <P> Kinvis        = 1e-1 </P>
- 	    <P> IterativeSolverTolerance = 1e-8</P> 
-	</PARAMETERS>
+            <P> IterativeSolverTolerance = 1e-8</P>
+        </PARAMETERS>
         <VARIABLES>
             <V ID="0"> u </V>
             <V ID="1"> v </V>
@@ -69,13 +69,13 @@
                 <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
             </REGION>
             <REGION REF="1">
-	        <N VAR="u" VALUE="0" />
+                <N VAR="u" VALUE="0" />
                 <N VAR="v" VALUE="0" />
                 <N VAR="w" VALUE="0" />
                 <D VAR="p" VALUE="0" />
             </REGION>
             <REGION REF="2">
-	        <D VAR="u" VALUE="0" />
+                <D VAR="u" VALUE="0" />
                 <D VAR="v" VALUE="0" />
                 <D VAR="w" VALUE="0" />
                 <N VAR="p" VALUE="0" />

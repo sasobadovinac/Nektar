@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Concatenate field
+//  File: ProcessConcatenateFld.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -61,7 +61,7 @@ ProcessConcatenateFld::~ProcessConcatenateFld()
 {
 }
 
-void ProcessConcatenateFld::Process(po::variables_map &vm)
+void ProcessConcatenateFld::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

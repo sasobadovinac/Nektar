@@ -80,6 +80,7 @@ struct Field
     std::vector<LibUtilities::FieldDefinitionsSharedPtr> m_fielddef;
     std::vector<std::vector<double>> m_data;
     std::vector<MultiRegions::ExpListSharedPtr> m_exp;
+
     std::vector<std::string> m_variables;
 
     int m_numHomogeneousDir;
@@ -177,7 +178,7 @@ struct Field
             // Check  if there are any elements to process
             std::vector<int> IDs;
             auto domain = m_graph->GetDomain();
-            for (int d = 0; d < domain.size(); ++d)
+            for (size_t d = 0; d < domain.size(); ++d)
             {
                 for (auto &compIter : domain[d])
                 {
@@ -194,6 +195,7 @@ struct Field
             {
                 m_exp[0] =
                     MemoryManager<MultiRegions::ExpList>::AllocateSharedPtr();
+
                 return;
             }
 
@@ -246,7 +248,7 @@ struct Field
 
         if (fldfilegiven)
         {
-            int i, j, nfields, nstrips;
+            size_t i, j, nfields, nstrips;
             m_session->LoadParameter("Strip_Z", nstrips, 1);
             std::vector<std::string> vars = m_session->GetVariables();
 
@@ -258,7 +260,7 @@ struct Field
 
             m_exp.resize(nfields * nstrips);
             // declare other fields;
-            for (int s = 0; s < nstrips; ++s) // homogeneous strip varient
+            for (size_t s = 0; s < nstrips; ++s) // homogeneous strip varient
             {
                 for (i = 0; i < nfields; ++i)
                 {
@@ -288,13 +290,13 @@ struct Field
             }
 
             // Extract data to coeffs and bwd transform
-            for (int s = 0; s < nstrips; ++s) // homogeneous strip varient
+            for (size_t s = 0; s < nstrips; ++s) // homogeneous strip varient
             {
                 for (j = 0; j < nfields; ++j)
                 {
                     for (i = 0; i < m_data.size() / nstrips; ++i)
                     {
-                        int n = i * nstrips + s;
+                        size_t n = i * nstrips + s;
                         // In case of multiple flds, we might not have a
                         //   variable in this m_data[n] -> skip in this case
                         auto it =

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CompressibleFlowSystem.cpp
+// File: CompressibleFlowSystem.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -56,7 +56,7 @@ void CompressibleFlowSystem::v_InitObject(bool DeclareFields)
 {
     AdvectionSystem::v_InitObject(DeclareFields);
 
-    for (int i = 0; i < m_fields.size(); i++)
+    for (size_t i = 0; i < m_fields.size(); i++)
     {
         // Use BwdTrans to make sure initial condition is in solution space
         m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),
@@ -98,8 +98,8 @@ void CompressibleFlowSystem::v_InitObject(bool DeclareFields)
                                            m_fields, m_fields.size());
 
     // User-defined boundary conditions
-    int cnt = 0;
-    for (int n = 0; n < m_fields[0]->GetBndConditions().size(); ++n)
+    size_t cnt = 0;
+    for (size_t n = 0; n < (size_t)m_fields[0]->GetBndConditions().size(); ++n)
     {
         std::string type = m_fields[0]->GetBndConditions()[n]->GetUserDefined();
 
@@ -145,7 +145,7 @@ void CompressibleFlowSystem::InitialiseParameters()
     // Check if the shock capture type is supported
     std::string err_msg = "Warning, ShockCaptureType = " + m_shockCaptureType +
                           " is not supported by this solver";
-    ASSERTL0(SupportsShockCaptType(m_shockCaptureType), err_msg);
+    ASSERTL0(v_SupportsShockCaptType(m_shockCaptureType), err_msg);
 
     // Load parameters for exponential filtering
     m_session->MatchSolverInfo("ExponentialFiltering", "True", m_useFiltering,
@@ -222,8 +222,9 @@ void CompressibleFlowSystem::DoOdeRhs(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
-    int nvariables = inarray.size();
-    int nTracePts  = GetTraceTotPoints();
+    size_t nvariables = inarray.size();
+    size_t npoints    = GetNpoints();
+    size_t nTracePts  = GetTraceTotPoints();
 
     // This converts our Mu in coefficient space to u in physical space for ALE
     Array<OneD, Array<OneD, NekDouble>> tmpIn(nvariables);
@@ -249,7 +250,7 @@ void CompressibleFlowSystem::DoOdeRhs(
     }
     else
     {
-        for (int i = 0; i < nvariables; ++i)
+        for (size_t i = 0; i < nvariables; ++i)
         {
             Fwd[i] = Array<OneD, NekDouble>(nTracePts, 0.0);
             Bwd[i] = Array<OneD, NekDouble>(nTracePts, 0.0);
@@ -265,7 +266,7 @@ void CompressibleFlowSystem::DoOdeRhs(
     timer.AccumulateRegion("DoAdvection");
 
     // Negate results
-    for (int i = 0; i < nvariables; ++i)
+    for (size_t i = 0; i < nvariables; ++i)
     {
         Vmath::Neg(outarray[i].size(), outarray[i], 1);
     }
@@ -284,7 +285,7 @@ void CompressibleFlowSystem::DoOdeRhs(
 
     if (m_useLocalTimeStep)
     {
-        int nElements = m_fields[0]->GetExpSize();
+        size_t nElements = m_fields[0]->GetExpSize();
         int nq, offset;
         NekDouble fac;
         Array<OneD, NekDouble> tmp;
@@ -293,12 +294,12 @@ void CompressibleFlowSystem::DoOdeRhs(
         GetElmtTimeStep(tmpIn, tstep);
 
         // Loop over elements
-        for (int n = 0; n < nElements; ++n)
+        for (size_t n = 0; n < nElements; ++n)
         {
             nq     = m_fields[0]->GetExp(n)->GetTotPoints();
             offset = m_fields[0]->GetPhys_Offset(n);
             fac    = tstep[n] / m_timestep;
-            for (int i = 0; i < nvariables; ++i)
+            for (size_t i = 0; i < nvariables; ++i)
             {
                 Vmath::Smul(nq, fac, outarray[i] + offset, 1,
                             tmp = outarray[i] + offset, 1);
@@ -315,7 +316,7 @@ void CompressibleFlowSystem::DoOdeProjection(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
-    int nvariables = inarray.size();
+    size_t nvariables = inarray.size();
 
     // Perform ALE movement
     if (m_ALESolver)
@@ -330,7 +331,7 @@ void CompressibleFlowSystem::DoOdeProjection(
             // Just copy over array
             // int npoints = GetNpoints();
 
-            for (int i = 0; i < nvariables; ++i)
+            for (size_t i = 0; i < nvariables; ++i)
             {
                 // std::cout << "POINTS??? : " << GetNpoints() << " " <<
                 // inarray[i].size() << " " << outarray[i].size() << std::endl;
@@ -403,8 +404,8 @@ void CompressibleFlowSystem::DoDiffusion(
 void CompressibleFlowSystem::SetBoundaryConditions(
     Array<OneD, Array<OneD, NekDouble>> &physarray, NekDouble time)
 {
-    int nTracePts  = GetTraceTotPoints();
-    int nvariables = physarray.size();
+    size_t nTracePts  = GetTraceTotPoints();
+    size_t nvariables = physarray.size();
 
     // This converts our Mu in coefficient space to u in physical space for ALE
     Array<OneD, Array<OneD, NekDouble>> tmpIn(nvariables);
@@ -418,7 +419,7 @@ void CompressibleFlowSystem::SetBoundaryConditions(
     }
 
     Array<OneD, Array<OneD, NekDouble>> Fwd(nvariables);
-    for (int i = 0; i < nvariables; ++i)
+    for (size_t i = 0; i < nvariables; ++i)
     {
         Fwd[i] = Array<OneD, NekDouble>(nTracePts);
         m_fields[i]->ExtractTracePhys(tmpIn[i], Fwd[i]);
@@ -459,8 +460,8 @@ void CompressibleFlowSystem::GetFluxVector(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     TensorOfArray3D<NekDouble> &flux)
 {
-    auto nVariables = physfield.size();
-    auto nPts       = physfield[0].size();
+    size_t nVariables = physfield.size();
+    size_t nPts       = physfield[0].size();
 
     constexpr unsigned short maxVel = 3;
     constexpr unsigned short maxFld = 5;
@@ -538,8 +539,8 @@ void CompressibleFlowSystem::GetFluxVectorDeAlias(
     TensorOfArray3D<NekDouble> &flux)
 {
     int i, j;
-    int nq         = physfield[0].size();
-    int nVariables = m_fields.size();
+    size_t nq         = physfield[0].size();
+    size_t nVariables = m_fields.size();
 
     // Factor to rescale 1d points in dealiasing
     NekDouble OneDptscale = 2;
@@ -551,7 +552,7 @@ void CompressibleFlowSystem::GetFluxVectorDeAlias(
     Array<OneD, Array<OneD, NekDouble>> physfield_interp(nVariables);
     TensorOfArray3D<NekDouble> flux_interp(nVariables);
 
-    for (i = 0; i < nVariables; ++i)
+    for (size_t i = 0; i < nVariables; ++i)
     {
         physfield_interp[i] = Array<OneD, NekDouble>(nq);
         flux_interp[i]      = Array<OneD, Array<OneD, NekDouble>>(m_spacedim);
@@ -627,7 +628,7 @@ void CompressibleFlowSystem::GetElmtTimeStep(
 {
     boost::ignore_unused(inarray);
 
-    int nElements = m_fields[0]->GetExpSize();
+    size_t nElements = m_fields[0]->GetExpSize();
 
     // Change value of m_timestep (in case it is set to zero)
     NekDouble tmp = m_timestep;
@@ -640,7 +641,7 @@ void CompressibleFlowSystem::GetElmtTimeStep(
     NekDouble alpha = MaxTimeStepEstimator();
 
     // Loop over elements to compute the time-step limit for each element
-    for (int n = 0; n < nElements; ++n)
+    for (size_t n = 0; n < nElements; ++n)
     {
         tstep[n] = m_cflSafetyFactor * alpha / cfl[n];
     }
@@ -690,6 +691,7 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
     boost::ignore_unused(domain);
 
     EquationSystem::v_SetInitialConditions(initialtime, false);
+    // Note: m_nchk has been incremented here.
 
     // insert white noise in initial condition
     NekDouble Noise;
@@ -713,10 +715,22 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
         }
     }
 
-    if (dumpInitialConditions && m_checksteps)
+    if (dumpInitialConditions && m_nchk - 1 == 0 && m_checksteps &&
+        !ParallelInTime())
     {
-        Checkpoint_Output(m_nchk);
-        m_nchk++;
+        Checkpoint_Output(0);
+    }
+    else if (dumpInitialConditions && m_nchk - 1 == 0 && ParallelInTime())
+    {
+        std::string newdir = m_sessionName + ".pit";
+        if (!fs::is_directory(newdir))
+        {
+            fs::create_directory(newdir);
+        }
+        if (m_comm->GetTimeComm()->GetRank() == 0)
+        {
+            WriteFld(newdir + "/" + m_sessionName + "_0.fld");
+        }
     }
 }
 
@@ -727,15 +741,15 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
 Array<OneD, NekDouble> CompressibleFlowSystem::v_GetMaxStdVelocity(
     const NekDouble SpeedSoundFactor)
 {
-    int nTotQuadPoints = GetTotPoints();
-    int n_element      = m_fields[0]->GetExpSize();
-    int expdim         = m_fields[0]->GetGraph()->GetMeshDimension();
-    int nfields        = m_fields.size();
+    size_t nTotQuadPoints = GetTotPoints();
+    size_t n_element      = m_fields[0]->GetExpSize();
+    size_t expdim         = m_fields[0]->GetGraph()->GetMeshDimension();
+    size_t nfields        = m_fields.size();
     int offset;
     Array<OneD, NekDouble> tmp;
 
     Array<OneD, Array<OneD, NekDouble>> physfields(nfields);
-    for (int i = 0; i < nfields; ++i)
+    for (size_t i = 0; i < nfields; ++i)
     {
         physfields[i] = m_fields[i]->GetPhys();
     }
@@ -766,7 +780,7 @@ Array<OneD, NekDouble> CompressibleFlowSystem::v_GetMaxStdVelocity(
                     velocity[i], 1);
     }
 
-    for (int el = 0; el < n_element; ++el)
+    for (size_t el = 0; el < n_element; ++el)
     {
         ptsKeys = m_fields[0]->GetExp(el)->GetPointsKeys();
         offset  = m_fields[0]->GetPhys_Offset(el);
@@ -787,13 +801,13 @@ Array<OneD, NekDouble> CompressibleFlowSystem::v_GetMaxStdVelocity(
         if (metricInfo->GetGtype() == SpatialDomains::eDeformed)
         {
             // d xi/ dx = gmat = 1/J * d x/d xi
-            for (int i = 0; i < expdim; ++i)
+            for (size_t i = 0; i < expdim; ++i)
             {
                 Vmath::Vmul(nq, gmat[i], 1, velocity[0] + offset, 1,
                             tmp = stdVelocity[i] + offset, 1);
                 Vmath::Vmul(nq, gmat[i], 1, soundspeed + offset, 1,
                             tmp = stdSoundSpeed[i] + offset, 1);
-                for (int j = 1; j < expdim; ++j)
+                for (size_t j = 1; j < expdim; ++j)
                 {
                     Vmath::Vvtvp(nq, gmat[expdim * j + i], 1,
                                  velocity[j] + offset, 1,
@@ -808,13 +822,13 @@ Array<OneD, NekDouble> CompressibleFlowSystem::v_GetMaxStdVelocity(
         }
         else
         {
-            for (int i = 0; i < expdim; ++i)
+            for (size_t i = 0; i < expdim; ++i)
             {
                 Vmath::Smul(nq, gmat[i][0], velocity[0] + offset, 1,
                             tmp = stdVelocity[i] + offset, 1);
                 Vmath::Smul(nq, gmat[i][0], soundspeed + offset, 1,
                             tmp = stdSoundSpeed[i] + offset, 1);
-                for (int j = 1; j < expdim; ++j)
+                for (size_t j = 1; j < expdim; ++j)
                 {
                     Vmath::Svtvp(nq, gmat[expdim * j + i][0],
                                  velocity[j] + offset, 1,
@@ -829,10 +843,10 @@ Array<OneD, NekDouble> CompressibleFlowSystem::v_GetMaxStdVelocity(
         }
 
         NekDouble vel;
-        for (int i = 0; i < nq; ++i)
+        for (size_t i = 0; i < nq; ++i)
         {
             NekDouble pntVelocity = 0.0;
-            for (int j = 0; j < expdim; ++j)
+            for (size_t j = 0; j < expdim; ++j)
             {
                 // Add sound speed
                 vel = std::abs(stdVelocity[j][offset + i]) +
@@ -1005,7 +1019,7 @@ void CompressibleFlowSystem::v_ExtraFldOutput(
 /**
  *
  */
-void CompressibleFlowSystem::GetPressure(
+void CompressibleFlowSystem::v_GetPressure(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     Array<OneD, NekDouble> &pressure)
 {
@@ -1015,7 +1029,7 @@ void CompressibleFlowSystem::GetPressure(
 /**
  *
  */
-void CompressibleFlowSystem::GetDensity(
+void CompressibleFlowSystem::v_GetDensity(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     Array<OneD, NekDouble> &density)
 {
@@ -1025,7 +1039,7 @@ void CompressibleFlowSystem::GetDensity(
 /**
  *
  */
-void CompressibleFlowSystem::GetVelocity(
+void CompressibleFlowSystem::v_GetVelocity(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     Array<OneD, Array<OneD, NekDouble>> &velocity)
 {
@@ -1036,11 +1050,11 @@ void CompressibleFlowSystem::v_SteadyStateResidual(int step,
                                                    Array<OneD, NekDouble> &L2)
 {
     boost::ignore_unused(step);
-    const int nPoints = GetTotPoints();
-    const int nFields = m_fields.size();
+    const size_t nPoints = GetTotPoints();
+    const size_t nFields = m_fields.size();
     Array<OneD, Array<OneD, NekDouble>> rhs(nFields);
     Array<OneD, Array<OneD, NekDouble>> inarray(nFields);
-    for (int i = 0; i < nFields; ++i)
+    for (size_t i = 0; i < nFields; ++i)
     {
         rhs[i]     = Array<OneD, NekDouble>(nPoints, 0.0);
         inarray[i] = m_fields[i]->UpdatePhys();
@@ -1053,7 +1067,7 @@ void CompressibleFlowSystem::v_SteadyStateResidual(int step,
     Array<OneD, NekDouble> RHSL2(nFields);
     Array<OneD, NekDouble> residual(nFields);
 
-    for (int i = 0; i < nFields; ++i)
+    for (size_t i = 0; i < nFields; ++i)
     {
         tmp = rhs[i];
 
@@ -1064,7 +1078,7 @@ void CompressibleFlowSystem::v_SteadyStateResidual(int step,
     m_comm->AllReduce(residual, LibUtilities::ReduceSum);
 
     NekDouble onPoints = 1.0 / NekDouble(nPoints);
-    for (int i = 0; i < nFields; ++i)
+    for (size_t i = 0; i < nFields; ++i)
     {
         L2[i] = sqrt(residual[i] * onPoints);
     }

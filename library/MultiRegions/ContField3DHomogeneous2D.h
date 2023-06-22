@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ContField3DHomogeneous2D.h
+// File: ContField3DHomogeneous2D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -66,30 +66,32 @@ public:
     MULTI_REGIONS_EXPORT virtual ~ContField3DHomogeneous2D();
 
 protected:
-private:
-    Array<OneD, NekDouble> m_contCoeffs;
-
     // virtual functions
 
-    virtual void v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray);
+    virtual void v_ImposeDirichletConditions(
+        Array<OneD, NekDouble> &outarray) override;
 
     /// Template method virtual forwarded for LocalToGlobal()
-    virtual void v_LocalToGlobal(bool useComm);
+    virtual void v_LocalToGlobal(bool useComm) override;
 
     /// Template method virtual forwarded for GlobalToLocal()
-    virtual void v_GlobalToLocal(void);
+    virtual void v_GlobalToLocal(void) override;
 
     /// Solves the three-dimensional Helmholtz equation, subject to the
     /// boundary conditions specified.
-    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::ConstFactorMap &factors,
-                             const StdRegions::VarCoeffMap &varcoeff,
-                             const MultiRegions::VarFactorsMap &varfactors,
-                             const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing);
+    virtual GlobalLinSysKey v_HelmSolve(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing) override;
 
-    virtual void v_ClearGlobalLinSysManager(void);
+    virtual void v_ClearGlobalLinSysManager(void) override;
+
+private:
+    Array<OneD, NekDouble> m_contCoeffs;
 };
 
 typedef std::shared_ptr<ContField3DHomogeneous2D>

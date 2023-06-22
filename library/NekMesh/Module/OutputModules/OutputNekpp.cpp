@@ -151,8 +151,15 @@ void TestElmts(const std::map<int, std::shared_ptr<T>> &geomMap,
 
 void OutputNekpp::Process()
 {
-    m_log(VERBOSE) << "Writing Nektar++ file '"
-                   << m_config["outfile"].as<string>() << "'" << endl;
+    string filename = m_config["outfile"].as<string>();
+
+    m_log(VERBOSE) << "Writing Nektar++ file '" << filename << "'" << endl;
+
+    // Check whether file exists.
+    if (!CheckOverwrite(filename))
+    {
+        return;
+    }
 
     int order = m_config["order"].as<int>();
 
@@ -186,8 +193,7 @@ void OutputNekpp::Process()
         }
     }
 
-    string file = m_config["outfile"].as<string>();
-    string ext  = boost::filesystem::extension(file);
+    string ext = boost::filesystem::extension(filename);
 
     if (m_config["stats"].beenSet)
     {
@@ -196,9 +202,6 @@ void OutputNekpp::Process()
 
     // Default to compressed XML output.
     std::string type = "XmlCompressed";
-
-    // Extract the output filename and extension
-    string filename = m_config["outfile"].as<string>();
 
     // Compress output and append .gz extension
     if (boost::iequals(ext, ".xml") && m_config["uncompress"].beenSet)
@@ -224,8 +227,7 @@ void OutputNekpp::Process()
     TransferComposites(graph);
     TransferDomain(graph);
 
-    string out = m_config["outfile"].as<string>();
-    graph->WriteGeometry(out, true, m_mesh->m_metadata);
+    graph->WriteGeometry(filename, true, m_mesh->m_metadata);
 
     // Test the resulting XML file (with a basic test) by loading it
     // with the session reader, generating the MeshGraph and testing if

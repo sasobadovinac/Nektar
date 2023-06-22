@@ -53,9 +53,10 @@ public:
 protected:
     AverageSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
 
-    void v_ArraySolve(const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
-                      const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
-                      Array<OneD, Array<OneD, NekDouble>> &flux) final;
+    virtual void v_ArraySolve(
+        const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
+        const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
+        Array<OneD, Array<OneD, NekDouble>> &flux) override final;
 };
 } // namespace Nektar
 

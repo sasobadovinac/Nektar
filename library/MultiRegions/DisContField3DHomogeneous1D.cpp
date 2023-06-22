@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// File DisContField3DHomogeneous1D.cpp
+// File: DisContField3DHomogeneous1D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -112,6 +112,7 @@ DisContField3DHomogeneous1D::DisContField3DHomogeneous1D(
     {
         m_planes[n] = MemoryManager<DisContField>::AllocateSharedPtr(
             *plane_zero, graph2D, variable, true, false);
+
         for (i = 0; i < nel; ++i)
         {
             (*m_exp).push_back((*m_exp)[i]);
@@ -162,19 +163,21 @@ void DisContField3DHomogeneous1D::SetupBoundaryConditions(
     const SpatialDomains::BoundaryConditionCollection &bconditions =
         bcs.GetBoundaryConditions();
 
+    int nplanes = m_planes.size();
+
     m_bndCondExpansions =
         Array<OneD, MultiRegions::ExpListSharedPtr>(bregions.size());
     m_bndConditions = m_planes[0]->UpdateBndConditions();
 
     m_bndCondBndWeight = Array<OneD, NekDouble>{bregions.size(), 0.0};
 
-    int nplanes = m_planes.size();
     Array<OneD, MultiRegions::ExpListSharedPtr> PlanesBndCondExp(nplanes);
 
     for (auto &it : bregions)
     {
         SpatialDomains::BoundaryConditionShPtr boundaryCondition =
             GetBoundaryCondition(bconditions, it.first, variable);
+
         for (n = 0; n < nplanes; ++n)
         {
             PlanesBndCondExp[n] = m_planes[n]->UpdateBndCondExpansion(cnt);
@@ -200,7 +203,50 @@ void DisContField3DHomogeneous1D::SetupBoundaryConditions(
     v_EvaluateBoundaryConditions(0.0, variable);
 }
 
-void DisContField3DHomogeneous1D::v_HelmSolve(
+/**
+ * @brief Set up all DG member variables and maps.
+ */
+void DisContField3DHomogeneous1D::SetUpDG()
+{
+    const int nPlanes     = m_planes.size();
+    const int nTracePlane = m_planes[0]->GetTrace()->GetExpSize();
+
+    // Get trace map from first plane.
+    AssemblyMapDGSharedPtr traceMap = m_planes[0]->GetTraceMap();
+    const Array<OneD, const int> &traceBndMap =
+        traceMap->GetBndCondIDToGlobalTraceID();
+    int mapSize = traceBndMap.size();
+
+    // Set up trace boundary map
+    m_traceBndMap = Array<OneD, int>(nPlanes * mapSize);
+
+    int i, n, e, cnt = 0, cnt1 = 0;
+
+    for (i = 0; i < m_bndCondExpansions.size(); ++i)
+    {
+        int nExp      = m_bndCondExpansions[i]->GetExpSize();
+        int nPlaneExp = nExp / nPlanes;
+
+        if (m_bndConditions[i]->GetBoundaryConditionType() ==
+            SpatialDomains::ePeriodic)
+        {
+            continue;
+        }
+
+        for (n = 0; n < nPlanes; ++n)
+        {
+            const int offset = n * nTracePlane;
+            for (e = 0; e < nPlaneExp; ++e)
+            {
+                m_traceBndMap[cnt++] = offset + traceBndMap[cnt1 + e];
+            }
+        }
+
+        cnt1 += nPlaneExp;
+    }
+}
+
+GlobalLinSysKey DisContField3DHomogeneous1D::v_HelmSolve(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
     const StdRegions::VarCoeffMap &varcoeff,
@@ -213,8 +259,9 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
     NekDouble beta;
     StdRegions::ConstFactorMap new_factors;
 
+    int npts_fce = PhysSpaceForcing ? m_npoints : m_ncoeffs;
     Array<OneD, NekDouble> e_out;
-    Array<OneD, NekDouble> fce(inarray.size());
+    Array<OneD, NekDouble> fce(npts_fce);
     Array<OneD, const NekDouble> wfce;
 
     // Transform forcing function in half-physical space if required
@@ -224,7 +271,7 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
     }
     else
     {
-        HomogeneousFwdTrans(inarray, fce);
+        HomogeneousFwdTrans(npts_fce, inarray, fce);
     }
 
     for (n = 0; n < m_planes.size(); ++n)
@@ -246,194 +293,66 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }
+    return NullGlobalLinSysKey;
 }
 
-void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
-    const NekDouble time, const std::string varName, const NekDouble x2_in,
-    const NekDouble x3_in)
+/// @todo Fix in another way considering all the planes
+ExpListSharedPtr &DisContField3DHomogeneous1D::v_GetTrace()
 {
-    boost::ignore_unused(x2_in, x3_in);
-    int i;
-    int npoints;
-    int nbnd = m_bndCondExpansions.size();
-    MultiRegions::ExpListSharedPtr locExpList;
+    return m_trace;
+}
 
-    for (i = 0; i < nbnd; ++i)
+/// @todo Fix in another way considering all the planes
+AssemblyMapDGSharedPtr &DisContField3DHomogeneous1D::v_GetTraceMap()
+{
+    return m_planes[0]->GetTraceMap();
+}
+
+void DisContField3DHomogeneous1D::v_ExtractTracePhys(
+    Array<OneD, NekDouble> &outarray)
+{
+    ASSERTL1(m_physState == true,
+             "Field must be in physical state to extract trace space.");
+
+    v_ExtractTracePhys(m_phys, outarray);
+}
+
+/**
+ * @brief This method extracts the trace (edges in 2D) for each plane
+ * from the field @a inarray and puts the values in @a outarray.
+ *
+ * It assumes the field is C0 continuous so that it can overwrite the
+ * edge data when visited by the two adjacent elements.
+ *
+ * @param inarray   An array containing the 2D data from which we wish
+ *                  to extract the edge data.
+ * @param outarray  The resulting edge information.
+ */
+void DisContField3DHomogeneous1D::v_ExtractTracePhys(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nPoints_plane = m_planes[0]->GetTotPoints();
+    int nTracePts     = m_planes[0]->GetTrace()->GetTotPoints();
+
+    for (int i = 0; i < m_planes.size(); ++i)
     {
-        if (time == 0.0 || m_bndConditions[i]->IsTimeDependent())
-        {
-            locExpList = m_bndCondExpansions[i];
-            npoints    = locExpList->GetNpoints();
+        Array<OneD, NekDouble> inarray_plane(nPoints_plane, 0.0);
+        Array<OneD, NekDouble> outarray_plane(nPoints_plane, 0.0);
 
-            Array<OneD, NekDouble> x0(npoints, 0.0);
-            Array<OneD, NekDouble> x1(npoints, 0.0);
-            Array<OneD, NekDouble> x2(npoints, 0.0);
-            Array<OneD, NekDouble> valuesFile(npoints, 1.0),
-                valuesExp(npoints, 1.0);
+        Vmath::Vcopy(nPoints_plane, &inarray[i * nPoints_plane], 1,
+                     &inarray_plane[0], 1);
 
-            locExpList->GetCoords(x0, x1, x2);
+        m_planes[i]->ExtractTracePhys(inarray_plane, outarray_plane);
 
-            if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                SpatialDomains::eDirichlet)
-            {
-                SpatialDomains::DirichletBCShPtr bcPtr =
-                    std::static_pointer_cast<
-                        SpatialDomains::DirichletBoundaryCondition>(
-                        m_bndConditions[i]);
-                std::string filebcs = bcPtr->m_filename;
-                std::string exprbcs = bcPtr->m_expr;
-
-                if (filebcs != "")
-                {
-                    ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                   locExpList);
-                    valuesFile = locExpList->GetPhys();
-                }
-
-                if (exprbcs != "")
-                {
-                    LibUtilities::Equation condition =
-                        std::static_pointer_cast<
-                            SpatialDomains::DirichletBoundaryCondition>(
-                            m_bndConditions[i])
-                            ->m_dirichletCondition;
-
-                    condition.Evaluate(x0, x1, x2, time, valuesExp);
-                }
-
-                Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
-                            locExpList->UpdatePhys(), 1);
-
-                // set wave space to false since have set up phys values
-                locExpList->SetWaveSpace(false);
-
-                locExpList->FwdTransBndConstrained(locExpList->GetPhys(),
-                                                   locExpList->UpdateCoeffs());
-            }
-            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                     SpatialDomains::eNeumann)
-            {
-                SpatialDomains::NeumannBCShPtr bcPtr = std::static_pointer_cast<
-                    SpatialDomains::NeumannBoundaryCondition>(
-                    m_bndConditions[i]);
-
-                std::string filebcs = bcPtr->m_filename;
-
-                if (filebcs != "")
-                {
-                    ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                   locExpList);
-                }
-                else
-                {
-                    LibUtilities::Equation condition =
-                        std::static_pointer_cast<
-                            SpatialDomains::NeumannBoundaryCondition>(
-                            m_bndConditions[i])
-                            ->m_neumannCondition;
-
-                    condition.Evaluate(x0, x1, x2, time,
-                                       locExpList->UpdatePhys());
-
-                    locExpList->IProductWRTBase(locExpList->GetPhys(),
-                                                locExpList->UpdateCoeffs());
-                }
-            }
-            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                     SpatialDomains::eRobin)
-            {
-                SpatialDomains::RobinBCShPtr bcPtr = std::static_pointer_cast<
-                    SpatialDomains::RobinBoundaryCondition>(m_bndConditions[i]);
-                std::string filebcs = bcPtr->m_filename;
-
-                if (filebcs != "")
-                {
-                    ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                   locExpList);
-                }
-                else
-                {
-                    LibUtilities::Equation condition =
-                        std::static_pointer_cast<
-                            SpatialDomains::RobinBoundaryCondition>(
-                            m_bndConditions[i])
-                            ->m_robinFunction;
-
-                    condition.Evaluate(x0, x1, x2, time,
-                                       locExpList->UpdatePhys());
-                }
-
-                locExpList->IProductWRTBase(locExpList->GetPhys(),
-                                            locExpList->UpdateCoeffs());
-            }
-            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                     SpatialDomains::ePeriodic)
-            {
-                continue;
-            }
-            else
-            {
-                ASSERTL0(false, "This type of BC not implemented yet");
-            }
-        }
+        Vmath::Vcopy(nTracePts, &outarray_plane[0], 1, &outarray[i * nTracePts],
+                     1);
     }
 }
 
-std::shared_ptr<ExpList> &DisContField3DHomogeneous1D::v_UpdateBndCondExpansion(
-    int i)
+const Array<OneD, const int> &DisContField3DHomogeneous1D::v_GetTraceBndMap()
 {
-    return UpdateBndCondExpansion(i);
-}
-
-Array<OneD, SpatialDomains::BoundaryConditionShPtr>
-    &DisContField3DHomogeneous1D::v_UpdateBndConditions()
-{
-    return UpdateBndConditions();
-}
-
-void DisContField3DHomogeneous1D::GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
-                                                       Array<OneD, int> &EdgeID)
-{
-
-    if (m_BCtoElmMap.size() == 0)
-    {
-        Array<OneD, int> ElmtID_tmp;
-        Array<OneD, int> EdgeID_tmp;
-
-        m_planes[0]->GetBoundaryToElmtMap(ElmtID_tmp, EdgeID_tmp);
-        int nel_per_plane = m_planes[0]->GetExpSize();
-        int nplanes       = m_planes.size();
-
-        int MapSize = ElmtID_tmp.size();
-
-        m_BCtoElmMap = Array<OneD, int>(nplanes * MapSize);
-        m_BCtoEdgMap = Array<OneD, int>(nplanes * MapSize);
-
-        // If this mesh (or partition) has no BCs, skip this step
-        if (MapSize > 0)
-        {
-            int i, j, n, cnt;
-            int cntPlane = 0;
-            for (cnt = n = 0; n < m_bndCondExpansions.size(); ++n)
-            {
-                int planeExpSize =
-                    m_planes[0]->GetBndCondExpansions()[n]->GetExpSize();
-                for (i = 0; i < planeExpSize; ++i, ++cntPlane)
-                {
-                    for (j = 0; j < nplanes; j++)
-                    {
-                        m_BCtoElmMap[cnt + i + j * planeExpSize] =
-                            ElmtID_tmp[cntPlane] + j * nel_per_plane;
-                        m_BCtoEdgMap[cnt + i + j * planeExpSize] =
-                            EdgeID_tmp[cntPlane];
-                    }
-                }
-                cnt += m_bndCondExpansions[n]->GetExpSize();
-            }
-        }
-    }
-    ElmtID = m_BCtoElmMap;
-    EdgeID = m_BCtoEdgMap;
+    return m_traceBndMap;
 }
 
 void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(
@@ -489,7 +408,52 @@ void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(
     result->SetWaveSpace(GetWaveSpace());
 }
 
-void DisContField3DHomogeneous1D::GetBCValues(
+void DisContField3DHomogeneous1D::v_GetBoundaryToElmtMap(
+    Array<OneD, int> &ElmtID, Array<OneD, int> &EdgeID)
+{
+
+    if (m_BCtoElmMap.size() == 0)
+    {
+        Array<OneD, int> ElmtID_tmp;
+        Array<OneD, int> EdgeID_tmp;
+
+        m_planes[0]->GetBoundaryToElmtMap(ElmtID_tmp, EdgeID_tmp);
+        int nel_per_plane = m_planes[0]->GetExpSize();
+        int nplanes       = m_planes.size();
+
+        int MapSize = ElmtID_tmp.size();
+
+        m_BCtoElmMap = Array<OneD, int>(nplanes * MapSize);
+        m_BCtoEdgMap = Array<OneD, int>(nplanes * MapSize);
+
+        // If this mesh (or partition) has no BCs, skip this step
+        if (MapSize > 0)
+        {
+            int i, j, n, cnt;
+            int cntPlane = 0;
+            for (cnt = n = 0; n < m_bndCondExpansions.size(); ++n)
+            {
+                int planeExpSize =
+                    m_planes[0]->GetBndCondExpansions()[n]->GetExpSize();
+                for (i = 0; i < planeExpSize; ++i, ++cntPlane)
+                {
+                    for (j = 0; j < nplanes; j++)
+                    {
+                        m_BCtoElmMap[cnt + i + j * planeExpSize] =
+                            ElmtID_tmp[cntPlane] + j * nel_per_plane;
+                        m_BCtoEdgMap[cnt + i + j * planeExpSize] =
+                            EdgeID_tmp[cntPlane];
+                    }
+                }
+                cnt += m_bndCondExpansions[n]->GetExpSize();
+            }
+        }
+    }
+    ElmtID = m_BCtoElmMap;
+    EdgeID = m_BCtoEdgMap;
+}
+
+void DisContField3DHomogeneous1D::v_GetBCValues(
     Array<OneD, NekDouble> &BndVals, const Array<OneD, NekDouble> &TotField,
     int BndID)
 {
@@ -538,7 +502,7 @@ void DisContField3DHomogeneous1D::GetBCValues(
     }
 }
 
-void DisContField3DHomogeneous1D::NormVectorIProductWRTBase(
+void DisContField3DHomogeneous1D::v_NormVectorIProductWRTBase(
     Array<OneD, const NekDouble> &V1, Array<OneD, const NekDouble> &V2,
     Array<OneD, NekDouble> &outarray, int BndID)
 {
@@ -583,48 +547,6 @@ void DisContField3DHomogeneous1D::NormVectorIProductWRTBase(
                 cnt++;
             }
         }
-    }
-}
-
-void DisContField3DHomogeneous1D::v_ExtractTracePhys(
-    Array<OneD, NekDouble> &outarray)
-{
-    ASSERTL1(m_physState == true,
-             "Field must be in physical state to extract trace space.");
-
-    v_ExtractTracePhys(m_phys, outarray);
-}
-
-/**
- * @brief This method extracts the trace (edges in 2D) for each plane
- * from the field @a inarray and puts the values in @a outarray.
- *
- * It assumes the field is C0 continuous so that it can overwrite the
- * edge data when visited by the two adjacent elements.
- *
- * @param inarray   An array containing the 2D data from which we wish
- *                  to extract the edge data.
- * @param outarray  The resulting edge information.
- */
-void DisContField3DHomogeneous1D::v_ExtractTracePhys(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nPoints_plane = m_planes[0]->GetTotPoints();
-    int nTracePts     = m_planes[0]->GetTrace()->GetTotPoints();
-
-    for (int i = 0; i < m_planes.size(); ++i)
-    {
-        Array<OneD, NekDouble> inarray_plane(nPoints_plane, 0.0);
-        Array<OneD, NekDouble> outarray_plane(nPoints_plane, 0.0);
-
-        Vmath::Vcopy(nPoints_plane, &inarray[i * nPoints_plane], 1,
-                     &inarray_plane[0], 1);
-
-        m_planes[i]->ExtractTracePhys(inarray_plane, outarray_plane);
-
-        Vmath::Vcopy(nTracePts, &outarray_plane[0], 1, &outarray[i * nTracePts],
-                     1);
     }
 }
 
@@ -673,47 +595,179 @@ void DisContField3DHomogeneous1D::v_GetBoundaryNormals(
     }
 }
 
-/**
- * @brief Set up all DG member variables and maps.
- */
-void DisContField3DHomogeneous1D::SetUpDG()
+std::map<int, RobinBCInfoSharedPtr> DisContField3DHomogeneous1D::
+    v_GetRobinBCInfo()
 {
-    const int nPlanes     = m_planes.size();
-    const int nTracePlane = m_planes[0]->GetTrace()->GetExpSize();
+    return std::map<int, RobinBCInfoSharedPtr>();
+}
 
-    // Get trace map from first plane.
-    AssemblyMapDGSharedPtr traceMap = m_planes[0]->GetTraceMap();
-    const Array<OneD, const int> &traceBndMap =
-        traceMap->GetBndCondIDToGlobalTraceID();
-    int mapSize = traceBndMap.size();
+void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
+    const NekDouble time, const std::string varName, const NekDouble x2_in,
+    const NekDouble x3_in)
+{
+    boost::ignore_unused(x2_in, x3_in);
+    int i;
+    int npoints;
+    int nbnd = m_bndCondExpansions.size();
+    MultiRegions::ExpListSharedPtr locExpList;
 
-    // Set up trace boundary map
-    m_traceBndMap = Array<OneD, int>(nPlanes * mapSize);
-
-    int i, n, e, cnt = 0, cnt1 = 0;
-
-    for (i = 0; i < m_bndCondExpansions.size(); ++i)
+    for (i = 0; i < nbnd; ++i)
     {
-        int nExp      = m_bndCondExpansions[i]->GetExpSize();
-        int nPlaneExp = nExp / nPlanes;
-
-        if (m_bndConditions[i]->GetBoundaryConditionType() ==
-            SpatialDomains::ePeriodic)
+        if (time == 0.0 || m_bndConditions[i]->IsTimeDependent())
         {
-            continue;
-        }
+            locExpList = m_bndCondExpansions[i];
+            npoints    = locExpList->GetNpoints();
 
-        for (n = 0; n < nPlanes; ++n)
-        {
-            const int offset = n * nTracePlane;
-            for (e = 0; e < nPlaneExp; ++e)
+            Array<OneD, NekDouble> x0(npoints, 0.0);
+            Array<OneD, NekDouble> x1(npoints, 0.0);
+            Array<OneD, NekDouble> x2(npoints, 0.0);
+            Array<OneD, NekDouble> valuesFile(npoints, 1.0),
+                valuesExp(npoints, 1.0);
+
+            locExpList->GetCoords(x0, x1, x2);
+
+            if (m_bndConditions[i]->GetBoundaryConditionType() ==
+                SpatialDomains::eDirichlet)
             {
-                m_traceBndMap[cnt++] = offset + traceBndMap[cnt1 + e];
+                SpatialDomains::DirichletBCShPtr bcPtr =
+                    std::static_pointer_cast<
+                        SpatialDomains::DirichletBoundaryCondition>(
+                        m_bndConditions[i]);
+                std::string bcfilename = bcPtr->m_filename;
+                std::string exprbcs    = bcPtr->m_expr;
+
+                if (bcfilename != "")
+                {
+                    locExpList->ExtractCoeffsFromFile(
+                        bcfilename, bcPtr->GetComm(), varName,
+                        locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
+                    valuesFile = locExpList->GetPhys();
+                }
+
+                if (exprbcs != "")
+                {
+                    LibUtilities::Equation condition =
+                        std::static_pointer_cast<
+                            SpatialDomains::DirichletBoundaryCondition>(
+                            m_bndConditions[i])
+                            ->m_dirichletCondition;
+
+                    condition.Evaluate(x0, x1, x2, time, valuesExp);
+                }
+
+                Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
+                            locExpList->UpdatePhys(), 1);
+                // set wave space to false since have set up phys values
+                locExpList->SetWaveSpace(false);
+                locExpList->FwdTransBndConstrained(locExpList->GetPhys(),
+                                                   locExpList->UpdateCoeffs());
+            }
+            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
+                     SpatialDomains::eNeumann)
+            {
+                SpatialDomains::NeumannBCShPtr bcPtr = std::static_pointer_cast<
+                    SpatialDomains::NeumannBoundaryCondition>(
+                    m_bndConditions[i]);
+
+                std::string bcfilename = bcPtr->m_filename;
+
+                if (bcfilename != "")
+                {
+                    locExpList->ExtractCoeffsFromFile(
+                        bcfilename, bcPtr->GetComm(), varName,
+                        locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
+                }
+                else
+                {
+                    LibUtilities::Equation condition =
+                        std::static_pointer_cast<
+                            SpatialDomains::NeumannBoundaryCondition>(
+                            m_bndConditions[i])
+                            ->m_neumannCondition;
+
+                    condition.Evaluate(x0, x1, x2, time,
+                                       locExpList->UpdatePhys());
+                }
+
+                locExpList->IProductWRTBase(locExpList->GetPhys(),
+                                            locExpList->UpdateCoeffs());
+            }
+            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
+                     SpatialDomains::eRobin)
+            {
+                SpatialDomains::RobinBCShPtr bcPtr = std::static_pointer_cast<
+                    SpatialDomains::RobinBoundaryCondition>(m_bndConditions[i]);
+
+                std::string bcfilename = bcPtr->m_filename;
+
+                if (bcfilename != "")
+                {
+                    locExpList->ExtractCoeffsFromFile(
+                        bcfilename, bcPtr->GetComm(), varName,
+                        locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
+                }
+                else
+                {
+                    LibUtilities::Equation condition =
+                        std::static_pointer_cast<
+                            SpatialDomains::RobinBoundaryCondition>(
+                            m_bndConditions[i])
+                            ->m_robinFunction;
+
+                    condition.Evaluate(x0, x1, x2, time,
+                                       locExpList->UpdatePhys());
+                }
+
+                locExpList->IProductWRTBase(locExpList->GetPhys(),
+                                            locExpList->UpdateCoeffs());
+            }
+            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
+                     SpatialDomains::ePeriodic)
+            {
+                continue;
+            }
+            else
+            {
+                ASSERTL0(false, "This type of BC not implemented yet");
             }
         }
-
-        cnt1 += nPlaneExp;
     }
+}
+
+const Array<OneD, const MultiRegions::ExpListSharedPtr>
+    &DisContField3DHomogeneous1D::v_GetBndCondExpansions(void)
+{
+    return m_bndCondExpansions;
+}
+
+const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
+    &DisContField3DHomogeneous1D::v_GetBndConditions()
+{
+    return m_bndConditions;
+}
+
+std::shared_ptr<ExpList> &DisContField3DHomogeneous1D::v_UpdateBndCondExpansion(
+    int i)
+{
+    return m_bndCondExpansions[i];
+}
+
+Array<OneD, SpatialDomains::BoundaryConditionShPtr>
+    &DisContField3DHomogeneous1D::v_UpdateBndConditions()
+{
+    return m_bndConditions;
+}
+
+void DisContField3DHomogeneous1D::v_SetBndCondBwdWeight(const int index,
+                                                        const NekDouble value)
+{
+    m_bndCondBndWeight[index] = value;
 }
 } // namespace MultiRegions
 } // namespace Nektar

@@ -61,7 +61,7 @@ ProcessScaleInFld::~ProcessScaleInFld()
 {
 }
 
-void ProcessScaleInFld::Process(po::variables_map &vm)
+void ProcessScaleInFld::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

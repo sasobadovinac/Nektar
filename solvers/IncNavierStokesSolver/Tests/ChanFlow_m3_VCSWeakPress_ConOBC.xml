@@ -9,7 +9,7 @@
 
     <CONDITIONS>
         <SOLVERINFO>
-            <I PROPERTY="SolverType" VALUE="VCSWeakPressure" />  
+            <I PROPERTY="SolverType" VALUE="VCSWeakPressure" />
             <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes" />
             <I PROPERTY="AdvectionForm" VALUE="Convective" />
             <I PROPERTY="Projection" VALUE="Galerkin" />

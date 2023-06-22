@@ -41,6 +41,8 @@ using namespace std;
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
+#include <LibUtilities/BasicUtils/CsvIO.h>
+
 #include "ProcessPointDataToFld.h"
 
 namespace Nektar
@@ -70,7 +72,7 @@ ProcessPointDataToFld::~ProcessPointDataToFld()
 {
 }
 
-void ProcessPointDataToFld::Process(po::variables_map &vm)
+void ProcessPointDataToFld::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -92,9 +94,22 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     string inFile = m_config["frompts"].as<string>().c_str();
     LibUtilities::CommSharedPtr c =
         LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0);
-    LibUtilities::PtsIOSharedPtr ptsIO =
-        MemoryManager<LibUtilities::PtsIO>::AllocateSharedPtr(c);
-    ptsIO->Import(inFile, fieldPts);
+
+    // Determine file format from file extension
+    if (boost::filesystem::path(inFile).extension() == ".pts")
+    {
+        LibUtilities::PtsIO(c).Import(inFile, fieldPts);
+    }
+    else if (boost::filesystem::path(inFile).extension() == ".csv")
+    {
+        LibUtilities::CsvIO(c).Import(inFile, fieldPts);
+    }
+    else
+    {
+        NEKERROR(ErrorUtil::efatal,
+                 "Unsupported file format for the \"frompts\" parameter. "
+                 "Supported formats: \".pts\" and \".csv\"");
+    }
 
     int nFields = fieldPts->GetNFields();
     ASSERTL0(nFields > 0, "No field values provided in input");
@@ -111,6 +126,7 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     {
         m_f->m_exp[i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
     }
+
     Array<OneD, Array<OneD, NekDouble>> pts;
     fieldPts->GetPts(pts);
 
@@ -174,9 +190,9 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
             totpoints = min(totpoints, (int)pts[0].size());
         }
 
-        for (i = 0; i < totpoints; ++i)
+        for (j = 0; j < dim; ++j)
         {
-            for (j = 0; j < dim; ++j)
+            for (i = 0; i < totpoints; ++i)
             {
                 if (fabs(coords[j][i] - pts[j][i]) > 1e-4)
                 {
@@ -190,18 +206,20 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
                     WARNINGL0(false, outstring);
                 }
             }
-
-            for (j = 0; j < nFields; ++j)
-            {
-                m_f->m_exp[j]->SetPhys(i, pts[j + dim][i]);
-            }
         }
 
-        // forward transform fields
-        for (i = 0; i < nFields; ++i)
+        for (j = 0; j < nFields; ++j)
         {
-            m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
-                                             m_f->m_exp[i]->UpdateCoeffs());
+            Array<OneD, NekDouble> phys = m_f->m_exp[j]->UpdatePhys();
+
+            for (i = 0; i < totpoints; ++i)
+            {
+                phys[i] = pts[j + dim][i];
+            }
+
+            // forward transform fields
+            m_f->m_exp[j]->FwdTransLocalElmt(phys,
+                                             m_f->m_exp[j]->UpdateCoeffs());
         }
     }
 

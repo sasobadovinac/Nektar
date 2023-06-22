@@ -69,7 +69,7 @@ ProcessBoundaryExtract::~ProcessBoundaryExtract()
 {
 }
 
-void ProcessBoundaryExtract::Process(po::variables_map &vm)
+void ProcessBoundaryExtract::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -98,7 +98,8 @@ void ProcessBoundaryExtract::Process(po::variables_map &vm)
 
         // not all partitions in parallel touch all boundaries so
         // find maximum number of boundaries
-        m_f->m_comm->AllReduce(numBndExp, LibUtilities::ReduceMax);
+        m_f->m_comm->GetSpaceComm()->AllReduce(numBndExp,
+                                               LibUtilities::ReduceMax);
 
         // THis presumes boundary regions are numbered consecutively
         for (int i = 0; i < numBndExp; ++i)
@@ -126,7 +127,7 @@ void ProcessBoundaryExtract::Process(po::variables_map &vm)
         {
             for (int i = 0; i < m_f->m_exp.size(); ++i)
             {
-                m_f->m_exp[i]->FillBndCondFromField();
+                m_f->m_exp[i]->FillBndCondFromField(m_f->m_exp[i]->GetCoeffs());
             }
         }
     }

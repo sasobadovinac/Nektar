@@ -67,7 +67,7 @@ protected:
                               NekDouble c0sqR, NekDouble rho0R, NekDouble u0R,
                               NekDouble v0R, NekDouble w0R, NekDouble &pF,
                               NekDouble &rhoF, NekDouble &rhouF,
-                              NekDouble &rhovF, NekDouble &rhowF);
+                              NekDouble &rhovF, NekDouble &rhowF) override;
 };
 
 } // namespace Nektar

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadySystem.cpp
+// File: UnsteadySystem.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -217,7 +217,8 @@ void UnsteadySystem::v_DoSolve()
     {
         for (i = 0; i < nfields; ++i)
         {
-            m_fields[i]->HomogeneousFwdTrans(m_fields[i]->GetPhys(),
+            m_fields[i]->HomogeneousFwdTrans(m_fields[i]->GetTotPoints(),
+                                             m_fields[i]->GetPhys(),
                                              m_fields[i]->UpdatePhys());
             m_fields[i]->SetWaveSpace(true);
             m_fields[i]->SetPhysState(false);
@@ -296,28 +297,32 @@ void UnsteadySystem::v_DoSolve()
 
         // Flag to update AV
         m_CalcPhysicalAV = true;
+
         // Frozen preconditioner checks
-        if (UpdateTimeStepCheck())
+        if (!ParallelInTime())
         {
-            m_cflSafetyFactor = tmp_cflSafetyFactor;
+            if (v_UpdateTimeStepCheck())
+            {
+                m_cflSafetyFactor = tmp_cflSafetyFactor;
 
-            if (m_cflSafetyFactor)
-            {
-                m_timestep = GetTimeStep(fields);
-            }
+                if (m_cflSafetyFactor)
+                {
+                    m_timestep = GetTimeStep(fields);
+                }
 
-            // Ensure that the final timestep finishes at the final
-            // time, or at a prescribed IO_CheckTime.
-            if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
-            {
-                m_timestep = m_fintime - m_time;
-            }
-            else if (m_checktime &&
-                     m_time + m_timestep - m_lastCheckTime >= m_checktime)
-            {
-                m_lastCheckTime += m_checktime;
-                m_timestep  = m_lastCheckTime - m_time;
-                doCheckTime = true;
+                // Ensure that the final timestep finishes at the final
+                // time, or at a prescribed IO_CheckTime.
+                if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
+                {
+                    m_timestep = m_fintime - m_time;
+                }
+                else if (m_checktime &&
+                         m_time + m_timestep - m_lastCheckTime >= m_checktime)
+                {
+                    m_lastCheckTime += m_checktime;
+                    m_timestep  = m_lastCheckTime - m_time;
+                    doCheckTime = true;
+                }
             }
         }
 
@@ -355,10 +360,22 @@ void UnsteadySystem::v_DoSolve()
         cpuTime += elapsed;
 
         // Write out status information
-        if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
+        if (m_infosteps &&
+            m_session->GetComm()->GetSpaceComm()->GetRank() == 0 &&
+            !((step + 1) % m_infosteps))
         {
-            cout << "Steps: " << setw(8) << left << step + 1 << " "
-                 << "Time: " << setw(12) << left << m_time;
+            if (ParallelInTime())
+            {
+                cout << "RANK "
+                     << m_session->GetComm()->GetTimeComm()->GetRank()
+                     << " Steps: " << setw(8) << left << step + 1 << " "
+                     << "Time: " << setw(12) << left << m_time;
+            }
+            else
+            {
+                cout << "Steps: " << setw(8) << left << step + 1 << " "
+                     << "Time: " << setw(12) << left << m_time;
+            }
 
             if (m_cflSafetyFactor)
             {
@@ -438,7 +455,7 @@ void UnsteadySystem::v_DoSolve()
                 }
             }
 
-            // rank zero looks for abort file and deltes it
+            // rank zero looks for abort file and deletes it
             // if it exists. The communicates the abort
             if (m_session->GetComm()->GetRank() == 0)
             {
@@ -449,8 +466,11 @@ void UnsteadySystem::v_DoSolve()
                 }
             }
 
-            m_session->GetComm()->AllReduce(abortFlags,
-                                            LibUtilities::ReduceMax);
+            if (!ParallelInTime())
+            {
+                m_session->GetComm()->AllReduce(abortFlags,
+                                                LibUtilities::ReduceMax);
+            }
 
             ASSERTL0(!abortFlags[0], "NaN found during time integration.");
         }
@@ -465,7 +485,7 @@ void UnsteadySystem::v_DoSolve()
             totFilterTime += elapsed;
 
             // Write out individual filter status information
-            if (m_session->GetComm()->GetRank() == 0 &&
+            if (m_filtersInfosteps && m_session->GetComm()->GetRank() == 0 &&
                 !((step + 1) % m_filtersInfosteps) && !m_filters.empty() &&
                 m_session->DefinesCmdLineArgument("verbose"))
             {
@@ -483,7 +503,7 @@ void UnsteadySystem::v_DoSolve()
         }
 
         // Write out overall filter status information
-        if (m_session->GetComm()->GetRank() == 0 &&
+        if (m_filtersInfosteps && m_session->GetComm()->GetRank() == 0 &&
             !((step + 1) % m_filtersInfosteps) && !m_filters.empty())
         {
             stringstream ss;
@@ -518,7 +538,8 @@ void UnsteadySystem::v_DoSolve()
                     {
                         m_fields[i]->SetWaveSpace(true);
                         m_fields[i]->HomogeneousFwdTrans(
-                            m_fields[i]->GetPhys(), m_fields[i]->UpdatePhys());
+                            m_fields[i]->GetTotPoints(), m_fields[i]->GetPhys(),
+                            m_fields[i]->UpdatePhys());
                         m_fields[i]->SetPhysState(false);
                     }
                 }
@@ -545,7 +566,8 @@ void UnsteadySystem::v_DoSolve()
                  << "CFL time-step     : " << m_timestep << endl;
         }
 
-        if (m_session->GetSolverInfo("Driver") != "SteadyState")
+        if (m_session->GetSolverInfo("Driver") != "SteadyState" &&
+            m_session->GetSolverInfo("Driver") != "Parareal")
         {
             cout << "Time-integration  : " << intTime << "s" << endl;
         }
@@ -594,14 +616,14 @@ void UnsteadySystem::v_DoSolve()
     // Print for 1D problems
     if (m_spacedim == 1)
     {
-        v_AppendOutput1D(fields);
+        AppendOutput1D(fields);
     }
 }
 
 /**
  * @brief Sets the initial conditions.
  */
-void UnsteadySystem::v_DoInitialise()
+void UnsteadySystem::v_DoInitialise(bool dumpInitialConditions)
 {
     CheckForRestartTime(m_time, m_nchk);
     SetBoundaryConditions(m_time);
@@ -638,14 +660,17 @@ void UnsteadySystem::v_GenerateSummary(SummaryList &s)
     AddSummaryItem(s, "Time Step", m_timestep);
     AddSummaryItem(s, "No. of Steps", m_steps);
     AddSummaryItem(s, "Checkpoints (steps)", m_checksteps);
-    AddSummaryItem(s, "Integration Type", m_intScheme->GetName());
+    if (m_intScheme)
+    {
+        AddSummaryItem(s, "Integration Type", m_intScheme->GetName());
+    }
 }
 
 /**
  * Stores the solution in a file for 1D problems only. This method has
  * been implemented to facilitate the post-processing for 1D problems.
  */
-void UnsteadySystem::v_AppendOutput1D(
+void UnsteadySystem::AppendOutput1D(
     Array<OneD, Array<OneD, NekDouble>> &solution1D)
 {
     // Coordinates of the quadrature points in the real physical space
@@ -865,7 +890,7 @@ bool UnsteadySystem::CheckSteadyState(int step, NekDouble totCPUTime)
 
     SteadyStateResidual(step, L2);
 
-    if (m_comm->GetRank() == 0 &&
+    if (m_infosteps && m_comm->GetRank() == 0 &&
         (((step + 1) % m_infosteps == 0) || ((step == m_initialStep))))
     {
         // Output time
@@ -889,7 +914,7 @@ bool UnsteadySystem::CheckSteadyState(int step, NekDouble totCPUTime)
     // Calculate maximum L2 error
     NekDouble maxL2 = Vmath::Vmax(nFields, L2, 1);
 
-    if (m_session->DefinesCmdLineArgument("verbose") &&
+    if (m_infosteps && m_session->DefinesCmdLineArgument("verbose") &&
         m_comm->GetRank() == 0 && ((step + 1) % m_infosteps == 0))
     {
         cout << "-- Maximum L^2 residual: " << maxL2 << endl;
@@ -945,6 +970,21 @@ void UnsteadySystem::v_SteadyStateResidual(int step, Array<OneD, NekDouble> &L2)
     {
         reference[i] = (reference[i] == 0) ? 1 : reference[i];
         L2[i]        = sqrt(residual[i] / reference[i]);
+    }
+}
+
+void UnsteadySystem::DoDummyProjection(
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
+{
+    boost::ignore_unused(time);
+
+    if (&inarray != &outarray)
+    {
+        for (int i = 0; i < inarray.size(); ++i)
+        {
+            Vmath::Vcopy(GetNpoints(), inarray[i], 1, outarray[i], 1);
+        }
     }
 }
 

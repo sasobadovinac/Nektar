@@ -1027,7 +1027,7 @@ void OutputVtk::OutputFromExpLowOrderMultiBlock(po::variables_map &vm,
         m_f->m_numHomogeneousDir == 0,
         "Multi block VTK is not implemented for homogeneous expansion types.")
 
-    ASSERTL0(m_f->m_comm->IsSerial(),
+    ASSERTL0(m_f->m_comm->GetSpaceComm()->IsSerial(),
              "Multi block VTK is not implemented in parallel.")
 
     int dim = m_f->m_graph->GetMeshDimension();
@@ -1514,7 +1514,8 @@ void OutputVtk::WriteVTK(vtkDataObject *vtkMesh, std::string &filename,
     // We could use the VTK lib to do this, but that requires VTK with MPI
     // enabled & messing about with the parallel controller & changing
     // our file naming scheme as VTK forces _${proc-number} as a suffix...
-    if (m_f->m_comm->TreatAsRankZero() && !m_f->m_comm->IsSerial())
+    if (m_f->m_comm->GetSpaceComm()->TreatAsRankZero() &&
+        !m_f->m_comm->GetSpaceComm()->IsSerial())
     {
         WritePVtu(vm);
     }
@@ -1529,9 +1530,9 @@ void OutputVtk::WritePVtu(po::variables_map &vm)
 
     std::ofstream outfile(filename.c_str());
 
-    int nprocs = m_f->m_comm->GetSize();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
     std::string path =
-        LibUtilities::PortablePath(OutputVtkBase::GetPath(filename, vm));
+        LibUtilities::PortablePath(OutputVtkBase::v_GetPath(filename, vm));
 
     outfile << "<?xml version=\"1.0\"?>" << endl;
     outfile << "<VTKFile type=\"PUnstructuredGrid\" version=\"0.1\" "
@@ -1592,18 +1593,20 @@ void OutputVtk::WritePVtu(po::variables_map &vm)
     cout << "Written file: " << filename << endl;
 }
 
-void OutputVtk::OutputFromData(po::variables_map &vm)
+void OutputVtk::v_OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal, "OutputVtk can't write using only FieldData.");
+    NEKERROR(ErrorUtil::efatal,
+             "OutputVtk can't write using only FieldData. You may need "
+             "to add a mesh XML file to your input files.");
 }
 
-void OutputVtk::OutputFromPts(po::variables_map &vm)
+void OutputVtk::v_OutputFromPts(po::variables_map &vm)
 {
-    OutputVtkBase::OutputFromPts(vm);
+    OutputVtkBase::v_OutputFromPts(vm);
 }
 
-void OutputVtk::OutputFromExp(po::variables_map &vm)
+void OutputVtk::v_OutputFromExp(po::variables_map &vm)
 {
     // Move geometry based on zones data in .xml and time in .fld metadatamap
     // Perform movement of zones based on time in field files metadata map
@@ -1630,7 +1633,7 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
                  "High order VTK is not implemented for legacy output.")
 
         // No caching of mesh data in legacy output
-        OutputVtkBase::OutputFromExp(vm);
+        OutputVtkBase::v_OutputFromExp(vm);
         return;
     }
 

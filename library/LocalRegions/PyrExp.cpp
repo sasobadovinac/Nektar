@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PyrExp.cpp
+// File: PyrExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -630,11 +630,6 @@ NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
 // Helper functions
 //---------------------------------------
 
-int PyrExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
-}
-
 void PyrExp::v_GetTracePhysMap(const int face, Array<OneD, int> &outarray)
 {
     int nquad0 = m_base[0]->GetNumPoints();
@@ -1082,6 +1077,11 @@ DNekMatSharedPtr PyrExp::v_CreateStdMatrix(const StdRegions::StdMatrixKey &mkey)
 DNekScalMatSharedPtr PyrExp::v_GetLocMatrix(const MatrixKey &mkey)
 {
     return m_matrixManager[mkey];
+}
+
+void PyrExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
 }
 
 DNekScalBlkMatSharedPtr PyrExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)

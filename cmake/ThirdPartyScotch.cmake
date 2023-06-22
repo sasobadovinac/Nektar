@@ -87,7 +87,7 @@ IF (NEKTAR_USE_SCOTCH)
             TMP_DIR ${TPBUILD}/scotch-6.0.4-tmp
             INSTALL_DIR ${TPDIST}
             CONFIGURE_COMMAND rm -f ${SCOTCH_SRC}/Makefile.inc
-                COMMAND ln -s
+            COMMAND ln -s
                 ${SCOTCH_SRC}/Make.inc/${SCOTCH_MAKE}
                 ${SCOTCH_SRC}/Makefile.inc
             BUILD_COMMAND $(MAKE) -C ${SCOTCH_SRC}
@@ -100,6 +100,30 @@ IF (NEKTAR_USE_SCOTCH)
             INSTALL_COMMAND $(MAKE) -C ${SCOTCH_SRC}
                 prefix=${TPDIST} install
         )
+
+        EXEC_PROGRAM( flex
+            ARGS --version
+            OUTPUT_VARIABLE FLEX_VERSION
+        )
+
+        # PATCH USED TO SOLVE COMPILATION ERROR (undefined reference to `scotchyywrap') 
+        # WHEN THIRD PARTY SCOTCH IS COMPILED WITH FLEX 2.6.3. THE PROBLEM HAS BEEN SOLVED
+        # WITH FLEX 2.6.4
+        IF (FLEX_VERSION STREQUAL "flex 2.6.3")
+            UNSET(PATCH CACHE)
+            FIND_PROGRAM(PATCH patch)
+            IF(NOT PATCH)
+              MESSAGE(FATAL_ERROR
+                "'patch' tool for modifying files not found. Cannot build boost-numpy.")
+            ENDIF()
+            MARK_AS_ADVANCED(PATCH)
+
+            EXTERNALPROJECT_ADD_STEP(scotch-6.0.4 patch-flex
+                WORKING_DIRECTORY ${TPBUILD}/scotch-6.0.4
+                COMMAND ${PATCH} -p0 < ${CMAKE_SOURCE_DIR}/cmake/thirdparty-patches/scotch-6_0_4-flex-2_6_3-yy-compatibility.patch
+                DEPENDERS configure
+                DEPENDEES patch)
+        ENDIF()
 
         THIRDPARTY_LIBRARY(SCOTCH_LIBRARY STATIC scotch
             DESCRIPTION "Scotch library")

@@ -22,9 +22,9 @@
     </GEOMETRY>
     <EXPANSIONS>
         <E COMPOSITE="C[0]"
-           NUMMODES="2,2" BASISTYPE="Modified_A,Modified_A"
-           NUMPOINTS="5,5" POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre"
-           FIELDS="u" />
+            NUMMODES="2,2" BASISTYPE="Modified_A,Modified_A"
+            NUMPOINTS="5,5" POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre"
+            FIELDS="u" />
     </EXPANSIONS>
     <CONDITIONS>
         <SOLVERINFO>

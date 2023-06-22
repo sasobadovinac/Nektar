@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdNodalTetExp.h
+// File: StdNodalPrismExp.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -51,7 +51,7 @@ public:
                                         const LibUtilities::BasisKey &Bc,
                                         const LibUtilities::PointsType Ntype);
     STD_REGIONS_EXPORT StdNodalPrismExp(const StdNodalPrismExp &T);
-    STD_REGIONS_EXPORT ~StdNodalPrismExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdNodalPrismExp() override = default;
 
     //-------------------------------
     // Nodal basis specific routines

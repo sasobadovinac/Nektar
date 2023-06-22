@@ -40,6 +40,10 @@ FIND_PROGRAM(CONVERT convert)
 FOREACH(pdf ${pdffiles})
     GET_FILENAME_COMPONENT(BASE ${pdf} NAME_WE)
     GET_FILENAME_COMPONENT(DIR  ${pdf} DIRECTORY)
+    # Set custom output location for PDFs in $DEVGUIDE/html/introduction/img/
+    IF(${DIR} STREQUAL "introduction/img")
+        SET(DIR "img")
+    ENDIF()
     ADD_CUSTOM_COMMAND(TARGET developer-guide-html POST_BUILD
         COMMENT "Converting ${pdf} to ${DEVGUIDE}/html/${DIR}/${BASE}.png"
         COMMAND ${CMAKE_COMMAND} -E make_directory ${DEVGUIDE}/html/${DIR}

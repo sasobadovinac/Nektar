@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalMatrixKey.h
+// File: GlobalMatrixKey.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -163,7 +163,7 @@ inline const Array<OneD, const NekDouble> &GlobalMatrixKey::GetVarCoeff(
     const StdRegions::VarCoeffType &coeff) const
 {
     auto found = m_varCoeffs.find(coeff);
-    return (*found).second;
+    return (*found).second.GetValue();
 }
 
 inline const StdRegions::VarCoeffMap &GlobalMatrixKey::GetVarCoeffs() const

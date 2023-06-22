@@ -88,9 +88,9 @@ void ForcingAxiSymmetric::v_InitObject(
     }
 
     // Project m_geomFactor to solution space
-    Array<OneD, NekDouble> tmpCoeff(pFields[0]->GetNcoeffs(), 0.0);
-    pFields[0]->FwdTransLocalElmt(m_geomFactor, tmpCoeff);
-    pFields[0]->BwdTrans(tmpCoeff, m_geomFactor);
+    // Array<OneD, NekDouble> tmpCoeff(pFields[0]->GetNcoeffs(), 0.0);
+    // pFields[0]->FwdTransLocalElmt(m_geomFactor, tmpCoeff);
+    // pFields[0]->BwdTrans(tmpCoeff, m_geomFactor);
 
     m_Forcing = Array<OneD, Array<OneD, NekDouble>>(m_NumVariable);
     for (int i = 0; i < m_NumVariable; ++i)

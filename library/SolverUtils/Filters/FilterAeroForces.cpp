@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAeroForces.cpp
+// File: FilterAeroForces.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -1264,7 +1264,8 @@ void FilterAeroForces::CalculateForces(
         for (int i = 0; i < pFields.size(); ++i)
         {
             pFields[i]->SetWaveSpace(true);
-            pFields[i]->HomogeneousFwdTrans(pFields[i]->GetPhys(),
+            pFields[i]->HomogeneousFwdTrans(pFields[i]->GetTotPoints(),
+                                            pFields[i]->GetPhys(),
                                             pFields[i]->UpdatePhys());
         }
     }
@@ -1945,7 +1946,8 @@ void FilterAeroForces::CalculateForcesMapping(
         for (int i = 0; i < pFields.size(); ++i)
         {
             pFields[i]->SetWaveSpace(true);
-            pFields[i]->HomogeneousFwdTrans(pFields[i]->GetPhys(),
+            pFields[i]->HomogeneousFwdTrans(pFields[i]->GetTotPoints(),
+                                            pFields[i]->GetPhys(),
                                             pFields[i]->UpdatePhys());
         }
     }

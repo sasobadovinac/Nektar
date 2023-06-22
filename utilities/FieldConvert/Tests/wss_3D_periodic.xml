@@ -35,80 +35,80 @@
         <E COMPOSITE="C[111]" NUMMODES="2" TYPE="MODIFIED" FIELDS="rho,rhou,rhov,rhow,E" />
     </EXPANSIONS>
 
-      <CONDITIONS>
+    <CONDITIONS>
 
-    <SOLVERINFO>
-        <I PROPERTY="EQType"                VALUE="NavierStokesCFE"     />
-        <I PROPERTY="Projection"            VALUE="DisContinuous"       />
-        <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
-        <I PROPERTY="DiffusionType"         VALUE="LDGNS"               />
-        <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-        <I PROPERTY="UpwindType"            VALUE="Roe"                 />
-        <I PROPERTY="ProblemType"           VALUE="General"             />
-        <I PROPERTY="ViscosityType"         VALUE="Variable"            />
-    </SOLVERINFO>
+        <SOLVERINFO>
+            <I PROPERTY="EQType"                VALUE="NavierStokesCFE"     />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"       />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
+            <I PROPERTY="DiffusionType"         VALUE="LDGNS"               />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
+            <I PROPERTY="UpwindType"            VALUE="Roe"                 />
+            <I PROPERTY="ProblemType"           VALUE="General"             />
+            <I PROPERTY="ViscosityType"         VALUE="Variable"            />
+        </SOLVERINFO>
 
-    <VARIABLES>
-      <V ID="0"> rho  </V>
-      <V ID="1"> rhou </V>
-      <V ID="2"> rhov </V>
-      <V ID="3"> rhow </V>
-      <V ID="4"> E    </V>
-    </VARIABLES>
+        <VARIABLES>
+            <V ID="0"> rho  </V>
+            <V ID="1"> rhou </V>
+            <V ID="2"> rhov </V>
+            <V ID="3"> rhow </V>
+            <V ID="4"> E    </V>
+        </VARIABLES>
 
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[2] </B>
-      <B ID="1"> C[3] </B>
-      <B ID="2"> C[4] </B>
-      <B ID="3"> C[1] </B>
-      <B ID="4"> C[113] </B>
-      <B ID="5"> C[114] </B>
-    </BOUNDARYREGIONS>
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[2] </B>
+            <B ID="1"> C[3] </B>
+            <B ID="2"> C[4] </B>
+            <B ID="3"> C[1] </B>
+            <B ID="4"> C[113] </B>
+            <B ID="5"> C[114] </B>
+        </BOUNDARYREGIONS>
 
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0">
-        <D VAR="rho"  VALUE="0" />
-        <D VAR="rhou" VALUE="0" />
-        <D VAR="rhov" VALUE="0" />
-        <D VAR="rhow" VALUE="0" />
-        <D VAR="E"    VALUE="0" />
-      </REGION>
-      <REGION REF="1">
-        <D VAR="rho"  USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
-        <D VAR="rhou" USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
-        <D VAR="rhov" USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
-        <D VAR="rhow" USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
-        <D VAR="E"    USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
-      </REGION>
-      <REGION REF="2">
-        <D VAR="rho"  USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
-        <D VAR="rhou" USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
-        <D VAR="rhov" USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
-        <D VAR="rhow" USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
-        <D VAR="E"    USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
-      </REGION>
-      <REGION REF="3">
-        <D VAR="rho"  VALUE="0" />
-        <D VAR="rhou" VALUE="0" />
-        <D VAR="rhov" VALUE="0" />
-        <D VAR="rhow" VALUE="0" />
-        <D VAR="E"    VALUE="0" />
-      </REGION>
-      <REGION REF="4">
-        <P VAR="rho"  VALUE="[5]" />
-        <P VAR="rhou" VALUE="[5]" />
-        <P VAR="rhov" VALUE="[5]" />
-        <P VAR="rhow" VALUE="[5]" />
-        <P VAR="E"    VALUE="[5]" />
-      </REGION>
-      <REGION REF="5">
-        <P VAR="rho"  VALUE="[4]" />
-        <P VAR="rhou" VALUE="[4]" />
-        <P VAR="rhov" VALUE="[4]" />
-        <P VAR="rhow" VALUE="[4]" />
-        <P VAR="E"    VALUE="[4]" />
-      </REGION>
-    </BOUNDARYCONDITIONS>
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="rho"  VALUE="0" />
+                <D VAR="rhou" VALUE="0" />
+                <D VAR="rhov" VALUE="0" />
+                <D VAR="rhow" VALUE="0" />
+                <D VAR="E"    VALUE="0" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="rho"  USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
+                <D VAR="rhou" USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
+                <D VAR="rhov" USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
+                <D VAR="rhow" USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
+                <D VAR="E"    USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="rho"  USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
+                <D VAR="rhou" USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
+                <D VAR="rhov" USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
+                <D VAR="rhow" USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
+                <D VAR="E"    USERDEFINEDTYPE="PressureOutflowNonReflective" VALUE="0" />
+            </REGION>
+            <REGION REF="3">
+                <D VAR="rho"  VALUE="0" />
+                <D VAR="rhou" VALUE="0" />
+                <D VAR="rhov" VALUE="0" />
+                <D VAR="rhow" VALUE="0" />
+                <D VAR="E"    VALUE="0" />
+            </REGION>
+            <REGION REF="4">
+                <P VAR="rho"  VALUE="[5]" />
+                <P VAR="rhou" VALUE="[5]" />
+                <P VAR="rhov" VALUE="[5]" />
+                <P VAR="rhow" VALUE="[5]" />
+                <P VAR="E"    VALUE="[5]" />
+            </REGION>
+            <REGION REF="5">
+                <P VAR="rho"  VALUE="[4]" />
+                <P VAR="rhou" VALUE="[4]" />
+                <P VAR="rhov" VALUE="[4]" />
+                <P VAR="rhow" VALUE="[4]" />
+                <P VAR="E"    VALUE="[4]" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
 
     </CONDITIONS>
 </NEKTAR>

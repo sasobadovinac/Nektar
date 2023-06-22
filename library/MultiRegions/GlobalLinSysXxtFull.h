@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSysDirectXxt.h
+// File: GlobalLinSysXxtFull.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: GlobalLinSysDirectXxt header
+// Description: GlobalLinSysXxtFull header
 //
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSDIRECTXXT_H
@@ -71,14 +71,16 @@ public:
 
     MULTI_REGIONS_EXPORT virtual ~GlobalLinSysXxtFull();
 
-private:
+protected:
     /// Solve the linear system for given input and output vectors
     /// using a specified local to global map.
-    virtual void v_Solve(
-        const Array<OneD, const NekDouble> &in, Array<OneD, NekDouble> &out,
-        const AssemblyMapSharedPtr &locToGloMap,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+    virtual void v_Solve(const Array<OneD, const NekDouble> &in,
+                         Array<OneD, NekDouble> &out,
+                         const AssemblyMapSharedPtr &locToGloMap,
+                         const Array<OneD, const NekDouble> &dirForcing =
+                             NullNekDouble1DArray) override;
 
+private:
     void CreateMap(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
 
     void AssembleMatrixArrays(const std::shared_ptr<AssemblyMap> &pLocToGloMap);

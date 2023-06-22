@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TriExp.cpp
+// File: TriExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -433,19 +433,6 @@ void TriExp::v_IProductWRTBase_SumFac(
     }
 }
 
-void TriExp::v_IProductWRTBase_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nq = GetTotPoints();
-    MatrixKey iprodmatkey(StdRegions::eIProductWRTBase, DetShapeType(), *this);
-    DNekScalMatSharedPtr iprodmat = m_matrixManager[iprodmatkey];
-
-    Blas::Dgemv('N', m_ncoeffs, nq, iprodmat->Scale(),
-                (iprodmat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
-}
-
 void TriExp::v_IProductWRTDerivBase_SumFac(
     const int dir, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
@@ -540,45 +527,6 @@ void TriExp::v_AlignVectorToCollapsedDir(
         Vmath::Smul(nqtot, df[2 * dir + 1][0], inarray, 1, tmp2, 1);
     }
     Vmath::Vadd(nqtot, tmp0, 1, tmp1, 1, tmp1, 1);
-}
-
-void TriExp::v_IProductWRTDerivBase_MatOp(
-    const int dir, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nq                       = GetTotPoints();
-    StdRegions::MatrixType mtype = StdRegions::eIProductWRTDerivBase0;
-
-    switch (dir)
-    {
-        case 0:
-        {
-            mtype = StdRegions::eIProductWRTDerivBase0;
-        }
-        break;
-        case 1:
-        {
-            mtype = StdRegions::eIProductWRTDerivBase1;
-        }
-        break;
-        case 2:
-        {
-            mtype = StdRegions::eIProductWRTDerivBase2;
-        }
-        break;
-        default:
-        {
-            ASSERTL1(false, "input dir is out of range");
-        }
-        break;
-    }
-
-    MatrixKey iprodmatkey(mtype, DetShapeType(), *this);
-    DNekScalMatSharedPtr iprodmat = m_matrixManager[iprodmatkey];
-
-    Blas::Dgemv('N', m_ncoeffs, nq, iprodmat->Scale(),
-                (iprodmat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
 }
 
 void TriExp::v_IProductWRTDirectionalDerivBase(
@@ -829,14 +777,6 @@ void TriExp::v_GetTracePhysVals(
     }
 }
 
-void TriExp::v_GetEdgeInterpVals(const int edge,
-                                 const Array<OneD, const NekDouble> &inarray,
-                                 Array<OneD, NekDouble> &outarray)
-{
-    boost::ignore_unused(edge, inarray, outarray);
-    ASSERTL0(false, "Routine not implemented for triangular elements");
-}
-
 void TriExp::v_GetTraceQFactors(const int edge,
                                 Array<OneD, NekDouble> &outarray)
 {
@@ -1065,11 +1005,6 @@ void TriExp::v_ComputeTraceNormal(const int edge)
     }
 }
 
-int TriExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
-}
-
 void TriExp::v_ExtractDataToCoeffs(
     const NekDouble *data, const std::vector<unsigned int> &nummodes,
     const int mode_offset, NekDouble *coeffs,
@@ -1115,17 +1050,6 @@ StdRegions::Orientation TriExp::v_GetTraceOrient(int edge)
     return GetGeom2D()->GetEorient(edge);
 }
 
-const LibUtilities::BasisSharedPtr &TriExp::v_GetBasis(int dir) const
-{
-    ASSERTL1(dir >= 0 && dir <= 1, "input dir is out of range");
-    return m_base[dir];
-}
-
-int TriExp::v_GetNumPoints(const int dir) const
-{
-    return GetNumPoints(dir);
-}
-
 DNekMatSharedPtr TriExp::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
 {
     DNekMatSharedPtr returnval;
@@ -1161,6 +1085,11 @@ DNekMatSharedPtr TriExp::v_CreateStdMatrix(const StdRegions::StdMatrixKey &mkey)
 DNekScalMatSharedPtr TriExp::v_GetLocMatrix(const MatrixKey &mkey)
 {
     return m_matrixManager[mkey];
+}
+
+void TriExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
 }
 
 DNekScalBlkMatSharedPtr TriExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)
@@ -1222,29 +1151,6 @@ void TriExp::v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
                                  const StdRegions::StdMatrixKey &mkey)
 {
     TriExp::HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
-}
-
-void TriExp::v_GeneralMatrixOp_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey)
-{
-    DNekScalMatSharedPtr mat = GetLocMatrix(mkey);
-
-    if (inarray.get() == outarray.get())
-    {
-        Array<OneD, NekDouble> tmp(m_ncoeffs);
-        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
-
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    tmp.get(), 1, 0.0, outarray.get(), 1);
-    }
-    else
-    {
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    inarray.get(), 1, 0.0, outarray.get(), 1);
-    }
 }
 
 void TriExp::v_LaplacianMatrixOp_MatFree_Kernel(

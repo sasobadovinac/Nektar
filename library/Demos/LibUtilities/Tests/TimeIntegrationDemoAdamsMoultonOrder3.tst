@@ -5,7 +5,7 @@
     <parameters>--dof 100 --timesteps 1000 --method AdamsMoulton --order 3</parameters>
     <metrics>
         <metric type="L2" id="1">
-            <value tolerance="1e-12">0.0162964</value>
+            <value tolerance="1e-12">0.00066271</value>
         </metric>
     </metrics>
 </test>

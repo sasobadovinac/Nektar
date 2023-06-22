@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdExpansion1D.h
+// File: StdExpansion1D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -53,7 +53,7 @@ public:
     STD_REGIONS_EXPORT StdExpansion1D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba);
     STD_REGIONS_EXPORT StdExpansion1D(const StdExpansion1D &T);
-    STD_REGIONS_EXPORT ~StdExpansion1D() override = default;
+    STD_REGIONS_EXPORT virtual ~StdExpansion1D() override;
 
     /** \brief Evaluate the derivative \f$ d/d{\xi_1} \f$ at the
      *  physical quadrature points given by \a inarray and return in

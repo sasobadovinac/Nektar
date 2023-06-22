@@ -79,7 +79,7 @@ InputSemtex::~InputSemtex()
  * is a classic nodal-Lagrangian spectral element code at a single polynomial
  * order, meaning that the field data are set up according to this structure.
  */
-void InputSemtex::Process(po::variables_map &vm)
+void InputSemtex::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
