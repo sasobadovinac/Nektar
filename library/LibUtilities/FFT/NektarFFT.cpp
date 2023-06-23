@@ -78,7 +78,6 @@ NektarFFTFactory &GetNektarFFTFactory()
  *
  * Public interface routine to virtual function implementation.
  */
-
 void NektarFFT::FFTFwdTrans(Array<OneD, NekDouble> &phys,
                             Array<OneD, NekDouble> &coef)
 {

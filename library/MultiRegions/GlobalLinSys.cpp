@@ -89,6 +89,15 @@ std::string GlobalLinSys::def =
 #endif
 
 /**
+ *
+ */
+GlobalLinSysFactory &GetGlobalLinSysFactory()
+{
+    static GlobalLinSysFactory instance;
+    return instance;
+}
+
+/**
  * @class GlobalLinSys
  *
  * Consider the linear system
@@ -194,15 +203,6 @@ GlobalLinSys::GlobalLinSys(const GlobalLinSysKey &pKey,
           m_expList.lock()->GetSession()->DefinesCmdLineArgument("verbose"))
 {
     boost::ignore_unused(pLocToGloMap);
-}
-
-/**
- *
- */
-GlobalLinSysFactory &GetGlobalLinSysFactory()
-{
-    static GlobalLinSysFactory instance;
-    return instance;
 }
 
 /**

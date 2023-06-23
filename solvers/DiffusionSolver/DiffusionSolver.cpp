@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
             Array<OneD, NekDouble> exact(nq);
 
             //----------------------------------------------
-            // evaluate exact solution
+            // Evaluate exact solution
             ex_sol->Evaluate(x0, x1, x2, (nSteps)*delta_t, exact);
 
             //--------------------------------------------

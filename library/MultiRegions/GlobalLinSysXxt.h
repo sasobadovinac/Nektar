@@ -32,13 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-/*
- * GlobalLinSysXxt.h
- *
- *  Created on: 19 Oct 2012
- *      Author: cc
- */
-
 #ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSXXT_H
 #define NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSXXT_H
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
