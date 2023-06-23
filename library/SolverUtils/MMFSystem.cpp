@@ -166,26 +166,9 @@ void MMFSystem::SetUpMovingFrames(
     if (conn == "LOCAL")
         m_MMFdir = SpatialDomains::eLOCAL;
 
-    /*for (int j=0; j<m_shapedim; j++)
-    {
-        for (int k=0; k<m_spacedim; k++)
-        {
-            std::cout << "before ehsan " << nq << "\t"<< m_shapedim << "\t" <<
-    m_spacedim << "\t" <<"m_movingframes " << m_movingframes[j][k*nq] <<
-    std::endl;
-        }
-    }*/
     // Get Tangetn vectors from GeomFactors2D, Orthonormalized = true
     m_fields[0]->GetMovingFrames(m_MMFdir, m_MMFfactors, m_movingframes);
-    /*  for (int j=0; j<m_shapedim; j++)
-      {
-          for (int k=0; k<m_spacedim; k++)
-          {
-                std::cout << "ehsan " << nq << "\t"<< m_shapedim << "\t" <<
-      m_spacedim << "\t" <<"m_movingframes " << m_movingframes[j][k*nq] <<
-      std::endl;
-          }
-      }*/
+
     // Align the tangentX direction after TangentXelem
     if (TangentXelem > 0)
     {

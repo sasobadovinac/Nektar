@@ -82,8 +82,6 @@ protected:
 
 private:
     void AssembleFullMatrix(const std::shared_ptr<AssemblyMap> &locToGloMap);
-    // void AssembleFullMatrixDG(const std::shared_ptr<AssemblyMapDG>&
-    // locToGloMap);
 };
 } // namespace MultiRegions
 } // namespace Nektar

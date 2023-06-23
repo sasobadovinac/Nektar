@@ -55,6 +55,7 @@ v5.4.0
 - Fixed deadlock problem for the LowEnergyBlock preconditioner which appeared for specific combinations of meshes and boundary conditions (!1553)
 - Add a check to avoid unnecessary copy in DoOdoProjecton function (!1582)
 - Update user guide and developer guide (!1598)
+- Some various tidy-up (!1585)
 
 **NekMesh**
 - Changed CMake to set NEKTAR_USE_THREAD_SAFETY to ON when MeshGen is set to ON (!1546)

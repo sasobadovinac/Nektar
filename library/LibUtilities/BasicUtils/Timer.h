@@ -40,7 +40,7 @@
 #include <unordered_map>
 
 #include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
-#include <LibUtilities/Communication/Comm.h>
+#include <LibUtilities/Communication/CommSerial.h>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 
 namespace Nektar

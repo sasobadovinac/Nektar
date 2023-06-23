@@ -65,6 +65,7 @@ template <typename DataType> class Array<OneD, const DataType>
 #endif
 public:
     typedef DataType *ArrayType;
+
     typedef const DataType &const_reference;
     typedef DataType &reference;
 
@@ -421,20 +422,6 @@ protected:
     size_type m_offset;
 
 private:
-    //            struct DestroyArray
-    //            {
-    //                DestroyArray(unsigned int elements) :
-    //                    m_elements(elements) {}
-    //
-    //                void operator()(DataType* p)
-    //                {
-    //                    ArrayDestructionPolicy<DataType>::Destroy(p,
-    //                    m_elements); MemoryManager<DataType>::RawDeallocate(p,
-    //                    m_elements);
-    //                }
-    //                unsigned int m_elements;
-    //            };
-    //
     void CreateStorage(size_type size)
     {
         DataType *storage = MemoryManager<DataType>::RawAllocate(size);
@@ -468,6 +455,7 @@ template <typename DataType> class Array<TwoD, const DataType>
 {
 public:
     typedef boost::multi_array_ref<DataType, 2> ArrayType;
+
     typedef typename ArrayType::const_reference const_reference;
     typedef typename ArrayType::reference reference;
 
@@ -899,14 +887,11 @@ void CopyArrayN(const Array<OneD, ConstDataType> &source,
 static Array<OneD, int> NullInt1DArray;
 static Array<OneD, NekDouble> NullNekDouble1DArray;
 static Array<OneD, Array<OneD, NekDouble>> NullNekDoubleArrayOfArray;
-
-// TODO: Consider removing this declaration
 static Array<OneD, Array<OneD, Array<OneD, NekDouble>>>
     NullNekDoubleTensorOfArray3D;
 
-// TODO: This declaration will be removed
+// Temporary alias for 2D nested array.
 template <class T> using TensorOfArray2D = Array<OneD, Array<OneD, T>>;
-
 // Temporary alias for 3D nested array. Please note that the inner arrays
 // are not const declared. It is therefore suggested to use this alias with
 // caution.

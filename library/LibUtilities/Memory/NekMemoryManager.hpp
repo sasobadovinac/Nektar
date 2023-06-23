@@ -246,10 +246,7 @@ public:
     MemoryManager()
     {
     }
-    template <typename T> MemoryManager(const MemoryManager<T> &rhs)
-    {
-        boost::ignore_unused(rhs);
-    }
+    template <typename T> MemoryManager(const MemoryManager<T> &rhs) = delete;
     ~MemoryManager()
     {
     }

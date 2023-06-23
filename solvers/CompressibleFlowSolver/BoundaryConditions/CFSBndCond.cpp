@@ -96,11 +96,10 @@ void CFSBndCond::Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
  */
 void CFSBndCond::v_ApplyBwdWeight()
 {
-    NekDouble weight  = m_diffusionAveWeight;
     size_t nVariables = m_fields.size();
     for (int i = 0; i < nVariables; ++i)
     {
-        m_fields[i]->SetBndCondBwdWeight(m_bcRegion, weight);
+        m_fields[i]->SetBndCondBwdWeight(m_bcRegion, m_diffusionAveWeight);
     }
 }
 

@@ -61,8 +61,8 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
                                LibUtilities::PtsFieldSharedPtr &ptsOutField,
                                bool reuseTree)
 {
-    ASSERTL0(ptsInField->GetDim() <= m_dim, "too many dimesions in inField");
-    ASSERTL0(ptsOutField->GetDim() <= m_dim, "too many dimesions in outField");
+    ASSERTL0(ptsInField->GetDim() <= m_dim, "too many dimensions in inField");
+    ASSERTL0(ptsOutField->GetDim() <= m_dim, "too many dimensions in outField");
 
     m_ptsInField  = ptsInField;
     m_ptsOutField = ptsOutField;
@@ -96,9 +96,8 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
     {
         case eNearestNeighbour:
         {
-            m_weights = Array<TwoD, NekDouble>(nOutPts, 1, 0.0);
-            m_neighInds =
-                Array<TwoD, unsigned int>(nOutPts, 1, (unsigned int)0);
+            m_weights   = Array<TwoD, NekDouble>(nOutPts, 1, 0.0);
+            m_neighInds = Array<TwoD, unsigned int>(nOutPts, 1, 0u);
 
             for (size_t i = 0; i < nOutPts; ++i)
             {
@@ -127,9 +126,8 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
             ASSERTL0(m_ptsInField->GetDim() == 1 || m_coordId >= 0,
                      "not implemented");
 
-            m_weights = Array<TwoD, NekDouble>(nOutPts, 3, 0.0);
-            m_neighInds =
-                Array<TwoD, unsigned int>(nOutPts, 3, (unsigned int)0);
+            m_weights   = Array<TwoD, NekDouble>(nOutPts, 3, 0.0);
+            m_neighInds = Array<TwoD, unsigned int>(nOutPts, 3, 0u);
 
             for (size_t i = 0; i < nOutPts; ++i)
             {
@@ -166,9 +164,8 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
             numPts     = 1 << numPts; // 2 ^ numPts
             numPts     = min(numPts, int(m_ptsInField->GetNpoints() / 2));
 
-            m_weights = Array<TwoD, NekDouble>(nOutPts, numPts, 0.0);
-            m_neighInds =
-                Array<TwoD, unsigned int>(nOutPts, numPts, (unsigned int)0);
+            m_weights   = Array<TwoD, NekDouble>(nOutPts, numPts, 0.0);
+            m_neighInds = Array<TwoD, unsigned int>(nOutPts, numPts, 0u);
 
             for (size_t i = 0; i < nOutPts; ++i)
             {
@@ -201,9 +198,8 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
 
             m_maxPts = min(m_maxPts, int(m_ptsInField->GetNpoints() / 2));
 
-            m_weights = Array<TwoD, NekDouble>(nOutPts, m_maxPts, 0.0);
-            m_neighInds =
-                Array<TwoD, unsigned int>(nOutPts, m_maxPts, (unsigned int)0);
+            m_weights   = Array<TwoD, NekDouble>(nOutPts, m_maxPts, 0.0);
+            m_neighInds = Array<TwoD, unsigned int>(nOutPts, m_maxPts, 0u);
 
             for (size_t i = 0; i < nOutPts; ++i)
             {
@@ -484,8 +480,7 @@ void Interpolator::CalcW_Shepard(const PtsPoint &searchPt, int numPts)
         m_neighInds[searchPt.idx][i] = neighbourPts[i].idx;
     }
 
-    // In case d < kVertexTheSameDouble ( d^2 < kNekSqrtTol), use the exact
-    // point and return
+    // In case d < kNekZeroTol, use the exact point and return
     for (int i = 0; i < neighbourPts.size(); ++i)
     {
         if (neighbourPts[i].dist <= NekConstants::kNekZeroTol)
@@ -633,7 +628,7 @@ void Interpolator::SetupTree()
 }
 
 /**
- * @brief Finds the neares neighbours of a point
+ * @brief Finds the nearest neighbours of a point
  *
  * @param searchPt     point for which the neighbours are searched
  * @param neighbourPts possible neighbour points
@@ -668,7 +663,7 @@ void Interpolator::FindNNeighbours(const PtsPoint &searchPt,
 }
 
 /**
- * @brief Finds the neares neighbours of a point
+ * @brief Finds the nearest neighbours of a point
  *
  * @param searchPt     point for which the neighbours are searched
  * @param neighbourPts possible neighbour points
