@@ -230,6 +230,21 @@ The \texttt{GlobalSysSoln} option is formed by combining the method of solution
 with the approach: for example \texttt{IterativeStaticCond} or
 \texttt{PETScMultiLevelStaticCond}.
 
+\subsubsection{Iterative  options}
+\begin{itemize}
+\item \textbf{LinSysIterSolver} which specifies which iterative solver
+  strategy to use and includes values of \textbf{ConjugateGradient} or
+  \textbf{GMRES}. The default option is to solve this in a global
+  degree of freedom array for continuous Galerkin discretisations but
+  there are also options of \textbf{ConjugateGradientLoc} and
+  \textbf{GMRESLoc} which solve the array in local element format. For
+  DG discretisations these should be the same.
+\item \textbf{NekLinSysMaxIterations} specifies the maximum number of
+  iterations and has a default value of 5000.
+\item \textbf{IterativeSolverTolerance} specifies the relative
+    stopping tolerances for the iterative solver. Default is $1e-9$.
+\end{itemize} 
+
 \subsubsection{Preconditioner options}
 
 Preconditioners can be used in the iterative and PETSc solvers to reduce the
@@ -247,6 +262,7 @@ and dimension-dependent:
     \inltt{Null}                              & All  & All \\
     \inltt{Diagonal}                          & All  & All \\
     \inltt{FullLinearSpace}                   & 2/3D & CG  \\
+    \inltt{Jacobi}                            & 2/3D & All  \\
     \inltt{LowEnergyBlock}                    & 3D   & CG  \\
     \inltt{Block}                             & 2/3D & All \\
     \midrule

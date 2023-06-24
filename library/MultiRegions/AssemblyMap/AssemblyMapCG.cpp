@@ -2584,7 +2584,7 @@ AssemblyMapSharedPtr AssemblyMapCG::v_LinearSpaceMap(const ExpList &locexp,
     returnval = MemoryManager<AssemblyMapCG>::AllocateSharedPtr(
         m_session, locexp.GetComm());
     returnval->m_solnType           = solnType;
-    returnval->m_preconType         = eNull;
+    returnval->m_preconType         = "Null";
     returnval->m_maxStaticCondLevel = 0;
     returnval->m_signChange         = false;
     returnval->m_comm               = m_comm;

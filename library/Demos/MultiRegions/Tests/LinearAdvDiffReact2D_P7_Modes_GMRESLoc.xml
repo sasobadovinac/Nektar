@@ -253,8 +253,8 @@
         <GLOBALSYSSOLNINFO>
             <V VAR="u">
                 <I PROPERTY="GlobalSysSoln"    VALUE="IterativeStaticCond" />
-                <I PROPERTY="Preconditioner"   VALUE="Jacobi"/>
-                <I PROPERTY="LinSysIterSolver" VALUE="GMRES"/>
+                <I PROPERTY="Preconditioner"   VALUE="Diagonal"/>
+                <I PROPERTY="LinSysIterSolver" VALUE="GMRESLoc"/>
             </V>
         </GLOBALSYSSOLNINFO>
 

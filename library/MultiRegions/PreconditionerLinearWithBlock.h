@@ -80,7 +80,8 @@ protected:
     virtual void v_InitObject() override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput) override;
+                                    Array<OneD, NekDouble> &pOutput,
+                                    const bool &isLocal = false) override;
 
     virtual void v_BuildPreconditioner() override;
 };

@@ -75,6 +75,9 @@ public:
     /// Retrieves the communicator
     MULTI_REGIONS_EXPORT LibUtilities::CommSharedPtr GetComm();
 
+    /// Retrieves the variable string
+    MULTI_REGIONS_EXPORT std::string GetVariable();
+
     /// Retrieves the hash of this map
     MULTI_REGIONS_EXPORT size_t GetHash() const;
 
@@ -304,7 +307,7 @@ public:
     MULTI_REGIONS_EXPORT bool AtLastLevel() const;
     /// Returns the method of solving global systems.
     MULTI_REGIONS_EXPORT GlobalSysSolnType GetGlobalSysSolnType() const;
-    MULTI_REGIONS_EXPORT PreconditionerType GetPreconType() const;
+    MULTI_REGIONS_EXPORT std::string GetPreconType() const;
     MULTI_REGIONS_EXPORT NekDouble GetIterativeTolerance() const;
     MULTI_REGIONS_EXPORT bool IsAbsoluteTolerance() const;
     MULTI_REGIONS_EXPORT int GetMaxIterations() const;
@@ -334,6 +337,9 @@ protected:
 
     /// Communicator
     LibUtilities::CommSharedPtr m_comm;
+
+    /// Variable string identifier
+    std::string m_variable;
 
     /// Hash for map
     size_t m_hash;
@@ -401,7 +407,7 @@ protected:
     int m_bndSystemBandWidth;
 
     /// Type type of preconditioner to use in iterative solver.
-    PreconditionerType m_preconType;
+    std::string m_preconType;
 
     /// Maximum iterations for iterative solver
     int m_maxIterations;

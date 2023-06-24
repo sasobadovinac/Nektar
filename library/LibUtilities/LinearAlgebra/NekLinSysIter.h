@@ -95,6 +95,11 @@ public:
         m_LinSysMaxStorage = in;
     }
 
+    LIB_UTILITIES_EXPORT bool IsLocal()
+    {
+        return m_isLocal;
+    }
+
 protected:
     /// Global to universal unique map
     Array<OneD, int> m_map;
@@ -113,7 +118,11 @@ protected:
     // It determines the max storage usage
     int m_LinSysMaxStorage;
 
+    // Boolean to identify if iteration acts on local storage
+    bool m_isLocal;
+
     void Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn);
+    void Set_Rhs_Magnitude(const Array<OneD, NekDouble> &pIn);
     void setUniversalUniqueMap();
 
     virtual void v_InitObject() override;

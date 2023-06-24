@@ -114,6 +114,8 @@ protected:
     /// Workspace array for matrix multiplication
     Array<OneD, NekDouble> m_wsp;
 
+    Array<OneD, const NekDouble> m_sign;
+
     /// Solve the linear system for given input and output vectors
     /// using a specified local to global map.
     virtual void v_Solve(const Array<OneD, const NekDouble> &in,

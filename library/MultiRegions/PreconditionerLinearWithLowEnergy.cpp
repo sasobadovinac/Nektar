@@ -151,8 +151,11 @@ void PreconditionerLinearWithLowEnergy::v_BuildPreconditioner()
  *
  */
 void PreconditionerLinearWithLowEnergy::v_DoPreconditioner(
-    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &isLocal)
 {
+    ASSERTL0(isLocal == false, "PreconditionerLinearWithLowEnergy"
+                               " is only set up for Global iteratives sovles");
     int nDirBndDofs = m_locToGloMap.lock()->GetNumGlobalDirBndCoeffs();
     int nGlobHomBndDofs =
         m_locToGloMap.lock()->GetNumGlobalBndCoeffs() - nDirBndDofs;

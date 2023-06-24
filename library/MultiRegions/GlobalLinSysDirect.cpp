@@ -58,22 +58,5 @@ GlobalLinSysDirect::~GlobalLinSysDirect()
 {
 }
 
-/// Solve the linear system for given input and output vectors.
-void GlobalLinSysDirect::v_SolveLinearSystem(
-    const int pNumRows, const Array<OneD, const NekDouble> &pInput,
-    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &pLocToGloMap,
-    const int pNumDir)
-{
-    boost::ignore_unused(pLocToGloMap);
-
-    const int nHomDofs = pNumRows - pNumDir;
-
-    DNekVec Vin(nHomDofs, pInput + pNumDir);
-
-    Array<OneD, NekDouble> tmp = pOutput + pNumDir;
-    DNekVec Vout(nHomDofs, tmp, eWrapper);
-
-    m_linSys->Solve(Vin, Vout);
-}
 } // namespace MultiRegions
 } // namespace Nektar

@@ -213,8 +213,7 @@ GlobalLinSys::GlobalLinSys(const GlobalLinSysKey &pKey,
  */
 PreconditionerSharedPtr GlobalLinSys::CreatePrecon(AssemblyMapSharedPtr asmMap)
 {
-    PreconditionerType pType = asmMap->GetPreconType();
-    std::string PreconType   = MultiRegions::PreconditionerTypeMap[pType];
+    std::string PreconType = asmMap->GetPreconType();
     return GetPreconFactory().CreateInstance(PreconType, GetSharedThisPtr(),
                                              asmMap);
 }

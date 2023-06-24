@@ -65,7 +65,6 @@ GlobalLinSysXxtFull::GlobalLinSysXxtFull(
              "This routine should only be used when using a Full XXT"
              " matrix solve");
 
-    CreateMap(pLocToGloMap);
     AssembleMatrixArrays(pLocToGloMap);
 }
 
@@ -111,54 +110,17 @@ void GlobalLinSysXxtFull::v_Solve(
             Vmath::Vsub(nLocDofs, pLocInput, 1, tmp, 1, tmp1, 1);
         }
 
-        pLocToGloMap->Assemble(tmp1, tmp);
-
-        SolveLinearSystem(pLocToGloMap->GetNumLocalCoeffs(), tmp, global,
+        SolveLinearSystem(pLocToGloMap->GetNumLocalCoeffs(), tmp1, tmp,
                           pLocToGloMap);
-        pLocToGloMap->GlobalToLocal(global, tmp);
 
         // Add back initial and boundary condition
         Vmath::Vadd(nLocDofs, tmp, 1, pLocOutput, 1, pLocOutput, 1);
     }
     else
     {
-        pLocToGloMap->Assemble(pLocInput, tmp);
-        SolveLinearSystem(pLocToGloMap->GetNumLocalCoeffs(), tmp, global,
-                          pLocToGloMap);
-        pLocToGloMap->GlobalToLocal(global, pLocOutput);
+        SolveLinearSystem(pLocToGloMap->GetNumLocalCoeffs(), pLocInput,
+                          pLocOutput, pLocToGloMap);
     }
-}
-
-/**
- * Create the inverse multiplicity map.
- * @param   locToGloMap Local to global mapping information.
- */
-void GlobalLinSysXxtFull::CreateMap(
-    const std::shared_ptr<AssemblyMap> &pLocToGloMap)
-{
-    const Array<OneD, const int> &vMap = pLocToGloMap->GetLocalToGlobalMap();
-    unsigned int nGlo                  = pLocToGloMap->GetNumGlobalCoeffs();
-    unsigned int nEntries              = pLocToGloMap->GetNumLocalCoeffs();
-    unsigned int i;
-
-    // Count the multiplicity of each global DOF on this process
-    Array<OneD, NekDouble> vCounts(nGlo, 0.0);
-    for (i = 0; i < nEntries; ++i)
-    {
-        vCounts[vMap[i]] += 1.0;
-    }
-
-    // Get universal multiplicity by globally assembling counts
-    pLocToGloMap->UniversalAssemble(vCounts);
-
-    // Construct a map of 1/multiplicity for use in XXT solve
-    m_locToGloSignMult = Array<OneD, NekDouble>(nEntries);
-    for (i = 0; i < nEntries; ++i)
-    {
-        m_locToGloSignMult[i] = 1.0 / vCounts[vMap[i]];
-    }
-
-    m_map = pLocToGloMap->GetLocalToGlobalMap();
 }
 
 /**
@@ -260,5 +222,36 @@ void GlobalLinSysXxtFull::AssembleMatrixArrays(
         Xxt::nektar_crs_stats(m_crsData);
     }
 }
+
+/// Solve the linear system for given input and output vectors.
+void GlobalLinSysXxtFull::v_SolveLinearSystem(
+    const int pNumRows, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &pLocToGloMap,
+    const int pNumDir)
+{
+    boost::ignore_unused(pNumRows, pNumDir);
+
+    int nLocal = pNumRows;
+
+    Vmath::Zero(nLocal, pOutput, 1);
+
+    // Set Output into correct sign
+    if (pLocToGloMap->GetSignChange())
+    {
+        Array<OneD, NekDouble> vlocal(nLocal);
+        Vmath::Vmul(nLocal, pLocToGloMap->GetLocalToGlobalSign(), 1, pInput, 1,
+                    vlocal, 1);
+
+        Xxt::Solve(pOutput, m_crsData, vlocal);
+
+        Vmath::Vmul(nLocal, pLocToGloMap->GetLocalToGlobalSign(), 1, pOutput, 1,
+                    pOutput, 1);
+    }
+    else
+    {
+        Xxt::Solve(pOutput, m_crsData, pInput);
+    }
+}
+
 } // namespace MultiRegions
 } // namespace Nektar

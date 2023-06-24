@@ -280,6 +280,61 @@ void GlobalLinSysPETScStaticCond::v_PreSolve(int scLevel,
     }
 }
 
+/**
+ * @brief Solve linear system using PETSc.
+ *
+ * The general strategy being a PETSc solve is to:
+ *
+ * - Copy values into the PETSc vector #m_b
+ * - Solve the system #m_ksp and place result into #m_x.
+ * - Scatter results back into #m_locVec using #m_ctx scatter object.
+ * - Copy from #m_locVec to output array #pOutput.
+ */
+void GlobalLinSysPETScStaticCond::v_SolveLinearSystem(
+    const int pNumRows, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &locToGloMap,
+    const int pNumDir)
+{
+    const int nHomDofs = pNumRows - pNumDir;
+
+    if (!m_precon && m_matMult == ePETScMatMultShell)
+    {
+        m_precon = CreatePrecon(locToGloMap);
+        m_precon->BuildPreconditioner();
+    }
+
+    Array<OneD, NekDouble> Glo(pNumRows);
+    locToGloMap->AssembleBnd(pInput, Glo);
+
+    // Populate RHS vector from input
+    VecSetValues(m_b, nHomDofs, &m_reorderedMap[0], &Glo[pNumDir],
+                 INSERT_VALUES);
+
+    // Assemble RHS vector
+    VecAssemblyBegin(m_b);
+    VecAssemblyEnd(m_b);
+
+    // Do system solve
+    KSPSolve(m_ksp, m_b, m_x);
+
+    KSPConvergedReason reason;
+    KSPGetConvergedReason(m_ksp, &reason);
+    ASSERTL0(reason > 0, "PETSc solver diverged, reason is: " +
+                             std::string(KSPConvergedReasons[reason]));
+
+    // Scatter results to local vector
+    VecScatterBegin(m_ctx, m_x, m_locVec, INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterEnd(m_ctx, m_x, m_locVec, INSERT_VALUES, SCATTER_FORWARD);
+
+    // Copy results into output vector
+    PetscScalar *tmp;
+    VecGetArray(m_locVec, &tmp);
+    Vmath::Vcopy(nHomDofs, tmp, 1, &Glo[pNumDir], 1);
+    Vmath::Zero(pNumDir, Glo, 1);
+    locToGloMap->GlobalToLocalBnd(Glo, pOutput);
+    VecRestoreArray(m_locVec, &tmp);
+}
+
 void GlobalLinSysPETScStaticCond::v_BasisFwdTransform(
     Array<OneD, NekDouble> &pInOut)
 {
