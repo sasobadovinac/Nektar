@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: NekLinSysIterCG.cpp
+// File: NekLinSysIterCGLoc.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,12 +29,12 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: NekLinSysIterCG definition
+// Description: NekLinSysIterCGLoc definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/BasicUtils/Timer.h>
-#include <LibUtilities/LinearAlgebra/NekLinSysIterCG.h>
+#include <LibUtilities/LinearAlgebra/NekLinSysIterCGLoc.h>
 
 using namespace std;
 
@@ -43,45 +43,47 @@ namespace Nektar
 namespace LibUtilities
 {
 /**
- * @class  NekLinSysIterCG
+ * @class  NekLinSysIterCGLoc
  *
  * Solves a linear system using iterative methods.
  */
-string NekLinSysIterCG::className =
+string NekLinSysIterCGLoc::className =
     LibUtilities::GetNekLinSysIterFactory().RegisterCreatorFunction(
-        "ConjugateGradient", NekLinSysIterCG::create,
-        "NekLinSysIterCG solver.");
+        "ConjugateGradientLoc", NekLinSysIterCGLoc::create,
+        "NekLinSysIterCG solver in Local Space.");
 
-NekLinSysIterCG::NekLinSysIterCG(
+NekLinSysIterCGLoc::NekLinSysIterCGLoc(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const LibUtilities::CommSharedPtr &vComm, const int nDimen,
     const NekSysKey &pKey)
     : NekLinSysIter(pSession, vComm, nDimen, pKey)
 {
+    m_isLocal = true;
 }
 
-void NekLinSysIterCG::v_InitObject()
+void NekLinSysIterCGLoc::v_InitObject()
 {
     NekLinSysIter::v_InitObject();
 }
 
-NekLinSysIterCG::~NekLinSysIterCG()
+NekLinSysIterCGLoc::~NekLinSysIterCGLoc()
 {
 }
 
 /**
  *
  */
-int NekLinSysIterCG::v_SolveSystem(const int nGlobal,
-                                   const Array<OneD, const NekDouble> &pInput,
-                                   Array<OneD, NekDouble> &pOutput,
-                                   const int nDir, const NekDouble tol,
-                                   const NekDouble factor)
+int NekLinSysIterCGLoc::v_SolveSystem(
+    const int nLocal, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput, const int nDir, const NekDouble tol,
+    const NekDouble factor)
 {
+    boost::ignore_unused(tol, nDir);
+
     m_tolerance   = max(tol, 1.0E-16);
     m_prec_factor = factor;
 
-    DoConjugateGradient(nGlobal, pInput, pOutput, nDir);
+    DoConjugateGradient(nLocal, pInput, pOutput);
 
     return m_totalIterations;
 }
@@ -99,48 +101,46 @@ int NekLinSysIterCG::v_SolveSystem(const int nGlobal,
  * @param       pInput      Input residual  of all DOFs.  
  * @param       pOutput     Solution vector of all DOFs.  
  */
-void NekLinSysIterCG::DoConjugateGradient(
-    const int nGlobal, const Array<OneD, const NekDouble> &pInput,
-    Array<OneD, NekDouble> &pOutput, const int nDir)
+void NekLinSysIterCGLoc::DoConjugateGradient(
+    const int nLocal, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput)
 {
-    // Get vector sizes
-    int nNonDir = nGlobal - nDir;
-
     // Allocate array storage
-    Array<OneD, NekDouble> w_A(nGlobal, 0.0);
-    Array<OneD, NekDouble> s_A(nGlobal, 0.0);
-    Array<OneD, NekDouble> p_A(nNonDir, 0.0);
-    Array<OneD, NekDouble> r_A(nNonDir, 0.0);
-    Array<OneD, NekDouble> q_A(nNonDir, 0.0);
-    Array<OneD, NekDouble> tmp;
+    Array<OneD, NekDouble> w_A(nLocal, 0.0);
+    Array<OneD, NekDouble> s_A(nLocal, 0.0);
+    Array<OneD, NekDouble> p_A(nLocal, 0.0);
+    Array<OneD, NekDouble> r_A(nLocal, 0.0);
+    Array<OneD, NekDouble> q_A(nLocal, 0.0);
+    Array<OneD, NekDouble> wk(nLocal, 0.0);
 
+    int k;
     NekDouble alpha;
     NekDouble beta;
     NekDouble rho;
     NekDouble rho_new;
     NekDouble mu;
     NekDouble eps;
+    NekDouble min_resid;
     Array<OneD, NekDouble> vExchange(3, 0.0);
 
     // Copy initial residual from input
-    Vmath::Vcopy(nNonDir, pInput + nDir, 1, r_A, 1);
+    Vmath::Vcopy(nLocal, pInput, 1, r_A, 1);
 
-    // Zero homogeneous out array ready for solution updates
+    // zero homogeneous out array ready for solution updates
     // Should not be earlier in case input vector is same as
     // output and above copy has been peformed
-    Vmath::Zero(nNonDir, tmp = pOutput + nDir, 1);
+    Vmath::Zero(nLocal, pOutput, 1);
 
-    // Evaluate initial residual error for exit check
-    vExchange[2] = Vmath::Dot2(nNonDir, r_A, r_A, m_map + nDir);
-
-    m_Comm->AllReduce(vExchange[2], Nektar::LibUtilities::ReduceSum);
+    // evaluate initial residual error for exit check
+    m_operator.DoAssembleLoc(r_A, wk, true);
+    vExchange[2] = Vmath::Dot(nLocal, wk, r_A);
+    m_Comm->AllReduce(vExchange, Nektar::LibUtilities::ReduceSum);
 
     eps = vExchange[2];
 
     if (m_rhs_magnitude == NekConstants::kNekUnsetDouble)
     {
-        NekVector<NekDouble> inGlob(nGlobal, pInput, eWrapper);
-        Set_Rhs_Magnitude(inGlob);
+        Set_Rhs_Magnitude(pInput);
     }
 
     m_totalIterations = 0;
@@ -158,18 +158,18 @@ void NekLinSysIterCG::DoConjugateGradient(
         return;
     }
 
-    m_operator.DoNekSysPrecon(r_A, tmp = w_A + nDir);
-
+    m_operator.DoNekSysPrecon(r_A, w_A, true);
     m_operator.DoNekSysLhsEval(w_A, s_A);
 
-    vExchange[0] = Vmath::Dot2(nNonDir, r_A, w_A + nDir, m_map + nDir);
+    k = 0;
 
-    vExchange[1] = Vmath::Dot2(nNonDir, s_A + nDir, w_A + nDir, m_map + nDir);
-
+    vExchange[0] = Vmath::Dot(nLocal, r_A, w_A);
+    vExchange[1] = Vmath::Dot(nLocal, s_A, w_A);
     m_Comm->AllReduce(vExchange, Nektar::LibUtilities::ReduceSum);
 
     rho               = vExchange[0];
     mu                = vExchange[1];
+    min_resid         = m_rhs_magnitude;
     beta              = 0.0;
     alpha             = rho / mu;
     m_totalIterations = 1;
@@ -177,7 +177,7 @@ void NekLinSysIterCG::DoConjugateGradient(
     // Continue until convergence
     while (true)
     {
-        if (m_totalIterations > m_maxiter)
+        if (k >= m_maxiter)
         {
             if (m_root)
             {
@@ -191,31 +191,28 @@ void NekLinSysIterCG::DoConjugateGradient(
         }
 
         // Compute new search direction p_k, q_k
-        Vmath::Svtvp(nNonDir, beta, &p_A[0], 1, &w_A[nDir], 1, &p_A[0], 1);
-        Vmath::Svtvp(nNonDir, beta, &q_A[0], 1, &s_A[nDir], 1, &q_A[0], 1);
+        Vmath::Svtvp(nLocal, beta, p_A, 1, w_A, 1, p_A, 1);
+        Vmath::Svtvp(nLocal, beta, q_A, 1, s_A, 1, q_A, 1);
 
         // Update solution x_{k+1}
-        Vmath::Svtvp(nNonDir, alpha, &p_A[0], 1, &pOutput[nDir], 1,
-                     &pOutput[nDir], 1);
+        Vmath::Svtvp(nLocal, alpha, p_A, 1, pOutput, 1, pOutput, 1);
 
         // Update residual vector r_{k+1}
-        Vmath::Svtvp(nNonDir, -alpha, &q_A[0], 1, &r_A[0], 1, &r_A[0], 1);
+        Vmath::Svtvp(nLocal, -alpha, q_A, 1, r_A, 1, r_A, 1);
 
         // Apply preconditioner
-        m_operator.DoNekSysPrecon(r_A, tmp = w_A + nDir);
+        m_operator.DoNekSysPrecon(r_A, w_A, true);
 
         // Perform the method-specific matrix-vector multiply operation.
         m_operator.DoNekSysLhsEval(w_A, s_A);
 
         // <r_{k+1}, w_{k+1}>
-        vExchange[0] = Vmath::Dot2(nNonDir, r_A, w_A + nDir, m_map + nDir);
-
+        vExchange[0] = Vmath::Dot(nLocal, r_A, w_A);
         // <s_{k+1}, w_{k+1}>
-        vExchange[1] =
-            Vmath::Dot2(nNonDir, s_A + nDir, w_A + nDir, m_map + nDir);
-
+        vExchange[1] = Vmath::Dot(nLocal, s_A, w_A);
         // <r_{k+1}, r_{k+1}>
-        vExchange[2] = Vmath::Dot2(nNonDir, r_A, r_A, m_map + nDir);
+        m_operator.DoAssembleLoc(r_A, wk, true);
+        vExchange[2] = Vmath::Dot(nLocal, wk, r_A);
 
         // Perform inner-product exchanges
         m_Comm->AllReduce(vExchange, Nektar::LibUtilities::ReduceSum);
@@ -238,11 +235,13 @@ void NekLinSysIterCG::DoConjugateGradient(
             }
             break;
         }
+        min_resid = min(min_resid, eps);
 
         // Compute search direction and solution coefficients
         beta  = rho_new / rho;
         alpha = rho_new / (mu - rho_new * beta / alpha);
         rho   = rho_new;
+        k++;
     }
 }
 } // namespace LibUtilities

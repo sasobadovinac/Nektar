@@ -100,6 +100,11 @@ protected:
         unsigned int n) override;
     virtual void v_PreSolve(int scLevel,
                             Array<OneD, NekDouble> &F_bBnd) override;
+    virtual void v_SolveLinearSystem(const int pNumRows,
+                                     const Array<OneD, const NekDouble> &pInput,
+                                     Array<OneD, NekDouble> &pOutput,
+                                     const AssemblyMapSharedPtr &locToGloMap,
+                                     const int pNumDir) override;
 
     virtual void v_BasisFwdTransform(Array<OneD, NekDouble> &pInOut) override;
     virtual void v_CoeffsBwdTransform(Array<OneD, NekDouble> &pInOut) override;

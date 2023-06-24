@@ -125,6 +125,8 @@ void PreconditionerLinear::v_BuildPreconditioner()
     m_vertLocToGloMap =
         m_locToGloMap.lock()->LinearSpaceMap(*expList, linSolveType);
 
+    SetupInvMult(m_vertLocToGloMap);
+
     // Generate linear solve system.
     StdRegions::MatrixType mType =
         m_linsys.lock()->GetKey().GetMatrixType() == StdRegions::eMass
@@ -161,8 +163,11 @@ void PreconditionerLinear::v_BuildPreconditioner()
  *
  */
 void PreconditionerLinear::v_DoPreconditioner(
-    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &isLocal)
 {
+    ASSERTL0(isLocal == false, "PreconditionerLinear is only set up for Global"
+                               " iteratives sovles");
     v_DoPreconditionerWithNonVertOutput(pInput, pOutput, NullNekDouble1DArray,
                                         NullNekDouble1DArray);
 }
@@ -183,7 +188,6 @@ void PreconditionerLinear::v_DoPreconditionerWithNonVertOutput(
         {
             int i, val;
             int nloc = m_vertLocToGloMap->GetNumLocalCoeffs();
-            int nglo = m_vertLocToGloMap->GetNumGlobalCoeffs();
             // mapping from full space to vertices
             Array<OneD, int> LocToGloBnd =
                 m_vertLocToGloMap->GetLocalToGlobalBndMap();
@@ -195,10 +199,12 @@ void PreconditionerLinear::v_DoPreconditionerWithNonVertOutput(
             // number of Dir coeffs in from full problem
             int nDirFull = m_locToGloMap.lock()->GetNumGlobalDirBndCoeffs();
 
+#if 0 
+            int nglo = m_vertLocToGloMap->GetNumGlobalCoeffs();
             Array<OneD, NekDouble> In(nglo, 0.0);
             Array<OneD, NekDouble> Out(nglo, 0.0);
 
-            // Gather rhs
+            // Gather rhs to local linear space.
             for (i = 0; i < nloc; ++i)
             {
                 val = LocToGloBnd[i];
@@ -207,6 +213,20 @@ void PreconditionerLinear::v_DoPreconditionerWithNonVertOutput(
                     In[LocToGlo[i]] = pInput[val - nDirFull];
                 }
             }
+#else
+            Array<OneD, NekDouble> In(nloc, 0.0);
+            Array<OneD, NekDouble> Out(nloc, 0.0);
+
+            // Gather rhs to local linear space.
+            for (i = 0; i < nloc; ++i)
+            {
+                val = LocToGloBnd[i];
+                if (val >= nDirFull)
+                {
+                    In[i] = pInput[val - nDirFull] * m_invMult[i];
+                }
+            }
+#endif
 
             // Do solve without enforcing any boundary conditions.
             m_vertLinsys->SolveLinearSystem(
@@ -227,6 +247,7 @@ void PreconditionerLinear::v_DoPreconditionerWithNonVertOutput(
                 Vmath::Vcopy(pInput.size(), pInput, 1, pOutput, 1);
             }
 
+#if 0 
             if (pVertForce != NullNekDouble1DArray)
             {
                 Vmath::Zero(pVertForce.size(), pVertForce, 1);
@@ -254,11 +275,69 @@ void PreconditionerLinear::v_DoPreconditionerWithNonVertOutput(
                     }
                 }
             }
+#else
+            if (pVertForce != NullNekDouble1DArray)
+            {
+                Vmath::Zero(pVertForce.size(), pVertForce, 1);
+                // Scatter back soln from linear solve
+                for (i = 0; i < nloc; ++i)
+                {
+                    val = LocToGloBnd[i];
+                    if (val >= nDirFull)
+                    {
+                        pOutput[val - nDirFull] = Out[i];
+                        // copy vertex forcing into this vector
+                        pVertForce[val - nDirFull] = In[i];
+                    }
+                }
+            }
+            else
+            {
+                // Scatter back soln from linear solve
+                for (i = 0; i < nloc; ++i)
+                {
+                    val = LocToGloBnd[i];
+                    if (val >= nDirFull)
+                    {
+                        pOutput[val - nDirFull] = Out[i];
+                    }
+                }
+            }
+#endif
         }
         break;
         default:
             ASSERTL0(0, "Unsupported solver type");
             break;
+    }
+}
+/**
+ * Create the inverse multiplicity map.
+ * @param   locToGloMap Local to global mapping information.
+ */
+void PreconditionerLinear::SetupInvMult(
+    const std::shared_ptr<AssemblyMap> &pLocToGloMap)
+{
+    const Array<OneD, const int> &vMap = pLocToGloMap->GetLocalToGlobalMap();
+    unsigned int nGlo                  = pLocToGloMap->GetNumGlobalCoeffs();
+    unsigned int nEntries              = pLocToGloMap->GetNumLocalCoeffs();
+    unsigned int i;
+
+    // Count the multiplicity of each global DOF on this process
+    Array<OneD, NekDouble> vCounts(nGlo, 0.0);
+    for (i = 0; i < nEntries; ++i)
+    {
+        vCounts[vMap[i]] += 1.0;
+    }
+
+    // Get universal multiplicity by globally assembling counts
+    pLocToGloMap->UniversalAssemble(vCounts);
+
+    // Construct a map of 1/multiplicity for use in XXT solve
+    m_invMult = Array<OneD, NekDouble>(nEntries);
+    for (i = 0; i < nEntries; ++i)
+    {
+        m_invMult[i] = 1.0 / vCounts[vMap[i]];
     }
 }
 } // namespace MultiRegions

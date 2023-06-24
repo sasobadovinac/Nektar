@@ -82,6 +82,13 @@ protected:
 
 private:
     void AssembleFullMatrix(const std::shared_ptr<AssemblyMap> &locToGloMap);
+
+    /// Solve the linear system for given input and output vectors.
+    virtual void v_SolveLinearSystem(const int pNumRows,
+                                     const Array<OneD, const NekDouble> &pInput,
+                                     Array<OneD, NekDouble> &pOutput,
+                                     const AssemblyMapSharedPtr &locToGloMap,
+                                     const int pNumDir) override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

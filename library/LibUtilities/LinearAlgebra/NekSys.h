@@ -63,7 +63,7 @@ public:
         FunctorType2;
     typedef Array<OneD, FunctorType1> FunctorType1Array;
     typedef Array<OneD, FunctorType2> FunctorType2Array;
-    static const int nfunctor1 = 3;
+    static const int nfunctor1 = 4;
     static const int nfunctor2 = 1;
 
     NekSysOperators(void) : m_functors1(nfunctor1), m_functors2(nfunctor2)
@@ -119,6 +119,13 @@ public:
                       std::placeholders::_3);
     }
     template <typename FuncPointerT, typename ObjectPointerT>
+    void DefineAssembleLoc(FuncPointerT func, ObjectPointerT obj)
+    {
+        m_functors1[3] =
+            std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,
+                      std::placeholders::_3);
+    }
+    template <typename FuncPointerT, typename ObjectPointerT>
     void DefineNekSysFixPointIte(FuncPointerT func, ObjectPointerT obj)
     {
         m_functors2[0] =
@@ -153,6 +160,13 @@ public:
         }
     }
 
+    inline void DoAssembleLoc(InArrayType &xn, OutArrayType &xn1,
+                              const bool &flag = false) const
+    {
+        ASSERTL1(m_functors1[3], "DoAssembleLoc should be defined");
+        m_functors1[3](xn, xn1, flag);
+    }
+
     inline void DoNekSysFixPointIte(InArrayType &rhs, InArrayType &xn,
                                     OutArrayType &xn1,
                                     const bool &flag = false) const
@@ -162,7 +176,7 @@ public:
     }
 
 protected:
-    /* Defines three operators
+    /* Defines operators
         DoNekSysResEval   :
             evaluations the residual of the Nonlinear/Linear system
             ie. the residual b-Ax and N(x) for linear and
@@ -177,6 +191,10 @@ protected:
             Jacobian matrix for Newton method;
         DoNekSysPrecon      :
             Preconditioning operator of the system.
+        DoAssembleLoc       :
+            Operator to assemble array and scater it back to the lcoal storage
+            if flag is true will zero Dirichlet conditions
+        DoNekSysFixPointIte :
     */
     FunctorType1Array m_functors1;
 

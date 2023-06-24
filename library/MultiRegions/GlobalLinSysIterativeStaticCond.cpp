@@ -381,31 +381,52 @@ void GlobalLinSysIterativeStaticCond::PrepareLocalSchurComplement()
 void GlobalLinSysIterativeStaticCond::v_DoMatrixMultiply(
     const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
 {
-    int nLocal                  = m_locToGloMap.lock()->GetNumLocalBndCoeffs();
-    AssemblyMapSharedPtr asmMap = m_locToGloMap.lock();
-
-    if (m_sparseSchurCompl)
+    if (m_linsol->IsLocal())
     {
-        // Do matrix multiply locally using block-diagonal sparse matrix
-        Array<OneD, NekDouble> tmp = m_wsp + nLocal;
-
-        asmMap->GlobalToLocalBnd(pInput, m_wsp);
-        m_sparseSchurCompl->Multiply(m_wsp, tmp);
-        asmMap->AssembleBnd(tmp, pOutput);
+        if (m_sparseSchurCompl)
+        {
+            m_sparseSchurCompl->Multiply(pInput, pOutput);
+        }
+        else
+        {
+            // Do matrix multiply locally, using direct BLAS calls
+            int i, cnt;
+            for (i = cnt = 0; i < m_denseBlocks.size(); cnt += m_rows[i], ++i)
+            {
+                const int rows = m_rows[i];
+                Blas::Dgemv('N', rows, rows, m_scale[i], m_denseBlocks[i], rows,
+                            pInput.get() + cnt, 1, 0.0, pOutput.get() + cnt, 1);
+            }
+        }
     }
     else
     {
-        // Do matrix multiply locally, using direct BLAS calls
-        asmMap->GlobalToLocalBnd(pInput, m_wsp);
-        int i, cnt;
-        Array<OneD, NekDouble> tmpout = m_wsp + nLocal;
-        for (i = cnt = 0; i < m_denseBlocks.size(); cnt += m_rows[i], ++i)
+        int nLocal = m_locToGloMap.lock()->GetNumLocalBndCoeffs();
+        AssemblyMapSharedPtr asmMap = m_locToGloMap.lock();
+
+        if (m_sparseSchurCompl)
         {
-            const int rows = m_rows[i];
-            Blas::Dgemv('N', rows, rows, m_scale[i], m_denseBlocks[i], rows,
-                        m_wsp.get() + cnt, 1, 0.0, tmpout.get() + cnt, 1);
+            // Do matrix multiply locally using block-diagonal sparse matrix
+            Array<OneD, NekDouble> tmp = m_wsp + nLocal;
+
+            asmMap->GlobalToLocalBnd(pInput, m_wsp);
+            m_sparseSchurCompl->Multiply(m_wsp, tmp);
+            asmMap->AssembleBnd(tmp, pOutput);
         }
-        asmMap->AssembleBnd(tmpout, pOutput);
+        else
+        {
+            // Do matrix multiply locally, using direct BLAS calls
+            asmMap->GlobalToLocalBnd(pInput, m_wsp);
+            int i, cnt;
+            Array<OneD, NekDouble> tmpout = m_wsp + nLocal;
+            for (i = cnt = 0; i < m_denseBlocks.size(); cnt += m_rows[i], ++i)
+            {
+                const int rows = m_rows[i];
+                Blas::Dgemv('N', rows, rows, m_scale[i], m_denseBlocks[i], rows,
+                            m_wsp.get() + cnt, 1, 0.0, tmpout.get() + cnt, 1);
+            }
+            asmMap->AssembleBnd(tmpout, pOutput);
+        }
     }
 }
 
@@ -502,6 +523,70 @@ GlobalLinSysStaticCondSharedPtr GlobalLinSysIterativeStaticCond::v_Recurse(
             mkey, pExpList, pSchurCompl, pBinvD, pC, pInvD, l2gMap, m_precon);
     sys->Initialise(l2gMap);
     return sys;
+}
+/**
+ *
+ */
+void GlobalLinSysIterativeStaticCond::v_SolveLinearSystem(
+    const int nGlobal, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &plocToGloMap,
+    const int nDir)
+{
+
+    if (!m_linsol)
+    {
+        LibUtilities::CommSharedPtr vComm =
+            m_expList.lock()->GetComm()->GetRowComm();
+        LibUtilities::SessionReaderSharedPtr pSession =
+            m_expList.lock()->GetSession();
+
+        // Check such a module exists for this equation.
+        ASSERTL0(LibUtilities::GetNekLinSysIterFactory().ModuleExists(
+                     m_linSysIterSolver),
+                 "NekLinSysIter '" + m_linSysIterSolver +
+                     "' is not defined.\n");
+        m_linsol = LibUtilities::GetNekLinSysIterFactory().CreateInstance(
+            m_linSysIterSolver, pSession, vComm, nGlobal - nDir,
+            LibUtilities::NekSysKey());
+
+        m_linsol->SetSysOperators(m_NekSysOp);
+        v_UniqueMap();
+        m_linsol->setUniversalUniqueMap(m_map);
+    }
+
+    if (!m_precon)
+    {
+        m_precon = CreatePrecon(plocToGloMap);
+        m_precon->BuildPreconditioner();
+    }
+
+    m_linsol->setRhsMagnitude(m_rhs_magnitude);
+
+    if (m_useProjection)
+    {
+        Array<OneD, NekDouble> gloIn(nGlobal);
+        Array<OneD, NekDouble> gloOut(nGlobal, 0.0);
+        plocToGloMap->AssembleBnd(pInput, gloIn);
+        DoProjection(nGlobal, gloIn, gloOut, nDir, m_tolerance, m_isAconjugate);
+        plocToGloMap->GlobalToLocalBnd(gloOut, pOutput);
+    }
+    else
+    {
+        if (m_linsol->IsLocal())
+        {
+            int nLocDofs = plocToGloMap->GetNumLocalBndCoeffs();
+            Vmath::Zero(nLocDofs, pOutput, 1);
+            m_linsol->SolveSystem(nLocDofs, pInput, pOutput, nDir, m_tolerance);
+        }
+        else
+        {
+            Array<OneD, NekDouble> gloIn(nGlobal);
+            Array<OneD, NekDouble> gloOut(nGlobal, 0.0);
+            plocToGloMap->AssembleBnd(pInput, gloIn);
+            m_linsol->SolveSystem(nGlobal, gloIn, gloOut, nDir, m_tolerance);
+            plocToGloMap->GlobalToLocalBnd(gloOut, pOutput);
+        }
+    }
 }
 } // namespace MultiRegions
 } // namespace Nektar

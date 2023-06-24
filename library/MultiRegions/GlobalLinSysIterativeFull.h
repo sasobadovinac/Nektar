@@ -85,6 +85,13 @@ protected:
 private:
     // Local to global map.
     std::weak_ptr<AssemblyMap> m_locToGloMap;
+
+    /// Solve the matrix system
+    virtual void v_SolveLinearSystem(const int pNumRows,
+                                     const Array<OneD, const NekDouble> &pInput,
+                                     Array<OneD, NekDouble> &pOutput,
+                                     const AssemblyMapSharedPtr &locToGloMap,
+                                     const int pNumDir) override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

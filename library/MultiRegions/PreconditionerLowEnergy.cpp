@@ -910,14 +910,19 @@ void PreconditionerLowEnergy::v_BuildPreconditioner()
  * routine
  */
 void PreconditionerLowEnergy::v_DoPreconditioner(
-    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &isLocal)
+
 {
+    ASSERTL0(isLocal == false, "PreconditionerLowEnergy is only currently "
+                               "set up for Global iteratives sovles");
     int nDir      = m_locToGloMap.lock()->GetNumGlobalDirBndCoeffs();
     int nGlobal   = m_locToGloMap.lock()->GetNumGlobalBndCoeffs();
     int nNonDir   = nGlobal - nDir;
     DNekBlkMat &M = (*m_BlkMat);
 
     NekVector<NekDouble> r(nNonDir, pInput, eWrapper);
+
     NekVector<NekDouble> z(nNonDir, pOutput, eWrapper);
 
     z = M * r;
@@ -1242,30 +1247,27 @@ DNekScalMatSharedPtr PreconditionerLowEnergy::v_TransformedSchurCompl(
 }
 
 /**
- * Create the inverse multiplicity map.
+ * Create the mask array
  */
 void PreconditionerLowEnergy::CreateVariablePMask(void)
 {
-    unsigned int nLocBnd = m_locToGloMap.lock()->GetNumLocalBndCoeffs();
-    unsigned int i;
-    auto asmMap = m_locToGloMap.lock();
-
-    const Array<OneD, const NekDouble> &sign =
-        asmMap->GetLocalToGlobalBndSign();
+    auto asmMap          = m_locToGloMap.lock();
+    unsigned int nLocBnd = asmMap->GetNumLocalBndCoeffs();
 
     m_signChange = asmMap->GetSignChange();
 
-    // Construct a map of 1/multiplicity
-    m_variablePmask = Array<OneD, NekDouble>(nLocBnd);
-    for (i = 0; i < nLocBnd; ++i)
+    // Construct a mask array
+    m_variablePmask = Array<OneD, NekDouble>(nLocBnd, 1.0);
+
+    if (m_signChange)
     {
-        if (m_signChange)
+        unsigned int i;
+        const Array<OneD, const NekDouble> &sign =
+            asmMap->GetLocalToGlobalBndSign();
+
+        for (i = 0; i < nLocBnd; ++i)
         {
             m_variablePmask[i] = fabs(sign[i]);
-        }
-        else
-        {
-            m_variablePmask[i] = 1.0;
         }
     }
 }

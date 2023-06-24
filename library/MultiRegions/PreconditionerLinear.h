@@ -84,6 +84,8 @@ protected:
     GlobalLinSysSharedPtr m_vertLinsys;
     std::shared_ptr<AssemblyMap> m_vertLocToGloMap;
 
+    Array<OneD, NekDouble> m_invMult;
+
     virtual void v_InitObject() override;
 
     virtual void v_DoPreconditionerWithNonVertOutput(
@@ -92,9 +94,12 @@ protected:
         Array<OneD, NekDouble> &pVertForce) override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput) override;
+                                    Array<OneD, NekDouble> &pOutput,
+                                    const bool &isLocal = false) override;
 
     virtual void v_BuildPreconditioner() override;
+
+    void SetupInvMult(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
 
 private:
     static std::string solveType;

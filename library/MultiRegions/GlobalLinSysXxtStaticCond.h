@@ -91,8 +91,6 @@ public:
     MULTI_REGIONS_EXPORT virtual ~GlobalLinSysXxtStaticCond();
 
 protected:
-    void CreateMap(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
-
     /// Assemble the Schur complement matrix.
     virtual void v_AssembleSchurComplement(
         std::shared_ptr<AssemblyMap> locToGloMap) override;
@@ -103,6 +101,14 @@ protected:
         const DNekScalBlkMatSharedPtr pBinvD, const DNekScalBlkMatSharedPtr pC,
         const DNekScalBlkMatSharedPtr pInvD,
         const std::shared_ptr<AssemblyMap> &locToGloMap) override;
+
+private:
+    /// Solve the linear system for given input and output vectors.
+    virtual void v_SolveLinearSystem(const int pNumRows,
+                                     const Array<OneD, const NekDouble> &pInput,
+                                     Array<OneD, NekDouble> &pOutput,
+                                     const AssemblyMapSharedPtr &locToGloMap,
+                                     const int pNumDir) override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

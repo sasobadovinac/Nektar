@@ -79,7 +79,8 @@ protected:
     virtual void v_InitObject() override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput) override;
+                                    Array<OneD, NekDouble> &pOutput,
+                                    const bool &IsLocal = false) override;
 
     virtual void v_BuildPreconditioner() override;
 
@@ -125,11 +126,59 @@ public:
     virtual void v_InitObject() override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput) override;
+                                    Array<OneD, NekDouble> &pOutput,
+                                    const bool &isLocal = false) override;
 
     virtual void v_BuildPreconditioner() override;
 
 private:
+    static std::string lookupIds[];
+    static std::string def;
+};
+
+class PreconditionerJacobi;
+typedef std::shared_ptr<PreconditionerJacobi> PreconditionerJacobiSharedPtr;
+
+class PreconditionerJacobi : public PreconditionerDiagonal
+{
+public:
+    /// Creates an instance of this class
+    static PreconditionerSharedPtr create(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
+    {
+        PreconditionerSharedPtr p =
+            MemoryManager<PreconditionerJacobi>::AllocateSharedPtr(
+                plinsys, pLocToGloMap);
+        p->InitObject();
+        return p;
+    }
+
+    /// Name of class
+    static std::string className;
+    // static std::string className1;
+
+    MULTI_REGIONS_EXPORT PreconditionerJacobi(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const AssemblyMapSharedPtr &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT
+    virtual ~PreconditionerJacobi()
+    {
+    }
+
+protected:
+    virtual void v_InitObject() override;
+
+    virtual void v_BuildPreconditioner() override;
+
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput,
+                                    const bool &IsLocal = false) override;
+
+private:
+    int m_niter;
+
     static std::string lookupIds[];
     static std::string def;
 };
