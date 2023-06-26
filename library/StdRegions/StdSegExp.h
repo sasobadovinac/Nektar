@@ -47,13 +47,13 @@ namespace StdRegions
 class StdSegExp : virtual public StdExpansion1D
 {
 public:
-    STD_REGIONS_EXPORT StdSegExp() = default;
+    STD_REGIONS_EXPORT StdSegExp();
 
     STD_REGIONS_EXPORT StdSegExp(const LibUtilities::BasisKey &Ba);
 
     STD_REGIONS_EXPORT StdSegExp(const StdSegExp &T);
 
-    STD_REGIONS_EXPORT virtual ~StdSegExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdSegExp() override;
 
 protected:
     //----------------------------

@@ -48,12 +48,12 @@ class StdHexExp : virtual public StdExpansion3D
 {
 
 public:
-    STD_REGIONS_EXPORT StdHexExp() = default;
+    STD_REGIONS_EXPORT StdHexExp();
     STD_REGIONS_EXPORT StdHexExp(const LibUtilities::BasisKey &Ba,
                                  const LibUtilities::BasisKey &Bb,
                                  const LibUtilities::BasisKey &Bc);
     STD_REGIONS_EXPORT StdHexExp(const StdHexExp &T);
-    STD_REGIONS_EXPORT virtual ~StdHexExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdHexExp() override;
 
 protected:
     //----------------------------
@@ -247,6 +247,10 @@ protected:
     STD_REGIONS_EXPORT void v_HelmholtzMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey) override;
+    
+    STD_REGIONS_EXPORT virtual void v_GeneralMatrixOp_MatOp(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey);
 
     STD_REGIONS_EXPORT void v_MultiplyByStdQuadratureMetric(
         const Array<OneD, const NekDouble> &inarray,

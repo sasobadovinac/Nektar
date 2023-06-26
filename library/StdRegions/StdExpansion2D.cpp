@@ -58,6 +58,10 @@ StdExpansion2D::StdExpansion2D(const StdExpansion2D &T) : StdExpansion(T)
 {
 }
 
+StdExpansion2D::~StdExpansion2D()
+{
+}
+
 //----------------------------
 // Differentiation Methods
 //----------------------------

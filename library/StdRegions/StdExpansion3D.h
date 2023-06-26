@@ -58,7 +58,7 @@ public:
                                       const LibUtilities::BasisKey &Bb,
                                       const LibUtilities::BasisKey &Bc);
     STD_REGIONS_EXPORT StdExpansion3D(const StdExpansion3D &T);
-    STD_REGIONS_EXPORT virtual ~StdExpansion3D() override = default;
+    STD_REGIONS_EXPORT virtual ~StdExpansion3D() override;
 
     // Differentiation
 
@@ -289,7 +289,7 @@ private:
         return 3;
     }
 
-    virtual int v_GetCoordim(void) override
+    virtual int v_GetCoordim(void) const override
     {
         return 3;
     }

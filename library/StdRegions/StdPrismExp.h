@@ -49,7 +49,7 @@ class StdPrismExp : virtual public StdExpansion3D
 {
 
 public:
-    STD_REGIONS_EXPORT StdPrismExp() = default;
+    STD_REGIONS_EXPORT StdPrismExp();
 
     STD_REGIONS_EXPORT StdPrismExp(const LibUtilities::BasisKey &Ba,
                                    const LibUtilities::BasisKey &Bb,

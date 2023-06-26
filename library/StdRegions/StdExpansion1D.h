@@ -49,7 +49,7 @@ class StdExpansion1D : virtual public StdExpansion
 {
 
 public:
-    STD_REGIONS_EXPORT StdExpansion1D() = default;
+    STD_REGIONS_EXPORT StdExpansion1D();
     STD_REGIONS_EXPORT StdExpansion1D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba);
     STD_REGIONS_EXPORT StdExpansion1D(const StdExpansion1D &T);
@@ -109,12 +109,12 @@ protected:
 private:
     // Virtual Functions ----------------------------------------
 
-    int v_GetCoordim(void) override
+    virtual int v_GetCoordim(void) const override
     {
         return 1;
     }
 
-    int v_GetShapeDimension() const final
+    virtual int v_GetShapeDimension() const final override
     {
         return 1;
     }

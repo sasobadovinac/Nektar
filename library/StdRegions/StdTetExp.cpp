@@ -492,6 +492,18 @@ void StdTetExp::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
     }
 }
 
+void StdTetExp::v_IProductWRTBase_MatOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nq = GetTotPoints();
+    StdMatrixKey iprodmatkey(eIProductWRTBase, DetShapeType(), *this);
+    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
+
+    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
+                inarray.get(), 1, 0.0, outarray.get(), 1);
+}
+
 /**
  * @param   inarray     Function evaluated at physical collocation
  *                      points.
@@ -614,6 +626,36 @@ void StdTetExp::v_IProductWRTDerivBase(
     Array<OneD, NekDouble> &outarray)
 {
     StdTetExp::v_IProductWRTDerivBase_SumFac(dir, inarray, outarray);
+}
+
+void StdTetExp::v_IProductWRTDerivBase_MatOp(
+    const int dir, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    ASSERTL0((dir == 0) || (dir == 1) || (dir == 2),
+             "input dir is out of range");
+
+    int nq           = GetTotPoints();
+    MatrixType mtype = eIProductWRTDerivBase0;
+
+    switch (dir)
+    {
+        case 0:
+            mtype = eIProductWRTDerivBase0;
+            break;
+        case 1:
+            mtype = eIProductWRTDerivBase1;
+            break;
+        case 2:
+            mtype = eIProductWRTDerivBase2;
+            break;
+    }
+
+    StdMatrixKey iprodmatkey(mtype, DetShapeType(), *this);
+    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
+
+    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
+                inarray.get(), 1, 0.0, outarray.get(), 1);
 }
 
 /**

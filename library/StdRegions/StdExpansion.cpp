@@ -1266,35 +1266,6 @@ NekDouble StdExpansion::v_PhysEvaluate(
     return 0;
 }
 
-NekDouble StdExpansion::v_PhysEvaluate(
-    const Array<OneD, NekDouble> &coord,
-    const Array<OneD, const NekDouble> &inarray,
-    std::array<NekDouble, 3> &firstOrderDerivs)
-{
-    boost::ignore_unused(coord, inarray, firstOrderDerivs);
-    NEKERROR(ErrorUtil::efatal,
-             "PhysEvaluate first order derivative method does not exist"
-             " for this shape type: " +
-                 static_cast<std::string>(
-                     LibUtilities::ShapeTypeMap[DetShapeType()]));
-    return 0;
-}
-
-NekDouble StdExpansion::v_PhysEvaluate(
-    const Array<OneD, NekDouble> &coord,
-    const Array<OneD, const NekDouble> &inarray,
-    std::array<NekDouble, 3> &firstOrderDerivs,
-    std::array<NekDouble, 6> &secondOrderDerivs)
-{
-    boost::ignore_unused(coord, inarray, firstOrderDerivs, secondOrderDerivs);
-    NEKERROR(ErrorUtil::efatal,
-             "PhysEvaluate second order derivative method does not exist"
-             " for this shape type: " +
-                 static_cast<std::string>(
-                     LibUtilities::ShapeTypeMap[DetShapeType()]));
-    return 0;
-}
-
 void StdExpansion::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)
 {
     boost::ignore_unused(mode, outarray);
@@ -1337,7 +1308,7 @@ void StdExpansion::v_GetCoord(const Array<OneD, const NekDouble> &Lcoord,
 
 int StdExpansion::v_GetCoordim() const
 {
-    return GetShapeDimension();
+    return GetShapeDimension(); 
 }
 
 void StdExpansion::v_GetBoundaryMap(Array<OneD, unsigned int> &outarray)

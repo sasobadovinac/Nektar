@@ -48,11 +48,11 @@ class StdMatrixKey;
 class StdTriExp : virtual public StdExpansion2D
 {
 public:
-    STD_REGIONS_EXPORT StdTriExp() = default;
+    STD_REGIONS_EXPORT StdTriExp();
     STD_REGIONS_EXPORT StdTriExp(const LibUtilities::BasisKey &Ba,
                                  const LibUtilities::BasisKey &Bb);
     STD_REGIONS_EXPORT StdTriExp(const StdTriExp &T);
-    STD_REGIONS_EXPORT virtual ~StdTriExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdTriExp() override;
 
 protected:
     //-------------------------------

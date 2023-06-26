@@ -71,7 +71,7 @@ class StdExpansion : public std::enable_shared_from_this<StdExpansion>
 {
 public:
     /** \brief Default Constructor */
-    STD_REGIONS_EXPORT StdExpansion() = default;
+    STD_REGIONS_EXPORT StdExpansion();
 
     /** \brief Constructor */
     STD_REGIONS_EXPORT StdExpansion(
@@ -84,7 +84,7 @@ public:
     STD_REGIONS_EXPORT StdExpansion(const StdExpansion &T);
 
     /** \brief Destructor */
-    STD_REGIONS_EXPORT virtual ~StdExpansion() = default;
+    STD_REGIONS_EXPORT virtual ~StdExpansion();
 
     // Standard Expansion Routines Applicable Regardless of Region
 

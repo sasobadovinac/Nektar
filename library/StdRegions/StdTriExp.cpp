@@ -447,6 +447,18 @@ void StdTriExp::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
     StdTriExp::v_IProductWRTBase_SumFac(inarray, outarray);
 }
 
+void StdTriExp::v_IProductWRTBase_MatOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nq = GetTotPoints();
+    StdMatrixKey iprodmatkey(eIProductWRTBase, DetShapeType(), *this);
+    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
+
+    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
+                inarray.get(), 1, 0.0, outarray.get(), 1);
+}
+
 void StdTriExp::v_IProductWRTBase_SumFac(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool multiplybyweights)
@@ -518,6 +530,39 @@ void StdTriExp::v_IProductWRTDerivBase(
     Array<OneD, NekDouble> &outarray)
 {
     StdTriExp::v_IProductWRTDerivBase_SumFac(dir, inarray, outarray);
+}
+
+void StdTriExp::v_IProductWRTDerivBase_MatOp(
+    const int dir, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nq           = GetTotPoints();
+    MatrixType mtype = eIProductWRTDerivBase0;
+
+    switch (dir)
+    {
+        case 0:
+        {
+            mtype = eIProductWRTDerivBase0;
+            break;
+        }
+        case 1:
+        {
+            mtype = eIProductWRTDerivBase1;
+            break;
+        }
+        default:
+        {
+            ASSERTL1(false, "input dir is out of range");
+            break;
+        }
+    }
+
+    StdMatrixKey iprodmatkey(mtype, DetShapeType(), *this);
+    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
+
+    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
+                inarray.get(), 1, 0.0, outarray.get(), 1);
 }
 
 void StdTriExp::v_IProductWRTDerivBase_SumFac(
@@ -1478,6 +1523,27 @@ void StdTriExp::v_ReduceOrderCoeffs(int numMin,
 
     m_OrthoTriExp->BwdTrans(coeff, phys_tmp);
     m_TriExp->FwdTrans(phys_tmp, outarray);
+}
+
+void StdTriExp::v_GeneralMatrixOp_MatOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey)
+{
+    DNekMatSharedPtr mat = m_stdMatrixManager[mkey];
+
+    if (inarray.get() == outarray.get())
+    {
+        Array<OneD, NekDouble> tmp(m_ncoeffs);
+        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
+
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, 1.0, mat->GetPtr().get(),
+                    m_ncoeffs, tmp.get(), 1, 0.0, outarray.get(), 1);
+    }
+    else
+    {
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, 1.0, mat->GetPtr().get(),
+                    m_ncoeffs, inarray.get(), 1, 0.0, outarray.get(), 1);
+    }
 }
 
 //---------------------------------------

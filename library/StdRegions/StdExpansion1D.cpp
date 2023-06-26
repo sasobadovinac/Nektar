@@ -53,6 +53,10 @@ StdExpansion1D::StdExpansion1D(const StdExpansion1D &T) : StdExpansion(T)
 {
 }
 
+StdExpansion1D::~StdExpansion1D()
+{
+}
+
 //----------------------------
 // Differentiation Methods
 //-----------------------------

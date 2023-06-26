@@ -48,12 +48,12 @@ namespace StdRegions
 class StdExpansion2D : virtual public StdExpansion
 {
 public:
-    STD_REGIONS_EXPORT StdExpansion2D() = default;
+    STD_REGIONS_EXPORT StdExpansion2D();
     STD_REGIONS_EXPORT StdExpansion2D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba,
                                       const LibUtilities::BasisKey &Bb);
     STD_REGIONS_EXPORT StdExpansion2D(const StdExpansion2D &T);
-    STD_REGIONS_EXPORT virtual ~StdExpansion2D() override = default;
+    STD_REGIONS_EXPORT virtual ~StdExpansion2D() override;
 
     // Generic operations in different element
 
@@ -221,7 +221,7 @@ private:
         return 2;
     }
 
-    virtual int v_GetCoordim(void) override
+    virtual int v_GetCoordim(void) const override
     {
         return 2;
     }

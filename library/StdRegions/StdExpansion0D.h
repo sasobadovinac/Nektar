@@ -71,7 +71,7 @@ protected:
         const Array<OneD, const NekDouble> &physvals) override;
 
 private:
-    virtual int v_GetCoordim(void) final
+    virtual int v_GetCoordim(void) const final
     {
         return 1;
     }

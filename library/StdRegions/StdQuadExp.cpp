@@ -405,6 +405,18 @@ void StdQuadExp::v_IProductWRTBase_SumFac(
     }
 }
 
+void StdQuadExp::v_IProductWRTBase_MatOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nq = GetTotPoints();
+    StdMatrixKey iprodmatkey(eIProductWRTBase, DetShapeType(), *this);
+    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
+
+    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
+                inarray.get(), 1, 0.0, outarray.get(), 1);
+}
+
 void StdQuadExp::v_IProductWRTDerivBase(
     const int dir, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
@@ -441,6 +453,31 @@ void StdQuadExp::v_IProductWRTDerivBase_SumFac(
                                      m_base[1]->GetBdata(), tmp, outarray, wsp,
                                      false, true);
     }
+}
+
+void StdQuadExp::v_IProductWRTDerivBase_MatOp(
+    const int dir, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    ASSERTL0((dir == 0) || (dir == 1), "input dir is out of range");
+
+    int nq = GetTotPoints();
+    MatrixType mtype;
+
+    if (dir) // dir == 1
+    {
+        mtype = eIProductWRTDerivBase1;
+    }
+    else // dir == 0
+    {
+        mtype = eIProductWRTDerivBase0;
+    }
+
+    StdMatrixKey iprodmatkey(mtype, DetShapeType(), *this);
+    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
+
+    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
+                inarray.get(), 1, 0.0, outarray.get(), 1);
 }
 
 // the arguments doCheckCollDir0 and doCheckCollDir1 allow you to specify
@@ -1349,6 +1386,28 @@ DNekMatSharedPtr StdQuadExp::v_CreateStdMatrix(const StdMatrixKey &mkey)
 ///////////////////////////////////
 // Operator evaluation functions //
 ///////////////////////////////////
+
+void StdQuadExp::v_GeneralMatrixOp_MatOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey)
+{
+
+    DNekMatSharedPtr mat = m_stdMatrixManager[mkey];
+
+    if (inarray.get() == outarray.get())
+    {
+        Array<OneD, NekDouble> tmp(m_ncoeffs);
+        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
+
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, 1.0, mat->GetPtr().get(),
+                    m_ncoeffs, tmp.get(), 1, 0.0, outarray.get(), 1);
+    }
+    else
+    {
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, 1.0, mat->GetPtr().get(),
+                    m_ncoeffs, inarray.get(), 1, 0.0, outarray.get(), 1);
+    }
+}
 
 void StdQuadExp::v_SVVLaplacianFilter(Array<OneD, NekDouble> &array,
                                       const StdMatrixKey &mkey)
