@@ -546,6 +546,11 @@ NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
 // Helper functions
 //---------------------------------------
 
+int PrismExp::v_GetCoordim() const
+{
+    return m_geom->GetCoordim();
+}
+
 void PrismExp::v_ExtractDataToCoeffs(
     const NekDouble *data, const std::vector<unsigned int> &nummodes,
     const int mode_offset, NekDouble *coeffs,
@@ -1015,6 +1020,29 @@ void PrismExp::v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
                                    const StdRegions::StdMatrixKey &mkey)
 {
     PrismExp::v_HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
+}
+
+void PrismExp::v_GeneralMatrixOp_MatOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey)
+{
+    DNekScalMatSharedPtr mat = GetLocMatrix(mkey);
+
+    if (inarray.get() == outarray.get())
+    {
+        Array<OneD, NekDouble> tmp(m_ncoeffs);
+        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
+
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
+                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
+                    tmp.get(), 1, 0.0, outarray.get(), 1);
+    }
+    else
+    {
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
+                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
+                    inarray.get(), 1, 0.0, outarray.get(), 1);
+    }
 }
 
 void PrismExp::v_SVVLaplacianFilter(Array<OneD, NekDouble> &array,

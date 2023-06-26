@@ -375,6 +375,3 @@ bool ZonePrescribe::v_Move(NekDouble time)
 
 } // namespace SpatialDomains
 } // namespace Nektar
-
-} // namespace SpatialDomains
-} // namespace Nektar

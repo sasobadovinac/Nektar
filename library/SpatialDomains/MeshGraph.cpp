@@ -593,7 +593,7 @@ void MeshGraph::GetCompositeList(const std::string &compositeStr,
 
             addedVector.push_back(*iter);
             ASSERTL0(m_meshComposites.find(*iter) != m_meshComposites.end(),
-                     "Composite C[" + std::to_string(*iter) + "] not found.");
+                     "Composite not found.");
             CompositeSharedPtr composite = m_meshComposites.find(*iter)->second;
 
             if (composite)

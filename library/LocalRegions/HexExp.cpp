@@ -1199,6 +1199,59 @@ void HexExp::v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
     HexExp::v_HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
 }
 
+void HexExp::v_GeneralMatrixOp_MatOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey)
+{
+    // int nConsts = mkey.GetNconstants();
+    DNekScalMatSharedPtr mat = GetLocMatrix(mkey);
+
+    //            switch(nConsts)
+    //            {
+    //            case 0:
+    //                {
+    //                    mat = GetLocMatrix(mkey.GetMatrixType());
+    //                }
+    //                break;
+    //            case 1:
+    //                {
+    //                    mat =
+    //                    GetLocMatrix(mkey.GetMatrixType(),mkey.GetConstant(0));
+    //                }
+    //                break;
+    //            case 2:
+    //                {
+    //                    mat =
+    //                    GetLocMatrix(mkey.GetMatrixType(),mkey.GetConstant(0),mkey.GetConstant(1));
+    //                }
+    //                break;
+    //
+    //            default:
+    //                {
+    //                    NEKERROR(ErrorUtil::efatal, "Unknown number of
+    //                    constants");
+    //                }
+    //                break;
+    //            }
+
+    if (inarray.get() == outarray.get())
+    {
+        Array<OneD, NekDouble> tmp(m_ncoeffs);
+        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
+
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
+                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
+                    tmp.get(), 1, 0.0, outarray.get(), 1);
+    }
+    else
+    {
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
+                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
+                    inarray.get(), 1, 0.0, outarray.get(), 1);
+    }
+}
+
+
 /**
  * This function is used to compute exactly the advective numerical flux
  * on the interface of two elements with different expansions, hence an

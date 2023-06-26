@@ -553,6 +553,11 @@ StdRegions::StdExpansionSharedPtr TetExp::v_GetLinStdExp(void) const
                                                                    bkey2);
 }
 
+int TetExp::v_GetCoordim() const
+{
+    return m_geom->GetCoordim();
+}
+
 void TetExp::v_ExtractDataToCoeffs(
     const NekDouble *data, const std::vector<unsigned int> &nummodes,
     const int mode_offset, NekDouble *coeffs,

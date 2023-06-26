@@ -70,7 +70,7 @@ protected:
     //-----------------------------
     // Differentiation Methods
     //-----------------------------
-    LOCAL_REGIONS_EXPORT void v_PhysDeriv(
+    LOCAL_REGIONS_EXPORT virtual void v_PhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
         Array<OneD, NekDouble> &out_d2) override;
@@ -78,14 +78,14 @@ protected:
     //-----------------------------
     // Transforms
     //-----------------------------
-    LOCAL_REGIONS_EXPORT void v_FwdTrans(
+    LOCAL_REGIONS_EXPORT virtual void v_FwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
     //-----------------------------
     // Inner product functions
     //-----------------------------
-    LOCAL_REGIONS_EXPORT void v_IProductWRTBase(
+    LOCAL_REGIONS_EXPORT virtual void v_IProductWRTBase(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
     LOCAL_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFac(
@@ -114,11 +114,11 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         std::array<NekDouble, 3> &firstOrderDerivs) override;
 
-    LOCAL_REGIONS_EXPORT void v_GetCoord(
+    LOCAL_REGIONS_EXPORT virtual void v_GetCoord(
         const Array<OneD, const NekDouble> &Lcoords,
         Array<OneD, NekDouble> &coords) override;
 
-    LOCAL_REGIONS_EXPORT void v_GetCoords(
+    LOCAL_REGIONS_EXPORT virtual void v_GetCoords(
         Array<OneD, NekDouble> &coords_1, Array<OneD, NekDouble> &coords_2,
         Array<OneD, NekDouble> &coords_3) override;
 
@@ -134,9 +134,9 @@ protected:
     LOCAL_REGIONS_EXPORT virtual StdRegions::StdExpansionSharedPtr v_GetLinStdExp(
         void) const override;
 
-    LOCAL_REGIONS_EXPORT int v_GetCoordim() override;
+    LOCAL_REGIONS_EXPORT int v_GetCoordim() const override;
 
-    LOCAL_REGIONS_EXPORT void v_ExtractDataToCoeffs(
+    LOCAL_REGIONS_EXPORT virtual void v_ExtractDataToCoeffs(
         const NekDouble *data, const std::vector<unsigned int> &nummodes,
         const int mode_offset, NekDouble *coeffs,
         std::vector<LibUtilities::BasisType> &fromType) override;
@@ -148,17 +148,17 @@ protected:
     //-----------------------------
     // Operator creation functions
     //-----------------------------
-    LOCAL_REGIONS_EXPORT void v_HelmholtzMatrixOp(
+    LOCAL_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         const StdRegions::StdMatrixKey &mkey) override;
 
-    LOCAL_REGIONS_EXPORT void v_LaplacianMatrixOp(
+    LOCAL_REGIONS_EXPORT virtual void v_LaplacianMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         const StdRegions::StdMatrixKey &mkey) override;
 
-    LOCAL_REGIONS_EXPORT void v_LaplacianMatrixOp(
+    LOCAL_REGIONS_EXPORT virtual void v_LaplacianMatrixOp(
         const int k1, const int k2, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         const StdRegions::StdMatrixKey &mkey) override;
@@ -191,7 +191,6 @@ protected:
         const DNekMatSharedPtr &m_transformationmatrix,
         DNekMatSharedPtr m_inversetransformationmatrix,
         DNekMatSharedPtr m_inversetransposedtransformationmatrix);
-    LOCAL_REGIONS_EXPORT void v_ComputeLaplacianMetric() override;
 
     LOCAL_REGIONS_EXPORT virtual void v_ComputeLaplacianMetric() override;
 

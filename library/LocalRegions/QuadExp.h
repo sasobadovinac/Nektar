@@ -112,13 +112,20 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         bool multiplybyweights = true) override;
+    LOCAL_REGIONS_EXPORT virtual void v_IProductWRTBase_MatOp(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
     LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_SumFac(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
     LOCAL_REGIONS_EXPORT virtual void v_AlignVectorToCollapsedDir(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray) override;
-
+    
+    LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_MatOp(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
+    
     LOCAL_REGIONS_EXPORT virtual void v_NormVectorIProductWRTBase(
         const Array<OneD, const NekDouble> &Fx,
         const Array<OneD, const NekDouble> &Fy,
@@ -165,6 +172,9 @@ protected:
     //---------------------------------------
     // Helper functions
     //---------------------------------------
+    LOCAL_REGIONS_EXPORT virtual const SpatialDomains::GeomFactorsSharedPtr &
+    v_GetMetricInfo() const;
+    LOCAL_REGIONS_EXPORT int v_GetCoordim() const override;
     LOCAL_REGIONS_EXPORT virtual void v_ExtractDataToCoeffs(
         const NekDouble *data, const std::vector<unsigned int> &nummodes,
         const int mode_offset, NekDouble *coeffs,
@@ -221,6 +231,10 @@ protected:
         Array<OneD, NekDouble> &outarray,
         const StdRegions::StdMatrixKey &mkey) override;
     LOCAL_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override;
+    LOCAL_REGIONS_EXPORT void v_GeneralMatrixOp_MatOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         const StdRegions::StdMatrixKey &mkey) override;

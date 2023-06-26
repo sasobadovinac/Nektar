@@ -161,5 +161,3 @@ typedef std::shared_ptr<InterfacePair> InterfacePairShPtr;
 } // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_INTERFACEINTERPOLATION_H
-
-#endif // NEKTAR_SPATIALDOMAINS_INTERFACEINTERPOLATION_H

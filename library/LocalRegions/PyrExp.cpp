@@ -630,6 +630,11 @@ NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
 // Helper functions
 //---------------------------------------
 
+int PyrExp::v_GetCoordim() const
+{
+    return m_geom->GetCoordim();
+}
+
 void PyrExp::v_GetTracePhysMap(const int face, Array<OneD, int> &outarray)
 {
     int nquad0 = m_base[0]->GetNumPoints();

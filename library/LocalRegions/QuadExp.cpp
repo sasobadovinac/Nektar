@@ -419,6 +419,19 @@ void QuadExp::v_IProductWRTBase_SumFac(
     }
 }
 
+void QuadExp::v_IProductWRTBase_MatOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nq = GetTotPoints();
+    MatrixKey iprodmatkey(StdRegions::eIProductWRTBase, DetShapeType(), *this);
+    DNekScalMatSharedPtr iprodmat = m_matrixManager[iprodmatkey];
+
+    Blas::Dgemv('N', m_ncoeffs, nq, iprodmat->Scale(),
+                (iprodmat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
+                inarray.get(), 1, 0.0, outarray.get(), 1);
+}
+
 void QuadExp::v_IProductWRTDerivBase_SumFac(
     const int dir, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
@@ -485,6 +498,45 @@ void QuadExp::v_AlignVectorToCollapsedDir(
         Vmath::Smul(nqtot, df[2 * dir][0], inarray.get(), 1, tmp1.get(), 1);
         Vmath::Smul(nqtot, df[2 * dir + 1][0], inarray.get(), 1, tmp2.get(), 1);
     }
+}
+
+void QuadExp::v_IProductWRTDerivBase_MatOp(
+    const int dir, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nq                       = GetTotPoints();
+    StdRegions::MatrixType mtype = StdRegions::eIProductWRTDerivBase0;
+
+    switch (dir)
+    {
+        case 0:
+        {
+            mtype = StdRegions::eIProductWRTDerivBase0;
+        }
+        break;
+        case 1:
+        {
+            mtype = StdRegions::eIProductWRTDerivBase1;
+        }
+        break;
+        case 2:
+        {
+            mtype = StdRegions::eIProductWRTDerivBase2;
+        }
+        break;
+        default:
+        {
+            ASSERTL1(false, "input dir is out of range");
+        }
+        break;
+    }
+
+    MatrixKey iprodmatkey(mtype, DetShapeType(), *this);
+    DNekScalMatSharedPtr iprodmat = m_matrixManager[iprodmatkey];
+
+    Blas::Dgemv('N', m_ncoeffs, nq, iprodmat->Scale(),
+                (iprodmat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
+                inarray.get(), 1, 0.0, outarray.get(), 1);
 }
 
 void QuadExp::v_NormVectorIProductWRTBase(
@@ -585,16 +637,6 @@ NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     m_geom->GetLocCoords(coord, Lcoord);
 
     return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
-}
-
-NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
-                                  const Array<OneD, const NekDouble> &inarray,
-                                  std::array<NekDouble, 3> &firstOrderDerivs)
-{
-    Array<OneD, NekDouble> Lcoord(2);
-    ASSERTL0(m_geom, "m_geom not defined");
-    m_geom->GetLocCoords(coord, Lcoord);
-    return StdQuadExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
 }
 
 NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
@@ -1272,6 +1314,16 @@ void QuadExp::v_ComputeTraceNormal(const int edge)
     }
 }
 
+const SpatialDomains::GeomFactorsSharedPtr &QuadExp::v_GetMetricInfo() const
+{
+    return m_metricinfo;
+}
+
+int QuadExp::v_GetCoordim() const 
+{
+    return m_geom->GetCoordim();
+}
+
 void QuadExp::v_ExtractDataToCoeffs(
     const NekDouble *data, const std::vector<unsigned int> &nummodes,
     int mode_offset, NekDouble *coeffs,
@@ -1466,6 +1518,30 @@ void QuadExp::v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
                                   const StdRegions::StdMatrixKey &mkey)
 {
     QuadExp::HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
+}
+
+void QuadExp::v_GeneralMatrixOp_MatOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey)
+{
+    MatrixKey newkey(mkey);
+    DNekScalMatSharedPtr mat = GetLocMatrix(newkey);
+
+    if (inarray.get() == outarray.get())
+    {
+        Array<OneD, NekDouble> tmp(m_ncoeffs);
+        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
+
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
+                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
+                    tmp.get(), 1, 0.0, outarray.get(), 1);
+    }
+    else
+    {
+        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
+                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
+                    inarray.get(), 1, 0.0, outarray.get(), 1);
+    }
 }
 
 void QuadExp::v_ReduceOrderCoeffs(int numMin,

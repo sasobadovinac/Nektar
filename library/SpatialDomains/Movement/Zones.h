@@ -337,5 +337,3 @@ typedef std::shared_ptr<ZoneFixed> ZoneFixedShPtr;
 } // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_ZONES_H
-
-#endif // NEKTAR_SPATIALDOMAINS_ZONES_H

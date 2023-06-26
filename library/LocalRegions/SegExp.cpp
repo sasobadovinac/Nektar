@@ -746,10 +746,35 @@ StdRegions::StdExpansionSharedPtr SegExp::v_GetLinStdExp(void) const
     return MemoryManager<StdRegions::StdSegExp>::AllocateSharedPtr(bkey0);
 }
 
+int SegExp::v_GetCoordim() const 
+{
+    return m_geom->GetCoordim();
+}
+
 const Array<OneD, const NekDouble> &SegExp::v_GetPhysNormals(void)
 {
     NEKERROR(ErrorUtil::efatal, "Got to SegExp");
     return NullNekDouble1DArray;
+}
+
+SpatialDomains::GeomType SegExp::v_MetricInfoType()
+{
+    return m_metricinfo->GetGtype();
+}
+
+int SegExp::v_GetNumPoints(const int dir) const
+{
+    return GetNumPoints(dir);
+}
+
+int SegExp::v_GetNcoeffs(void) const
+{
+    return m_ncoeffs;
+}
+
+const LibUtilities::BasisSharedPtr &SegExp::v_GetBasis(int dir) const
+{
+    return GetBasis(dir);
 }
 
 int SegExp::v_NumBndryCoeffs() const
@@ -761,6 +786,8 @@ int SegExp::v_NumDGBndryCoeffs() const
 {
     return 2;
 }
+
+
 
 /// Unpack data from input file assuming it comes from
 // the same expansion type

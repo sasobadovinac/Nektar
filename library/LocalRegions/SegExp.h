@@ -163,7 +163,7 @@ protected:
         const int vertex, const NekDouble &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    LOCAL_REGIONS_EXPORT void v_GetTracePhysVals(
+    LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysVals(
         const int edge, const StdRegions::StdExpansionSharedPtr &EdgeExp,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, StdRegions::Orientation orient) override;
@@ -179,7 +179,7 @@ protected:
     LOCAL_REGIONS_EXPORT virtual StdRegions::StdExpansionSharedPtr v_GetLinStdExp(
         void) const override;
 
-    LOCAL_REGIONS_EXPORT int v_GetCoordim() const final;
+    LOCAL_REGIONS_EXPORT int v_GetCoordim() const override;
 
     LOCAL_REGIONS_EXPORT virtual void v_SetCoeffsToOrientation(
         StdRegions::Orientation dir, Array<OneD, const NekDouble> &inarray,
