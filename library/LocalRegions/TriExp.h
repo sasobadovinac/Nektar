@@ -73,7 +73,7 @@ protected:
     //----------------------------
     // Differentiation Methods
     //----------------------------
-    LOCAL_REGIONS_EXPORT void v_PhysDeriv(
+    LOCAL_REGIONS_EXPORT virtual void v_PhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
         Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override;
@@ -144,7 +144,7 @@ protected:
     LOCAL_REGIONS_EXPORT virtual StdRegions::StdExpansionSharedPtr v_GetLinStdExp(
         void) const override;
 
-    LOCAL_REGIONS_EXPORT void v_GetCoord(
+    LOCAL_REGIONS_EXPORT virtual void v_GetCoord(
         const Array<OneD, const NekDouble> &Lcoords,
         Array<OneD, NekDouble> &coords) override;
     LOCAL_REGIONS_EXPORT virtual void v_GetCoords(

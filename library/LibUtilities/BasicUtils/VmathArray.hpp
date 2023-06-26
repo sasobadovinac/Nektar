@@ -358,7 +358,7 @@ void Vvtvm(int n, const Array<OneD, const T> &w, const int incw,
 #endif
 }
 
-/// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + x*y
+/// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + y*z
 template <class T>
 void Vvtvvtp(int n, const Array<OneD, const T> &v, int incv,
              const Array<OneD, const T> &w, int incw,
