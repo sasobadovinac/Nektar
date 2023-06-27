@@ -80,8 +80,11 @@ UnsteadySystem::UnsteadySystem(
 void UnsteadySystem::v_InitObject(bool DeclareField)
 {
     EquationSystem::v_InitObject(DeclareField);
+    if ((m_projectionType == MultiRegions::eDiscontinuous || m_projectionType == MultiRegions::eMixed_CG_Discontinuous)
+    && m_session->GetSolverInfo("EQTYPE") != "PulseWavePropagation")
+    {
     ALEHelper::InitObject(m_spacedim, m_fields);
-
+    }
     m_initialStep = 0;
 
     // Load SolverInfo parameters
@@ -627,7 +630,7 @@ void UnsteadySystem::v_DoInitialise(bool dumpInitialConditions)
 {
     CheckForRestartTime(m_time, m_nchk);
     SetBoundaryConditions(m_time);
-    SetInitialConditions(m_time);
+    SetInitialConditions(m_time, dumpInitialConditions);
 
     if (m_ALESolver)
     {
