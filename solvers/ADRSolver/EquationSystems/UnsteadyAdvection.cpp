@@ -49,9 +49,9 @@ string UnsteadyAdvection::className =
 UnsteadyAdvection::UnsteadyAdvection(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const SpatialDomains::MeshGraphSharedPtr &pGraph)
-    : UnsteadySystem(pSession, pGraph), AdvectionSystem(pSession, pGraph),
-      m_planeNumber(0)
+    : UnsteadySystem(pSession, pGraph), AdvectionSystem(pSession, pGraph)
 {
+    m_planeNumber = 0;
 }
 
 /**
@@ -76,9 +76,9 @@ void UnsteadyAdvection::v_InitObject(bool DeclareFields)
     m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
 
     std::vector<std::string> vel;
-    vel.emplace_back("Vx");
-    vel.emplace_back("Vy");
-    vel.emplace_back("Vz");
+    vel.push_back("Vx");
+    vel.push_back("Vy");
+    vel.push_back("Vz");
 
     // Resize the advection velocities vector to dimension of the problem
     vel.resize(m_spacedim);
