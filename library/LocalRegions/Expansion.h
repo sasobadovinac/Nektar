@@ -314,10 +314,10 @@ protected:
     {
     }
 
-    virtual int v_GetCoordim() const override
-    {
-        return m_geom->GetCoordim();
-    }
+    // virtual int v_GetCoordim() const override
+    // {
+    //     return m_geom->GetCoordim();
+    // }
 
     virtual void v_GetCoords(Array<OneD, NekDouble> &coords_1,
                              Array<OneD, NekDouble> &coords_2,
