@@ -94,14 +94,14 @@ void DiffusionLDG::v_Diffuse(
 
     // Multiply by inverse mass matrix     // @TODO: We don't want
     // MultiplyByElmtInvMassfor ALE so we moved out of the diffusecoeffs method
-    LibUtilities::Timer timer;
-    for (int i = 0; i < nConvectiveFields; ++i)
-    {
-        timer.Start();
-        fields[i]->MultiplyByElmtInvMass(tmp[i], tmp[i]);
-        timer.Stop();
-        timer.AccumulateRegion("MultiplyByElmtInvMass");
-    }
+    // LibUtilities::Timer timer;
+    // for (int i = 0; i < nConvectiveFields; ++i)
+    // {
+    //     timer.Start();
+    //     fields[i]->MultiplyByElmtInvMass(tmp[i], tmp[i]);
+    //     timer.Stop();
+    //     timer.AccumulateRegion("MultiplyByElmtInvMass");
+    // }
 
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
@@ -172,6 +172,16 @@ void DiffusionLDG::v_DiffuseCoeffs(
         Vmath::Neg(nCoeffs, outarray[i], 1);
         fields[i]->AddTraceIntegral(traceflux[i], outarray[i]);
         fields[i]->SetPhysState(false);
+    }
+
+    //jy21: Add flag to aviod problem in implicit solver 
+    if (!fields[0]->GetGraph()->GetMovement()->GetMoveFlag()) // i.e. if
+                                                             // m_ALESolver
+    {
+    for (std::size_t i = 0; i < nConvectiveFields; ++i)
+    {
+        fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
+    }
     }
 }
 
