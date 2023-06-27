@@ -463,7 +463,7 @@ struct NodeHash
 
 // @TODO: Fixed by just hashing based on memory address, I feel like we
 // shouldn't just delete vertices anyway...
-typedef std::unordered_set<NodeSharedPtr> NodeSet;
+typedef std::unordered_set<NodeSharedPtr, NodeHash> NodeSet;
 } // namespace NekMesh
 } // namespace Nektar
 
