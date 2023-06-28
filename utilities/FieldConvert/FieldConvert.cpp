@@ -470,13 +470,14 @@ int main(int argc, char *argv[])
         mod->SetDefaults();
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    // Include equispacedoutput module if needed.
-=======
-    // Include equispacedoutput module if needed
->>>>>>> 6507aa3fa (Removing redundant CreateExp module)
-=======
+
+    Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
+    for (int i = 0; i < modules.size(); ++i)
+    {
+        ++modulesCount[modules[i]->GetModulePriority()];
+
+    }
+    
     // Loading modules prerequisites
     for (int i = 0; i < modules.size(); ++i)
     {
@@ -484,16 +485,15 @@ int main(int argc, char *argv[])
         for (int j = 0; j < modules[i]->GetModulePrerequisites().size(); ++j)
         {
             mod = GetModuleFactory().CreateInstance(modules[i]->GetModulePrerequisites()[j], f);
-            modules.push_back(mod);
-            mod->SetDefaults();
+            // Checking if pre-req modules were already loaded
+            if (modulesCount[mod->GetModulePriority()] == 0)
+            {
+                // Adding pre-requisite modules to modulesCount (to prevent double-load)
+                ++modulesCount[mod->GetModulePriority()];
+                modules.push_back(mod);
+                mod->SetDefaults();
+            }
         }
-    }
-
->>>>>>> 7860d6067 (Added member function GetModulePrerequisites() to class Module)
-    Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
-    for (int i = 0; i < modules.size(); ++i)
-    {
-        ++modulesCount[modules[i]->GetModulePriority()];
     }
 
     // Include equispacedoutput module if needed

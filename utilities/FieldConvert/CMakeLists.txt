@@ -61,10 +61,6 @@ ADD_NEKTAR_TEST(surfDist)
 ADD_NEKTAR_TEST(bndextract)
 ADD_NEKTAR_TEST(halfmodetofourier)
 ADD_NEKTAR_TEST(chanflow_m8_addfld)
-<<<<<<< HEAD
->>>>>>> a36ef001e (Fixed fieldconvert addflds module)
-=======
->>>>>>> 7860d6067 (Added member function GetModulePrerequisites() to class Module)
 
 IF (NEKTAR_USE_METIS OR NEKTAR_USE_SCOTCH)
     ADD_NEKTAR_TEST(chan3D_part_only)
