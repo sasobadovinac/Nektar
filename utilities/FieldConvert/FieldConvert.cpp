@@ -470,25 +470,23 @@ int main(int argc, char *argv[])
         mod->SetDefaults();
     }
 
-
     Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < modules.size(); ++i)
     {
         ++modulesCount[modules[i]->GetModulePriority()];
-
     }
-    
-    // Loading modules prerequisites
+
+    // Loading module prerequisites
     for (int i = 0; i < modules.size(); ++i)
     {
-        // Looping through prereqs and loading them
+        // Looping through listed prereqs and loading them
         for (int j = 0; j < modules[i]->GetModulePrerequisites().size(); ++j)
         {
-            mod = GetModuleFactory().CreateInstance(modules[i]->GetModulePrerequisites()[j], f);
-            // Checking if pre-req modules were already loaded
+            mod = GetModuleFactory().CreateInstance(
+                modules[i]->GetModulePrerequisites()[j], f);
+            // Logic that prevents double loading
             if (modulesCount[mod->GetModulePriority()] == 0)
             {
-                // Adding pre-requisite modules to modulesCount (to prevent double-load)
                 ++modulesCount[mod->GetModulePriority()];
                 modules.push_back(mod);
                 mod->SetDefaults();

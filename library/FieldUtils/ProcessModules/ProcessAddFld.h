@@ -80,7 +80,7 @@ protected:
 
     virtual std::vector<ModuleKey> v_GetModulePrerequisites() override
     {
-        return { {eProcessModule,  "createExp"} };
+        return {{eProcessModule, "createExp"}};
     }
 
 private:
