@@ -486,7 +486,7 @@ NekDouble ExpList3DHomogeneous1D::v_L2(
         {
             errL2 = m_planes[n]->L2(inarray + cnt);
             cnt += m_planes[n]->GetTotPoints();
-            err += errL2 * errL2 * local_w[n] * m_lhom * 0.5;
+            err += errL2 * errL2 * local_w[n] * m_lhom;
         }
     }
     else
@@ -495,7 +495,7 @@ NekDouble ExpList3DHomogeneous1D::v_L2(
         {
             errL2 = m_planes[n]->L2(inarray + cnt, soln + cnt);
             cnt += m_planes[n]->GetTotPoints();
-            err += errL2 * errL2 * local_w[n] * m_lhom * 0.5;
+            err += errL2 * errL2 * local_w[n] * m_lhom;
         }
     }
     m_comm->GetColumnComm()->AllReduce(err, LibUtilities::ReduceSum);
