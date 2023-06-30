@@ -122,11 +122,6 @@ struct HelmholtzTemplate
                                                                          nElmt);
     }
 
-    NekDouble Ndof() final
-    {
-        return m_nmTot * this->m_nElmt;
-    }
-
     void operator()(const Array<OneD, const NekDouble> &input,
                     Array<OneD, NekDouble> &output) final
     {
@@ -241,7 +236,7 @@ struct HelmholtzTemplate
             PhysDerivTensor2DKernel(nq0, nq1, bwd, this->m_D[0], this->m_D[1],
                                     deriv0, deriv1);
 
-            Helmholtz2DKernel<SHAPE_TYPE, DEFORMED>(
+            DiffusionCoeff2DKernel<SHAPE_TYPE, DEFORMED>(
                 nq0, nq1, this->m_isConstVarDiff, this->m_constVarDiff,
                 this->m_isVarDiff, this->m_varD00, this->m_varD01,
                 this->m_varD11, df_ptr, this->m_h0, this->m_h1, bwd, deriv0,
@@ -334,7 +329,7 @@ struct HelmholtzTemplate
             PhysDerivTensor2DKernel(nq0, nq1, bwd, this->m_D[0], this->m_D[1],
                                     deriv0, deriv1);
 
-            Helmholtz2DKernel<SHAPE_TYPE, DEFORMED>(
+            DiffusionCoeff2DKernel<SHAPE_TYPE, DEFORMED>(
                 nq0, nq1, this->m_isConstVarDiff, this->m_constVarDiff,
                 this->m_isVarDiff, this->m_varD00, this->m_varD01,
                 this->m_varD11, df_ptr, this->m_h0, this->m_h1, bwd, deriv0,
@@ -441,7 +436,7 @@ struct HelmholtzTemplate
                                     deriv2);
 
             // Step 4: Apply Laplacian metrics & inner product
-            Helmholtz3DKernel<SHAPE_TYPE, DEFORMED>(
+            DiffusionCoeff3DKernel<SHAPE_TYPE, DEFORMED>(
                 nq0, nq1, nq2, this->m_isConstVarDiff, this->m_constVarDiff,
                 this->m_isVarDiff, this->m_varD00, this->m_varD01,
                 this->m_varD11, this->m_varD02, this->m_varD12, this->m_varD22,
@@ -545,7 +540,7 @@ struct HelmholtzTemplate
                                     deriv2);
 
             // Step 4: Apply Laplacian metrics & inner product
-            Helmholtz3DKernel<SHAPE_TYPE, DEFORMED>(
+            DiffusionCoeff3DKernel<SHAPE_TYPE, DEFORMED>(
                 nq0, nq1, nq2, this->m_isConstVarDiff, this->m_constVarDiff,
                 this->m_isVarDiff, this->m_varD00, this->m_varD01,
                 this->m_varD11, this->m_varD02, this->m_varD12, this->m_varD22,

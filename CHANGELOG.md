@@ -34,6 +34,7 @@ v5.4.0
 - Added a jacobi preconditioner building on diagonal impelemtation (!1575)
 - Add a priori convergence and null-input check to GMRES (!1590)
 - Tidy-up/removed unused Lapack function definition (!1573)
+- Some Tidy-up in MatrixFreeOps (!1599)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)

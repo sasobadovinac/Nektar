@@ -129,84 +129,6 @@ NEK_FORCE_INLINE static void PhysDerivTensor2DKernel(
     }
 }
 
-// Overloaded with diffusion
-NEK_FORCE_INLINE static void PhysDerivTensor2DKernel(
-    const size_t nq0, const size_t nq1,
-    const std::vector<vec_t, allocator<vec_t>> &in,
-    const std::vector<vec_t, allocator<vec_t>> &D0,
-    const std::vector<vec_t, allocator<vec_t>> &D1,
-    std::vector<vec_t, allocator<vec_t>> &out_d0,
-    std::vector<vec_t, allocator<vec_t>> &out_d1,
-    const Array<OneD, Array<OneD, NekDouble>> &diff)
-{
-    const auto nqTot = nq0 * nq1;
-
-    vec_t d00 = diff[0][0], d01 = diff[0][1], d11 = diff[1][1];
-
-    std::vector<vec_t, allocator<vec_t>> temp_d0(nqTot), temp_d1(nqTot);
-
-    // All matricies are column major ordered since operators used to
-    // be computed via BLAS.
-
-    // D0 * in
-    for (int i = 0; i < nq0; ++i)
-    { // Row index of D0 matrix
-        for (int j = 0; j < nq1; ++j)
-        { // Col index of IN matrix
-
-            vec_t prod_sum = 0.0;
-            for (int k = 0; k < nq0; ++k)
-            {                               // Col index of D0, row index of IN
-                vec_t v1 = D0[k * nq0 + i]; // Load 1x
-                vec_t v2 = in[j * nq0 + k]; // Load 1x
-
-                prod_sum.fma(v1, v2);
-            }
-
-            temp_d0[j * nq0 + i] = prod_sum; // Store 1x
-        }
-    }
-
-    // in * D1^T
-    for (int i = 0; i < nq0; ++i)
-    { // Row index for grid
-        for (int j = 0; j < nq1; ++j)
-        { // Column index for D1^T (row idx for D1)
-
-            vec_t prod_sum = 0.0;
-            for (int k = 0; k < nq1; ++k)
-            {
-                vec_t v1 = in[k * nq0 + i]; // Load 1x
-                vec_t v2 = D1[k * nq1 + j]; // Load 1x
-
-                prod_sum.fma(v1, v2);
-            }
-
-            temp_d1[j * nq0 + i] = prod_sum; // Store 1x
-        }
-    }
-
-    for (int ij = 0; ij < nqTot; ++ij)
-    {
-        vec_t prod_sum = 0.0;
-        vec_t temp0    = temp_d0[ij];
-        prod_sum.fma(d00, temp0);
-        vec_t temp1 = temp_d1[ij];
-        prod_sum.fma(d01, temp1);
-        out_d0[ij] = prod_sum;
-    }
-
-    for (int ij = 0; ij < nqTot; ++ij)
-    {
-        vec_t prod_sum = 0.0;
-        vec_t temp0    = temp_d0[ij];
-        prod_sum.fma(d01, temp0);
-        vec_t temp1 = temp_d1[ij];
-        prod_sum.fma(d11, temp1);
-        out_d1[ij] = prod_sum;
-    }
-}
-
 #elif defined(SHAPE_DIMENSION_3D)
 
 NEK_FORCE_INLINE static void PhysDerivTensor3DKernel(
@@ -249,7 +171,6 @@ NEK_FORCE_INLINE static void PhysDerivTensor3DKernel(
         {
             for (int j = 0; j < nq1; ++j)
             {
-
                 vec_t prod_sum = 0.0;
                 for (int k = 0; k < nq1; ++k)
                 {

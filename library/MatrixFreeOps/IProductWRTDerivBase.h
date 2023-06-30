@@ -96,11 +96,6 @@ struct IProductWRTDerivBaseTemplate
             IProductWRTDerivBaseTemplate<SHAPE_TYPE, DEFORMED>>(basis, nElmt);
     }
 
-    NekDouble Ndof() final
-    {
-        return m_nmTot * this->m_nElmt;
-    }
-
     void operator()(const Array<OneD, Array<OneD, NekDouble>> &input,
                     Array<OneD, NekDouble> &output) final
     {
