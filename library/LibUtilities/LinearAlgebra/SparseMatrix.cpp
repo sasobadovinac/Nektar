@@ -42,7 +42,6 @@
 #include <LibUtilities/LinearAlgebra/MatrixStorageType.h>
 #include <LibUtilities/LinearAlgebra/NistSparseDescriptors.hpp>
 #include <LibUtilities/LinearAlgebra/SparseMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 #include <LibUtilities/LinearAlgebra/StorageSmvBsr.hpp>
 
 using std::max;

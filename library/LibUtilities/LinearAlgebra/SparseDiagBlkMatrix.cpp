@@ -42,7 +42,6 @@
 #include <LibUtilities/LinearAlgebra/MatrixStorageType.h>
 #include <LibUtilities/LinearAlgebra/NistSparseDescriptors.hpp>
 #include <LibUtilities/LinearAlgebra/SparseDiagBlkMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 #include <LibUtilities/LinearAlgebra/StorageSmvBsr.hpp>
 
 namespace Nektar

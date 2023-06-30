@@ -32,9 +32,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/Vmath.hpp>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
 
 namespace Vmath
 {

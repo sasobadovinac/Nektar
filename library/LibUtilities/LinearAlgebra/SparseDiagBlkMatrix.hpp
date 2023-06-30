@@ -43,7 +43,6 @@
 #include <utility>
 #include <vector>
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 
 #include <boost/call_traits.hpp>
@@ -89,9 +88,6 @@ public:
     LIB_UTILITIES_EXPORT typename boost::call_traits<DataType>::const_reference
     operator()(const IndexType block, const IndexType row,
                const IndexType column) const;
-
-    // typename SparseStorageType::const_iterator begin() const;
-    // typename SparseStorageType::const_iterator end() const;
 
     LIB_UTILITIES_EXPORT void Multiply(const DataVectorType &in,
                                        DataVectorType &out);

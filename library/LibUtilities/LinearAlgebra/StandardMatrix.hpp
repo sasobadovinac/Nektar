@@ -38,7 +38,6 @@
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 
 #include <LibUtilities/LinearAlgebra/MatrixBase.hpp>
-#include <LibUtilities/LinearAlgebra/MatrixFuncs.h>
 #include <LibUtilities/LinearAlgebra/NekVectorFwd.hpp>
 #include <LibUtilities/LinearAlgebra/PointerWrapper.h>
 

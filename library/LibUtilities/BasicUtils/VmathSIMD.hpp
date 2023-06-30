@@ -37,8 +37,6 @@
 #ifndef NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_VMATHSIMD_HPP
 #define NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_VMATHSIMD_HPP
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <LibUtilities/SimdLib/tinysimd.hpp>
 
 namespace Vmath
