@@ -50,21 +50,27 @@ namespace Nektar
 namespace MatrixFree
 {
 
+class Operator;
+
+typedef std::shared_ptr<Operator> OperatorSharedPtr;
+
 using vec_t = tinysimd::simd<NekDouble>;
+
+using OperatorFactory =
+    LibUtilities::NekFactory<std::string, Operator,
+                             std::vector<LibUtilities::BasisSharedPtr>, int>;
+
+MATRIXFREE_EXPORT OperatorFactory &GetOperatorFactory();
+
+/// Helper function, get operator string
+MATRIXFREE_EXPORT std::string GetOpstring(LibUtilities::ShapeType shape,
+                                          bool deformed = false);
 
 /// Operator base class
 class Operator
 {
 public:
-    virtual ~Operator()
-    {
-    }
-
-    /// Number of degrees of freedom that this operator will process.
-    MATRIXFREE_EXPORT virtual NekDouble Ndof()
-    {
-        return 0.0;
-    }
+    virtual ~Operator() = default;
 
     /// This operator requires derivative factors.
     MATRIXFREE_EXPORT virtual bool NeedsDF()
@@ -78,16 +84,14 @@ public:
         return false;
     }
 
-    MATRIXFREE_EXPORT virtual void SetJac(
-        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
-            &jac) = 0;
-
     MATRIXFREE_EXPORT virtual void SetDF(
         const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
             &df) = 0;
-};
 
-typedef std::shared_ptr<Operator> OperatorSharedPtr;
+    MATRIXFREE_EXPORT virtual void SetJac(
+        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
+            &jac) = 0;
+};
 
 // Base class for backwards transform operator.
 class BwdTrans : virtual public Operator
@@ -98,9 +102,7 @@ public:
     {
     }
 
-    virtual ~BwdTrans()
-    {
-    }
+    virtual ~BwdTrans() = default;
 
     MATRIXFREE_EXPORT virtual void operator()(
         const Array<OneD, const NekDouble> &input,
@@ -120,11 +122,9 @@ public:
     {
     }
 
-    virtual ~IProduct()
-    {
-    }
+    virtual ~IProduct() = default;
 
-    bool NeedsJac() final
+    bool NeedsJac() override final
     {
         return true;
     }
@@ -139,33 +139,6 @@ protected:
     int m_nElmt;
 };
 
-// Base class for physical derivatives operator.
-class PhysDeriv : virtual public Operator
-{
-public:
-    PhysDeriv(std::vector<LibUtilities::BasisSharedPtr> basis, int nElmt)
-        : m_basis(basis), m_nElmt(nElmt)
-    {
-    }
-
-    virtual ~PhysDeriv()
-    {
-    }
-
-    bool NeedsDF() final
-    {
-        return true;
-    }
-
-    MATRIXFREE_EXPORT virtual void operator()(
-        const Array<OneD, const NekDouble> &input,
-        Array<OneD, Array<OneD, NekDouble>> &output) = 0;
-
-protected:
-    std::vector<LibUtilities::BasisSharedPtr> m_basis;
-    int m_nElmt;
-};
-
 // Base class for product WRT derivative base operator.
 class IProductWRTDerivBase : virtual public Operator
 {
@@ -176,16 +149,14 @@ public:
     {
     }
 
-    virtual ~IProductWRTDerivBase()
-    {
-    }
+    virtual ~IProductWRTDerivBase() = default;
 
-    bool NeedsJac() final
+    virtual bool NeedsDF() override final
     {
         return true;
     }
 
-    bool NeedsDF() final
+    virtual bool NeedsJac() override final
     {
         return true;
     }
@@ -193,6 +164,31 @@ public:
     MATRIXFREE_EXPORT virtual void operator()(
         const Array<OneD, Array<OneD, NekDouble>> &input,
         Array<OneD, NekDouble> &output) = 0;
+
+protected:
+    std::vector<LibUtilities::BasisSharedPtr> m_basis;
+    int m_nElmt;
+};
+
+// Base class for physical derivatives operator.
+class PhysDeriv : virtual public Operator
+{
+public:
+    PhysDeriv(std::vector<LibUtilities::BasisSharedPtr> basis, int nElmt)
+        : m_basis(basis), m_nElmt(nElmt)
+    {
+    }
+
+    virtual ~PhysDeriv() = default;
+
+    virtual bool NeedsDF() override final
+    {
+        return true;
+    }
+
+    MATRIXFREE_EXPORT virtual void operator()(
+        const Array<OneD, const NekDouble> &input,
+        Array<OneD, Array<OneD, NekDouble>> &output) = 0;
 
 protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
@@ -234,16 +230,14 @@ public:
         }
     }
 
-    virtual ~Helmholtz()
-    {
-    }
+    virtual ~Helmholtz() = default;
 
-    bool NeedsJac() final
+    virtual bool NeedsDF() override final
     {
         return true;
     }
 
-    bool NeedsDF() final
+    virtual bool NeedsJac() override final
     {
         return true;
     }
@@ -393,18 +387,18 @@ protected:
         }
     }
 
-    void SetJac(
+    void virtual SetDF(
         const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
-            &jac) final
-    {
-        m_jac = jac;
-    }
-
-    void SetDF(
-        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
-            &df) final
+            &df) override final
     {
         m_df = df;
+    }
+
+    void virtual SetJac(
+        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
+            &jac) override final
+    {
+        m_jac = jac;
     }
 
     int m_nBlocks;
@@ -422,16 +416,6 @@ protected:
               // 20, 30...)
     std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>> m_jac;
 };
-
-using OperatorFactory =
-    LibUtilities::NekFactory<std::string, Operator,
-                             std::vector<LibUtilities::BasisSharedPtr>, int>;
-
-MATRIXFREE_EXPORT OperatorFactory &GetOperatorFactory();
-
-/// Helper function, get operator string
-MATRIXFREE_EXPORT std::string GetOpstring(LibUtilities::ShapeType shape,
-                                          bool deformed = false);
 
 } // namespace MatrixFree
 } // namespace Nektar

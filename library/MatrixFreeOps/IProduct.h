@@ -48,7 +48,7 @@ namespace Nektar
 namespace MatrixFree
 {
 
-// As each opertor has seven shapes over three dimension to get to the
+// As each operator has seven shapes over three dimension to get to the
 // "work" each operator uses a series of preprocessor directives based
 // on the dimension and shape type so to limit the code
 // inclusion. This keeps the library size as minimal as possible while
@@ -94,11 +94,6 @@ struct IProductTemplate
                                                                         nElmt);
     }
 
-    NekDouble Ndof() final
-    {
-        return m_nmTot * this->m_nElmt;
-    }
-
     void operator()(const Array<OneD, const NekDouble> &input,
                     Array<OneD, NekDouble> &output) final
     {
@@ -130,9 +125,6 @@ struct IProductTemplate
 
         auto *inptr  = &input[0];
         auto *outptr = &output[0];
-
-        // Workspace for kernels - also checks preconditions
-        // IProduct1DWorkspace<SHAPE_TYPE>(nm0, nq0);
 
         std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut(m_nmTot);
 
@@ -175,9 +167,6 @@ struct IProductTemplate
 
         auto *inptr  = &input[0];
         auto *outptr = &output[0];
-
-        // Workspace for kernels - also checks preconditions
-        // IProduct1DWorkspace<SHAPE_TYPE>(nm0, nq0);
 
         std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut(m_nmTot);
 
