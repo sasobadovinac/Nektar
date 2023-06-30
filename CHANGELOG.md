@@ -40,6 +40,9 @@ v5.4.0
 - Redesign of AUSM Riemann solver class (!1577)
 - Redesign of PreconCfs class (!1578)
 
+**IncNavierStokesSolver**
+- Add an option to mask variables for the linear stability problem (!1280)
+
 **FieldConvert**
 - Add option to use .csv files in pointdatatofld module (!1545)
 

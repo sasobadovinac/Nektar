@@ -320,41 +320,58 @@ void DriverArnoldi::WriteEvs(ostream &evlout, const int i,
     }
 }
 
-void DriverArnoldi::GetUnmaskFunction(
-    std::vector<std::vector<LibUtilities::EquationSharedPtr>> &unmaskfun)
+void DriverArnoldi::GetMaskInfo(
+    std::vector<std::vector<LibUtilities::EquationSharedPtr>> &selectedDomains,
+    std::set<int> &unselectedVariables)
 {
-    string Unmask0("Unmask0");
-    string C0("C0");
-    for (size_t i = 0; 1; ++i)
+    selectedDomains.clear();
+    string domain("SelectEVCalcDomain0");
+    string condition("C0");
+    for (size_t i = 0; i < 10; ++i)
     {
-        Unmask0[Unmask0.size() - 1] = '0' + i;
-        if (!m_session->DefinesFunction(Unmask0))
+        domain[domain.size() - 1] = '0' + i;
+        if (!m_session->DefinesFunction(domain))
         {
             break;
         }
-        for (size_t j = 0; 1; ++j)
+        for (size_t j = 0; j < 10; ++j)
         {
-            C0[C0.size() - 1] = '0' + j;
-            if (!m_session->DefinesFunction(Unmask0, C0))
+            condition[condition.size() - 1] = '0' + j;
+            if (!m_session->DefinesFunction(domain, condition))
             {
                 break;
             }
             if (j == 0)
             {
-                unmaskfun.push_back(
+                selectedDomains.push_back(
                     std::vector<LibUtilities::EquationSharedPtr>());
             }
-            unmaskfun[unmaskfun.size() - 1].push_back(
-                m_session->GetFunction(Unmask0, C0));
+            selectedDomains[selectedDomains.size() - 1].push_back(
+                m_session->GetFunction(domain, condition));
         }
+    }
+    unselectedVariables.clear();
+    string funName("SelectEVCalcVariables");
+    std::vector<std::string> variables = m_session->GetVariables();
+    for (size_t v = 0; v < m_nfields; ++v)
+    {
+        if (!m_session->DefinesFunction(funName, variables[v]))
+        {
+            unselectedVariables.insert(v);
+        }
+    }
+    if (unselectedVariables.size() == m_nfields)
+    {
+        unselectedVariables.clear();
     }
 }
 
 void DriverArnoldi::MaskInit()
 {
-    std::vector<std::vector<LibUtilities::EquationSharedPtr>> unmaskfun;
-    GetUnmaskFunction(unmaskfun);
-    if (unmaskfun.size() == 0)
+    std::vector<std::vector<LibUtilities::EquationSharedPtr>> selectedDomains;
+    std::set<int> unselectedVariables;
+    GetMaskInfo(selectedDomains, unselectedVariables);
+    if (selectedDomains.size() == 0 && unselectedVariables.size() == 0)
     {
         m_useMask = false;
         return;
@@ -381,12 +398,12 @@ void DriverArnoldi::MaskInit()
             gc[2] += gct[2] / NekDouble(nv);
         }
         int unmask = 1;
-        for (size_t m = 0; m < unmaskfun.size(); ++m)
+        for (size_t m = 0; m < selectedDomains.size(); ++m)
         {
             unmask = 0;
-            for (size_t n = 0; n < unmaskfun[m].size(); ++n)
+            for (size_t n = 0; n < selectedDomains[m].size(); ++n)
             {
-                if (unmaskfun[m][n]->Evaluate(gc[0], gc[1], gc[2]) <= 0.)
+                if (selectedDomains[m][n]->Evaluate(gc[0], gc[1], gc[2]) <= 0.)
                 {
                     unmask = 0;
                     break;
@@ -399,9 +416,9 @@ void DriverArnoldi::MaskInit()
             if (unmask == 1)
                 break;
         }
-        if (unmask == 0)
+        for (int j = 0; j < m_nfields; ++j)
         {
-            for (int j = 0; j < m_nfields; ++j)
+            if (unmask == 0 || unselectedVariables.count(j))
             {
                 Vmath::Fill(
                     exp->GetNcoeffs(), 0.,
