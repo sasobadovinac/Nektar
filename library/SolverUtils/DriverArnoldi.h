@@ -108,8 +108,9 @@ protected:
     /// init mask
     void MaskInit();
 
-    void GetUnmaskFunction(
-        std::vector<std::vector<LibUtilities::EquationSharedPtr>> &unmaskfun);
+    void GetMaskInfo(std::vector<std::vector<LibUtilities::EquationSharedPtr>>
+                         &selectedDomains,
+                     std::set<int> &unselectedVariables);
 
     virtual void v_InitObject(std::ostream &out = std::cout) override;
 
