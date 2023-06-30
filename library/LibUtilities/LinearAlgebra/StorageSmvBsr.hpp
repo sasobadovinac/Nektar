@@ -99,9 +99,6 @@ public:
         bool operator==(const const_iterator &rhs);
         bool operator!=(const const_iterator &rhs);
 
-        // one way conversion: iterator -> const_iterator
-        // operator const_iterator<T const, Tag>() const;
-
     private:
         void forward();
         CoordType storageIndexToFullCoord(IndexType storageIndex);

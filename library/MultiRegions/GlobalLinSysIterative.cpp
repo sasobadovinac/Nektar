@@ -464,7 +464,7 @@ void GlobalLinSysIterative::Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn)
 {
     if (m_isAbsoluteTolerance)
     {
-        m_rhs_magnitude = 1.;
+        m_rhs_magnitude = 1.0;
         return;
     }
 

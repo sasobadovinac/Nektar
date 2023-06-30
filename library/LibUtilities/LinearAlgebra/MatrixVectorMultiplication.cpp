@@ -37,19 +37,7 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <LibUtilities/LinearAlgebra/ExplicitInstantiation.h>
-#include <LibUtilities/LinearAlgebra/NekTypeDefs.hpp>
-
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-
-#include <LibUtilities/LinearAlgebra/Blas.hpp>
-#include <LibUtilities/LinearAlgebra/CanGetRawPtr.hpp>
-
-#include <LibUtilities/LinearAlgebra/Blas.hpp>
-#include <LibUtilities/LinearAlgebra/BlockMatrix.hpp>
 #include <LibUtilities/LinearAlgebra/MatrixOperations.hpp>
-#include <LibUtilities/LinearAlgebra/NekVectorFwd.hpp>
-#include <LibUtilities/LinearAlgebra/ScaledMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/StandardMatrix.hpp>
 
 namespace Nektar
 {
@@ -175,8 +163,6 @@ void FullBlockMatrixMultiply(
                     lhs.GetNumberOfColumnsInBlockColumn(blockColumn - 1);
             }
 
-            // const std::shared_ptr<const LhsInnerMatrixType>& block =
-            // lhs.GetBlock(blockRow, blockColumn);
             const LhsInnerMatrixType *block =
                 lhs.GetBlockPtr(blockRow, blockColumn);
             if (!block)
@@ -254,7 +240,6 @@ void DiagonalBlockMatrixMultiply(
         DataType *resultWrapper    = result_ptr + curResultRow;
         const DataType *rhsWrapper = rhs_ptr + curWrapperRow;
         Multiply(resultWrapper, *block, rhsWrapper);
-        // resultWrapper = (*block)*rhsWrapper;
     }
     curResultRow += rowsInBlock;
     if (curResultRow < result.GetRows())
