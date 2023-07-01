@@ -788,13 +788,41 @@ NekDouble EquationSystem::v_L2Error(unsigned int field,
 {
     NekDouble L2error = -1.0;
 
+
     if (m_NumQuadPointsError == 0)
     {
+        // std::cout << "Field: " << field << " IsPhys: " << m_fields[field]->GetPhysState() << std::endl;
+        // for (int i = 0; i < m_fields[field]->GetPhys().size(); ++i)
+        // {
+        //     std::cout << "m_fields[" << field << "][" << i <<"]:  "<< m_fields[field]->GetPhys()[i] << std::endl;
+        // }
+        // std::cout << std::endl;
         if (m_fields[field]->GetPhysState() == false)
         {
+        //    std::cout << "BwdTrans!!!! " << std::endl;
+            m_fields[field]->SetWaveSpace(0);
             m_fields[field]->BwdTrans(m_fields[field]->GetCoeffs(),
                                       m_fields[field]->UpdatePhys());
         }
+        //std::cout << std::endl;
+        //for (int i = 0; i < m_fields[field]->GetPhys().size(); ++i)
+        //{
+        //    std::cout << "m_fields[" << field << "][" << i <<"]:  "<< m_fields[field]->GetPhys()[i] << std::endl;
+        //}
+        //std::cout << "Field: " << field << " IsPhys: " << m_fields[field]->GetPhysState() << std::endl;
+        
+        //std::cout << "Wavespace: " << m_fields[field]->GetWaveSpace() << std::endl; 
+        //if (m_fields[field]->GetWaveSpace() != 0)
+        //{
+        //    m_fields[field]->HomogeneousBwdTrans(m_fields[field]->GetCoeffs(),
+        //                              m_fields[field]->UpdatePhys());
+        //    std::cout << "Wavespace: " << m_fields[field]->GetWaveSpace() << std::endl; 
+        //}
+
+        //for (int i = 0; i < m_fields[field]->GetPhys().size(); ++i)
+        //{
+        //    std::cout << "m_fields[" << field << "][" << i <<"]:  "<< m_fields[field]->GetPhys()[i] << std::endl;
+        //}
 
         if (exactsoln.size())
         {
