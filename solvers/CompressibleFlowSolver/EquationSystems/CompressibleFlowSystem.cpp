@@ -223,7 +223,7 @@ void CompressibleFlowSystem::DoOdeRhs(
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     size_t nvariables = inarray.size();
-    size_t npoints    = GetNpoints();
+    // size_t npoints    = GetNpoints();
     size_t nTracePts  = GetTraceTotPoints();
 
     // This converts our Mu in coefficient space to u in physical space for ALE
@@ -425,7 +425,7 @@ void CompressibleFlowSystem::SetBoundaryConditions(
         m_fields[i]->ExtractTracePhys(tmpIn[i], Fwd[i]);
     }
 
-    if (!m_bndConds.empty())
+    if (m_bndConds.size())
     {
         // Loop over user-defined boundary conditions
         for (auto &x : m_bndConds)

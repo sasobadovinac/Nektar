@@ -797,6 +797,7 @@ inline void EquationSystem::CopyToPhysField(
 {
     Vmath::Vcopy(input.size(), input, 1, m_fields[i]->UpdatePhys(), 1);
 }
+
 } // namespace SolverUtils
 } // namespace Nektar
 

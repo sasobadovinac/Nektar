@@ -71,7 +71,6 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
     TiXmlNode *movement = nektar->FirstChild("MOVEMENT");
     if (movement != nullptr)
     {   
-        m_slideFlag = true;
         bool zones = movement->FirstChild("ZONES") != nullptr;
         if (zones)
         {

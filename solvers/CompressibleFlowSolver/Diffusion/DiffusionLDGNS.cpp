@@ -70,8 +70,7 @@ void DiffusionLDGNS::v_InitObject(
 
     m_diffDim = m_spaceDim - nDim;
 
-    m_traceVel = Array<OneD, Array<OneD, NekDouble>>{
-        m_spaceDim}; // @TODO: What is this trace vel used for???
+    m_traceVel          = Array<OneD, Array<OneD, NekDouble>>{m_spaceDim}; // @TODO: What is this trace vel used for???
     m_traceNormals      = Array<OneD, Array<OneD, NekDouble>>{m_spaceDim};
     m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble>>{m_spaceDim};
     for (std::size_t i = 0; i < m_spaceDim; ++i)
@@ -226,10 +225,10 @@ void DiffusionLDGNS::v_Diffuse(
     }
     v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp2, pFwd, pBwd);
 
-    for (int i = 0; i < nConvectiveFields; ++i)
-    {
-        fields[i]->MultiplyByElmtInvMass(tmp2[i], tmp2[i]);
-    }
+    // for (int i = 0; i < nConvectiveFields; ++i)
+    // {
+    //     fields[i]->MultiplyByElmtInvMass(tmp2[i], tmp2[i]);
+    // }
 
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
@@ -296,7 +295,7 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
     // Obtain numerical fluxes
     DiffuseTraceFlux(fields, inarray, derivativesO1, m_viscTensor, viscousFlux,
                      pFwd, pBwd);
-
+    Array<OneD, NekDouble> tmpOut{nCoeffs};
     Array<OneD, Array<OneD, NekDouble>> tmpIn{nDim};
 
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
@@ -307,12 +306,16 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         {
             tmpIn[j] = m_viscTensor[j][i];
         }
-        fields[i]->IProductWRTDerivBase(tmpIn, outarray[i]);
+        fields[i]->IProductWRTDerivBase(tmpIn, tmpOut);
 
         // Evaulate  <\phi, \hat{F}\cdot n> - outarray[i]
-        Vmath::Neg(nCoeffs, outarray[i], 1);
-        fields[i]->AddTraceIntegral(viscousFlux[i], outarray[i]);
+        Vmath::Neg(nCoeffs, tmpOut, 1);
+        fields[i]->AddTraceIntegral(viscousFlux[i], tmpOut);
         fields[i]->SetPhysState(false);
+        if (!fields[0]->GetGraph()->GetMovement()->GetMoveFlag()) 
+        {
+        fields[i]->MultiplyByElmtInvMass(tmpOut, outarray[i]);
+        }
     }
 }
 
