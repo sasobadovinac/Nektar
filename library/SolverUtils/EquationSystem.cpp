@@ -789,13 +789,18 @@ NekDouble EquationSystem::v_L2Error(unsigned int field,
     NekDouble L2error = -1.0;
 
 
+    bool transformed = false;
+
     if (m_NumQuadPointsError == 0)
     {
+
         if (m_fields[field]->GetPhysState() == false)
         {
-            m_fields[field]->SetWaveSpace(0);
+            m_fields[field]->SetWaveSpace(false);
             m_fields[field]->BwdTrans(m_fields[field]->GetCoeffs(),
                                       m_fields[field]->UpdatePhys());
+            m_fields[field]->SetPhysState(true);
+            transformed = true;
         }
 
         if (exactsoln.size())
@@ -825,6 +830,16 @@ NekDouble EquationSystem::v_L2Error(unsigned int field,
             NekDouble Vol = m_fields[field]->Integral(one);
             L2error       = sqrt(L2error * L2error / Vol);
         }
+
+        if (transformed == true)
+        {
+            m_fields[field]->SetWaveSpace(true);
+            m_fields[field]->HomogeneousFwdTrans(
+                    m_fields[field]->GetTotPoints(), m_fields[field]->GetPhys(),
+                    m_fields[field]->UpdatePhys());
+            m_fields[field]->SetPhysState(false);
+        }
+
     }
     else
     {
