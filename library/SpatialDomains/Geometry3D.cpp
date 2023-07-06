@@ -70,6 +70,132 @@ Geometry3D::~Geometry3D()
 // 3D Geometry Methods
 //---------------------------------------
 void Geometry3D::NewtonIterationForLocCoord(
+    const Array<OneD, const NekDouble> &coords, Array<OneD, NekDouble> &Lcoords)
+{
+    // maximum iterations for convergence
+    const int MaxIterations = 51;
+    // |x-xp|^2 < EPSILON  error tolerance
+    const NekDouble Tol = 1.e-8;
+    // |r,s|    > LcoordDIV stop the search
+    const NekDouble LcoordDiv = 15.0;
+
+    Array<OneD, const NekDouble> Jac =
+        m_geomFactors->GetJac(m_xmap->GetPointsKeys());
+
+    NekDouble ScaledTol =
+        Vmath::Vsum(Jac.size(), Jac, 1) / ((NekDouble)Jac.size());
+    ScaledTol *= Tol * Tol;
+
+    NekDouble xmap, ymap, zmap, res;
+    int cnt = 0;
+    Array<OneD, NekDouble> var(8, 1.);
+    Array<OneD, NekDouble> deriv(9);
+    Array<OneD, NekDouble> tmp(3);
+    while (cnt++ < MaxIterations)
+    {
+        var[1] = Lcoords[0];
+        var[2] = Lcoords[1];
+        var[3] = Lcoords[2];
+        var[4] = Lcoords[0] * Lcoords[1];
+        var[5] = Lcoords[1] * Lcoords[2];
+        var[6] = Lcoords[0] * Lcoords[2];
+        var[7] = var[4] * Lcoords[2];
+        // calculate the global point corresponding to Lcoords
+        xmap =
+            Vmath::Dot(m_isoParameter[0].size(), var, 1, m_isoParameter[0], 1);
+        ymap =
+            Vmath::Dot(m_isoParameter[0].size(), var, 1, m_isoParameter[1], 1);
+        zmap =
+            Vmath::Dot(m_isoParameter[0].size(), var, 1, m_isoParameter[2], 1);
+
+        tmp[0] = coords[0] - xmap;
+        tmp[1] = coords[1] - ymap;
+        tmp[2] = coords[2] - zmap;
+
+        res = tmp[0] * tmp[0] + tmp[1] * tmp[1] + tmp[2] * tmp[2];
+        if (res < ScaledTol)
+        {
+            break;
+        }
+
+        // Interpolate derivative metric at Lcoords (ddx1, ddx2, ddx3)
+        deriv[0] = m_isoParameter[0][1] + m_isoParameter[0][4] * Lcoords[1];
+        deriv[1] = m_isoParameter[0][2] + m_isoParameter[0][4] * Lcoords[0];
+        deriv[2] = m_isoParameter[0][3];
+        deriv[3] = m_isoParameter[1][1] + m_isoParameter[1][4] * Lcoords[1];
+        deriv[4] = m_isoParameter[1][2] + m_isoParameter[1][4] * Lcoords[0];
+        deriv[5] = m_isoParameter[1][3];
+        deriv[6] = m_isoParameter[2][1] + m_isoParameter[2][4] * Lcoords[1];
+        deriv[7] = m_isoParameter[2][2] + m_isoParameter[2][4] * Lcoords[0];
+        deriv[8] = m_isoParameter[2][3];
+        if (m_isoParameter[0].size() >= 6)
+        {
+            deriv[1] += m_isoParameter[0][5] * Lcoords[2];
+            deriv[2] += m_isoParameter[0][5] * Lcoords[1];
+            deriv[4] += m_isoParameter[1][5] * Lcoords[2];
+            deriv[5] += m_isoParameter[1][5] * Lcoords[1];
+            deriv[7] += m_isoParameter[2][5] * Lcoords[2];
+            deriv[8] += m_isoParameter[2][5] * Lcoords[1];
+        }
+        if (m_isoParameter[0].size() >= 8)
+        {
+            deriv[0] += m_isoParameter[0][6] * Lcoords[2] +
+                        m_isoParameter[0][7] * var[5];
+            deriv[1] += m_isoParameter[0][7] * var[6];
+            deriv[2] += m_isoParameter[0][6] * Lcoords[0] +
+                        m_isoParameter[0][7] * var[4];
+            deriv[3] += m_isoParameter[1][6] * Lcoords[2] +
+                        m_isoParameter[1][7] * var[5];
+            deriv[4] += m_isoParameter[1][7] * var[6];
+            deriv[5] += m_isoParameter[1][6] * Lcoords[0] +
+                        m_isoParameter[1][7] * var[4];
+            deriv[6] += m_isoParameter[2][6] * Lcoords[2] +
+                        m_isoParameter[2][7] * var[5];
+            deriv[7] += m_isoParameter[2][7] * var[6];
+            deriv[8] += m_isoParameter[2][6] * Lcoords[0] +
+                        m_isoParameter[2][7] * var[4];
+        }
+        DNekMatSharedPtr mat =
+            MemoryManager<DNekMat>::AllocateSharedPtr(3, 3, 0, eFULL);
+        Vmath::Vcopy(9, deriv, 1, mat->GetPtr(), 1);
+        mat->Invert();
+        Lcoords[0] += Vmath::Dot(3, mat->GetPtr(), 1, tmp, 1);
+        Lcoords[1] += Vmath::Dot(3, mat->GetPtr() + 3, 1, tmp, 1);
+        Lcoords[2] += Vmath::Dot(3, mat->GetPtr() + 6, 1, tmp, 1);
+
+        if (!(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1]) &&
+              std::isfinite(Lcoords[2])) ||
+            fabs(Lcoords[0]) > LcoordDiv || fabs(Lcoords[1]) > LcoordDiv ||
+            fabs(Lcoords[2]) > LcoordDiv)
+        {
+            std::ostringstream ss;
+            ss << "Iteration has diverged in NewtonIterationForLocCoord in "
+                  "element "
+               << GetGlobalID();
+            WARNINGL1(false, ss.str());
+            return;
+        }
+    }
+
+    if (cnt >= MaxIterations)
+    {
+        std::ostringstream ss;
+
+        ss << "Reached MaxIterations (" << MaxIterations
+           << ") in Newton iteration ";
+
+        WARNINGL1(cnt < MaxIterations, ss.str());
+    }
+}
+
+int Geometry3D::v_AllLeftCheck(const Array<OneD, const NekDouble> &gloCoord)
+{
+    boost::ignore_unused(gloCoord);
+    // todo: check only plane surfaces
+    return 0;
+}
+
+void Geometry3D::NewtonIterationForLocCoord(
     const Array<OneD, const NekDouble> &coords,
     const Array<OneD, const NekDouble> &ptsx,
     const Array<OneD, const NekDouble> &ptsy,
@@ -191,7 +317,7 @@ void Geometry3D::NewtonIterationForLocCoord(
             return;
         }
         if (fabs(Lcoords[0]) > LcoordDiv || fabs(Lcoords[1]) > LcoordDiv ||
-            fabs(Lcoords[0]) > LcoordDiv)
+            fabs(Lcoords[2]) > LcoordDiv)
         {
             break; // lcoords have diverged so stop iteration
         }
@@ -245,72 +371,30 @@ void Geometry3D::NewtonIterationForLocCoord(
 NekDouble Geometry3D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
                                      Array<OneD, NekDouble> &Lcoords)
 {
-    NekDouble dist = 0.;
+    NekDouble dist = std::numeric_limits<double>::max();
+    Array<OneD, NekDouble> tmpcoords(3);
+    tmpcoords[0] = coords[0];
+    tmpcoords[1] = coords[1];
+    tmpcoords[2] = coords[2];
     if (GetMetricInfo()->GetGtype() == eRegular)
     {
-        int v1, v2, v3;
-        if (m_shapeType == LibUtilities::eHexahedron ||
-            m_shapeType == LibUtilities::ePrism ||
-            m_shapeType == LibUtilities::ePyramid)
-        {
-            v1 = 1;
-            v2 = 3;
-            v3 = 4;
-        }
-        else if (m_shapeType == LibUtilities::eTetrahedron)
-        {
-            v1 = 1;
-            v2 = 2;
-            v3 = 3;
-        }
-        else
-        {
-            v1 = 1;
-            v2 = 2;
-            v3 = 3;
-            ASSERTL0(false, "unrecognized 3D element type");
-        }
-        // Point inside tetrahedron
-        PointGeom r(m_coordim, 0, coords[0], coords[1], coords[2]);
-
-        // Edges
-        PointGeom er0, e10, e20, e30;
-        er0.Sub(r, *m_verts[0]);
-        e10.Sub(*m_verts[v1], *m_verts[0]);
-        e20.Sub(*m_verts[v2], *m_verts[0]);
-        e30.Sub(*m_verts[v3], *m_verts[0]);
-
-        // Cross products (Normal times area)
-        PointGeom cp1020, cp2030, cp3010;
-        cp1020.Mult(e10, e20);
-        cp2030.Mult(e20, e30);
-        cp3010.Mult(e30, e10);
-
-        // Barycentric coordinates (relative volume)
-        NekDouble iV =
-            2. / e30.dot(cp1020); // Hex Volume = {(e30)dot(e10)x(e20)}
-        Lcoords[0] = er0.dot(cp2030) * iV - 1.0;
-        Lcoords[1] = er0.dot(cp3010) * iV - 1.0;
-        Lcoords[2] = er0.dot(cp1020) * iV - 1.0;
-
-        // Set distance
-        Array<OneD, NekDouble> eta(3, 0.);
-        m_xmap->LocCoordToLocCollapsed(Lcoords, eta);
-        if (ClampLocCoords(eta, 0.))
-        {
-            Array<OneD, NekDouble> xi(3, 0.);
-            m_xmap->LocCollapsedToLocCoord(eta, xi);
-            xi[0] = (xi[0] + 1.) * 0.5; // re-scaled to ratio [0, 1]
-            xi[1] = (xi[1] + 1.) * 0.5;
-            xi[2] = (xi[2] + 1.) * 0.5;
-            for (int i = 0; i < m_coordim; ++i)
-            {
-                NekDouble tmp =
-                    xi[0] * e10[i] + xi[1] * e20[i] + xi[2] * e30[i] - er0[i];
-                dist += tmp * tmp;
-            }
-            dist = sqrt(dist);
-        }
+        tmpcoords[0] -= m_isoParameter[0][0];
+        tmpcoords[1] -= m_isoParameter[1][0];
+        tmpcoords[2] -= m_isoParameter[2][0];
+        Lcoords[0] = m_invIsoParam[0][0] * tmpcoords[0] +
+                     m_invIsoParam[0][1] * tmpcoords[1] +
+                     m_invIsoParam[0][2] * tmpcoords[2];
+        Lcoords[1] = m_invIsoParam[1][0] * tmpcoords[0] +
+                     m_invIsoParam[1][1] * tmpcoords[1] +
+                     m_invIsoParam[1][2] * tmpcoords[2];
+        Lcoords[2] = m_invIsoParam[2][0] * tmpcoords[0] +
+                     m_invIsoParam[2][1] * tmpcoords[1] +
+                     m_invIsoParam[2][2] * tmpcoords[2];
+    }
+    else if (m_straightEdge)
+    {
+        ClampLocCoords(Lcoords, 0.);
+        NewtonIterationForLocCoord(tmpcoords, Lcoords);
     }
     else
     {
@@ -483,6 +567,30 @@ StdRegions::Orientation Geometry3D::v_GetForient(const int i) const
              "Face ID must be between 0 and " +
                  boost::lexical_cast<string>(m_faces.size() - 1));
     return m_forient[i];
+}
+
+void Geometry3D::v_CalculateInverseIsoParam()
+{
+    DNekMatSharedPtr mat =
+        MemoryManager<DNekMat>::AllocateSharedPtr(3, 3, 0, eFULL);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+
+            mat->SetValue(i, j, m_isoParameter[i][j + 1]);
+        }
+    }
+    mat->Invert();
+    m_invIsoParam = Array<OneD, Array<OneD, NekDouble>>(3);
+    for (int i = 0; i < 3; ++i)
+    {
+        m_invIsoParam[i] = Array<OneD, NekDouble>(3);
+        for (int j = 0; j < 3; ++j)
+        {
+            m_invIsoParam[i][j] = mat->GetValue(i, j);
+        }
+    }
 }
 
 } // namespace SpatialDomains

@@ -83,6 +83,8 @@ protected:
     SegGeomVector m_edges;
     std::vector<StdRegions::Orientation> m_eorient;
     CurveSharedPtr m_curve;
+    Array<OneD, int> m_manifold;
+    Array<OneD, Array<OneD, NekDouble>> m_edgeNormal;
 
     SPATIAL_DOMAINS_EXPORT virtual NekDouble v_GetLocCoords(
         const Array<OneD, const NekDouble> &coords,
@@ -93,6 +95,11 @@ protected:
                                     const Array<OneD, const NekDouble> &ptsy,
                                     Array<OneD, NekDouble> &Lcoords,
                                     NekDouble &dist);
+    void NewtonIterationForLocCoord(const Array<OneD, const NekDouble> &coords,
+                                    Array<OneD, NekDouble> &Lcoords);
+    virtual void v_CalculateInverseIsoParam() override;
+    virtual int v_AllLeftCheck(
+        const Array<OneD, const NekDouble> &gloCoord) override;
 
     //---------------------------------------
     // Helper functions

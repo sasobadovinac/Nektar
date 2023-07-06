@@ -86,36 +86,53 @@ void PyrGeom::v_GenGeomFactors()
 
     if (m_geomFactorsState != ePtsFilled)
     {
-        int i;
         GeomType Gtype = eRegular;
 
         v_FillGeom();
 
         // check to see if expansions are linear
-        for (i = 0; i < m_coordim; ++i)
+        m_straightEdge = true;
+        if (m_xmap->GetBasisNumModes(0) != 2 ||
+            m_xmap->GetBasisNumModes(1) != 2 ||
+            m_xmap->GetBasisNumModes(2) != 2)
         {
-            if (m_xmap->GetBasisNumModes(0) != 2 ||
-                m_xmap->GetBasisNumModes(1) != 2 ||
-                m_xmap->GetBasisNumModes(2) != 2)
-            {
-                Gtype = eDeformed;
-            }
+            Gtype          = eDeformed;
+            m_straightEdge = false;
         }
 
         // check to see if all quadrilateral faces are parallelograms
         if (Gtype == eRegular)
         {
-            // Ensure each face is a parallelogram? Check this.
-            for (i = 0; i < m_coordim; i++)
+            m_isoParameter = Array<OneD, Array<OneD, NekDouble>>(3);
+            for (int i = 0; i < 3; ++i)
             {
-                if (fabs((*m_verts[0])(i) - (*m_verts[1])(i) +
-                         (*m_verts[2])(i) - (*m_verts[3])(i)) >
-                    NekConstants::kNekZeroTol)
+                m_isoParameter[i]    = Array<OneD, NekDouble>(5, 0.);
+                NekDouble A          = (*m_verts[0])(i);
+                NekDouble B          = (*m_verts[1])(i);
+                NekDouble C          = (*m_verts[2])(i);
+                NekDouble D          = (*m_verts[3])(i);
+                NekDouble E          = (*m_verts[4])(i);
+                m_isoParameter[i][0] = 0.25 * (-A + B + C + D + E + E);
+
+                m_isoParameter[i][1] = 0.25 * (-A + B + C - D); // xi1
+                m_isoParameter[i][2] = 0.25 * (-A - B + C + D); // xi2
+                m_isoParameter[i][3] = 0.5 * (-A + E);          // xi3
+
+                m_isoParameter[i][4] = 0.25 * (A - B + C - D); // xi1*xi2
+                NekDouble tmp        = fabs(m_isoParameter[i][1]) +
+                                fabs(m_isoParameter[i][2]) +
+                                fabs(m_isoParameter[i][3]);
+                if (fabs(m_isoParameter[i][4]) >
+                    tmp * NekConstants::kNekZeroTol)
                 {
                     Gtype = eDeformed;
-                    break;
                 }
             }
+        }
+
+        if (Gtype == eRegular)
+        {
+            v_CalculateInverseIsoParam();
         }
 
         m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(
