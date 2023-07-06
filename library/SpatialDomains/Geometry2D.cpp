@@ -62,6 +62,126 @@ Geometry2D::~Geometry2D()
 {
 }
 
+int Geometry2D::v_AllLeftCheck(const Array<OneD, const NekDouble> &gloCoord)
+{
+    int nc = 1, d0 = m_manifold[0], d1 = m_manifold[1];
+    if (0 == m_edgeNormal.size())
+    {
+        m_edgeNormal = Array<OneD, Array<OneD, NekDouble>>(m_verts.size());
+        Array<OneD, Array<OneD, NekDouble>> x(2);
+        x[0] = Array<OneD, NekDouble>(3);
+        x[1] = Array<OneD, NekDouble>(3);
+        m_verts[m_verts.size() - 1]->GetCoords(x[0]);
+        int i0 = 1, i1 = 0;
+        for (size_t i = 0; i < m_verts.size(); ++i)
+        {
+            i0 ^= 1;
+            i1 ^= 1;
+            m_verts[i]->GetCoords(x[i1]);
+            if (m_edges[i]->GetXmap()->GetBasis(0)->GetNumModes() > 2)
+            {
+                continue;
+            }
+            m_edgeNormal[i]    = Array<OneD, NekDouble>(2);
+            m_edgeNormal[i][0] = x[i0][d1] - x[i1][d1];
+            m_edgeNormal[i][1] = x[i1][d0] - x[i0][d0];
+        }
+    }
+
+    Array<OneD, NekDouble> vertex(3);
+    for (size_t i = 0; i < m_verts.size(); ++i)
+    {
+        m_verts[i]->GetCoords(vertex);
+        if (m_edgeNormal[i].size() == 0)
+        {
+            nc = 0; // not sure
+            continue;
+        }
+        NekDouble value = m_edgeNormal[i][0] * (gloCoord[d0] - vertex[d0]) +
+                          m_edgeNormal[i][1] * (gloCoord[d1] - vertex[d1]);
+        if (value < 0)
+        {
+            return -1; // outside
+        }
+    }
+    // nc: 1 (side element), 0 (maybe inside), -1 (outside)
+    return nc;
+}
+
+void Geometry2D::NewtonIterationForLocCoord(
+    const Array<OneD, const NekDouble> &coords, Array<OneD, NekDouble> &Lcoords)
+{
+    // Maximum iterations for convergence
+    const int MaxIterations = 51;
+    // |x-xp|^2 < EPSILON  error    tolerance
+    const NekDouble Tol = 1.e-8;
+    // |r,s|    > LcoordDIV stop   the search
+    const NekDouble LcoordDiv = 15.0;
+
+    NekDouble ScaledTol = fabs(m_isoParameter[0][1] * m_isoParameter[1][2] -
+                               m_isoParameter[1][1] * m_isoParameter[0][2]);
+    ScaledTol *= Tol * Tol;
+
+    NekDouble xmap, ymap, F1, F2;
+    NekDouble derx_1, derx_2, dery_1, dery_2, jac;
+
+    NekDouble res;
+    int cnt = 0;
+    while (cnt++ < MaxIterations)
+    {
+        NekDouble tmp = Lcoords[0] * Lcoords[1];
+        // calculate the global point corresponding to Lcoords
+        xmap = m_isoParameter[0][0] + m_isoParameter[0][1] * Lcoords[0] +
+               m_isoParameter[0][2] * Lcoords[1] + m_isoParameter[0][3] * tmp;
+        ymap = m_isoParameter[1][0] + m_isoParameter[1][1] * Lcoords[0] +
+               m_isoParameter[1][2] * Lcoords[1] + m_isoParameter[1][3] * tmp;
+
+        F1 = coords[0] - xmap;
+        F2 = coords[1] - ymap;
+
+        res = F1 * F1 + F2 * F2;
+        if (res < ScaledTol)
+        {
+            break;
+        }
+
+        // Interpolate derivative metric at Lcoords
+        derx_1 = m_isoParameter[0][1] + m_isoParameter[0][3] * Lcoords[1];
+        derx_2 = m_isoParameter[0][2] + m_isoParameter[0][3] * Lcoords[0];
+        dery_1 = m_isoParameter[1][1] + m_isoParameter[1][3] * Lcoords[1];
+        dery_2 = m_isoParameter[1][2] + m_isoParameter[1][3] * Lcoords[0];
+
+        jac = 1. / (dery_2 * derx_1 - dery_1 * derx_2);
+
+        // use analytical inverse of derivitives which are
+        // also similar to those of metric factors.
+        Lcoords[0] += (dery_2 * F1 - derx_2 * F2) * jac;
+
+        Lcoords[1] += (-dery_1 * F1 + derx_1 * F2) * jac;
+
+        if (!(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1])) ||
+            fabs(Lcoords[0]) > LcoordDiv || fabs(Lcoords[1]) > LcoordDiv)
+        {
+            std::ostringstream ss;
+            ss << "Iteration has diverged in NewtonIterationForLocCoord in "
+                  "element "
+               << GetGlobalID();
+            WARNINGL1(false, ss.str());
+            return;
+        }
+    }
+
+    if (cnt >= MaxIterations)
+    {
+        std::ostringstream ss;
+
+        ss << "Reached MaxIterations (" << MaxIterations
+           << ") in Newton iteration ";
+
+        WARNINGL1(cnt < MaxIterations, ss.str());
+    }
+}
+
 void Geometry2D::NewtonIterationForLocCoord(
     const Array<OneD, const NekDouble> &coords,
     const Array<OneD, const NekDouble> &ptsx,
@@ -201,65 +321,25 @@ void Geometry2D::NewtonIterationForLocCoord(
 NekDouble Geometry2D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
                                      Array<OneD, NekDouble> &Lcoords)
 {
-    NekDouble dist = 0.;
+    NekDouble dist = std::numeric_limits<double>::max();
+    Array<OneD, NekDouble> tmpcoords(2);
+    tmpcoords[0] = coords[m_manifold[0]];
+    tmpcoords[1] = coords[m_manifold[1]];
     if (GetMetricInfo()->GetGtype() == eRegular)
     {
-        int v2;
-        if (m_shapeType == LibUtilities::eTriangle)
-        {
-            v2 = 2;
-        }
-        else if (m_shapeType == LibUtilities::eQuadrilateral)
-        {
-            v2 = 3;
-        }
-        else
-        {
-            v2 = 2;
-            ASSERTL0(false, "unrecognized 2D element type");
-        }
-
-        NekDouble coords2 = (m_coordim == 3) ? coords[2] : 0.0;
-        PointGeom r(m_coordim, 0, coords[0], coords[1], coords2);
-
-        // Edges
-        PointGeom er0, e10, e20;
-        PointGeom norm, orth1, orth2;
-        er0.Sub(r, *m_verts[0]);
-        e10.Sub(*m_verts[1], *m_verts[0]);
-        e20.Sub(*m_verts[v2], *m_verts[0]);
-
-        // Obtain normal to element plane
-        norm.Mult(e10, e20);
-        // Obtain vector which are proportional to normal of e10 and e20.
-        orth1.Mult(norm, e10);
-        orth2.Mult(norm, e20);
-
-        // Calculate length using L/|dv1| = (x-v0).n1/(dv1.n1) for coordiante 1
-        // Then rescale to [-1,1].
-        Lcoords[0] = er0.dot(orth2) / e10.dot(orth2);
-        Lcoords[0] = 2. * Lcoords[0] - 1.;
-        Lcoords[1] = er0.dot(orth1) / e20.dot(orth1);
-        Lcoords[1] = 2. * Lcoords[1] - 1.;
-
-        // Set distance
-        Array<OneD, NekDouble> eta(2, 0.);
-        m_xmap->LocCoordToLocCollapsed(Lcoords, eta);
-        if (ClampLocCoords(eta, 0.))
-        {
-            Array<OneD, NekDouble> xi(2, 0.);
-            m_xmap->LocCollapsedToLocCoord(eta, xi);
-            xi[0] = (xi[0] + 1.) * 0.5; // re-scaled to ratio [0, 1]
-            xi[1] = (xi[1] + 1.) * 0.5;
-            for (int i = 0; i < m_coordim; ++i)
-            {
-                NekDouble tmp = xi[0] * e10[i] + xi[1] * e20[i] - er0[i];
-                dist += tmp * tmp;
-            }
-            dist = sqrt(dist);
-        }
+        tmpcoords[0] -= m_isoParameter[0][0];
+        tmpcoords[1] -= m_isoParameter[1][0];
+        Lcoords[0] = m_invIsoParam[0][0] * tmpcoords[0] +
+                     m_invIsoParam[0][1] * tmpcoords[1];
+        Lcoords[1] = m_invIsoParam[1][0] * tmpcoords[0] +
+                     m_invIsoParam[1][1] * tmpcoords[1];
     }
-    else
+    else if (m_straightEdge)
+    {
+        ClampLocCoords(Lcoords, 0.);
+        NewtonIterationForLocCoord(tmpcoords, Lcoords);
+    }
+    else if (GetMetricInfo()->GetGtype() == eDeformed)
     {
         v_FillGeom();
         // Determine nearest point of coords  to values in m_xmap
@@ -268,48 +348,13 @@ NekDouble Geometry2D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
         Array<OneD, NekDouble> tmpx(npts), tmpy(npts);
 
         // Determine 3D manifold orientation
-        int idx = 0, idy = 1;
-        if (m_coordim == 3)
-        {
-            PointGeom e01, e21, norm;
-            e01.Sub(*m_verts[0], *m_verts[1]);
-            e21.Sub(*m_verts[2], *m_verts[1]);
-            norm.Mult(e01, e21);
-            int tmpi   = 0;
-            double tmp = std::fabs(norm[0]);
-            if (tmp < fabs(norm[1]))
-            {
-                tmp  = fabs(norm[1]);
-                tmpi = 1;
-            }
-            if (tmp < fabs(norm[2]))
-            {
-                tmpi = 2;
-            }
-            idx = (tmpi + 1) % 3;
-            idy = (tmpi + 2) % 3;
-        }
-        Array<OneD, NekDouble> tmpcoords(2);
-        tmpcoords[0] = coords[idx];
-        tmpcoords[1] = coords[idy];
-
-        m_xmap->BwdTrans(m_coeffs[idx], ptsx);
-        m_xmap->BwdTrans(m_coeffs[idy], ptsy);
-
-        const Array<OneD, const NekDouble> za = m_xmap->GetPoints(0);
-        const Array<OneD, const NekDouble> zb = m_xmap->GetPoints(1);
-
-        // guess the first local coords based on nearest point
-        Vmath::Sadd(npts, -tmpcoords[0], ptsx, 1, tmpx, 1);
-        Vmath::Sadd(npts, -tmpcoords[1], ptsy, 1, tmpy, 1);
-        Vmath::Vmul(npts, tmpx, 1, tmpx, 1, tmpx, 1);
-        Vmath::Vvtvp(npts, tmpy, 1, tmpy, 1, tmpx, 1, tmpx, 1);
-
-        int min_i = Vmath::Imin(npts, tmpx, 1);
+        m_xmap->BwdTrans(m_coeffs[m_manifold[0]], ptsx);
+        m_xmap->BwdTrans(m_coeffs[m_manifold[1]], ptsy);
 
         Array<OneD, NekDouble> eta(2, 0.);
-        eta[0] = za[min_i % za.size()];
-        eta[1] = zb[min_i / za.size()];
+        m_xmap->LocCoordToLocCollapsed(Lcoords, eta);
+        ClampLocCoords(eta, 0.);
+
         m_xmap->LocCollapsedToLocCoord(eta, Lcoords);
 
         // Perform newton iteration to find local coordinates
@@ -575,6 +620,21 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     }
 
     return -1.0;
+}
+
+void Geometry2D::v_CalculateInverseIsoParam()
+{
+    NekDouble Jac = m_isoParameter[0][1] * m_isoParameter[1][2] -
+                    m_isoParameter[1][1] * m_isoParameter[0][2];
+    Jac = 1. / Jac;
+    // a12, -a02, -a11, a01
+    m_invIsoParam       = Array<OneD, Array<OneD, NekDouble>>(2);
+    m_invIsoParam[0]    = Array<OneD, NekDouble>(2);
+    m_invIsoParam[1]    = Array<OneD, NekDouble>(2);
+    m_invIsoParam[0][0] = m_isoParameter[1][2] * Jac;
+    m_invIsoParam[0][1] = -m_isoParameter[0][2] * Jac;
+    m_invIsoParam[1][0] = -m_isoParameter[1][1] * Jac;
+    m_invIsoParam[1][1] = m_isoParameter[0][1] * Jac;
 }
 
 } // namespace SpatialDomains

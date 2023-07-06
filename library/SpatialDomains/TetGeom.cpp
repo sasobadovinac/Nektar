@@ -615,14 +615,32 @@ void TetGeom::v_GenGeomFactors()
         v_FillGeom();
 
         // check to see if expansions are linear
-        for (int i = 0; i < m_coordim; ++i)
+        m_straightEdge = true;
+        if (m_xmap->GetBasisNumModes(0) != 2 ||
+            m_xmap->GetBasisNumModes(1) != 2 ||
+            m_xmap->GetBasisNumModes(2) != 2)
         {
-            if (m_xmap->GetBasisNumModes(0) != 2 ||
-                m_xmap->GetBasisNumModes(1) != 2 ||
-                m_xmap->GetBasisNumModes(2) != 2)
+            Gtype          = eDeformed;
+            m_straightEdge = false;
+        }
+
+        if (Gtype == eRegular)
+        {
+            m_isoParameter = Array<OneD, Array<OneD, NekDouble>>(3);
+            for (int i = 0; i < 3; ++i)
             {
-                Gtype = eDeformed;
+                m_isoParameter[i]    = Array<OneD, NekDouble>(4, 0.);
+                NekDouble A          = (*m_verts[0])(i);
+                NekDouble B          = (*m_verts[1])(i);
+                NekDouble C          = (*m_verts[2])(i);
+                NekDouble D          = (*m_verts[3])(i);
+                m_isoParameter[i][0] = 0.5 * (-A + B + C + D);
+
+                m_isoParameter[i][1] = 0.5 * (-A + B); // xi1
+                m_isoParameter[i][2] = 0.5 * (-A + C); // xi2
+                m_isoParameter[i][3] = 0.5 * (-A + D); // xi3
             }
+            v_CalculateInverseIsoParam();
         }
 
         m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(

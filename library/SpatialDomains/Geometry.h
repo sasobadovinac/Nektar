@@ -152,6 +152,8 @@ public:
         Array<OneD, NekDouble> &Lcoords);
     SPATIAL_DOMAINS_EXPORT inline NekDouble GetCoord(
         const int i, const Array<OneD, const NekDouble> &Lcoord);
+    SPATIAL_DOMAINS_EXPORT int PreliminaryCheck(
+        const Array<OneD, const NekDouble> &gloCoord);
     SPATIAL_DOMAINS_EXPORT bool MinMaxCheck(
         const Array<OneD, const NekDouble> &gloCoord);
     SPATIAL_DOMAINS_EXPORT bool ClampLocCoords(
@@ -202,6 +204,9 @@ protected:
     Array<OneD, Array<OneD, NekDouble>> m_coeffs;
     /// Array containing bounding box
     Array<OneD, NekDouble> m_boundingBox;
+    Array<OneD, Array<OneD, NekDouble>> m_isoParameter;
+    Array<OneD, Array<OneD, NekDouble>> m_invIsoParam;
+    bool m_straightEdge;
 
     /// Handles generation of geometry factors.
     void GenGeomFactors();
@@ -225,6 +230,7 @@ protected:
     virtual bool v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                                  Array<OneD, NekDouble> &locCoord,
                                  NekDouble tol, NekDouble &dist);
+    virtual int v_AllLeftCheck(const Array<OneD, const NekDouble> &gloCoord);
 
     virtual NekDouble v_GetCoord(const int i,
                                  const Array<OneD, const NekDouble> &Lcoord);
@@ -244,6 +250,7 @@ protected:
     virtual void v_GenGeomFactors() = 0;
 
     inline void SetUpCoeffs(const int nCoeffs);
+    virtual void v_CalculateInverseIsoParam();
 }; // class Geometry
 
 /**

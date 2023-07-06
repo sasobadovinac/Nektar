@@ -59,7 +59,7 @@ int Geometry1D::v_GetShapeDim() const
 NekDouble Geometry1D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
                                      Array<OneD, NekDouble> &Lcoords)
 {
-    NekDouble dist = 0.;
+    NekDouble dist = std::numeric_limits<double>::max();
     v_FillGeom();
 
     // calculate local coordinate for coord

@@ -268,7 +268,6 @@ void QuadGeom::v_GenGeomFactors()
 
     if (m_geomFactorsState != ePtsFilled)
     {
-        int i;
         GeomType Gtype = eRegular;
 
         QuadGeom::v_FillGeom();
@@ -280,13 +279,12 @@ void QuadGeom::v_GenGeomFactors()
 
         // Check to see if expansions are linear
         // If not linear => deformed geometry
-        for (i = 0; i < m_coordim; ++i)
+        m_straightEdge = true;
+        if ((m_xmap->GetBasisNumModes(0) != 2) ||
+            (m_xmap->GetBasisNumModes(1) != 2))
         {
-            if ((m_xmap->GetBasisNumModes(0) != 2) ||
-                (m_xmap->GetBasisNumModes(1) != 2))
-            {
-                Gtype = eDeformed;
-            }
+            Gtype          = eDeformed;
+            m_straightEdge = false;
         }
 
         // For linear expansions, the mapping from standard to local
@@ -311,18 +309,67 @@ void QuadGeom::v_GenGeomFactors()
         //     x_i^A - x_i^B = x_i^D - x_i^C
         //
         // This corresponds to quadrilaterals which are paralellograms.
+        m_manifold    = Array<OneD, int>(2);
+        m_manifold[0] = 0;
+        m_manifold[1] = 1;
+        if (m_coordim == 3)
+        {
+            PointGeom e01, e21, norm;
+            e01.Sub(*m_verts[0], *m_verts[1]);
+            e21.Sub(*m_verts[3], *m_verts[1]);
+            norm.Mult(e01, e21);
+            int tmpi   = 0;
+            double tmp = std::fabs(norm[0]);
+            if (tmp < fabs(norm[1]))
+            {
+                tmp  = fabs(norm[1]);
+                tmpi = 1;
+            }
+            if (tmp < fabs(norm[2]))
+            {
+                tmpi = 2;
+            }
+            m_manifold[0] = (tmpi + 1) % 3;
+            m_manifold[1] = (tmpi + 2) % 3;
+        }
+
         if (Gtype == eRegular)
         {
-            for (i = 0; i < m_coordim; i++)
+            Array<OneD, Array<OneD, NekDouble>> verts(m_verts.size());
+            for (int i = 0; i < m_verts.size(); ++i)
             {
-                if (fabs((*m_verts[0])(i) - (*m_verts[1])(i) +
-                         (*m_verts[2])(i) - (*m_verts[3])(i)) >
-                    NekConstants::kGeomFactorsTol)
+                verts[i] = Array<OneD, NekDouble>(3);
+                m_verts[i]->GetCoords(verts[i]);
+            }
+            // a00 + a01 xi1 + a02 xi2 + a03 xi1 xi2
+            // a10 + a11 xi1 + a12 xi2 + a03 xi1 xi2
+            m_isoParameter = Array<OneD, Array<OneD, NekDouble>>(2);
+            for (int i = 0; i < 2; i++)
+            {
+                unsigned int d    = m_manifold[i];
+                m_isoParameter[i] = Array<OneD, NekDouble>(4, 0.);
+                // Karniadakis, Sherwin 2005, Appendix D
+                NekDouble A          = verts[0][d];
+                NekDouble B          = verts[1][d];
+                NekDouble D          = verts[2][d];
+                NekDouble C          = verts[3][d];
+                m_isoParameter[i][0] = 0.25 * (A + B + C + D);  // 1
+                m_isoParameter[i][1] = 0.25 * (-A + B - C + D); // xi1
+                m_isoParameter[i][2] = 0.25 * (-A - B + C + D); // xi2
+                m_isoParameter[i][3] = 0.25 * (A - B - C + D);  // xi1*xi2
+                NekDouble tmp =
+                    fabs(m_isoParameter[i][1]) + fabs(m_isoParameter[i][2]);
+                if (fabs(m_isoParameter[i][3]) >
+                    tmp * NekConstants::kNekZeroTol)
                 {
                     Gtype = eDeformed;
-                    break;
                 }
             }
+        }
+
+        if (Gtype == eRegular)
+        {
+            v_CalculateInverseIsoParam();
         }
 
         m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(

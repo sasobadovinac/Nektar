@@ -54,7 +54,7 @@ GeomFactorsVector Geometry::m_regGeomFactorsManager;
 Geometry::Geometry()
     : m_coordim(0), m_geomFactorsState(eNotFilled), m_state(eNotFilled),
       m_setupState(false), m_shapeType(LibUtilities::eNoShapeType),
-      m_globalID(-1)
+      m_globalID(-1), m_straightEdge(false)
 {
 }
 
@@ -64,7 +64,7 @@ Geometry::Geometry()
 Geometry::Geometry(const int coordim)
     : m_coordim(coordim), m_geomFactorsState(eNotFilled), m_state(eNotFilled),
       m_setupState(false), m_shapeType(LibUtilities::eNoShapeType),
-      m_globalID(-1)
+      m_globalID(-1), m_straightEdge(false)
 {
 }
 
@@ -237,6 +237,18 @@ int Geometry::v_GetShapeDim() const
     return 0;
 }
 
+int Geometry::v_AllLeftCheck(const Array<OneD, const NekDouble> &gloCoord)
+{
+    boost::ignore_unused(gloCoord);
+    return 0;
+}
+
+void Geometry::v_CalculateInverseIsoParam()
+{
+    NEKERROR(ErrorUtil::efatal,
+             "This function is only valid for shape type geometries");
+}
+
 /**
  * @copydoc Geometry::GetXmap()
  */
@@ -249,27 +261,29 @@ StdRegions::StdExpansionSharedPtr Geometry::v_GetXmap() const
  * @copydoc Geometry::ContainsPoint(
  *     const Array<OneD, const NekDouble> &, Array<OneD, NekDouble> &,
  *     NekDouble, NekDouble&)
+ * dist is assigned value for curved elements
  */
 bool Geometry::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                                Array<OneD, NekDouble> &locCoord, NekDouble tol,
                                NekDouble &dist)
 {
-    // Convert to the local (xi) coordinates.
-    dist = GetLocCoords(gloCoord, locCoord);
-    if (dist <= tol + NekConstants::kNekMachineEpsilon)
+    int inside = PreliminaryCheck(gloCoord);
+    if (inside == -1)
     {
-        return true;
-    }
-    Array<OneD, NekDouble> eta(GetShapeDim(), 0.);
-    m_xmap->LocCoordToLocCollapsed(locCoord, eta);
-    if (ClampLocCoords(eta, tol))
-    {
-        m_xmap->LocCollapsedToLocCoord(eta, locCoord);
+        dist = std::numeric_limits<double>::max();
         return false;
+    }
+    dist = GetLocCoords(gloCoord, locCoord);
+    if (inside == 1)
+    {
+        dist = 0.;
+        return true;
     }
     else
     {
-        return true;
+        Array<OneD, NekDouble> eta(GetShapeDim(), 0.);
+        m_xmap->LocCoordToLocCollapsed(locCoord, eta);
+        return !ClampLocCoords(eta, tol);
     }
 }
 
@@ -430,8 +444,10 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox()
         }
     }
     // If element is deformed loop over quadrature points
+    NekDouble marginFactor = NekConstants::kGeomFactorsTol;
     if (GetGeomFactors()->GetGtype() != eRegular)
     {
+        marginFactor = 0.1;
         const int nq = GetXmap()->GetTotPoints();
         Array<OneD, Array<OneD, NekDouble>> x(3);
         for (int j = 0; j < 3; ++j)
@@ -451,13 +467,14 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox()
             }
         }
     }
-    // Add 10% margin to bounding box, in order to
+    // Add margin to bounding box, in order to
     // return the nearest element
     for (int j = 0; j < 3; ++j)
     {
-        const NekDouble len = max[j] - min[j];
-        min[j] -= (0.1 * len + NekConstants::kGeomFactorsTol);
-        max[j] += (0.1 * len + NekConstants::kGeomFactorsTol);
+        NekDouble margin =
+            marginFactor * (max[j] - min[j]) + NekConstants::kFindDistanceMin;
+        min[j] -= margin;
+        max[j] += margin;
     }
 
     // save bounding box
@@ -474,6 +491,35 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox()
 void Geometry::ClearBoundingBox()
 {
     m_boundingBox = {};
+}
+
+/**
+ * @brief A fast and robust check if a given global coord is
+ * outside of a deformed element. For regular elements, this
+ * check is unnecessary
+ *
+ * @param coords   Input Cartesian global coordinates
+ *
+ * @return 1 is inside of the element.
+ *         0 maybe inside
+ *        -1 outside of the element
+ */
+int Geometry::PreliminaryCheck(const Array<OneD, const NekDouble> &gloCoord)
+{
+    // bounding box check
+    if (!MinMaxCheck(gloCoord))
+    {
+        return -1;
+    }
+
+    // regular element check
+    if (GetMetricInfo()->GetGtype() == eRegular)
+    {
+        return 0;
+    }
+
+    // All left check for straight edges/plane surfaces
+    return v_AllLeftCheck(gloCoord);
 }
 
 /**
