@@ -163,7 +163,7 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         Vmath::FillWhiteNoise(ntot, eps, &Kseq[1][0], 1);
         if (m_useMask)
         {
-            Vmath::Vmul(ntot, Kseq[1], 1, GetMaskCoeff(), 1, Kseq[1], 1);
+            Vmath::Vmul(ntot, Kseq[1], 1, m_maskCoeffs, 1, Kseq[1], 1);
         }
     }
 
@@ -178,7 +178,7 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
     // Normalise first vector in sequence
     if (m_useMask)
     {
-        Vmath::Vmul(ntot, Kseq[0], 1, GetMaskCoeff(), 1, Kseqcopy[0], 1);
+        Vmath::Vmul(ntot, Kseq[0], 1, m_maskCoeffs, 1, Kseqcopy[0], 1);
     }
     alpha[0] = Blas::Ddot(ntot, &Kseqcopy[0][0], 1, &Kseqcopy[0][0], 1);
     m_comm->AllReduce(alpha[0], Nektar::LibUtilities::ReduceSum);
@@ -195,7 +195,7 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         // Normalise
         if (m_useMask)
         {
-            Vmath::Vmul(ntot, Kseq[i], 1, GetMaskCoeff(), 1, Kseqcopy[i], 1);
+            Vmath::Vmul(ntot, Kseq[i], 1, m_maskCoeffs, 1, Kseqcopy[i], 1);
         }
         alpha[i] = Blas::Ddot(ntot, &Kseqcopy[i][0], 1, &Kseqcopy[i][0], 1);
         m_comm->AllReduce(alpha[i], Nektar::LibUtilities::ReduceSum);
@@ -209,7 +209,7 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
         {
             if (m_useMask)
             {
-                Vmath::Vmul(ntot, Kseq[k], 1, GetMaskCoeff(), 1, Tseq[k], 1);
+                Vmath::Vmul(ntot, Kseq[k], 1, m_maskCoeffs, 1, Tseq[k], 1);
                 Vmath::Vcopy(ntot, Kseq[k], 1, Kseqcopy[k], 1);
             }
             else
@@ -260,7 +260,7 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
             // Compute new scale factor
             if (m_useMask)
             {
-                Vmath::Vmul(ntot, Kseq[m_kdim], 1, GetMaskCoeff(), 1,
+                Vmath::Vmul(ntot, Kseq[m_kdim], 1, m_maskCoeffs, 1,
                             Kseqcopy[m_kdim], 1);
             }
             alpha[m_kdim] = Blas::Ddot(ntot, &Kseqcopy[m_kdim][0], 1,
@@ -275,8 +275,7 @@ void DriverModifiedArnoldi::v_Execute(ostream &out)
             {
                 if (m_useMask)
                 {
-                    Vmath::Vmul(ntot, Kseq[k], 1, GetMaskCoeff(), 1, Tseq[k],
-                                1);
+                    Vmath::Vmul(ntot, Kseq[k], 1, m_maskCoeffs, 1, Tseq[k], 1);
                     Vmath::Vcopy(ntot, Kseq[k], 1, Kseqcopy[k], 1);
                 }
                 else

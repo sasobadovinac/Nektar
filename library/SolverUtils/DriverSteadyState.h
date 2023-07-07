@@ -36,8 +36,6 @@
 #define NEKTAR_SOLVERUTILS_DRIVERSTEADYSTATE_H
 
 #include <LibUtilities/BasicUtils/Timer.h>
-#include <SolverUtils/Driver.h>
-#include <SolverUtils/DriverArnoldi.h>
 #include <SolverUtils/DriverModifiedArnoldi.h>
 
 namespace Nektar
@@ -64,34 +62,6 @@ public:
     /// Name of the class
     static std::string className;
 
-    void PrintSummarySFD();
-
-    void ConvergenceHistory(
-        const Array<OneD, const Array<OneD, NekDouble>> &qBar1,
-        const Array<OneD, const Array<OneD, NekDouble>> &q0,
-        NekDouble &MaxNormDiff_q_qBar, NekDouble &MaxNormDiff_q1_q0);
-
-    void ComputeSFD(const int i,
-                    const Array<OneD, const Array<OneD, NekDouble>> &q0,
-                    const Array<OneD, const Array<OneD, NekDouble>> &qBar0,
-                    Array<OneD, Array<OneD, NekDouble>> &q1,
-                    Array<OneD, Array<OneD, NekDouble>> &qBar1);
-
-    void EvalEV_ScalarSFD(const NekDouble &X_input,
-                          const NekDouble &Delta_input,
-                          const std::complex<NekDouble> &alpha,
-                          NekDouble &MaxEV);
-
-    void GradientDescentMethod(const std::complex<NekDouble> &alpha,
-                               NekDouble &X_output, NekDouble &Delta_output);
-
-    void ReadEVfile(int &KrylovSubspaceDim, NekDouble &growthEV,
-                    NekDouble &frequencyEV);
-
-    void ComputeOptimization();
-
-    void SetSFDOperator(const NekDouble X_input, const NekDouble Delta_input);
-
 protected:
     /// Constructor
     SOLVER_UTILS_EXPORT DriverSteadyState(
@@ -101,15 +71,13 @@ protected:
     /// Destructor
     SOLVER_UTILS_EXPORT virtual ~DriverSteadyState();
 
-    /// Second-stage initialisation
+    /// Initialises EquationSystem class members.
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
         std::ostream &out = std::cout) override;
 
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(
         std::ostream &out = std::cout) override;
-
-    static std::string driverLookupId;
 
 private:
     int m_stepCounter;
@@ -147,6 +115,36 @@ private:
     int m_NonConvergingStepsCounter;
     NekDouble GrowthRateEV;
     NekDouble FrequencyEV;
+
+    void PrintSummarySFD();
+
+    void ConvergenceHistory(
+        const Array<OneD, const Array<OneD, NekDouble>> &qBar1,
+        const Array<OneD, const Array<OneD, NekDouble>> &q0,
+        NekDouble &MaxNormDiff_q_qBar, NekDouble &MaxNormDiff_q1_q0);
+
+    void ComputeSFD(const int i,
+                    const Array<OneD, const Array<OneD, NekDouble>> &q0,
+                    const Array<OneD, const Array<OneD, NekDouble>> &qBar0,
+                    Array<OneD, Array<OneD, NekDouble>> &q1,
+                    Array<OneD, Array<OneD, NekDouble>> &qBar1);
+
+    void EvalEV_ScalarSFD(const NekDouble &X_input,
+                          const NekDouble &Delta_input,
+                          const std::complex<NekDouble> &alpha,
+                          NekDouble &MaxEV);
+
+    void GradientDescentMethod(const std::complex<NekDouble> &alpha,
+                               NekDouble &X_output, NekDouble &Delta_output);
+
+    void ReadEVfile(int &KrylovSubspaceDim, NekDouble &growthEV,
+                    NekDouble &frequencyEV);
+
+    void ComputeOptimization();
+
+    void SetSFDOperator(const NekDouble X_input, const NekDouble Delta_input);
+
+    static std::string driverLookupId;
 };
 
 } // namespace SolverUtils

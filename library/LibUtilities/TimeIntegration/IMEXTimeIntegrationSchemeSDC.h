@@ -88,21 +88,14 @@ protected:
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) override;
 
-    LUE virtual void v_ResidualEval(
-        const NekDouble &delta_t, const size_t n,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t,
+                                    const size_t n) override;
 
-    LUE virtual void v_ResidualEval(
-        const NekDouble &delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t) override;
 
-    LUE virtual void v_ComputeInitialGuess(
-        const NekDouble &delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ComputeInitialGuess(const NekDouble &delta_t) override;
 
-    LUE virtual void v_SDCIterationLoop(
-        const NekDouble &delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_SDCIterationLoop(const NekDouble &delta_t) override;
 
 private:
     void ComputeTotalResidual(const size_t n);
@@ -118,6 +111,7 @@ void IMEXTimeIntegrationSchemeSDC::v_InitializeScheme(
 {
     if (m_initialized)
     {
+        m_time = time;
         for (size_t i = 0; i < m_nvars; ++i)
         {
             // Store the initial values as the first previous state.
@@ -152,9 +146,8 @@ void IMEXTimeIntegrationSchemeSDC::v_InitializeScheme(
 /**
  * @brief Worker method to compute the residual.
  */
-void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(
-    const NekDouble &delta_t, const size_t n,
-    const TimeIntegrationSchemeOperators &op)
+void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(const NekDouble &delta_t,
+                                                  const size_t n)
 {
     // Compute implicit residual
     if (n == 0)
@@ -164,15 +157,15 @@ void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(
         // GaussLobattoLegendre) should not be used.
 
         // Apply time-dependent boundary condition
-        op.DoProjection(m_Y[0], m_Y[0], m_time);
+        m_op.DoProjection(m_Y[0], m_Y[0], m_time);
     }
     else
     {
         NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
 
         // Update implicit solution
-        op.DoImplicitSolve(m_Y[n - 1], m_tmp, m_time + delta_t * m_tau[n],
-                           m_theta * dtn);
+        m_op.DoImplicitSolve(m_Y[n - 1], m_tmp, m_time + delta_t * m_tau[n],
+                             m_theta * dtn);
 
         // Compute implicit residual from updated solution
         for (size_t i = 0; i < m_nvars; ++i)
@@ -185,18 +178,17 @@ void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(
     }
 
     // Compute explicit residual
-    op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_tau[n]);
+    m_op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_tau[n]);
 
     // Compute total residual
     ComputeTotalResidual(n);
 }
 
-void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(
-    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(const NekDouble &delta_t)
 {
     for (size_t n = 0; n < m_nQuadPts; ++n)
     {
-        v_ResidualEval(delta_t, n, op);
+        v_ResidualEval(delta_t, n);
     }
 }
 
@@ -204,7 +196,7 @@ void IMEXTimeIntegrationSchemeSDC::v_ResidualEval(
  * @brief Worker method to compute the initial SDC guess.
  */
 void IMEXTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
-    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+    const NekDouble &delta_t)
 {
     for (size_t n = 0; n < m_nQuadPts; ++n)
     {
@@ -215,7 +207,7 @@ void IMEXTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
             // GaussLobattoLegendre) should not be used.
 
             // Apply time-dependent boundary condition
-            op.DoProjection(m_Y[0], m_Y[0], m_time);
+            m_op.DoProjection(m_Y[0], m_Y[0], m_time);
         }
         else
         {
@@ -229,7 +221,8 @@ void IMEXTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
             }
 
             // Solve implicit system from rhs
-            op.DoImplicitSolve(m_tmp, m_Y[n], m_time + delta_t * m_tau[n], dtn);
+            m_op.DoImplicitSolve(m_tmp, m_Y[n], m_time + delta_t * m_tau[n],
+                                 dtn);
 
             // Compute implicit flux from updated solution
             for (size_t i = 0; i < m_nvars; ++i)
@@ -242,7 +235,7 @@ void IMEXTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
         }
 
         // Compute explicit residual
-        op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_tau[n]);
+        m_op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_tau[n]);
 
         // Compute total residual
         ComputeTotalResidual(n);
@@ -252,8 +245,7 @@ void IMEXTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
 /**
  * @brief Worker method to compute the SDC iteration.
  */
-void IMEXTimeIntegrationSchemeSDC::v_SDCIterationLoop(
-    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+void IMEXTimeIntegrationSchemeSDC::v_SDCIterationLoop(const NekDouble &delta_t)
 {
     // Update integrated residual
     UpdateIntegratedResidualSFint(delta_t);
@@ -294,8 +286,8 @@ void IMEXTimeIntegrationSchemeSDC::v_SDCIterationLoop(
         }
 
         // Solve implicit system from rhs
-        op.DoImplicitSolve(m_tmp, m_Y[n], m_time + delta_t * m_tau[n],
-                           m_theta * dtn);
+        m_op.DoImplicitSolve(m_tmp, m_Y[n], m_time + delta_t * m_tau[n],
+                             m_theta * dtn);
 
         // Compute implicit residual from updated solution
         for (size_t i = 0; i < m_nvars; ++i)
@@ -306,7 +298,7 @@ void IMEXTimeIntegrationSchemeSDC::v_SDCIterationLoop(
         }
 
         // Compute explicit residual
-        op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_tau[n]);
+        m_op.DoOdeRhs(m_Y[n], m_Fexp[n], m_time + delta_t * m_tau[n]);
 
         // Compute total residual
         ComputeTotalResidual(n);

@@ -73,21 +73,14 @@ protected:
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) override;
 
-    LUE virtual void v_ResidualEval(
-        const NekDouble &delta_t, const size_t n,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t,
+                                    const size_t n) override;
 
-    LUE virtual void v_ResidualEval(
-        const NekDouble &delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t) override;
 
-    LUE virtual void v_ComputeInitialGuess(
-        const NekDouble &delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ComputeInitialGuess(const NekDouble &delta_t) override;
 
-    LUE virtual void v_SDCIterationLoop(
-        const NekDouble &delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_SDCIterationLoop(const NekDouble &delta_t) override;
 
 }; // end class ExplicitTimeIntegrationSchemeSDC
 
@@ -104,20 +97,18 @@ void ExplicitTimeIntegrationSchemeSDC::v_InitializeScheme(
 /**
  * @brief Worker method to compute the residual.
  */
-void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(
-    const NekDouble &delta_t, const size_t n,
-    const TimeIntegrationSchemeOperators &op)
+void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(const NekDouble &delta_t,
+                                                      const size_t n)
 {
-    op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_tau[n]);
-    op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_tau[n]);
+    m_op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_tau[n]);
+    m_op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_tau[n]);
 }
 
-void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(
-    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(const NekDouble &delta_t)
 {
     for (size_t n = 0; n < m_nQuadPts; ++n)
     {
-        v_ResidualEval(delta_t, n, op);
+        v_ResidualEval(delta_t, n);
     }
 }
 
@@ -125,7 +116,7 @@ void ExplicitTimeIntegrationSchemeSDC::v_ResidualEval(
  * @brief Worker method to compute the initial SDC guess.
  */
 void ExplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
-    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+    const NekDouble &delta_t)
 {
     for (size_t n = 0; n < m_nQuadPts; ++n)
     {
@@ -141,8 +132,8 @@ void ExplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
         }
 
         // Compute residual
-        op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_tau[n]);
-        op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_tau[n]);
+        m_op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_tau[n]);
+        m_op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_tau[n]);
     }
 }
 
@@ -150,7 +141,7 @@ void ExplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
  * @brief Worker method to compute the SDC iteration.
  */
 void ExplicitTimeIntegrationSchemeSDC::v_SDCIterationLoop(
-    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+    const NekDouble &delta_t)
 {
     // Update integrated residual
     UpdateIntegratedResidualSFint(delta_t);
@@ -186,8 +177,8 @@ void ExplicitTimeIntegrationSchemeSDC::v_SDCIterationLoop(
         }
 
         // Compute residual
-        op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_tau[n]);
-        op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_tau[n]);
+        m_op.DoProjection(m_Y[n], m_Y[n], m_time + delta_t * m_tau[n]);
+        m_op.DoOdeRhs(m_Y[n], m_F[n], m_time + delta_t * m_tau[n]);
     }
 }
 

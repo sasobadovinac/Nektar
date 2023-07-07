@@ -814,7 +814,7 @@ int main(int argc, char *argv[])
     {
         // Time integration for one time step
         timer.Start();
-        approxSol = tiScheme->TimeIntegrate(timeStep, dt, ode);
+        approxSol = tiScheme->TimeIntegrate(timeStep, dt);
         timer.Stop();
         intTime += timer.TimePerTest(1);
 

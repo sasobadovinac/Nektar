@@ -48,19 +48,21 @@ class DriverArnoldi : public Driver
 public:
     friend class MemoryManager<DriverArnoldi>;
 
-    SOLVER_UTILS_EXPORT void ArnoldiSummary(std::ostream &out);
+    Array<OneD, NekDouble> GetRealEvl(void)
+    {
+        return m_real_evl;
+    }
 
-    SOLVER_UTILS_EXPORT inline const Array<OneD, const NekDouble>
-        &GetMaskCoeff() const;
-
-    SOLVER_UTILS_EXPORT inline const Array<OneD, const NekDouble> &GetMaskPhys()
-        const;
+    Array<OneD, NekDouble> GetImagEvl(void)
+    {
+        return m_imag_evl;
+    }
 
 protected:
     int m_kdim;                   /// Dimension of Krylov subspace
     int m_nvec;                   /// Number of vectors to test
     int m_nits;                   /// Maxmum number of iterations
-    NekDouble m_evtol;            /// Tolerance of iteratiosn
+    NekDouble m_evtol;            /// Tolerance of iterations
     NekDouble m_period;           /// Period of time stepping algorithm
     bool m_timeSteppingAlgorithm; /// underlying operator is time stepping
 
@@ -85,6 +87,12 @@ protected:
     /// Destructor
     virtual ~DriverArnoldi();
 
+    /// Virtual function for initialisation implementation.
+    virtual void v_InitObject(std::ostream &out = std::cout) override;
+
+    /// Virtual function for solve implementation.
+    virtual void v_Execute(std::ostream &out = std::cout) override;
+
     /// Copy Arnoldi storage to fields.
     void CopyArnoldiArrayToField(Array<OneD, NekDouble> &array);
 
@@ -105,35 +113,16 @@ protected:
                   NekDouble resid  = NekConstants::kNekUnsetDouble,
                   bool DumpInverse = true);
 
-    /// init mask
+    /// Init mask
     void MaskInit();
 
     void GetMaskInfo(std::vector<std::vector<LibUtilities::EquationSharedPtr>>
                          &selectedDomains,
                      std::set<int> &unselectedVariables);
 
-    virtual void v_InitObject(std::ostream &out = std::cout) override;
-
-    virtual Array<OneD, NekDouble> v_GetRealEvl(void) override
-    {
-        return m_real_evl;
-    }
-
-    virtual Array<OneD, NekDouble> v_GetImagEvl(void) override
-    {
-        return m_imag_evl;
-    }
+    SOLVER_UTILS_EXPORT void ArnoldiSummary(std::ostream &out);
 };
 
-inline const Array<OneD, const NekDouble> &DriverArnoldi::GetMaskCoeff() const
-{
-    return m_maskCoeffs;
-}
-
-inline const Array<OneD, const NekDouble> &DriverArnoldi::GetMaskPhys() const
-{
-    return m_maskPhys;
-}
 } // namespace SolverUtils
 } // namespace Nektar
 

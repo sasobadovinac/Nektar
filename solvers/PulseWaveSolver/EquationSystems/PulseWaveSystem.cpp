@@ -1290,7 +1290,7 @@ void PulseWaveSystem::v_DoSolve()
     {
         LibUtilities::Timer time_v_IntStep;
         time_v_IntStep.Start();
-        fields = m_intScheme->TimeIntegrate(n, m_timestep, m_ode);
+        fields = m_intScheme->TimeIntegrate(n, m_timestep);
         m_time += m_timestep;
         time_v_IntStep.Stop();
         time_v_IntStep.AccumulateRegion("PulseWaveSystem::TimeIntegrationStep",

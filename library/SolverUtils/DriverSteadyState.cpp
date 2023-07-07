@@ -77,6 +77,9 @@ void DriverSteadyState::v_InitObject(ostream &out)
     DriverModifiedArnoldi::v_InitObject(out);
 }
 
+/**
+ *
+ */
 void DriverSteadyState::v_Execute(ostream &out)
 
 {
@@ -348,6 +351,9 @@ void DriverSteadyState::SetSFDOperator(const NekDouble X_input,
     M22             = coeff * (X * Delta + exp(-(X + 1.0 / Delta)));
 }
 
+/**
+ *
+ */
 void DriverSteadyState::ComputeSFD(
     const int i, const Array<OneD, const Array<OneD, NekDouble>> &q0,
     const Array<OneD, const Array<OneD, NekDouble>> &qBar0,
@@ -365,6 +371,9 @@ void DriverSteadyState::ComputeSFD(
     Vmath::Svtvp(qBar1[i].size(), M22, qBar0[i], 1, qBar1[i], 1, qBar1[i], 1);
 }
 
+/**
+ *
+ */
 void DriverSteadyState::ComputeOptimization()
 {
     NekDouble growthEV(0.0);
@@ -516,6 +525,9 @@ void DriverSteadyState::EvalEV_ScalarSFD(const NekDouble &X_input,
     MaxEV = max(NORM_1, NORM_2);
 }
 
+/**
+ *
+ */
 void DriverSteadyState::ReadEVfile(int &KrylovSubspaceDim, NekDouble &growthEV,
                                    NekDouble &frequencyEV)
 {
@@ -635,6 +647,9 @@ void DriverSteadyState::ConvergenceHistory(
     timer.Start();
 }
 
+/**
+ *
+ */
 void DriverSteadyState::PrintSummarySFD()
 {
     cout << "\n====================================="

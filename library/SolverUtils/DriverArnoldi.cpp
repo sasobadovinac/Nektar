@@ -126,6 +126,19 @@ void DriverArnoldi::v_InitObject(ostream &out)
     MaskInit();
 }
 
+/**
+ *
+ */
+void DriverArnoldi::v_Execute(std::ostream &out)
+{
+    boost::ignore_unused(out);
+
+    ASSERTL0(false, "Specific version of Arnoldi driver not implemented");
+}
+
+/**
+ *
+ */
 void DriverArnoldi::ArnoldiSummary(std::ostream &out)
 {
     if (m_comm->GetRank() == 0)
@@ -236,6 +249,9 @@ void DriverArnoldi::CopyFwdToAdj()
     }
 }
 
+/**
+ *
+ */
 void DriverArnoldi::WriteFld(std::string file,
                              std::vector<Array<OneD, NekDouble>> coeffs)
 {
@@ -251,6 +267,9 @@ void DriverArnoldi::WriteFld(std::string file,
     m_equ[0]->WriteFld(file, m_equ[0]->UpdateFields()[0], coeffs, variables);
 }
 
+/**
+ *
+ */
 void DriverArnoldi::WriteFld(std::string file, Array<OneD, NekDouble> coeffs)
 {
 
@@ -271,6 +290,9 @@ void DriverArnoldi::WriteFld(std::string file, Array<OneD, NekDouble> coeffs)
                        variables);
 }
 
+/**
+ *
+ */
 void DriverArnoldi::WriteEvs(ostream &evlout, const int i,
                              const NekDouble re_ev, const NekDouble im_ev,
                              NekDouble resid, bool DumpInverse)
@@ -320,6 +342,9 @@ void DriverArnoldi::WriteEvs(ostream &evlout, const int i,
     }
 }
 
+/**
+ *
+ */
 void DriverArnoldi::GetMaskInfo(
     std::vector<std::vector<LibUtilities::EquationSharedPtr>> &selectedDomains,
     std::set<int> &unselectedVariables)
@@ -366,6 +391,9 @@ void DriverArnoldi::GetMaskInfo(
     }
 }
 
+/**
+ *
+ */
 void DriverArnoldi::MaskInit()
 {
     std::vector<std::vector<LibUtilities::EquationSharedPtr>> selectedDomains;

@@ -164,11 +164,10 @@ public:
         v_InitializeScheme(deltaT, y_0, time, op);
     }
 
-    LUE ConstDoubleArray &TimeIntegrate(
-        const size_t timestep, const NekDouble delta_t,
-        const TimeIntegrationSchemeOperators &op)
+    LUE ConstDoubleArray &TimeIntegrate(const size_t timestep,
+                                        const NekDouble delta_t)
     {
-        return v_TimeIntegrate(timestep, delta_t, op);
+        return v_TimeIntegrate(timestep, delta_t);
     }
 
     LUE void print(std::ostream &os) const
@@ -202,12 +201,11 @@ protected:
                                          const DoubleArray &y) = 0;
     LUE virtual void v_InitializeScheme(
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
-        const TimeIntegrationSchemeOperators &op) = 0;
-    LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const size_t timestep, const NekDouble delta_t,
-        const TimeIntegrationSchemeOperators &op)        = 0;
-    LUE virtual void v_print(std::ostream &os) const     = 0;
-    LUE virtual void v_printFull(std::ostream &os) const = 0;
+        const TimeIntegrationSchemeOperators &op)                          = 0;
+    LUE virtual ConstDoubleArray &v_TimeIntegrate(const size_t timestep,
+                                                  const NekDouble delta_t) = 0;
+    LUE virtual void v_print(std::ostream &os) const                       = 0;
+    LUE virtual void v_printFull(std::ostream &os) const                   = 0;
 
     // These methods should never be used directly, only used by child classes.
     LUE TimeIntegrationScheme(std::string variant, size_t order,
