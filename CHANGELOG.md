@@ -35,6 +35,7 @@ v5.4.0
 - Add a priori convergence and null-input check to GMRES (!1590)
 - Tidy-up/removed unused Lapack function definition (!1573)
 - Some Tidy-up in MatrixFreeOps (!1599)
+- Fix an indexing error in MatrixFreeOps (!1602)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)

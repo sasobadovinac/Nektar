@@ -261,7 +261,7 @@ NEK_FORCE_INLINE static void IProductQuadKernel(
 
             // Modes are reversed from what they normally are for tris, tets
             // etc.
-            ScaleAppend<SCALE, APPEND>(out[q * nm1 + p], sum,
+            ScaleAppend<SCALE, APPEND>(out[q * nm0 + p], sum,
                                        scale); // Store x1
         }
     }
@@ -476,10 +476,6 @@ NEK_FORCE_INLINE static void IProductTetKernel(
 
                     // top vertex
                     //
-                    // outarray[1] += inarray[cnt] * basis2[nq2 + k] * (
-                    //     basis0[i]*basis1[nq1+j] + basis0[nq0+i]*basis1[j] +
-                    //     basis0[nq0+i]*basis1[nq1+j]);
-
                     vec_t tmp = basis0[i] * basis1[nq1 + j];   // Load 2x
                     tmp.fma(basis0[nq0 + i], basis1[j]);       // Load 2x
                     tmp.fma(basis0[nq0 + i], basis1[nq1 + j]); // Load 2x
@@ -492,9 +488,6 @@ NEK_FORCE_INLINE static void IProductTetKernel(
 
                     // bottom vertex
                     //
-                    // outarray[nm2] += inarray[cnt] * basis2[k] * (
-                    //    basis0[nq0+i] * basis1[nq1+j]);
-
                     tmp = basis0[nq0 + i] * basis1[nq1 + j] * basis2[k] *
                           tmpIn; // Load 3x
                     tmpOut = tmp * tmpQ;
@@ -504,9 +497,6 @@ NEK_FORCE_INLINE static void IProductTetKernel(
                     // singular edge
                     for (int r = 1; r < nm2 - 1; ++r)
                     {
-                        // outarray[nm2+r] += inarray[cnt] *
-                        //     basis2[(r+1)*nq2+k] * basis1[nq1+j] *
-                        //     basis0[nq0+i];
                         tmp = basis2[(r + 1) * nq2 + k] * basis1[nq1 + j] *
                               basis0[nq0 + i] * tmpIn; // Load 3x
                         tmpOut = tmp * tmpQ;
@@ -805,10 +795,6 @@ NEK_FORCE_INLINE static void IProductPyrKernel(
 
                     // top vertex
                     //
-                    // outarray[1] += inarray[cnt] * basis2[nq2 + k] * (
-                    //     basis0[i]*basis1[nq1+j] + basis0[nq0+i]*basis1[j] +
-                    //     basis0[nq0+i]*basis1[nq1+j]);
-
                     vec_t tmp = basis0[i] * basis1[nq1 + j];   // Load 2x
                     tmp.fma(basis0[nq0 + i], basis1[j]);       // Load 2x
                     tmp.fma(basis0[nq0 + i], basis1[nq1 + j]); // Load 2x
