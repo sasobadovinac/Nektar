@@ -83,11 +83,11 @@ protected:
     /// Virtual function for solve implementation.
     virtual void v_Execute(std::ostream &out = std::cout) override;
 
-    static std::string arpackProblemTypeLookupIds[];
-    static std::string arpackProblemTypeDefault;
     static std::string driverLookupId;
 
 private:
+    static std::string arpackProblemTypeLookupIds[];
+    static std::string arpackProblemTypeDefault;
     static std::string ArpackProblemTypeTrans[];
 };
 

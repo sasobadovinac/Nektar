@@ -65,7 +65,7 @@ namespace Polylib
    - h    -   Lagrange Interpolant
    - I    -   Interpolation matrix
    - g    -   Gauss
-   - k	  -   Kronrod
+   - k    -   Kronrod
    - gr   -   Gauss-Radau
    - gl   -   Gauss-Lobatto
    - j    -   Jacobi
@@ -210,20 +210,21 @@ LIB_UTILITIES_EXPORT void Imglj(double *, const double *, const double *,
                                 const double);
 
 /* Polynomial functions */
-LIB_UTILITIES_EXPORT void polycoeffs(const int, const double *, double *,
+LIB_UTILITIES_EXPORT void polycoeffs(double *, const double *, const int,
                                      const int);
 LIB_UTILITIES_EXPORT void jacobfd(const int, const double *, double *, double *,
                                   const int, const double, const double);
 LIB_UTILITIES_EXPORT void jacobd(const int, const double *, double *, const int,
                                  const double, const double);
 
-LIB_UTILITIES_EXPORT std::complex<Nektar::NekDouble> ImagBesselComp(
-    const int, std::complex<Nektar::NekDouble>);
-
 /* Gamma function routines */
 LIB_UTILITIES_EXPORT double gammaF(const double);
 LIB_UTILITIES_EXPORT double gammaFracGammaF(const int, const double, const int,
                                             const double);
+
+/* Bessel function routines */
+LIB_UTILITIES_EXPORT std::complex<Nektar::NekDouble> ImagBesselComp(
+    const int, std::complex<Nektar::NekDouble>);
 
 } // namespace Polylib
 

@@ -79,21 +79,14 @@ protected:
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) override;
 
-    LUE virtual void v_ResidualEval(
-        const NekDouble &delta_t, const size_t n,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t,
+                                    const size_t n) override;
 
-    LUE virtual void v_ResidualEval(
-        const NekDouble &delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t) override;
 
-    LUE virtual void v_ComputeInitialGuess(
-        const NekDouble &delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_ComputeInitialGuess(const NekDouble &delta_t) override;
 
-    LUE virtual void v_SDCIterationLoop(
-        const NekDouble &delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+    LUE virtual void v_SDCIterationLoop(const NekDouble &delta_t) override;
 
 }; // end class ImplicitTimeIntegrationSchemeSDC
 
@@ -106,6 +99,7 @@ void ImplicitTimeIntegrationSchemeSDC::v_InitializeScheme(
 {
     if (m_initialized)
     {
+        m_time = time;
         for (size_t i = 0; i < m_nvars; ++i)
         {
             // Store the initial values as the first previous state.
@@ -127,9 +121,8 @@ void ImplicitTimeIntegrationSchemeSDC::v_InitializeScheme(
 /**
  * @brief Worker method to compute the residual.
  */
-void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(
-    const NekDouble &delta_t, const size_t n,
-    const TimeIntegrationSchemeOperators &op)
+void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(const NekDouble &delta_t,
+                                                      const size_t n)
 {
     if (n == 0)
     {
@@ -142,8 +135,8 @@ void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(
         NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
 
         // Update solution
-        op.DoImplicitSolve(m_Y[n - 1], m_tmp, m_time + delta_t * m_tau[n],
-                           m_theta * dtn);
+        m_op.DoImplicitSolve(m_Y[n - 1], m_tmp, m_time + delta_t * m_tau[n],
+                             m_theta * dtn);
 
         // Compute residual from updated solution
         for (size_t i = 0; i < m_nvars; ++i)
@@ -155,12 +148,11 @@ void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(
     }
 }
 
-void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(
-    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(const NekDouble &delta_t)
 {
     for (size_t n = 0; n < m_nQuadPts; ++n)
     {
-        v_ResidualEval(delta_t, n, op);
+        v_ResidualEval(delta_t, n);
     }
 }
 
@@ -168,7 +160,7 @@ void ImplicitTimeIntegrationSchemeSDC::v_ResidualEval(
  * @brief Worker method to compute the initial SDC guess.
  */
 void ImplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
-    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+    const NekDouble &delta_t)
 {
     for (size_t n = 0; n < m_nQuadPts; ++n)
     {
@@ -183,8 +175,8 @@ void ImplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
             NekDouble dtn = delta_t * (m_tau[n] - m_tau[n - 1]);
 
             // Update solution
-            op.DoImplicitSolve(m_Y[n - 1], m_Y[n], m_time + delta_t * m_tau[n],
-                               dtn);
+            m_op.DoImplicitSolve(m_Y[n - 1], m_Y[n],
+                                 m_time + delta_t * m_tau[n], dtn);
 
             // Compute residual from updated solution
             for (size_t i = 0; i < m_nvars; ++i)
@@ -201,7 +193,7 @@ void ImplicitTimeIntegrationSchemeSDC::v_ComputeInitialGuess(
  * @brief Worker method to compute the SDC iteration.
  */
 void ImplicitTimeIntegrationSchemeSDC::v_SDCIterationLoop(
-    const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+    const NekDouble &delta_t)
 {
     // Update integrated residual
     UpdateIntegratedResidualSFint(delta_t);
@@ -227,8 +219,8 @@ void ImplicitTimeIntegrationSchemeSDC::v_SDCIterationLoop(
         }
 
         // Solve implicit system
-        op.DoImplicitSolve(m_tmp, m_Y[n], m_time + delta_t * m_tau[n],
-                           m_theta * dtn);
+        m_op.DoImplicitSolve(m_tmp, m_Y[n], m_time + delta_t * m_tau[n],
+                             m_theta * dtn);
 
         // Compute residual from updated solution
         for (size_t i = 0; i < m_nvars; ++i)

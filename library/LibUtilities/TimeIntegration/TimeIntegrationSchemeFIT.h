@@ -130,7 +130,6 @@ protected:
     {
         return m_u;
     }
-
     virtual TripleArray &v_UpdateSolutionVector() override
     {
         return m_u;
@@ -151,8 +150,7 @@ protected:
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const size_t timestep, const NekDouble delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+        const size_t timestep, const NekDouble delta_t) override;
 
     LUE virtual void v_print(std::ostream &os) const override;
     LUE virtual void v_printFull(std::ostream &os) const override;
@@ -235,19 +233,15 @@ protected:
 
     void updateStage(const size_t timeStep, Instance &instance);
 
-    void finalIncrement(const size_t timeStep,
-                        const TimeIntegrationSchemeOperators &op);
+    void finalIncrement(const size_t timeStep);
 
     void integralContribution(const size_t timeStep, const size_t tauml,
                               const Instance &instance);
 
-    void timeAdvance(const size_t timeStep,
-                     const TimeIntegrationSchemeOperators &op,
-                     Instance &instance, ComplexTripleArray &y);
+    void timeAdvance(const size_t timeStep, Instance &instance,
+                     ComplexTripleArray &y);
 
-    void advanceSandbox(const size_t timeStep,
-                        const TimeIntegrationSchemeOperators &op,
-                        Instance &instance);
+    void advanceSandbox(const size_t timeStep, Instance &instance);
 
     // Variables common to all schemes.
     std::string m_name;
@@ -256,6 +250,7 @@ protected:
     std::vector<NekDouble> m_freeParams;
 
     TimeIntegrationSchemeType m_schemeType{eFractionalInTime};
+    TimeIntegrationSchemeOperators m_op;
 
     // Varaibles and methods specific to FIT integration schemes.
     NekDouble m_deltaT{0};

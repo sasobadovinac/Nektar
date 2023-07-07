@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File DriverParareal.h
+// File DriverPFASST.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,14 +28,16 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Driver class for the parareal solver
+// Description: Driver class for the PFASST solver
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_SOLVERUTILS_DRIVERPARAREAL_H
-#define NEKTAR_SOLVERUTILS_DRIVERPARAREAL_H
+#ifndef NEKTAR_SOLVERUTILS_DRIVERPFASST_H
+#define NEKTAR_SOLVERUTILS_DRIVERPFASST_H
 
+#include <LibUtilities/TimeIntegration/TimeIntegrationSchemeSDC.h>
 #include <SolverUtils/DriverParallelInTime.h>
+#include <SolverUtils/UnsteadySystem.h>
 
 namespace Nektar
 {
@@ -43,10 +45,10 @@ namespace SolverUtils
 {
 
 /// Base class for the development of solvers.
-class DriverParareal : public DriverParallelInTime
+class DriverPFASST : public DriverParallelInTime
 {
 public:
-    friend class MemoryManager<DriverParareal>;
+    friend class MemoryManager<DriverPFASST>;
 
     /// Creates an instance of this class
     static DriverSharedPtr create(
@@ -54,7 +56,7 @@ public:
         const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
         DriverSharedPtr p =
-            MemoryManager<DriverParareal>::AllocateSharedPtr(pSession, pGraph);
+            MemoryManager<DriverPFASST>::AllocateSharedPtr(pSession, pGraph);
         p->InitObject();
         return p;
     }
@@ -64,12 +66,12 @@ public:
 
 protected:
     /// Constructor
-    SOLVER_UTILS_EXPORT DriverParareal(
+    SOLVER_UTILS_EXPORT DriverPFASST(
         const LibUtilities::SessionReaderSharedPtr pSession,
         const SpatialDomains::MeshGraphSharedPtr pGraph);
 
     /// Destructor
-    SOLVER_UTILS_EXPORT virtual ~DriverParareal();
+    SOLVER_UTILS_EXPORT virtual ~DriverPFASST();
 
     /// Virtual function for initialisation implementation.
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
@@ -103,29 +105,99 @@ protected:
 private:
     void AssertParameters(void);
 
-    void RunCoarseSolve(const NekDouble time, const size_t nstep,
-                        const Array<OneD, const Array<OneD, NekDouble>> &input,
-                        Array<OneD, Array<OneD, NekDouble>> &output);
+    void InitialiseSDCScheme(bool pfasst);
 
-    void RunFineSolve(const NekDouble time, const size_t nstep,
-                      const size_t iter, const size_t wd,
-                      const Array<OneD, const Array<OneD, NekDouble>> &input,
-                      Array<OneD, Array<OneD, NekDouble>> &output);
+    void SetTimeInterpolator(void);
 
-    void PararealCorrection(
-        const Array<OneD, const Array<OneD, NekDouble>> &coarse_new,
-        const Array<OneD, const Array<OneD, NekDouble>> &coarse_old,
-        Array<OneD, Array<OneD, NekDouble>> &fine);
+    bool IsNotInitialCondition(const size_t n);
 
-    void PrintSolutionFile(void);
+    void SetTime(const NekDouble &time);
 
-    void ApplyWindowing(const Array<OneD, const Array<OneD, NekDouble>> &in,
-                        Array<OneD, Array<OneD, NekDouble>> &out);
+    void CopyQuadratureSolutionAndResidual(
+        std::shared_ptr<LibUtilities::TimeIntegrationSchemeSDC> SDCsolver,
+        const int index);
 
-    void CopyConvergedCheckPoints(const size_t w, const size_t k, size_t kmax);
+    void UpdateCoarseFirstQuadrature(void);
+
+    void UpdateFineFirstQuadrature(void);
+
+    void ComputeCoarseInitialGuess(void);
+
+    void ComputeFineInitialGuess(void);
+
+    void RunCoarseSweep(void);
+
+    void RunFineSweep(void);
+
+    void CoarseResidualEval(const size_t n);
+
+    void CoarseResidualEval(void);
+
+    void FineResidualEval(const size_t n);
+
+    void FineResidualEval(void);
+
+    void CoarseIntegratedResidualEval(void);
+
+    void FineIntegratedResidualEval(void);
+
+    void Interpolate(
+        const Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &coarse,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &fine, bool forced);
+
+    void InterpolateCoarseSolution(void);
+
+    void InterpolateCoarseResidual(void);
+
+    void Restrict(const Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &fine,
+                  Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &coarse);
+
+    void RestrictFineSolution(void);
+
+    void RestrictFineResidual(void);
+
+    void SaveCoarseSolution(void);
+
+    void SaveCoarseResidual(void);
+
+    void ComputeFASCorrection(void);
+
+    void Correct(const Array<OneD, Array<OneD, NekDouble>> &coarse,
+                 Array<OneD, Array<OneD, NekDouble>> &fine, bool forced);
+
+    void CorrectInitialFineSolution(void);
+
+    void CorrectInitialFineResidual(void);
+
+    void Correct(const Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &rest,
+                 const Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &coarse,
+                 Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &fine,
+                 bool forced);
+
+    void CorrectFineSolution(void);
+
+    void CorrectFineResidual(void);
+
+    void ApplyWindowing(void);
+
+    void EvaluateSDCResidualNorm(void);
+
+    void WriteOutput(size_t chkPts);
+
+    // Storage of PFASST
+    Array<OneD, NekDouble> m_ImatFtoC;
+    Array<OneD, NekDouble> m_ImatCtoF;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_solutionRest;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_residualRest;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_tmpfine_arr;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_tmpcoarse_arr;
+    std::shared_ptr<LibUtilities::TimeIntegrationSchemeSDC> m_fineSDCSolver;
+    std::shared_ptr<LibUtilities::TimeIntegrationSchemeSDC> m_coarseSDCSolver;
+
+    bool m_updateFineResidual = false;
 };
 
 } // namespace SolverUtils
 } // namespace Nektar
 
-#endif // NEKTAR_SOLVERUTILS_DRIVERPARAREAL_H
+#endif // NEKTAR_SOLVERUTILS_DRIVERPFASST_H

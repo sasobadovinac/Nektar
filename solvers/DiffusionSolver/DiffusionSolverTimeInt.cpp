@@ -148,7 +148,7 @@ void Diffusion::TimeIntegrate()
 
     for (int n = 0; n < nSteps; ++n)
     {
-        fields = intScheme->TimeIntegrate(n, delta_t, ode);
+        fields = intScheme->TimeIntegrate(n, delta_t);
     }
 
     Vmath::Vcopy(field->GetNpoints(), fields[0], 1, field->UpdatePhys(), 1);

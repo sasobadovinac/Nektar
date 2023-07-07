@@ -6,6 +6,7 @@ v5.4.0
 - Add unit tests for Polylib (!1533)
 - Add the absolution tolerance for the iterative linear system solver (!1549)
 - Redesign of Parareal driver (!1509) 
+- Add PFASST driver (!1501)
 - Add local p-refinement functionality (!1508)
 - Tidy-up SDC schemes (!1550)
 - Add min/max and fmin/fmax function to the interpretor registry (!1552)

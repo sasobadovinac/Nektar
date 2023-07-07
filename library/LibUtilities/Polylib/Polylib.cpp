@@ -96,7 +96,8 @@ double laginterp(double z, int j, const double *zj, int np)
     }
     return temp;
 }
-/// Define whether to use polynomial deflation (1)  or tridiagonal solver (0).
+
+/// Define whether to use polynomial deflation (1) or tridiagonal solver (0).
 #define POLYNOMIAL_DEFLATION 0
 
 #ifdef POLYNOMIAL_DEFLATION
@@ -110,13 +111,8 @@ double laginterp(double z, int j, const double *zj, int np)
 /* local functions */
 static void Jacobz(const int n, double *z, const double alpha,
                    const double beta);
-// static void   JacZeros (const int n, double *a, const double alpha,
-//    const double beta);
-// static void   TriQL    (const int n, double *d, double *e);
-static void TriQL(const int, double *, double *, double **);
-double gammaF(const double);
-double gammaFracGammaF(const int, const double, const int, const double);
 static void RecCoeff(const int, double *, double *, const double, const double);
+static void TriQL(const int, double *, double *, double **);
 void JKMatrix(int, double *, double *);
 void chri1(int, double *, double *, double *, double *, double);
 
@@ -597,7 +593,7 @@ void Qg(double *Q, const double *z, const int np)
 
         for (i = 0; i < np; i++)
         {
-            polycoeffs(i, z, pd, np);
+            polycoeffs(pd, z, i, np);
             for (j = 0; j < np; j++)
             {
                 Q[j * np + i] = 0.0;
@@ -1099,7 +1095,12 @@ void Imglj(double *im, const double *zglj, const double *zm, const int nz,
     return;
 }
 
-void polycoeffs(const int i, const double *z, double *c, const int np)
+/**
+\brief Compute the coefficients of Lagrange interpolation polynomials
+
+*/
+
+void polycoeffs(double *c, const double *z, const int i, const int np)
 {
     int j, k, m;
 
@@ -1438,6 +1439,44 @@ double gammaFracGammaF(const int x, const double alpha, const int y,
     }
 
     return gamma;
+}
+
+/**
+
+    \brief
+
+Calcualte the bessel function of the first kind with complex double input y.
+Taken from Numerical Recipies in C
+
+Returns a complex double
+*/
+
+std::complex<Nektar::NekDouble> ImagBesselComp(
+    int n, std::complex<Nektar::NekDouble> y)
+{
+    std::complex<Nektar::NekDouble> z(1.0, 0.0);
+    std::complex<Nektar::NekDouble> zbes(1.0, 0.0);
+    std::complex<Nektar::NekDouble> zarg;
+    Nektar::NekDouble tol = 1e-15;
+    int maxit             = 10000;
+    int i                 = 1;
+
+    zarg = -0.25 * y * y;
+
+    while (abs(z) > tol && i <= maxit)
+    {
+        z = z * (1.0 / i / (i + n) * zarg);
+        if (abs(z) <= tol)
+            break;
+        zbes = zbes + z;
+        i++;
+    }
+    zarg = 0.5 * y;
+    for (i = 1; i <= n; i++)
+    {
+        zbes = zbes * zarg;
+    }
+    return zbes;
 }
 
 /**
@@ -1823,41 +1862,4 @@ void chri1(int n, double *a, double *b, double *a0, double *b0, double z)
     delete[] r;
 }
 
-/**
-
-    \brief
-
-Calcualte the bessel function of the first kind with complex double input y.
-Taken from Numerical Recipies in C
-
-Returns a complex double
-*/
-
-std::complex<Nektar::NekDouble> ImagBesselComp(
-    int n, std::complex<Nektar::NekDouble> y)
-{
-    std::complex<Nektar::NekDouble> z(1.0, 0.0);
-    std::complex<Nektar::NekDouble> zbes(1.0, 0.0);
-    std::complex<Nektar::NekDouble> zarg;
-    Nektar::NekDouble tol = 1e-15;
-    int maxit             = 10000;
-    int i                 = 1;
-
-    zarg = -0.25 * y * y;
-
-    while (abs(z) > tol && i <= maxit)
-    {
-        z = z * (1.0 / i / (i + n) * zarg);
-        if (abs(z) <= tol)
-            break;
-        zbes = zbes + z;
-        i++;
-    }
-    zarg = 0.5 * y;
-    for (i = 1; i <= n; i++)
-    {
-        zbes = zbes * zarg;
-    }
-    return zbes;
-}
 } // namespace Polylib

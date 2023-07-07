@@ -77,6 +77,8 @@ protected:
     /// Virtual function for solve implementation.
     virtual void v_Execute(std::ostream &out = std::cout) override;
 
+    static std::string driverLookupId;
+
 private:
     /// Generates a new vector in the sequence by applying the linear operator.
     void EV_update(Array<OneD, NekDouble> &src, Array<OneD, NekDouble> &tgt);
@@ -109,8 +111,6 @@ private:
                 Array<OneD, Array<OneD, NekDouble>> &evecs, const int ntot,
                 const int kdim, const int nvec, Array<OneD, NekDouble> &zvec,
                 Array<OneD, NekDouble> &wr, Array<OneD, NekDouble> &wi);
-
-    static std::string driverLookupId;
 };
 
 } // namespace SolverUtils

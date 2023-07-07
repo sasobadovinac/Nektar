@@ -82,6 +82,9 @@ void DriverAdaptive::v_InitObject(ostream &out)
     Driver::v_InitObject(out);
 }
 
+/**
+ *
+ */
 void DriverAdaptive::v_Execute(ostream &out)
 {
     Nektar::LibUtilities::Timer timer;

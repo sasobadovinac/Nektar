@@ -358,8 +358,7 @@ void SubSteppingExtrapolate::v_SubStepAdvance(int nstep, NekDouble time)
 
         for (n = 0; n < nsubsteps; ++n)
         {
-            fields = m_subStepIntegrationScheme->TimeIntegrate(
-                n, dt, m_subStepIntegrationOps);
+            fields = m_subStepIntegrationScheme->TimeIntegrate(n, dt);
         }
 
         // set up HBC m_acceleration field for Pressure BCs

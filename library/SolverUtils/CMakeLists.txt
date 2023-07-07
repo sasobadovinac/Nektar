@@ -21,6 +21,7 @@ SET(SOLVER_UTILS_SOURCES
   DriverModifiedArnoldi.cpp
   DriverParallelInTime.cpp
   DriverParareal.cpp
+  DriverPFASST.cpp
   DriverStandard.cpp
   DriverSteadyState.cpp	
   EquationSystem.cpp
@@ -76,6 +77,7 @@ SET(SOLVER_UTILS_HEADERS
   DriverModifiedArnoldi.h
   DriverParallelInTime.h
   DriverParareal.h
+  DriverPFASST.h
   DriverStandard.h
   DriverSteadyState.h
   EquationSystem.h

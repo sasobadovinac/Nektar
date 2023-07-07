@@ -71,6 +71,12 @@ public:
     static std::string cmdSetStartTime;
     static std::string cmdSetStartChkNum;
 
+    SOLVER_UTILS_EXPORT LibUtilities::TimeIntegrationSchemeSharedPtr &
+    GetTimeIntegrationScheme();
+
+    SOLVER_UTILS_EXPORT LibUtilities::TimeIntegrationSchemeOperators &
+    GetTimeIntegrationSchemeOperators();
+
 protected:
     /// Number of steps between checks for abort conditions.
     int m_abortSteps;

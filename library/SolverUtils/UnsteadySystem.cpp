@@ -186,6 +186,24 @@ NekDouble UnsteadySystem::MaxTimeStepEstimator()
 }
 
 /**
+ * @brief Returns the time integration scheme.
+ */
+LibUtilities::TimeIntegrationSchemeSharedPtr &UnsteadySystem::
+    GetTimeIntegrationScheme()
+{
+    return m_intScheme;
+}
+
+/**
+ * @brief Returns the time integration scheme operators.
+ */
+LibUtilities::TimeIntegrationSchemeOperators &UnsteadySystem::
+    GetTimeIntegrationSchemeOperators()
+{
+    return m_ode;
+}
+
+/**
  * @brief Initialises the time integration scheme (as specified in the
  * session file), and perform the time integration.
  */
@@ -336,7 +354,7 @@ void UnsteadySystem::v_DoSolve()
 
         ASSERTL0(m_timestep > 0, "m_timestep < 0");
 
-        fields = m_intScheme->TimeIntegrate(stepCounter, m_timestep, m_ode);
+        fields = m_intScheme->TimeIntegrate(stepCounter, m_timestep);
         timer.Stop();
 
         m_time += m_timestep;

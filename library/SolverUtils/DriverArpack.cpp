@@ -103,20 +103,18 @@ void DriverArpack::v_InitObject(ostream &out)
 
     ASSERTL0(m_comm->GetSize() == 1,
              "..ARPACK is not currently set-up for parallel execution...\n");
-    m_equ[0]->PrintSummary(out);
 
-    ASSERTL0(m_comm->GetSize() == 1,
-             "ARPACK Arnoldi solver does not support execution in parallel.");
+    m_equ[0]->PrintSummary(out);
 
     // Print session parameters
     out << "\tArnoldi solver type    : Arpack" << endl;
-
     out << "\tArpack problem type    : ";
     out << ArpackProblemTypeTrans[m_session->GetSolverInfoAsEnum<int>(
                "ArpackProblemType")]
         << endl;
     DriverArnoldi::ArnoldiSummary(out);
 
+    // Initialization
     for (int i = 0; i < m_nequ; ++i)
     {
         m_equ[i]->DoInitialise();
@@ -126,6 +124,9 @@ void DriverArpack::v_InitObject(ostream &out)
     m_equ[m_nequ - 1]->TransPhysToCoeff();
 }
 
+/**
+ *
+ */
 void DriverArpack::v_Execute(ostream &out)
 
 {
