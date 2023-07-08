@@ -35,10 +35,7 @@
 #ifndef GAUSSPOINTS_H
 #define GAUSSPOINTS_H
 
-#include <LibUtilities/Foundations/Foundations.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
 
 namespace Nektar
 {
@@ -191,38 +188,26 @@ protected:
     LIB_UTILITIES_EXPORT virtual const std::shared_ptr<NekMatrix<NekDouble>> v_GetI(
         const Array<OneD, const NekDouble> &x) override;
     LIB_UTILITIES_EXPORT virtual const std::shared_ptr<NekMatrix<NekDouble>> v_GetI(
-        unsigned int numpoints, const Array<OneD, const NekDouble> &x) override;
+        size_t numpoints, const Array<OneD, const NekDouble> &x) override;
     LIB_UTILITIES_EXPORT virtual const std::shared_ptr<NekMatrix<NekDouble>>
     v_GetGalerkinProjection(const PointsKey &pkey) override;
 
 private:
     static bool initPointsManager[];
 
-    /// These should not be called.  All creation is done
-    /// using the constructor requiring the key, declared
-    /// above.
-    GaussPoints();
-    GaussPoints(const GaussPoints &points);
+    GaussPoints()                          = delete;
+    GaussPoints(const GaussPoints &points) = delete;
 
-    virtual void v_CalculatePoints() override;
-    virtual void v_CalculateWeights() override;
-    virtual void v_CalculateDerivMatrix() override;
+    virtual void v_CalculatePoints() override final;
+    virtual void v_CalculateWeights() override final;
+    virtual void v_CalculateDerivMatrix() override final;
 
-    void CalculateInterpMatrix(unsigned int npts,
+    void CalculateInterpMatrix(size_t npts,
                                const Array<OneD, const NekDouble> &xpoints,
                                Array<OneD, NekDouble> &interp);
 
     std::shared_ptr<NekMatrix<NekDouble>> CalculateGalerkinProjectionMatrix(
         const PointsKey &pkey);
-
-    /// functions used by the Kronrod points
-    NekDouble LagrangeInterpolant(NekDouble x, int npts,
-                                  const Array<OneD, const NekDouble> &xpts,
-                                  const Array<OneD, const NekDouble> &funcvals);
-    NekDouble LagrangePoly(NekDouble x, int pt, int npts,
-                           const Array<OneD, const NekDouble> &xpts);
-    NekDouble LagrangePolyDeriv(NekDouble x, int pt, int npts,
-                                const Array<OneD, const NekDouble> &xpts);
 
 }; // class GaussPoints
 } // namespace LibUtilities

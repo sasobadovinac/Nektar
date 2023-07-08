@@ -35,9 +35,6 @@
 #ifndef FOURIERSINGLEMODEPOINTS_H
 #define FOURIERSINGLEMODEPOINTS_H
 
-#include <LibUtilities/BasicUtils/NekManager.hpp> // for NekManager
-#include <LibUtilities/Foundations/Foundations.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/Points.h>
 
 namespace Nektar
@@ -108,26 +105,23 @@ public:
 
 protected:
     LIB_UTILITIES_EXPORT virtual const MatrixSharedPtrType v_GetI(
-        const PointsKey &pkey) override;
+        const PointsKey &pkey) override final;
     LIB_UTILITIES_EXPORT virtual const MatrixSharedPtrType v_GetI(
-        const Array<OneD, const NekDouble> &x) override;
+        const Array<OneD, const NekDouble> &x) override final;
     LIB_UTILITIES_EXPORT virtual const MatrixSharedPtrType v_GetI(
-        unsigned int numpoints, const Array<OneD, const NekDouble> &x) override;
+        size_t numpoints, const Array<OneD, const NekDouble> &x) override final;
 
 private:
     static bool initPointsManager[];
 
-    /// Default constructor should not be called except by Create method.
-    FourierSingleModePoints();
-
-    /// Copy constructor should not be called.
-    FourierSingleModePoints(const FourierSingleModePoints &points);
+    FourierSingleModePoints()                                      = delete;
+    FourierSingleModePoints(const FourierSingleModePoints &points) = delete;
 
     virtual void v_CalculatePoints() override;
     virtual void v_CalculateWeights() override;
     virtual void v_CalculateDerivMatrix() override;
 
-    void CalculateInterpMatrix(unsigned int npts,
+    void CalculateInterpMatrix(size_t npts,
                                const Array<OneD, const NekDouble> &xpoints,
                                Array<OneD, NekDouble> &interp);
 

@@ -39,8 +39,8 @@ namespace Nektar
 {
 namespace LibUtilities
 {
-const unsigned int NodalTetSPIAvailable                         = 10;
-static const unsigned int NodalTetSPINPTS[NodalTetSPIAvailable] = {
+const size_t NodalTetSPIAvailable                         = 10;
+static const size_t NodalTetSPINPTS[NodalTetSPIAvailable] = {
     1, 4, 8, 14, 14, 28, 36, 81, 121, 180};
 static const NekDouble NodalTetSPIData[][4] = {
     // %%% x y w

@@ -73,7 +73,7 @@ typedef std::vector<BasisSharedPtr> BasisVector;
 
 typedef Points<NekDouble> PointsBaseType;
 typedef std::shared_ptr<Points<NekDouble>> PointsSharedPtr;
-typedef int GraphVertexID;
+typedef size_t GraphVertexID;
 
 } // namespace LibUtilities
 } // namespace Nektar

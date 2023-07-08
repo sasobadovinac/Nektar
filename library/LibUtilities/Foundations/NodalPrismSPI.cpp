@@ -32,12 +32,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/NodalPrismSPI.h>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Points.h>
 
 namespace Nektar
 {
@@ -49,7 +44,7 @@ bool NodalPrismSPI::initPointsManager[] = {PointsManager().RegisterCreator(
 void NodalPrismSPI::v_CalculatePoints()
 {
     // Allocate the storage for points
-    unsigned int numPoints = GetNumPoints();
+    size_t numPoints = GetNumPoints();
 
     PointsKey e(numPoints, eGaussLobattoLegendre);
     PointsManager()[e]->GetPoints(m_e0);
@@ -60,14 +55,14 @@ void NodalPrismSPI::v_CalculatePoints()
     m_tw     = PointsManager()[t]->GetW();
     m_numtri = m_tw.size();
 
-    for (int i = 0; i < 3; i++)
+    for (size_t i = 0; i < 3; i++)
     {
         m_points[i] = Array<OneD, DataType>(m_numtri * numPoints);
     }
 
-    for (int j = 0, ct = 0; j < numPoints; j++)
+    for (size_t j = 0, ct = 0; j < numPoints; j++)
     {
-        for (int i = 0; i < m_numtri; i++, ct++)
+        for (size_t i = 0; i < m_numtri; i++, ct++)
         {
             // need to flip y and z because of quad orientation
             m_points[0][ct] = m_t0[i];
@@ -79,13 +74,13 @@ void NodalPrismSPI::v_CalculatePoints()
 
 void NodalPrismSPI::v_CalculateWeights()
 {
-    unsigned int numPoints = GetNumPoints();
+    size_t numPoints = GetNumPoints();
 
     m_weights = Array<OneD, DataType>(m_numtri * numPoints);
 
-    for (int j = 0, ct = 0; j < numPoints; j++)
+    for (size_t j = 0, ct = 0; j < numPoints; j++)
     {
-        for (int i = 0; i < m_numtri; i++, ct++)
+        for (size_t i = 0; i < m_numtri; i++, ct++)
         {
             m_weights[ct] = m_tw[i] * m_ew[j];
         }

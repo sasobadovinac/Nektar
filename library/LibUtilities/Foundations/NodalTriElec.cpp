@@ -32,13 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/NodalTriElec.h>
 #include <LibUtilities/Foundations/NodalTriElecData.h>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Points.h>
 
 namespace Nektar
 {
@@ -51,18 +46,18 @@ void NodalTriElec::v_CalculatePoints()
     // Allocate the storage for points
     PointsBaseType::v_CalculatePoints();
 
-    int index = 0, isum = 0;
-    const int offset = 3; // offset to match Datafile
+    size_t index = 0, isum = 0;
+    const size_t offset = 3; // offset to match Datafile
     NekDouble b, c;
-    unsigned int numPoints = GetNumPoints();
+    size_t numPoints = GetNumPoints();
 
     // initialize values
-    for (unsigned int i = 0; i < numPoints - 2; ++i)
+    for (size_t i = 0; i < numPoints - 2; ++i)
     {
         index += NodalTriElecNPTS[i];
     }
 
-    for (unsigned int i = 0; i < NodalTriElecNPTS[numPoints - 2]; ++i, ++index)
+    for (size_t i = 0; i < NodalTriElecNPTS[numPoints - 2]; ++i, ++index)
     {
         if (int(NodalTriElecData[index][0]))
         {
@@ -77,7 +72,7 @@ void NodalTriElec::v_CalculatePoints()
 
         if (int(NodalTriElecData[index][1]) == 1)
         {
-            for (unsigned int j = 0; j < 3; ++j)
+            for (size_t j = 0; j < 3; ++j)
             {
                 b = NodalTriElecData[index][offset + perm3A_2d[j][1]];
                 c = NodalTriElecData[index][offset + perm3A_2d[j][2]];
@@ -90,7 +85,7 @@ void NodalTriElec::v_CalculatePoints()
 
         if (int(NodalTriElecData[index][1]) == 2)
         {
-            for (unsigned int j = 0; j < 3; ++j)
+            for (size_t j = 0; j < 3; ++j)
             {
                 b = NodalTriElecData[index][offset + perm3B_2d[j][1]];
                 c = NodalTriElecData[index][offset + perm3B_2d[j][2]];
@@ -103,7 +98,7 @@ void NodalTriElec::v_CalculatePoints()
 
         if (int(NodalTriElecData[index][2]))
         {
-            for (unsigned int j = 0; j < 6; ++j)
+            for (size_t j = 0; j < 6; ++j)
             {
                 b = NodalTriElecData[index][offset + perm6_2d[j][1]];
                 c = NodalTriElecData[index][offset + perm6_2d[j][2]];
@@ -115,17 +110,9 @@ void NodalTriElec::v_CalculatePoints()
         } // end symmetry6
     }     // end npts
 
-    //    std::cout << "(x y) = (" << ToVector(m_points[0]) << ", " <<
-    //    ToVector(m_points[1]) <<  ")" << std::endl; cout << "numPoints = " <<
-    //    numPoints << endl; cout << "NodalTriElecNPTS[numPoints-2] = " <<
-    //    NodalTriElecNPTS[numPoints-2] << endl; cout << "isum = " << isum <<
-    //    endl; for( int i = 0; i <= numPoints-2; ++i ) {
-    //        cout << "NodalTriElecNPTS[" << i << "] = " << NodalTriElecNPTS[i]
-    //        << endl;
-    //    }
     NodalPointReorder2d();
 
-    ASSERTL1((static_cast<unsigned int>(isum) == m_pointsKey.GetTotNumPoints()),
+    ASSERTL1((static_cast<size_t>(isum) == m_pointsKey.GetTotNumPoints()),
              "sum not equal to npts");
 
     m_util = MemoryManager<NodalUtilTriangle>::AllocateSharedPtr(
@@ -181,13 +168,13 @@ std::shared_ptr<PointsBaseType> NodalTriElec::Create(const PointsKey &key)
 
 void NodalTriElec::NodalPointReorder2d()
 {
-    int i, j;
-    int cnt;
-    int istart, iend;
+    size_t i, j;
+    size_t cnt;
+    size_t istart, iend;
 
-    const int nVerts              = 3;
-    const int nEdgeInteriorPoints = GetNumPoints() - 2;
-    const int nBoundaryPoints     = 3 * nEdgeInteriorPoints + 3;
+    const size_t nVerts              = 3;
+    const size_t nEdgeInteriorPoints = GetNumPoints() - 2;
+    const size_t nBoundaryPoints     = 3 * nEdgeInteriorPoints + 3;
 
     if (nEdgeInteriorPoints == 0)
     {
@@ -288,7 +275,7 @@ void NodalTriElec::NodalPointReorder2d()
 
     Array<OneD, NekDouble> xc(m_points[0].size() - iend);
     Array<OneD, NekDouble> yc(m_points[0].size() - iend);
-    int ct = 0;
+    size_t ct = 0;
     for (i = iend; i < m_points[0].size(); i++, ct++)
     {
         xc[ct] = m_points[0][i];
@@ -311,8 +298,8 @@ void NodalTriElec::NodalPointReorder2d()
         }
     }
 
-    int offset = 0;
-    int npl    = GetNumPoints() - 3;
+    size_t offset = 0;
+    size_t npl    = GetNumPoints() - 3;
     while (npl > 1)
     {
         repeat = true;

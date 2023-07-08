@@ -35,11 +35,8 @@
 #ifndef NODALPRISMSPI_H
 #define NODALPRISMSPI_H
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <LibUtilities/Foundations/NodalUtil.h>
 #include <memory>
 
 namespace Nektar
@@ -64,16 +61,15 @@ public:
 private:
     static bool initPointsManager[];
 
-    NodalPrismSPI() : PointsBaseType(NullPointsKey)
-    {
-    }
+    NodalPrismSPI()                            = delete;
+    NodalPrismSPI(const NodalPrismSPI &points) = delete;
 
     Array<OneD, NekDouble> m_t0, m_t1, m_tw, m_e0, m_ew;
-    int m_numtri;
+    size_t m_numtri;
 
-    virtual void v_CalculatePoints() override;
-    virtual void v_CalculateWeights() override;
-    virtual void v_CalculateDerivMatrix() override;
+    virtual void v_CalculatePoints() override final;
+    virtual void v_CalculateWeights() override final;
+    virtual void v_CalculateDerivMatrix() override final;
 };
 } // namespace LibUtilities
 } // namespace Nektar

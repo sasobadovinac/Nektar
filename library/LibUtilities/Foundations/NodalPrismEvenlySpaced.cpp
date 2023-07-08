@@ -34,10 +34,7 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/NodalPrismEvenlySpaced.h>
-#include <LibUtilities/Foundations/Points.h>
 #include <vector>
 
 namespace Nektar
@@ -50,7 +47,7 @@ bool NodalPrismEvenlySpaced::initPointsManager[] = {
 
 namespace
 {
-bool isVertex(int x, int y, int z, int npts)
+bool isVertex(size_t x, size_t y, size_t z, size_t npts)
 {
     return (x == 0 && y == 0 && z == 0) ||
            (x == (npts - 1) && y == 0 && z == 0) ||
@@ -60,59 +57,59 @@ bool isVertex(int x, int y, int z, int npts)
            (x == 0 && y == (npts - 1) && z == (npts - 1));
 }
 
-bool isEdge_01(int x, int y, int z, int npts)
+bool isEdge_01(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(x, npts);
     return y == 0 && z == 0;
 }
 
-bool isEdge_12(int x, int y, int z, int npts)
+bool isEdge_12(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(y);
     return x == (npts - 1) && z == 0;
 }
 
-bool isEdge_23(int x, int y, int z, int npts)
+bool isEdge_23(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(x);
     return y == (npts - 1) && z == 0;
 }
 
-bool isEdge_30(int x, int y, int z, int npts)
+bool isEdge_30(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(y, npts);
     return x == 0 && z == 0;
 }
 
-bool isEdge_04(int x, int y, int z, int npts)
+bool isEdge_04(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(z, npts);
     return x == 0 && y == 0;
 }
 
-bool isEdge_14(int x, int y, int z, int npts)
+bool isEdge_14(size_t x, size_t y, size_t z, size_t npts)
 {
     return x + z == (npts - 1) && y == 0;
 }
 
-bool isEdge_25(int x, int y, int z, int npts)
+bool isEdge_25(size_t x, size_t y, size_t z, size_t npts)
 {
     return x + z == (npts - 1) && y == (npts - 1);
 }
 
-bool isEdge_35(int x, int y, int z, int npts)
+bool isEdge_35(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(z);
     return x == 0 && y == (npts - 1);
 }
 
-bool isEdge_45(int x, int y, int z, int npts)
+bool isEdge_45(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(y);
     return x == 0 && z == (npts - 1);
 }
 
-bool isEdge(int x, int y, int z, int npts)
+bool isEdge(size_t x, size_t y, size_t z, size_t npts)
 {
     return isEdge_01(x, y, z, npts) || isEdge_12(x, y, z, npts) ||
            isEdge_23(x, y, z, npts) || isEdge_30(x, y, z, npts) ||
@@ -121,37 +118,37 @@ bool isEdge(int x, int y, int z, int npts)
            isEdge_45(x, y, z, npts);
 }
 
-bool isFace_0123(int x, int y, int z, int npts)
+bool isFace_0123(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(x, y, npts);
     return z == 0;
 }
 
-bool isFace_014(int x, int y, int z, int npts)
+bool isFace_014(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(x, z, npts);
     return y == 0;
 }
 
-bool isFace_1254(int x, int y, int z, int npts)
+bool isFace_1254(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(y);
     return x + z == npts - 1;
 }
 
-bool isFace_325(int x, int y, int z, int npts)
+bool isFace_325(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(x, z);
     return y == (npts - 1);
 }
 
-bool isFace_0354(int x, int y, int z, int npts)
+bool isFace_0354(size_t x, size_t y, size_t z, size_t npts)
 {
     boost::ignore_unused(y, z, npts);
     return x == 0;
 }
 
-bool isFace(int x, int y, int z, int npts)
+bool isFace(size_t x, size_t y, size_t z, size_t npts)
 {
     return isFace_0123(x, y, z, npts) || isFace_014(x, y, z, npts) ||
            isFace_1254(x, y, z, npts) || isFace_325(x, y, z, npts) ||
@@ -166,13 +163,13 @@ void NodalPrismEvenlySpaced::v_CalculatePoints()
     PointsBaseType::v_CalculatePoints();
 
     // Populate m_points
-    unsigned int npts = GetNumPoints();
-    NekDouble delta   = 2.0 / (npts - 1.0);
-    for (unsigned int z = 0, index = 0; z < npts; ++z)
+    size_t npts     = GetNumPoints();
+    NekDouble delta = 2.0 / (npts - 1.0);
+    for (size_t z = 0, index = 0; z < npts; ++z)
     {
-        for (unsigned int y = 0; y < npts; ++y)
+        for (size_t y = 0; y < npts; ++y)
         {
-            for (unsigned int x = 0; x < npts - z; ++x, ++index)
+            for (size_t x = 0; x < npts - z; ++x, ++index)
             {
                 NekDouble xi = -1.0 + x * delta;
                 NekDouble yi = -1.0 + y * delta;
@@ -192,7 +189,7 @@ void NodalPrismEvenlySpaced::v_CalculatePoints()
 
 void NodalPrismEvenlySpaced::NodalPointReorder3d()
 {
-    unsigned int npts = GetNumPoints();
+    size_t npts = GetNumPoints();
     using std::vector;
     vector<int> vertex;
     vector<int> iEdge_01;             // interior edge 0
@@ -213,11 +210,11 @@ void NodalPrismEvenlySpaced::NodalPointReorder3d()
     vector<int> map;
 
     // Build the lattice prism left to right - bottom to top
-    for (unsigned int z = 0, index = 0; z < npts; ++z)
+    for (size_t z = 0, index = 0; z < npts; ++z)
     {
-        for (unsigned int y = 0; y < npts; ++y)
+        for (size_t y = 0; y < npts; ++y)
         {
-            for (unsigned int x = 0; x < npts - z; ++x, ++index)
+            for (size_t x = 0; x < npts - z; ++x, ++index)
             {
                 if (isVertex(x, y, z, npts))
                 {
@@ -293,82 +290,82 @@ void NodalPrismEvenlySpaced::NodalPointReorder3d()
         }
     }
 
-    for (unsigned int n = 0; n < vertex.size(); ++n)
+    for (size_t n = 0; n < vertex.size(); ++n)
     {
         map.push_back(vertex[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_01.size(); ++n)
+    for (size_t n = 0; n < iEdge_01.size(); ++n)
     {
         map.push_back(iEdge_01[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_12.size(); ++n)
+    for (size_t n = 0; n < iEdge_12.size(); ++n)
     {
         map.push_back(iEdge_12[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_23.size(); ++n)
+    for (size_t n = 0; n < iEdge_23.size(); ++n)
     {
         map.push_back(iEdge_23[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_30.size(); ++n)
+    for (size_t n = 0; n < iEdge_30.size(); ++n)
     {
         map.push_back(iEdge_30[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_04.size(); ++n)
+    for (size_t n = 0; n < iEdge_04.size(); ++n)
     {
         map.push_back(iEdge_04[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_14.size(); ++n)
+    for (size_t n = 0; n < iEdge_14.size(); ++n)
     {
         map.push_back(iEdge_14[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_25.size(); ++n)
+    for (size_t n = 0; n < iEdge_25.size(); ++n)
     {
         map.push_back(iEdge_25[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_35.size(); ++n)
+    for (size_t n = 0; n < iEdge_35.size(); ++n)
     {
         map.push_back(iEdge_35[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_45.size(); ++n)
+    for (size_t n = 0; n < iEdge_45.size(); ++n)
     {
         map.push_back(iEdge_45[n]);
     }
 
-    for (unsigned int n = 0; n < iFace_0123.size(); ++n)
+    for (size_t n = 0; n < iFace_0123.size(); ++n)
     {
         map.push_back(iFace_0123[n]);
     }
 
-    for (unsigned int n = 0; n < iFace_014.size(); ++n)
+    for (size_t n = 0; n < iFace_014.size(); ++n)
     {
         map.push_back(iFace_014[n]);
     }
 
-    for (unsigned int n = 0; n < iFace_1254.size(); ++n)
+    for (size_t n = 0; n < iFace_1254.size(); ++n)
     {
         map.push_back(iFace_1254[n]);
     }
 
-    for (unsigned int n = 0; n < iFace_325.size(); ++n)
+    for (size_t n = 0; n < iFace_325.size(); ++n)
     {
         map.push_back(iFace_325[n]);
     }
 
-    for (unsigned int n = 0; n < iFace_0354.size(); ++n)
+    for (size_t n = 0; n < iFace_0354.size(); ++n)
     {
         map.push_back(iFace_0354[n]);
     }
 
-    for (unsigned int n = 0; n < interiorVolumePoints.size(); ++n)
+    for (size_t n = 0; n < interiorVolumePoints.size(); ++n)
     {
         map.push_back(interiorVolumePoints[n]);
     }
@@ -378,14 +375,14 @@ void NodalPrismEvenlySpaced::NodalPointReorder3d()
     points[1] = Array<OneD, NekDouble>(GetTotNumPoints());
     points[2] = Array<OneD, NekDouble>(GetTotNumPoints());
 
-    for (unsigned int index = 0; index < map.size(); ++index)
+    for (size_t index = 0; index < map.size(); ++index)
     {
         points[0][index] = m_points[0][index];
         points[1][index] = m_points[1][index];
         points[2][index] = m_points[2][index];
     }
 
-    for (unsigned int index = 0; index < map.size(); ++index)
+    for (size_t index = 0; index < map.size(); ++index)
     {
         m_points[0][index] = points[0][map[index]];
         m_points[1][index] = points[1][map[index]];

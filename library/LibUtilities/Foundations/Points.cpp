@@ -32,7 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/Foundations/Foundations.hpp>
 #include <LibUtilities/Foundations/Points.h>
 
 namespace Nektar
@@ -80,7 +79,7 @@ bool operator<(const PointsKey &lhs, const PointsKey &rhs)
 
     if (lhs.m_factor > rhs.m_factor)
     {
-        return true;
+        return false;
     }
 
     return false;

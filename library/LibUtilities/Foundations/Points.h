@@ -38,21 +38,17 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/Foundations.hpp>
 #include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
-
-//#include <LibUtilities/BasicUtils/BasicUtilsFwd.hpp>  // for NekManager
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 namespace Nektar
 {
 
 namespace LibUtilities
 {
-// Need to add method to compute total number of points given dimension
-// and number of points.
 
 /// Defines a specification for a set of points.
 class PointsKey
@@ -75,7 +71,7 @@ public:
     }
 
     /// Constructor defining the number and distribution of points.
-    PointsKey(const int &numpoints, const PointsType &pointstype,
+    PointsKey(const size_t &numpoints, const PointsType &pointstype,
               const NekDouble factor = NekConstants::kNekUnsetDouble)
         : m_numpoints(numpoints), m_pointstype(pointstype), m_factor(factor)
     {
@@ -87,21 +83,11 @@ public:
     }
 
     /// Copy constructor.
-    PointsKey(const PointsKey &key)
-    {
-        *this = key; // defer to assignment operator
-    }
+    PointsKey(const PointsKey &key) = default;
 
-    PointsKey &operator=(const PointsKey &key)
-    {
-        m_numpoints  = key.m_numpoints;
-        m_pointstype = key.m_pointstype;
-        m_factor     = key.m_factor;
+    PointsKey &operator=(const PointsKey &key) = default;
 
-        return *this;
-    }
-
-    inline unsigned int GetNumPoints() const
+    inline size_t GetNumPoints() const
     {
         return m_numpoints;
     }
@@ -144,9 +130,9 @@ public:
     }
 
     // If new points are added, this function must be modified
-    inline unsigned int GetPointsDim() const
+    inline size_t GetPointsDim() const
     {
-        int dimpoints = 1;
+        size_t dimpoints = 1;
 
         switch (m_pointstype)
         {
@@ -174,9 +160,9 @@ public:
     }
 
     // If new points are added, this function must be modified
-    inline unsigned int GetTotNumPoints() const
+    inline size_t GetTotNumPoints() const
     {
-        int totpoints = m_numpoints;
+        size_t totpoints = m_numpoints;
 
         switch (m_pointstype)
         {
@@ -232,10 +218,10 @@ public:
         const PointsKey &lhs, const PointsKey &rhs) const;
 
 protected:
-    unsigned int m_numpoints; //!< number of the points (as appropriately
-                              //!< defined for PointsType)
-    PointsType m_pointstype;  //!< Type of Points
-    NekDouble m_factor;       //!< optional factor
+    size_t m_numpoints;      //!< number of the points (as appropriately
+                             //!< defined for PointsType)
+    PointsType m_pointstype; //!< Type of Points
+    NekDouble m_factor;      //!< optional factor
 private:
 };
 
@@ -265,17 +251,17 @@ public:
         v_Initialize();
     }
 
-    inline unsigned int GetPointsDim() const
+    inline size_t GetPointsDim() const
     {
         return m_pointsKey.GetPointsDim();
     }
 
-    inline unsigned int GetNumPoints() const
+    inline size_t GetNumPoints() const
     {
         return m_pointsKey.GetNumPoints();
     }
 
-    inline unsigned int GetTotNumPoints() const
+    inline size_t GetTotNumPoints() const
     {
         return m_pointsKey.GetTotNumPoints();
     }
@@ -343,7 +329,7 @@ public:
         return v_GetI(x);
     }
 
-    const MatrixSharedPtrType GetI(unsigned int uint,
+    const MatrixSharedPtrType GetI(size_t uint,
                                    const Array<OneD, const DataType> &x)
     {
         return v_GetI(uint, x);
@@ -394,10 +380,10 @@ protected:
 
     virtual void v_CalculatePoints()
     {
-        unsigned int pointsDim    = GetPointsDim();
-        unsigned int totNumPoints = GetTotNumPoints();
+        size_t pointsDim    = GetPointsDim();
+        size_t totNumPoints = GetTotNumPoints();
 
-        for (unsigned int i = 0; i < pointsDim; ++i)
+        for (size_t i = 0; i < pointsDim; ++i)
         {
             m_points[i] = Array<OneD, DataType>(totNumPoints);
         }
@@ -421,14 +407,14 @@ protected:
      */
     virtual void v_CalculateBaryWeights()
     {
-        const unsigned int totNumPoints = m_pointsKey.GetNumPoints();
-        m_bcweights = Array<OneD, DataType>(totNumPoints, 1.0);
+        const size_t totNumPoints = m_pointsKey.GetNumPoints();
+        m_bcweights               = Array<OneD, DataType>(totNumPoints, 1.0);
 
         Array<OneD, DataType> z = m_points[0];
 
-        for (unsigned int i = 0; i < totNumPoints; ++i)
+        for (size_t i = 0; i < totNumPoints; ++i)
         {
-            for (unsigned int j = 0; j < totNumPoints; ++j)
+            for (size_t j = 0; j < totNumPoints; ++j)
             {
                 if (i == j)
                 {
@@ -444,8 +430,8 @@ protected:
 
     virtual void v_CalculateDerivMatrix()
     {
-        int totNumPoints = GetTotNumPoints();
-        for (unsigned int i = 0; i < m_pointsKey.GetPointsDim(); ++i)
+        size_t totNumPoints = GetTotNumPoints();
+        for (size_t i = 0; i < m_pointsKey.GetPointsDim(); ++i)
         {
             m_derivmatrix[i] =
                 MemoryManager<NekMatrix<DataType>>::AllocateSharedPtr(
@@ -477,7 +463,7 @@ protected:
     }
 
     virtual const MatrixSharedPtrType v_GetI(
-        unsigned int, const Array<OneD, const DataType> &x)
+        size_t, const Array<OneD, const DataType> &x)
     {
         boost::ignore_unused(x);
         NEKERROR(ErrorUtil::efatal, "Method not implemented");
@@ -520,18 +506,8 @@ protected:
     }
 
 private:
-    // These should never be called
-    Points(const Points &pts)
-    {
-        boost::ignore_unused(pts);
-        NEKERROR(ErrorUtil::efatal,
-                 "Copy Constructor for Points should not be called");
-    }
-    Points()
-    {
-        NEKERROR(ErrorUtil::efatal,
-                 "Default Constructor for Points should not be called");
-    }
+    Points(const Points &pts) = delete;
+    Points()                  = delete;
 };
 
 } // namespace LibUtilities

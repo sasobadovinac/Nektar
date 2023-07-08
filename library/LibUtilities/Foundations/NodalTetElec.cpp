@@ -32,12 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/Foundations/NodalTetElec.h>
 #include <LibUtilities/Foundations/NodalTetElecData.h>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/NekVector.hpp>
 
 namespace Nektar
 {
@@ -54,18 +50,18 @@ void NodalTetElec::v_CalculatePoints()
     // Allocate the storage for points
     Points<NekDouble>::v_CalculatePoints();
 
-    int index = 0, isum = 0;
-    const int offset = 5; // offset to match Datafile
+    size_t index = 0, isum = 0;
+    const size_t offset = 5; // offset to match Datafile
     NekDouble b, c, d;
-    unsigned int numPoints = GetNumPoints();
+    size_t numPoints = GetNumPoints();
 
     // initialize values
-    for (unsigned int i = 0; i < numPoints - 2; ++i)
+    for (size_t i = 0; i < numPoints - 2; ++i)
     {
         index += NodalTetElecNPTS[i];
     }
 
-    for (unsigned int i = 0; i < NodalTetElecNPTS[numPoints - 2]; ++i, ++index)
+    for (size_t i = 0; i < NodalTetElecNPTS[numPoints - 2]; ++i, ++index)
     {
         // 1 Point Symmetry: aaaa
         if (int(NodalTetElecData[index][0]))
@@ -84,7 +80,7 @@ void NodalTetElec::v_CalculatePoints()
         // 4 Point symmetry: aaab or abbb
         if (int(NodalTetElecData[index][1]))
         {
-            for (unsigned int j = 0; j < 4; ++j)
+            for (size_t j = 0; j < 4; ++j)
             {
                 b = NodalTetElecData[index][offset + perm4_3d[j][1]];
                 c = NodalTetElecData[index][offset + perm4_3d[j][2]];
@@ -101,7 +97,7 @@ void NodalTetElec::v_CalculatePoints()
         // 6 Point symmetry: aabb
         if (int(NodalTetElecData[index][2]))
         {
-            for (unsigned int j = 0; j < 6; ++j)
+            for (size_t j = 0; j < 6; ++j)
             {
                 b = NodalTetElecData[index][offset + perm6_3d[j][1]];
                 c = NodalTetElecData[index][offset + perm6_3d[j][2]];
@@ -118,7 +114,7 @@ void NodalTetElec::v_CalculatePoints()
         // 12 Point symmetry: case aabc
         if (int(NodalTetElecData[index][3]) == 1)
         {
-            for (unsigned int j = 0; j < 12; ++j)
+            for (size_t j = 0; j < 12; ++j)
             {
                 b = NodalTetElecData[index][offset + perm12A_3d[j][1]];
                 c = NodalTetElecData[index][offset + perm12A_3d[j][2]];
@@ -135,7 +131,7 @@ void NodalTetElec::v_CalculatePoints()
         // 12 Point symmetry: case abcc
         if (int(NodalTetElecData[index][3]) == 2)
         {
-            for (unsigned int j = 0; j < 12; ++j)
+            for (size_t j = 0; j < 12; ++j)
             {
                 b = NodalTetElecData[index][offset + perm12B_3d[j][1]];
                 c = NodalTetElecData[index][offset + perm12B_3d[j][2]];
@@ -152,7 +148,7 @@ void NodalTetElec::v_CalculatePoints()
         // 12 Point symmetry: case abbc
         if (int(NodalTetElecData[index][3]) == 3)
         {
-            for (unsigned int j = 0; j < 12; ++j)
+            for (size_t j = 0; j < 12; ++j)
             {
                 b = NodalTetElecData[index][offset + perm12C_3d[j][1]];
                 c = NodalTetElecData[index][offset + perm12C_3d[j][2]];
@@ -169,7 +165,7 @@ void NodalTetElec::v_CalculatePoints()
         // 24 Point symmetry: case abcd
         if (int(NodalTetElecData[index][4]))
         {
-            for (unsigned int j = 0; j < 24; ++j)
+            for (size_t j = 0; j < 24; ++j)
             {
                 b = NodalTetElecData[index][offset + perm24_3d[j][1]];
                 c = NodalTetElecData[index][offset + perm24_3d[j][2]];
@@ -187,7 +183,7 @@ void NodalTetElec::v_CalculatePoints()
 
     NodalPointReorder3d();
 
-    ASSERTL1((static_cast<unsigned int>(isum) == m_pointsKey.GetTotNumPoints()),
+    ASSERTL1((static_cast<size_t>(isum) == m_pointsKey.GetTotNumPoints()),
              "sum not equal to npts");
 
     m_util = MemoryManager<NodalUtilTetrahedron>::AllocateSharedPtr(
@@ -245,16 +241,16 @@ std::shared_ptr<PointsBaseType> NodalTetElec::Create(const PointsKey &key)
 
 void NodalTetElec::NodalPointReorder3d()
 {
-    int cnt;
-    int istart, iend;
+    size_t cnt;
+    size_t istart, iend;
 
-    const int nVerts              = 4;
-    const int nEdgeInteriorPoints = GetNumPoints() - 2;
-    const int nFaceInteriorPoints =
+    const size_t nVerts              = 4;
+    const size_t nEdgeInteriorPoints = GetNumPoints() - 2;
+    const size_t nFaceInteriorPoints =
         (GetNumPoints() - 3) * (GetNumPoints() - 2) / 2;
-    // const int nBoundaryPoints = 4 + 6*nEdgeInteriorPoints +
+    // const size_t nBoundaryPoints = 4 + 6*nEdgeInteriorPoints +
     // 4*nFaceInteriorPoints;
-    const int nAllPoints =
+    const size_t nAllPoints =
         GetNumPoints() * (GetNumPoints() + 1) * (GetNumPoints() + 2) / 6;
     if (nEdgeInteriorPoints == 0)
     {
@@ -263,7 +259,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group all edge 1 points
     istart = nVerts;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[1][i] + 1.0) < NekConstants::kNekZeroTol &&
             fabs(m_points[2][i] + 1.0) < NekConstants::kNekZeroTol)
@@ -277,9 +273,9 @@ void NodalTetElec::NodalPointReorder3d()
 
     // bubble sort edge 1 (counterclockwise numbering)
     iend = istart + nEdgeInteriorPoints;
-    for (int i = istart; i < iend; i++)
+    for (size_t i = istart; i < iend; i++)
     {
-        for (int j = istart + 1; j < iend; j++)
+        for (size_t j = istart + 1; j < iend; j++)
         {
             if (m_points[0][j] < m_points[0][j - 1])
             {
@@ -292,7 +288,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group the points of edge 2 together;
     istart = iend;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[1][i] + m_points[0][i]) < NekConstants::kNekZeroTol &&
             fabs(m_points[2][i] + 1.0) < NekConstants::kNekZeroTol)
@@ -306,9 +302,9 @@ void NodalTetElec::NodalPointReorder3d()
 
     // bubble sort edge 2 (counterclockwise numbering)
     iend = istart + nEdgeInteriorPoints;
-    for (int i = istart; i < iend; i++)
+    for (size_t i = istart; i < iend; i++)
     {
-        for (int j = istart + 1; j < iend; j++)
+        for (size_t j = istart + 1; j < iend; j++)
         {
             if (m_points[1][j] < m_points[1][j - 1])
             {
@@ -321,7 +317,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group the points of edge 3 together;
     istart = iend;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[0][i] + 1.0) < NekConstants::kNekZeroTol &&
             fabs(m_points[2][i] + 1.0) < NekConstants::kNekZeroTol)
@@ -335,9 +331,9 @@ void NodalTetElec::NodalPointReorder3d()
 
     // bubble sort edge 3 (counterclockwise numbering)
     iend = istart + nEdgeInteriorPoints;
-    for (int i = istart; i < iend; i++)
+    for (size_t i = istart; i < iend; i++)
     {
-        for (int j = istart + 1; j < iend; j++)
+        for (size_t j = istart + 1; j < iend; j++)
         {
             if (m_points[1][j] > m_points[1][j - 1])
             {
@@ -350,7 +346,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group the points of edge 4 together;
     istart = iend;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[0][i] + 1.0) < NekConstants::kNekZeroTol &&
             fabs(m_points[1][i] + 1.0) < NekConstants::kNekZeroTol)
@@ -364,9 +360,9 @@ void NodalTetElec::NodalPointReorder3d()
 
     // bubble sort edge 3 (counterclockwise numbering)
     iend = istart + nEdgeInteriorPoints;
-    for (int i = istart; i < iend; i++)
+    for (size_t i = istart; i < iend; i++)
     {
-        for (int j = istart + 1; j < iend; j++)
+        for (size_t j = istart + 1; j < iend; j++)
         {
             if (m_points[2][j] < m_points[2][j - 1])
             {
@@ -379,7 +375,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group the points of edge 5 together;
     istart = iend;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[0][i] + m_points[2][i]) < NekConstants::kNekZeroTol &&
             fabs(m_points[1][i] + 1.0) < NekConstants::kNekZeroTol)
@@ -393,9 +389,9 @@ void NodalTetElec::NodalPointReorder3d()
 
     // bubble sort edge 5 (counterclockwise numbering)
     iend = istart + nEdgeInteriorPoints;
-    for (int i = istart; i < iend; i++)
+    for (size_t i = istart; i < iend; i++)
     {
-        for (int j = istart + 1; j < iend; j++)
+        for (size_t j = istart + 1; j < iend; j++)
         {
             if (m_points[2][j] < m_points[2][j - 1])
             {
@@ -408,7 +404,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group the points of edge 6 together;
     istart = iend;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[1][i] + m_points[2][i]) < NekConstants::kNekZeroTol &&
             fabs(m_points[0][i] + 1.0) < NekConstants::kNekZeroTol)
@@ -422,9 +418,9 @@ void NodalTetElec::NodalPointReorder3d()
 
     // bubble sort edge 6 (counterclockwise numbering)
     iend = istart + nEdgeInteriorPoints;
-    for (int i = istart; i < iend; i++)
+    for (size_t i = istart; i < iend; i++)
     {
-        for (int j = istart + 1; j < iend; j++)
+        for (size_t j = istart + 1; j < iend; j++)
         {
             if (m_points[2][j] < m_points[2][j - 1])
             {
@@ -443,7 +439,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group the points of face 1 together;
     istart = iend;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[2][i] + 1.0) < NekConstants::kNekZeroTol)
         {
@@ -460,7 +456,7 @@ void NodalTetElec::NodalPointReorder3d()
     while (repeat)
     {
         repeat = false;
-        for (int i = istart; i < iend - 1; i++)
+        for (size_t i = istart; i < iend - 1; i++)
         {
             if (m_points[1][i] > m_points[1][i + 1])
             {
@@ -471,15 +467,15 @@ void NodalTetElec::NodalPointReorder3d()
             }
         }
     }
-    int offset = 0;
-    int npl    = GetNumPoints() - 3;
+    size_t offset = 0;
+    size_t npl    = GetNumPoints() - 3;
     while (npl > 1)
     {
         repeat = true;
         while (repeat)
         {
             repeat = false;
-            for (int i = offset + istart; i < offset + istart + npl - 1; i++)
+            for (size_t i = offset + istart; i < offset + istart + npl - 1; i++)
             {
                 if (m_points[0][i] > m_points[0][i + 1])
                 {
@@ -496,7 +492,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group the points of face 2 together;
     istart = iend;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[1][i] + 1.0) < NekConstants::kNekZeroTol)
         {
@@ -513,7 +509,7 @@ void NodalTetElec::NodalPointReorder3d()
     while (repeat)
     {
         repeat = false;
-        for (int i = istart; i < iend - 1; i++)
+        for (size_t i = istart; i < iend - 1; i++)
         {
             if (m_points[2][i] > m_points[2][i + 1])
             {
@@ -532,7 +528,7 @@ void NodalTetElec::NodalPointReorder3d()
         while (repeat)
         {
             repeat = false;
-            for (int i = offset + istart; i < offset + istart + npl - 1; i++)
+            for (size_t i = offset + istart; i < offset + istart + npl - 1; i++)
             {
                 if (m_points[0][i] > m_points[0][i + 1])
                 {
@@ -549,7 +545,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group the points of face 3 together;
     istart = iend;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[1][i] + m_points[0][i] + m_points[2][i] + 1.0) <
             1E-9) // nek zero tol too small
@@ -567,7 +563,7 @@ void NodalTetElec::NodalPointReorder3d()
     while (repeat)
     {
         repeat = false;
-        for (int i = istart; i < iend - 1; i++)
+        for (size_t i = istart; i < iend - 1; i++)
         {
             if (m_points[2][i] > m_points[2][i + 1])
             {
@@ -586,7 +582,7 @@ void NodalTetElec::NodalPointReorder3d()
         while (repeat)
         {
             repeat = false;
-            for (int i = offset + istart; i < offset + istart + npl - 1; i++)
+            for (size_t i = offset + istart; i < offset + istart + npl - 1; i++)
             {
                 if (m_points[1][i] > m_points[1][i + 1])
                 {
@@ -603,7 +599,7 @@ void NodalTetElec::NodalPointReorder3d()
 
     // group the points of face 4 together;
     istart = iend;
-    for (int i = cnt = istart; i < nAllPoints; i++)
+    for (size_t i = cnt = istart; i < nAllPoints; i++)
     {
         if (fabs(m_points[0][i] + 1.0) < NekConstants::kNekZeroTol)
         {
@@ -620,7 +616,7 @@ void NodalTetElec::NodalPointReorder3d()
     while (repeat)
     {
         repeat = false;
-        for (int i = istart; i < iend - 1; i++)
+        for (size_t i = istart; i < iend - 1; i++)
         {
             if (m_points[2][i] > m_points[2][i + 1])
             {
@@ -639,7 +635,7 @@ void NodalTetElec::NodalPointReorder3d()
         while (repeat)
         {
             repeat = false;
-            for (int i = offset + istart; i < offset + istart + npl - 1; i++)
+            for (size_t i = offset + istart; i < offset + istart + npl - 1; i++)
             {
                 if (m_points[1][i] > m_points[1][i + 1])
                 {

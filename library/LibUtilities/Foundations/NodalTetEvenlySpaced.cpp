@@ -34,12 +34,7 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/NodalTetEvenlySpaced.h>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/NekVector.hpp>
 #include <vector>
 
 namespace Nektar
@@ -55,7 +50,7 @@ namespace
 // construct the geometory and set the coordinate of tetrahedron
 // edges and vertices are ordered as anticlockwise
 
-bool isVertex(int x, int y, int z, int npts)
+bool isVertex(size_t x, size_t y, size_t z, size_t npts)
 {
     return (x == 0 && y == 0 && z == 0) ||
            (x == (npts - 1) && y == 0 && z == 0) ||
@@ -63,70 +58,70 @@ bool isVertex(int x, int y, int z, int npts)
            (x == 0 && y == 0 && z == (npts - 1));
 }
 
-bool isEdge_01(int x, int y, int z, int npts)
+bool isEdge_01(size_t x, size_t y, size_t z, size_t npts)
 { // edge 0
     boost::ignore_unused(x, npts);
     return y == 0 && z == 0;
 }
 
-bool isEdge_12(int x, int y, int z, int npts)
+bool isEdge_12(size_t x, size_t y, size_t z, size_t npts)
 { // edge 1
     return z == 0 && x + y == npts - 1;
 }
 
-bool isEdge_20(int x, int y, int z, int npts)
+bool isEdge_20(size_t x, size_t y, size_t z, size_t npts)
 { // edge 2
     boost::ignore_unused(y, npts);
     return x == 0 && z == 0;
 }
 
-bool isEdge_03(int x, int y, int z, int npts)
+bool isEdge_03(size_t x, size_t y, size_t z, size_t npts)
 { // edge 3
     boost::ignore_unused(z, npts);
     return x == 0 && y == 0;
 }
 
-bool isEdge_13(int x, int y, int z, int npts)
+bool isEdge_13(size_t x, size_t y, size_t z, size_t npts)
 { // edge 4
     return y == 0 && x + z == npts - 1;
 }
 
-bool isEdge_23(int x, int y, int z, int npts)
+bool isEdge_23(size_t x, size_t y, size_t z, size_t npts)
 { // edge 5
     return x == 0 && y + z == npts - 1;
 }
 
-bool isEdge(int x, int y, int z, int npts)
+bool isEdge(size_t x, size_t y, size_t z, size_t npts)
 {
     return isEdge_01(x, y, z, npts) || isEdge_12(x, y, z, npts) ||
            isEdge_20(x, y, z, npts) || isEdge_03(x, y, z, npts) ||
            isEdge_13(x, y, z, npts) || isEdge_23(x, y, z, npts);
 }
 
-bool isFace_012(int x, int y, int z, int npts)
+bool isFace_012(size_t x, size_t y, size_t z, size_t npts)
 { // bottom face (face 0)
     boost::ignore_unused(x, y, npts);
     return z == 0;
 }
 
-bool isFace_013(int x, int y, int z, int npts)
+bool isFace_013(size_t x, size_t y, size_t z, size_t npts)
 { // face 1
     boost::ignore_unused(x, z, npts);
     return y == 0;
 }
 
-bool isFace_123(int x, int y, int z, int npts)
+bool isFace_123(size_t x, size_t y, size_t z, size_t npts)
 { // face 2
     return x + y + z == npts - 1;
 }
 
-bool isFace_203(int x, int y, int z, int npts)
+bool isFace_203(size_t x, size_t y, size_t z, size_t npts)
 { // face 3
     boost::ignore_unused(y, z, npts);
     return x == 0;
 }
 
-bool isFace(int x, int y, int z, int npts)
+bool isFace(size_t x, size_t y, size_t z, size_t npts)
 {
     return isFace_012(x, y, z, npts) || isFace_013(x, y, z, npts) ||
            isFace_123(x, y, z, npts) || isFace_203(x, y, z, npts);
@@ -140,13 +135,13 @@ void NodalTetEvenlySpaced::v_CalculatePoints()
     PointsBaseType::v_CalculatePoints();
 
     // Populate m_points
-    unsigned int npts = GetNumPoints();
-    NekDouble delta   = 2.0 / (npts - 1.0);
-    for (unsigned int z = 0, index = 0; z < npts; ++z)
+    size_t npts     = GetNumPoints();
+    NekDouble delta = 2.0 / (npts - 1.0);
+    for (size_t z = 0, index = 0; z < npts; ++z)
     {
-        for (unsigned int y = 0; y < npts - z; ++y)
+        for (size_t y = 0; y < npts - z; ++y)
         {
-            for (unsigned int x = 0; x < npts - z - y; ++x, ++index)
+            for (size_t x = 0; x < npts - z - y; ++x, ++index)
             {
                 NekDouble xi = -1.0 + x * delta;
                 NekDouble yi = -1.0 + y * delta;
@@ -166,7 +161,7 @@ void NodalTetEvenlySpaced::v_CalculatePoints()
 
 void NodalTetEvenlySpaced::NodalPointReorder3d()
 {
-    unsigned int npts = GetNumPoints();
+    size_t npts = GetNumPoints();
     using std::vector;
     vector<int> vertex;
     vector<int> iEdge_01;             // interior edge 0
@@ -183,11 +178,11 @@ void NodalTetEvenlySpaced::NodalPointReorder3d()
     vector<int> map;
 
     // Build the lattice tetrahedron left to right - bottom to top
-    for (int z = 0, index = 0; z < npts; ++z)
+    for (size_t z = 0, index = 0; z < npts; ++z)
     {
-        for (int y = 0; y < npts - z; ++y)
+        for (size_t y = 0; y < npts - z; ++y)
         {
-            for (int x = 0; x < npts - z - y; ++x, ++index)
+            for (size_t x = 0; x < npts - z - y; ++x, ++index)
             {
 
                 if (isVertex(x, y, z, npts))
@@ -264,73 +259,73 @@ void NodalTetEvenlySpaced::NodalPointReorder3d()
 
     // Mapping the vertex, edges, faces, interior volume points using the
     // permutation matrix, so the points are ordered anticlockwise.
-    for (unsigned int n = 0; n < vertex.size(); ++n)
+    for (size_t n = 0; n < vertex.size(); ++n)
     {
 
         map.push_back(vertex[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_01.size(); ++n)
+    for (size_t n = 0; n < iEdge_01.size(); ++n)
     {
 
         map.push_back(iEdge_01[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_12.size(); ++n)
+    for (size_t n = 0; n < iEdge_12.size(); ++n)
     {
 
         map.push_back(iEdge_12[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_20.size(); ++n)
+    for (size_t n = 0; n < iEdge_20.size(); ++n)
     {
 
         map.push_back(iEdge_20[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_03.size(); ++n)
+    for (size_t n = 0; n < iEdge_03.size(); ++n)
     {
 
         map.push_back(iEdge_03[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_13.size(); ++n)
+    for (size_t n = 0; n < iEdge_13.size(); ++n)
     {
 
         map.push_back(iEdge_13[n]);
     }
 
-    for (unsigned int n = 0; n < iEdge_23.size(); ++n)
+    for (size_t n = 0; n < iEdge_23.size(); ++n)
     {
 
         map.push_back(iEdge_23[n]);
     }
 
-    for (unsigned int n = 0; n < iFace_012.size(); ++n)
+    for (size_t n = 0; n < iFace_012.size(); ++n)
     {
 
         map.push_back(iFace_012[n]);
     }
 
-    for (unsigned int n = 0; n < iFace_013.size(); ++n)
+    for (size_t n = 0; n < iFace_013.size(); ++n)
     {
 
         map.push_back(iFace_013[n]);
     }
 
-    for (unsigned int n = 0; n < iFace_123.size(); ++n)
+    for (size_t n = 0; n < iFace_123.size(); ++n)
     {
 
         map.push_back(iFace_123[n]);
     }
 
-    for (unsigned int n = 0; n < iFace_203.size(); ++n)
+    for (size_t n = 0; n < iFace_203.size(); ++n)
     {
 
         map.push_back(iFace_203[n]);
     }
 
-    for (unsigned int n = 0; n < interiorVolumePoints.size(); ++n)
+    for (size_t n = 0; n < interiorVolumePoints.size(); ++n)
     {
 
         map.push_back(interiorVolumePoints[n]);
@@ -340,7 +335,7 @@ void NodalTetEvenlySpaced::NodalPointReorder3d()
     points[0] = Array<OneD, NekDouble>(GetTotNumPoints());
     points[1] = Array<OneD, NekDouble>(GetTotNumPoints());
     points[2] = Array<OneD, NekDouble>(GetTotNumPoints());
-    for (unsigned int index = 0; index < map.size(); ++index)
+    for (size_t index = 0; index < map.size(); ++index)
     {
 
         points[0][index] = m_points[0][index];
@@ -348,7 +343,7 @@ void NodalTetEvenlySpaced::NodalPointReorder3d()
         points[2][index] = m_points[2][index];
     }
 
-    for (unsigned int index = 0; index < map.size(); ++index)
+    for (size_t index = 0; index < map.size(); ++index)
     {
 
         m_points[0][index] = points[0][map[index]];

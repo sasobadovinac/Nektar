@@ -38,13 +38,8 @@
 #include <iostream>
 #include <memory>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
 
 namespace Nektar
 {
@@ -81,7 +76,7 @@ protected:
         const Array<OneD, const NekDouble> &y) override
     {
         size_t numpoints = x.size();
-        unsigned int np  = GetTotNumPoints();
+        size_t np        = GetTotNumPoints();
 
         Array<OneD, NekDouble> interp(GetTotNumPoints() * numpoints);
         CalculateInterpMatrix(x, y, interp);
@@ -96,15 +91,14 @@ private:
 
     std::shared_ptr<NodalUtilTriangle> m_util;
 
-    NodalTriFekete() : PointsBaseType(NullPointsKey)
-    {
-    }
+    NodalTriFekete()                             = delete;
+    NodalTriFekete(const NodalTriFekete &points) = delete;
 
     void NodalPointReorder2d();
 
-    virtual void v_CalculatePoints() override;
-    virtual void v_CalculateWeights() override;
-    virtual void v_CalculateDerivMatrix() override;
+    virtual void v_CalculatePoints() override final;
+    virtual void v_CalculateWeights() override final;
+    virtual void v_CalculateDerivMatrix() override final;
 
     void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xi,
                                const Array<OneD, const NekDouble> &yi,

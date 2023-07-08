@@ -36,37 +36,36 @@ namespace Nektar
 {
 namespace LibUtilities
 {
-static const unsigned int perm4_3d[4][4] = {
-    {0, 1, 2, 3},
-    {3, 0, 1, 2},
-    {2, 3, 0, 1},
-    {1, 2, 3, 0}}; // Works for abbb or aaab
-static const unsigned int perm6_3d[6][4] = {
+static const size_t perm4_3d[4][4] = {{0, 1, 2, 3},
+                                      {3, 0, 1, 2},
+                                      {2, 3, 0, 1},
+                                      {1, 2, 3, 0}}; // Works for abbb or aaab
+static const size_t perm6_3d[6][4] = {
     {0, 1, 2, 3}, {0, 2, 1, 3}, {0, 2, 3, 1},
     {2, 0, 1, 3}, {2, 0, 3, 1}, {2, 3, 0, 1}}; // Works for aabb
 
-static const unsigned int perm12A_3d[12][4] = {
+static const size_t perm12A_3d[12][4] = {
     {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 2, 1, 3}, {0, 2, 3, 1},
     {0, 3, 1, 2}, {0, 3, 2, 1}, {2, 0, 1, 3}, {2, 0, 3, 1},
     {2, 3, 0, 1}, {3, 0, 1, 2}, {3, 0, 2, 1}, {3, 2, 0, 1}}; // Works for aabc
-static const unsigned int perm12B_3d[12][4] = {
+static const size_t perm12B_3d[12][4] = {
     {0, 1, 2, 3}, {0, 2, 1, 3}, {0, 2, 3, 1}, {1, 0, 2, 3},
     {1, 2, 0, 3}, {1, 2, 3, 0}, {2, 0, 1, 3}, {2, 0, 3, 1},
     {2, 1, 0, 3}, {2, 1, 3, 0}, {2, 3, 0, 1}, {2, 3, 1, 0}}; // Works for abcc
-static const unsigned int perm12C_3d[12][4] = {
+static const size_t perm12C_3d[12][4] = {
     {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 3, 1, 2}, {1, 0, 2, 3},
     {1, 0, 3, 2}, {1, 2, 0, 3}, {1, 2, 3, 0}, {1, 3, 0, 2},
     {1, 3, 2, 0}, {3, 0, 1, 2}, {3, 1, 0, 2}, {3, 1, 2, 0}}; // Works for abbc
 
-static const unsigned int perm24_3d[24][4] = {
+static const size_t perm24_3d[24][4] = {
     {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 2, 1, 3}, {0, 2, 3, 1}, {0, 3, 1, 2},
     {0, 3, 2, 1}, {1, 0, 2, 3}, {1, 0, 3, 2}, {1, 2, 0, 3}, {1, 2, 3, 0},
     {1, 3, 0, 2}, {1, 3, 2, 0}, {2, 0, 1, 3}, {2, 0, 3, 1}, {2, 1, 0, 3},
     {2, 1, 3, 0}, {2, 3, 0, 1}, {2, 3, 1, 0}, {3, 0, 1, 2}, {3, 0, 2, 1},
     {3, 1, 0, 2}, {3, 1, 2, 0}, {3, 2, 0, 1}, {3, 2, 1, 0}}; // Works for abcd
 
-const unsigned int NodalTetElecAvailable                          = 10;
-static const unsigned int NodalTetElecNPTS[NodalTetElecAvailable] = {
+const size_t NodalTetElecAvailable                          = 10;
+static const size_t NodalTetElecNPTS[NodalTetElecAvailable] = {
     1, 2, 3, 5, 6, 9, 11, 15, 18, 23};
 static const NekDouble NodalTetElecData[][9] = {
     // %%% n_1    n_4    n_6   n_12    n_24          l_1             l_2 l_3 l_4

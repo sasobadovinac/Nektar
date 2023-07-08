@@ -32,14 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/Foundations/Foundations.hpp>
-#include <LibUtilities/Foundations/Points.h>
-
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/Foundations/GaussPoints.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
-#include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <LibUtilities/Polylib/Polylib.h>
 
 namespace Nektar
@@ -86,7 +80,7 @@ void GaussPoints::v_CalculatePoints()
     PointsBaseType::v_CalculatePoints();
     PointsBaseType::v_CalculateWeights();
 
-    int numpoints = m_pointsKey.GetNumPoints();
+    size_t numpoints = m_pointsKey.GetNumPoints();
 
     switch (m_pointsKey.GetPointsType())
     {
@@ -186,8 +180,8 @@ void GaussPoints::v_CalculateDerivMatrix()
     // Allocate the derivative matrix
     PointsBaseType::v_CalculateDerivMatrix();
 
-    int numpoints = m_pointsKey.GetNumPoints();
-    int totpoints = m_pointsKey.GetTotNumPoints();
+    size_t numpoints = m_pointsKey.GetNumPoints();
+    size_t totpoints = m_pointsKey.GetTotNumPoints();
     Array<OneD, NekDouble> dmtempSharedArray =
         Array<OneD, NekDouble>(totpoints * totpoints);
     NekDouble *dmtemp = dmtempSharedArray.data();
@@ -247,13 +241,13 @@ void GaussPoints::v_CalculateDerivMatrix()
         case eGaussRadauKronrodMAlpha1Beta0:
         case eGaussLobattoKronrodLegendre:
         {
-            for (unsigned int i = 0; i < m_pointsKey.GetNumPoints(); ++i)
+            for (size_t i = 0; i < m_pointsKey.GetNumPoints(); ++i)
             {
-                for (unsigned int j = 0; j < m_pointsKey.GetNumPoints(); ++j)
+                for (size_t j = 0; j < m_pointsKey.GetNumPoints(); ++j)
                 {
-                    (*m_derivmatrix[0])(i, j) = LagrangePolyDeriv(
-                        m_points[0][i], j, m_pointsKey.GetNumPoints(),
-                        m_points[0]);
+                    (*m_derivmatrix[0])(i, j) = Polylib::laginterpderiv(
+                        m_points[0][i], j, &m_points[0][0],
+                        m_pointsKey.GetNumPoints());
                 }
             }
             return;
@@ -270,7 +264,7 @@ void GaussPoints::v_CalculateDerivMatrix()
 }
 
 void GaussPoints::CalculateInterpMatrix(
-    unsigned int npts, const Array<OneD, const NekDouble> &xpoints,
+    size_t npts, const Array<OneD, const NekDouble> &xpoints,
     Array<OneD, NekDouble> &interp)
 {
     switch (m_pointsKey.GetPointsType())
@@ -340,12 +334,13 @@ void GaussPoints::CalculateInterpMatrix(
         case eGaussRadauKronrodMAlpha1Beta0:
         case eGaussLobattoKronrodLegendre:
         {
-            for (unsigned int i = 0; i < npts; ++i)
+            for (size_t i = 0; i < npts; ++i)
             {
-                for (unsigned int j = 0; j < m_pointsKey.GetNumPoints(); ++j)
+                for (size_t j = 0; j < m_pointsKey.GetNumPoints(); ++j)
                 {
-                    interp[i + j * npts] = LagrangePoly(
-                        xpoints[i], j, m_pointsKey.GetNumPoints(), m_points[0]);
+                    interp[i + j * npts] =
+                        Polylib::laginterp(xpoints[i], j, &m_points[0][0],
+                                           m_pointsKey.GetNumPoints());
                 }
             }
         }
@@ -370,7 +365,7 @@ std::shared_ptr<Points<NekDouble>> GaussPoints::Create(const PointsKey &pkey)
 std::shared_ptr<NekMatrix<NekDouble>> GaussPoints::CreateMatrix(
     const PointsKey &pkey)
 {
-    int numpoints = pkey.GetNumPoints();
+    size_t numpoints = pkey.GetNumPoints();
     Array<OneD, const NekDouble> xpoints;
 
     PointsManager()[pkey]->GetPoints(xpoints);
@@ -391,85 +386,26 @@ const std::shared_ptr<NekMatrix<NekDouble>> GaussPoints::v_GetI(
 const std::shared_ptr<NekMatrix<NekDouble>> GaussPoints::v_GetI(
     const Array<OneD, const NekDouble> &x)
 {
-    int numpoints = 1;
+    size_t numpoints = 1;
 
     // Delegate to function below
     return GetI(numpoints, x);
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> GaussPoints::v_GetI(
-    unsigned int numpoints, const Array<OneD, const NekDouble> &x)
+    size_t numpoints, const Array<OneD, const NekDouble> &x)
 {
     Array<OneD, NekDouble> interp(GetNumPoints() * numpoints);
 
     CalculateInterpMatrix(numpoints, x, interp);
 
-    NekDouble *t    = interp.data();
-    unsigned int np = GetNumPoints();
+    NekDouble *t = interp.data();
+    size_t np    = GetNumPoints();
     std::shared_ptr<NekMatrix<NekDouble>> returnval(
         MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints, np,
                                                                t));
 
     return returnval;
-}
-
-NekDouble GaussPoints::LagrangeInterpolant(
-    NekDouble x, int npts, const Array<OneD, const NekDouble> &xpts,
-    const Array<OneD, const NekDouble> &funcvals)
-{
-    NekDouble sum = 0.0;
-
-    for (int i = 0; i < npts; ++i)
-    {
-        sum += funcvals[i] * LagrangePoly(x, i, npts, xpts);
-    }
-    return sum;
-}
-
-NekDouble GaussPoints::LagrangePoly(NekDouble x, int pt, int npts,
-                                    const Array<OneD, const NekDouble> &xpts)
-{
-    NekDouble h = 1.0;
-
-    for (int i = 0; i < pt; ++i)
-    {
-        h = h * (x - xpts[i]) / (xpts[pt] - xpts[i]);
-    }
-
-    for (int i = pt + 1; i < npts; ++i)
-    {
-        h = h * (x - xpts[i]) / (xpts[pt] - xpts[i]);
-    }
-
-    return h;
-}
-
-NekDouble GaussPoints::LagrangePolyDeriv(
-    NekDouble x, int pt, int npts, const Array<OneD, const NekDouble> &xpts)
-{
-    NekDouble h;
-    NekDouble y = 0.0;
-
-    for (int j = 0; j < npts; ++j)
-    {
-        if (j != pt)
-        {
-            h = 1.0;
-            for (int i = 0; i < npts; ++i)
-            {
-                if (i != pt)
-                {
-                    if (i != j)
-                    {
-                        h = h * (x - xpts[i]);
-                    }
-                    h = h / (xpts[pt] - xpts[i]);
-                }
-            }
-            y = y + h;
-        }
-    }
-    return y;
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> GaussPoints::
@@ -491,8 +427,8 @@ std::shared_ptr<NekMatrix<NekDouble>> GaussPoints::CreateGPMatrix(
 std::shared_ptr<NekMatrix<NekDouble>> GaussPoints::
     CalculateGalerkinProjectionMatrix(const PointsKey &pkey)
 {
-    int numpointsfrom = pkey.GetNumPoints();
-    int numpointsto   = GetNumPoints();
+    size_t numpointsfrom = pkey.GetNumPoints();
+    size_t numpointsto   = GetNumPoints();
 
     Array<OneD, const NekDouble> weightsfrom;
 
@@ -504,7 +440,7 @@ std::shared_ptr<NekMatrix<NekDouble>> GaussPoints::
 
     // set up inner product matrix and multiply by inverse of
     // diagaonal mass matrix
-    for (int i = 0; i < numpointsto; ++i)
+    for (size_t i = 0; i < numpointsto; ++i)
     {
         Vmath::Vmul(numpointsfrom, Interp->GetPtr().get() + i * numpointsfrom,
                     1, &weightsfrom[0], 1, &GalProj[0] + i, numpointsto);
