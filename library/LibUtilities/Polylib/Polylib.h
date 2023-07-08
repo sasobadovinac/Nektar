@@ -186,6 +186,8 @@ LIB_UTILITIES_EXPORT void Dglj(double *, const double *, const int,
                                const double, const double);
 
 /* Lagrangian interpolants */
+LIB_UTILITIES_EXPORT double laginterp(double, int, const double *, int);
+LIB_UTILITIES_EXPORT double laginterpderiv(double, int, const double *, int);
 LIB_UTILITIES_EXPORT double hgj(const int, const double, const double *,
                                 const int, const double, const double);
 LIB_UTILITIES_EXPORT double hgrjm(const int, const double, const double *,

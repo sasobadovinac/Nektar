@@ -37,11 +37,8 @@
 
 #include <memory>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <LibUtilities/Foundations/NodalUtil.h>
 
 namespace Nektar
 {
@@ -65,13 +62,12 @@ public:
 private:
     static bool initPointsManager[];
 
-    NodalTriSPI() : PointsBaseType(NullPointsKey)
-    {
-    }
+    NodalTriSPI()                          = delete;
+    NodalTriSPI(const NodalTriSPI &points) = delete;
 
-    virtual void v_CalculatePoints() override;
-    virtual void v_CalculateWeights() override;
-    virtual void v_CalculateDerivMatrix() override;
+    virtual void v_CalculatePoints() override final;
+    virtual void v_CalculateWeights() override final;
+    virtual void v_CalculateDerivMatrix() override final;
 };
 
 } // namespace LibUtilities

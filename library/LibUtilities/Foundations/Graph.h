@@ -50,15 +50,13 @@ public:
     {
         m_id = m_nextid++;
     }
-    //    virtual int ReadFromFile(FILE * fp) = 0;
-    //    virtual int WriteToFile(FILE * fp) = 0;
 
     GraphVertexObject(const GraphVertexID id)
     {
         m_id = id;
     }
 
-    inline int getid()
+    inline size_t getid()
     {
         return m_id;
     }
@@ -88,22 +86,21 @@ class GraphEdgeObject
 {
 public:
 protected:
-    int m_gvoid1;
-    int m_gvoid2; // two graph vertex object identifiers which are being
-                  // connected
+    size_t m_gvoid1;
+    size_t m_gvoid2; // two graph vertex object identifiers which are being
+                     // connected
 };
 
 // --------------------------------------------------------------------------
 
 class Graph
 {
-
 public:
     LIB_UTILITIES_EXPORT Graph();
     LIB_UTILITIES_EXPORT ~Graph();
 
 protected:
-    int m_curmaxvid;
+    size_t m_curmaxvid;
     std::list<GraphVertexObject *> m_vertset;
     std::list<GraphEdgeObject *> m_edgeset;
 };

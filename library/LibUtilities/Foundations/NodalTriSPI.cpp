@@ -32,13 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/NodalTriSPI.h>
 #include <LibUtilities/Foundations/NodalTriSPIData.h>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Points.h>
 
 namespace Nektar
 {
@@ -51,22 +46,22 @@ bool NodalTriSPI::initPointsManager[] = {PointsManager().RegisterCreator(
 void NodalTriSPI::v_CalculatePoints()
 {
     // Allocate the storage for points
-    unsigned int numPoints = GetNumPoints();
+    size_t numPoints = GetNumPoints();
 
-    for (int i = 0; i < 2; i++)
+    for (size_t i = 0; i < 2; i++)
     {
         m_points[i] = Array<OneD, DataType>(NodalTriSPINPTS[numPoints - 2]);
     }
 
-    int index = 0;
+    size_t index = 0;
 
     // initialize values
-    for (unsigned int i = 0; i < numPoints - 2; ++i)
+    for (size_t i = 0; i < numPoints - 2; ++i)
     {
         index += NodalTriSPINPTS[i];
     }
 
-    for (int i = 0; i < NodalTriSPINPTS[numPoints - 2]; i++)
+    for (size_t i = 0; i < NodalTriSPINPTS[numPoints - 2]; i++)
     {
         m_points[0][i] = NodalTriSPIData[index][0];
         m_points[1][i] = NodalTriSPIData[index][1];
@@ -76,19 +71,19 @@ void NodalTriSPI::v_CalculatePoints()
 
 void NodalTriSPI::v_CalculateWeights()
 {
-    unsigned int numPoints = GetNumPoints();
+    size_t numPoints = GetNumPoints();
 
     m_weights = Array<OneD, DataType>(NodalTriSPINPTS[numPoints - 2]);
 
-    int index = 0;
+    size_t index = 0;
 
     // initialize values
-    for (unsigned int i = 0; i < numPoints - 2; ++i)
+    for (size_t i = 0; i < numPoints - 2; ++i)
     {
         index += NodalTriSPINPTS[i];
     }
 
-    for (int i = 0; i < NodalTriSPINPTS[numPoints - 2]; i++)
+    for (size_t i = 0; i < NodalTriSPINPTS[numPoints - 2]; i++)
     {
         m_weights[i] = NodalTriSPIData[index][2];
         index++;

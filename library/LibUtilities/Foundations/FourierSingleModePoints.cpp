@@ -34,10 +34,8 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/Foundations/FourierSingleModePoints.h>
-#include <LibUtilities/Foundations/ManagerAccess.h> // for PointsManager, etc
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <LibUtilities/Foundations/ManagerAccess.h>
 
 namespace Nektar
 {
@@ -51,14 +49,13 @@ void FourierSingleModePoints::v_CalculatePoints()
 {
     // Allocate the storage for points
     PointsBaseType::v_CalculatePoints();
-    unsigned int npts = m_pointsKey.GetNumPoints();
+    size_t npts = m_pointsKey.GetNumPoints();
 
     if (npts == 1)
     {
         m_points[0][0] = 0.25;
     }
     else
-
     {
         ASSERTL0(npts == 2,
                  "Fourier points for single mode analysis should be 2");
@@ -73,9 +70,8 @@ void FourierSingleModePoints::v_CalculateWeights()
     // Allocate the storage for points
     PointsBaseType::v_CalculateWeights();
 
-    unsigned int npts = m_pointsKey.GetNumPoints();
-    // Here I need to insert the weight for the new point distribution
-    for (unsigned int i = 0; i < npts; ++i)
+    size_t npts = m_pointsKey.GetNumPoints();
+    for (size_t i = 0; i < npts; ++i)
     {
         m_weights[i] = 1.0;
     }
@@ -101,54 +97,53 @@ std::shared_ptr<Points<NekDouble>> FourierSingleModePoints::Create(
 std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::CreateMatrix(
     const PointsKey &pkey)
 {
-    int numpoints = pkey.GetNumPoints();
-    Array<OneD, const NekDouble> xpoints;
+    boost::ignore_unused(pkey);
 
-    PointsManager()[pkey]->GetPoints(xpoints);
+    ASSERTL0(false,
+             "CreateMatrix not available for Fourier Single Mode Points");
 
-    /// Delegate to function below.
-    return GetI(numpoints, xpoints);
+    return nullptr;
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::v_GetI(
     const PointsKey &pkey)
 {
-    ASSERTL0(pkey.GetPointsDim() == 1,
-             "Fourier Points can only interp to other 1d point distributions");
+    boost::ignore_unused(pkey);
 
-    return m_InterpManager[pkey];
+    ASSERTL0(false, "Interp not available for Fourier Single Mode Points");
+
+    return nullptr;
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::v_GetI(
     const Array<OneD, const NekDouble> &x)
 {
-    int numpoints = 1;
+    boost::ignore_unused(x);
 
-    /// Delegate to function below.
-    return GetI(numpoints, x);
+    ASSERTL0(false, "Interp not available for Fourier Single Mode Points");
+
+    return nullptr;
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::v_GetI(
-    unsigned int numpoints, const Array<OneD, const NekDouble> &x)
+    size_t numpoints, const Array<OneD, const NekDouble> &x)
 {
-    Array<OneD, NekDouble> interp(GetNumPoints() * numpoints);
+    boost::ignore_unused(numpoints, x);
 
-    CalculateInterpMatrix(numpoints, x, interp);
+    ASSERTL0(false, "Interp not available for Fourier Single Mode Points");
 
-    NekDouble *t    = interp.data();
-    unsigned int np = GetNumPoints();
-    std::shared_ptr<NekMatrix<NekDouble>> returnval(
-        MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints, np,
-                                                               t));
-
-    return returnval;
+    return nullptr;
 }
 
 void FourierSingleModePoints::CalculateInterpMatrix(
-    unsigned int npts, const Array<OneD, const NekDouble> &xpoints,
+    size_t npts, const Array<OneD, const NekDouble> &xpoints,
     Array<OneD, NekDouble> &interp)
 {
     boost::ignore_unused(npts, xpoints, interp);
+
+    ASSERTL0(
+        false,
+        "CalculateInterpMatrix not available for Fourier Single Mode Points");
 }
 
 } // end of namespace LibUtilities

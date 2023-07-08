@@ -31,12 +31,12 @@
 // Description: Definition of Physical Space Galerkin Projection methods
 //
 ///////////////////////////////////////////////////////////////////////////////
+
 #include <LibUtilities/BasicUtils/Vmath.hpp>
 #include <LibUtilities/BasicUtils/VmathArray.hpp>
-#include <LibUtilities/Foundations/PhysGalerkinProject.h>
-
 #include <LibUtilities/Foundations/Basis.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>
+#include <LibUtilities/Foundations/PhysGalerkinProject.h>
 #include <LibUtilities/Foundations/Points.h>
 #include <LibUtilities/LinearAlgebra/NekTypeDefs.hpp>
 
@@ -134,10 +134,10 @@ void PhysGalerkinProject2D(const PointsKey &fpoints0, const PointsKey &fpoints1,
     Array<OneD, NekDouble> wsp(tpoints1.GetNumPoints() *
                                fpoints0.GetNumPoints()); // fnp0*tnp1
 
-    int fnp0 = fpoints0.GetNumPoints();
-    int fnp1 = fpoints1.GetNumPoints();
-    int tnp0 = tpoints0.GetNumPoints();
-    int tnp1 = tpoints1.GetNumPoints();
+    size_t fnp0 = fpoints0.GetNumPoints();
+    size_t fnp1 = fpoints1.GetNumPoints();
+    size_t tnp0 = tpoints0.GetNumPoints();
+    size_t tnp1 = tpoints1.GetNumPoints();
 
     if (fpoints1 == tpoints1)
     {
@@ -193,12 +193,12 @@ void PhysGalerkinProject3D(const PointsKey &fpoints0, const PointsKey &fpoints1,
 {
     DNekMatSharedPtr GP0, GP1, GP2;
 
-    int fnp0 = fpoints0.GetNumPoints();
-    int fnp1 = fpoints1.GetNumPoints();
-    int fnp2 = fpoints2.GetNumPoints();
-    int tnp0 = tpoints0.GetNumPoints();
-    int tnp1 = tpoints1.GetNumPoints();
-    int tnp2 = tpoints2.GetNumPoints();
+    size_t fnp0 = fpoints0.GetNumPoints();
+    size_t fnp1 = fpoints1.GetNumPoints();
+    size_t fnp2 = fpoints2.GetNumPoints();
+    size_t tnp0 = tpoints0.GetNumPoints();
+    size_t tnp1 = tpoints1.GetNumPoints();
+    size_t tnp2 = tpoints2.GetNumPoints();
 
     Array<OneD, NekDouble> wsp1(fnp0 * tnp1 * tnp2);
     Array<OneD, NekDouble> wsp2(fnp0 * fnp1 * tnp2);
@@ -208,7 +208,7 @@ void PhysGalerkinProject3D(const PointsKey &fpoints0, const PointsKey &fpoints1,
                 GP2->GetPtr().get(), tnp2, 0.0, wsp2.get(), fnp0 * fnp1);
 
     GP1 = PointsManager()[tpoints1]->GetGalerkinProjection(fpoints1);
-    for (int i = 0; i < tnp2; i++)
+    for (size_t i = 0; i < tnp2; i++)
     {
         Blas::Dgemm('N', 'T', fnp0, tnp1, fnp1, 1.0,
                     wsp2.get() + i * fnp0 * fnp1, fnp0, GP1->GetPtr().get(),

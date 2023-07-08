@@ -35,13 +35,8 @@
 #ifndef POLYEPOINTS_H
 #define POLYEPOINTS_H
 
-#include <memory>
-
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
-#include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
+#include <memory>
 
 namespace Nektar
 {
@@ -70,36 +65,21 @@ protected:
     LIB_UTILITIES_EXPORT virtual const std::shared_ptr<NekMatrix<NekDouble>> v_GetI(
         const Array<OneD, const NekDouble> &x) override;
     LIB_UTILITIES_EXPORT virtual const std::shared_ptr<NekMatrix<NekDouble>> v_GetI(
-        unsigned int numpoints, const Array<OneD, const NekDouble> &x) override;
+        size_t numpoints, const Array<OneD, const NekDouble> &x) override;
 
 private:
     static bool initPointsManager[];
 
-    /// Default constructor should not be called except by Create method.
-    PolyEPoints() : PointsBaseType(NullPointsKey)
-    {
-    }
+    PolyEPoints()                          = delete;
+    PolyEPoints(const PolyEPoints &points) = delete;
 
-    /// Copy constructor should not be called.
-    PolyEPoints(const PolyEPoints &points) : PointsBaseType(points.m_pointsKey)
-    {
-    }
+    virtual void v_CalculatePoints() override final;
+    virtual void v_CalculateWeights() override final;
+    virtual void v_CalculateDerivMatrix() override final;
 
-    virtual void v_CalculatePoints() override;
-    virtual void v_CalculateWeights() override;
-    virtual void v_CalculateDerivMatrix() override;
-
-    void CalculateInterpMatrix(unsigned int npts,
+    void CalculateInterpMatrix(size_t npts,
                                const Array<OneD, const NekDouble> &xpoints,
                                Array<OneD, NekDouble> &interp);
-
-    NekDouble LagrangeInterpolant(NekDouble x, int npts,
-                                  const Array<OneD, const NekDouble> &xpts,
-                                  const Array<OneD, const NekDouble> &funcvals);
-    NekDouble LagrangePoly(NekDouble x, int pt, int npts,
-                           const Array<OneD, const NekDouble> &xpts);
-    NekDouble LagrangePolyDeriv(NekDouble x, int pt, int npts,
-                                const Array<OneD, const NekDouble> &xpts);
 
 }; // class PolyEPoints
 } // namespace LibUtilities

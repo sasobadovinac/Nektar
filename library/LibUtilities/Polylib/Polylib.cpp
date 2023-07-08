@@ -97,6 +97,31 @@ double laginterp(double z, int j, const double *zj, int np)
     return temp;
 }
 
+double laginterpderiv(double z, int k, const double *zj, int np)
+{
+    double y = 0.0;
+    for (int j = 0; j < np; ++j)
+    {
+        if (j != k)
+        {
+            double tmp = 1.0;
+            for (int i = 0; i < np; ++i)
+            {
+                if (i != k)
+                {
+                    if (i != j)
+                    {
+                        tmp *= (z - zj[i]);
+                    }
+                    tmp /= (zj[k] - zj[i]);
+                }
+            }
+            y += tmp;
+        }
+    }
+    return y;
+}
+
 /// Define whether to use polynomial deflation (1) or tridiagonal solver (0).
 #define POLYNOMIAL_DEFLATION 0
 

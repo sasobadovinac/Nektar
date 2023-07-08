@@ -32,10 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VmathArray.hpp>
-#include <LibUtilities/Foundations/InterpCoeff.h>
-
 #include <LibUtilities/Foundations/Basis.h>
+#include <LibUtilities/Foundations/InterpCoeff.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/LinearAlgebra/NekTypeDefs.hpp>
 
@@ -80,10 +78,10 @@ void InterpCoeff2D(const BasisKey &fbasis0, const BasisKey &fbasis1,
                    const NekDouble *from, const BasisKey &tbasis0,
                    const BasisKey &tbasis1, NekDouble *to)
 {
-    const int fnm0 = fbasis0.GetNumModes();
-    const int fnm1 = fbasis1.GetNumModes();
-    const int tnm0 = tbasis0.GetNumModes();
-    const int tnm1 = tbasis1.GetNumModes();
+    const size_t fnm0 = fbasis0.GetNumModes();
+    const size_t fnm1 = fbasis1.GetNumModes();
+    const size_t tnm0 = tbasis0.GetNumModes();
+    const size_t tnm1 = tbasis1.GetNumModes();
 
     Array<OneD, NekDouble> wsp(tnm1 * fnm0);
 
@@ -129,12 +127,12 @@ void InterpCoeff3D(const BasisKey &fbasis0, const BasisKey &fbasis1,
                    const BasisKey &tbasis0, const BasisKey &tbasis1,
                    const BasisKey &tbasis2, NekDouble *to)
 {
-    const int fnm0 = fbasis0.GetNumModes();
-    const int fnm1 = fbasis1.GetNumModes();
-    const int fnm2 = fbasis2.GetNumModes();
-    const int tnm0 = tbasis0.GetNumModes();
-    const int tnm1 = tbasis1.GetNumModes();
-    const int tnm2 = tbasis2.GetNumModes();
+    const size_t fnm0 = fbasis0.GetNumModes();
+    const size_t fnm1 = fbasis1.GetNumModes();
+    const size_t fnm2 = fbasis2.GetNumModes();
+    const size_t tnm0 = tbasis0.GetNumModes();
+    const size_t tnm1 = tbasis1.GetNumModes();
+    const size_t tnm2 = tbasis2.GetNumModes();
 
     Array<OneD, NekDouble> wsp1(tnm0 * tnm1 * fnm2);
     Array<OneD, NekDouble> wsp2(tnm0 * fnm1 * fnm2);
@@ -146,7 +144,7 @@ void InterpCoeff3D(const BasisKey &fbasis0, const BasisKey &fbasis1,
     Blas::Dgemm('N', 'N', tnm0, fnm1 * fnm2, fnm0, 1.0, ft0->GetPtr().get(),
                 tnm0, from, fnm0, 0.0, wsp2.get(), tnm0);
 
-    for (int i = 0; i < fnm2; i++)
+    for (size_t i = 0; i < fnm2; i++)
     {
         Blas::Dgemm('N', 'T', tnm0, tnm1, fnm1, 1.0,
                     wsp2.get() + i * tnm0 * fnm1, tnm0, ft1->GetPtr().get(),

@@ -35,9 +35,7 @@
 #ifndef BLPOINTS_H
 #define BLPOINTS_H
 
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
 
 namespace Nektar
 {
@@ -110,27 +108,23 @@ public:
 
 protected:
     LIB_UTILITIES_EXPORT virtual const MatrixSharedPtrType v_GetI(
-        const PointsKey &pkey) override;
+        const PointsKey &pkey) override final;
     LIB_UTILITIES_EXPORT virtual const MatrixSharedPtrType v_GetI(
-        const Array<OneD, const NekDouble> &x) override;
+        const Array<OneD, const NekDouble> &x) override final;
     LIB_UTILITIES_EXPORT virtual const MatrixSharedPtrType v_GetI(
-        unsigned int numpoints, const Array<OneD, const NekDouble> &x) override;
+        size_t numpoints, const Array<OneD, const NekDouble> &x) override final;
 
 private:
     static bool initPointsManager[];
 
-    /// Default constructor should not be called except by Create
-    /// method.
-    BLPoints();
-
-    /// Copy constructor should not be called.
-    BLPoints(const BLPoints &points);
+    BLPoints()                       = delete;
+    BLPoints(const BLPoints &points) = delete;
 
     virtual void v_CalculatePoints() override;
     virtual void v_CalculateWeights() override;
     virtual void v_CalculateDerivMatrix() override;
 
-    void CalculateInterpMatrix(unsigned int npts,
+    void CalculateInterpMatrix(size_t npts,
                                const Array<OneD, const NekDouble> &xpoints,
                                Array<OneD, NekDouble> &interp);
 }; // class BLPoints

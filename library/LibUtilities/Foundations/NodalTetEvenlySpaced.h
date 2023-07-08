@@ -37,13 +37,8 @@
 
 #include <memory>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
-#include <LibUtilities/LinearAlgebra/NekVectorFwd.hpp>
 
 namespace Nektar
 {
@@ -80,7 +75,7 @@ protected:
         const Array<OneD, const NekDouble> &z) override
     {
         size_t numpoints = x.size();
-        unsigned int np  = GetTotNumPoints();
+        size_t np        = GetTotNumPoints();
 
         Array<OneD, NekDouble> interp(GetTotNumPoints() * numpoints);
         CalculateInterpMatrix(x, y, z, interp);
@@ -95,16 +90,14 @@ private:
 
     std::shared_ptr<NodalUtilTetrahedron> m_util;
 
-    /// Default constructor should not be called except by Create matrix
-    NodalTetEvenlySpaced() : PointsBaseType(NullPointsKey)
-    {
-    }
+    NodalTetEvenlySpaced()                                   = delete;
+    NodalTetEvenlySpaced(const NodalTetEvenlySpaced &points) = delete;
 
     void NodalPointReorder3d();
 
-    virtual void v_CalculatePoints() override;
-    virtual void v_CalculateWeights() override;
-    virtual void v_CalculateDerivMatrix() override;
+    virtual void v_CalculatePoints() override final;
+    virtual void v_CalculateWeights() override final;
+    virtual void v_CalculateDerivMatrix() override final;
 
     void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xi,
                                const Array<OneD, const NekDouble> &yi,

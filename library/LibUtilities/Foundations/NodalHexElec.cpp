@@ -32,12 +32,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/NodalHexElec.h>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Points.h>
 
 namespace Nektar
 {
@@ -49,22 +44,22 @@ bool NodalHexElec::initPointsManager[] = {PointsManager().RegisterCreator(
 void NodalHexElec::v_CalculatePoints()
 {
     // Allocate the storage for points
-    unsigned int numPoints = GetNumPoints();
+    size_t numPoints = GetNumPoints();
 
     PointsKey e(numPoints, eGaussLobattoLegendre);
     PointsManager()[e]->GetPoints(m_e0);
     m_ew = PointsManager()[e]->GetW();
 
-    for (int i = 0; i < 3; i++)
+    for (size_t i = 0; i < 3; i++)
     {
         m_points[i] = Array<OneD, DataType>(numPoints * numPoints * numPoints);
     }
 
-    for (int k = 0, ct = 0; k < numPoints; k++)
+    for (size_t k = 0, ct = 0; k < numPoints; k++)
     {
-        for (int j = 0; j < numPoints; j++)
+        for (size_t j = 0; j < numPoints; j++)
         {
-            for (int i = 0; i < numPoints; i++, ct++)
+            for (size_t i = 0; i < numPoints; i++, ct++)
             {
                 m_points[0][ct] = m_e0[i];
                 m_points[1][ct] = m_e0[j];
@@ -76,15 +71,15 @@ void NodalHexElec::v_CalculatePoints()
 
 void NodalHexElec::v_CalculateWeights()
 {
-    unsigned int numPoints = GetNumPoints();
+    size_t numPoints = GetNumPoints();
 
     m_weights = Array<OneD, DataType>(numPoints * numPoints * numPoints);
 
-    for (int k = 0, ct = 0; k < numPoints; k++)
+    for (size_t k = 0, ct = 0; k < numPoints; k++)
     {
-        for (int j = 0; j < numPoints; j++)
+        for (size_t j = 0; j < numPoints; j++)
         {
-            for (int i = 0; i < numPoints; i++, ct++)
+            for (size_t i = 0; i < numPoints; i++, ct++)
             {
                 m_weights[ct] = m_ew[i] * m_ew[j] * m_ew[k];
             }

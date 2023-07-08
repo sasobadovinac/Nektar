@@ -37,12 +37,10 @@
 #include <limits>
 
 #include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Polylib/Polylib.h>
-
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/LinearAlgebra/NekLinSys.hpp>
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 #include <LibUtilities/LinearAlgebra/NekVector.hpp>
+#include <LibUtilities/Polylib/Polylib.h>
 
 namespace Nektar
 {
@@ -65,7 +63,7 @@ namespace LibUtilities
 NekVector<NekDouble> NodalUtil::GetWeights()
 {
     // Get number of modes in orthogonal basis
-    int numModes = v_NumModes();
+    size_t numModes = v_NumModes();
 
     // If we have the same number of nodes as modes, then we can solve the
     // linear system V^T w = (1,0,...)
@@ -100,14 +98,14 @@ NekVector<NekDouble> NodalUtil::GetWeights()
  */
 SharedMatrix NodalUtil::GetVandermonde()
 {
-    int rows = m_numPoints, cols = v_NumModes();
+    size_t rows = m_numPoints, cols = v_NumModes();
     SharedMatrix matV =
         MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(rows, cols, 0.0);
 
-    for (int j = 0; j < cols; ++j)
+    for (size_t j = 0; j < cols; ++j)
     {
         NekVector<NekDouble> col = v_OrthoBasis(j);
-        for (int i = 0; i < rows; ++i)
+        for (size_t i = 0; i < rows; ++i)
         {
             (*matV)(i, j) = col[i];
         }
@@ -131,16 +129,16 @@ SharedMatrix NodalUtil::GetVandermonde()
  * @return Vandermonde matrix corresponding with derivative of the basis
  *         functions in direction @p dir.
  */
-SharedMatrix NodalUtil::GetVandermondeForDeriv(int dir)
+SharedMatrix NodalUtil::GetVandermondeForDeriv(size_t dir)
 {
-    int rows = m_numPoints, cols = v_NumModes();
+    size_t rows = m_numPoints, cols = v_NumModes();
     SharedMatrix matV =
         MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(rows, cols, 0.0);
 
-    for (int j = 0; j < cols; ++j)
+    for (size_t j = 0; j < cols; ++j)
     {
         NekVector<NekDouble> col = v_OrthoBasisDeriv(dir, j);
-        for (int i = 0; i < rows; ++i)
+        for (size_t i = 0; i < rows; ++i)
         {
             (*matV)(i, j) = col[i];
         }
@@ -164,7 +162,7 @@ SharedMatrix NodalUtil::GetVandermondeForDeriv(int dir)
  *
  * @return The derivative matrix for direction @p dir.
  */
-SharedMatrix NodalUtil::GetDerivMatrix(int dir)
+SharedMatrix NodalUtil::GetDerivMatrix(size_t dir)
 {
     SharedMatrix V  = GetVandermonde();
     SharedMatrix Vd = GetVandermondeForDeriv(dir);
@@ -235,7 +233,7 @@ SharedMatrix NodalUtil::GetInterpolationMatrix(
  * @param s       \f$ \xi_2 \f$-coordinates of nodal points in the standard
  *                element.
  */
-NodalUtilTriangle::NodalUtilTriangle(int degree, Array<OneD, NekDouble> r,
+NodalUtilTriangle::NodalUtilTriangle(size_t degree, Array<OneD, NekDouble> r,
                                      Array<OneD, NekDouble> s)
     : NodalUtil(degree, 2), m_eta(2)
 {
@@ -246,9 +244,9 @@ NodalUtilTriangle::NodalUtilTriangle(int degree, Array<OneD, NekDouble> r,
 
     // Construct a mapping (i,j) -> m from the triangular tensor product space
     // (i,j) to a single ordering m.
-    for (int i = 0; i <= m_degree; ++i)
+    for (size_t i = 0; i <= m_degree; ++i)
     {
-        for (int j = 0; j <= m_degree - i; ++j)
+        for (size_t j = 0; j <= m_degree - i; ++j)
         {
             m_ordering.push_back(std::make_pair(i, j));
         }
@@ -258,7 +256,7 @@ NodalUtilTriangle::NodalUtilTriangle(int degree, Array<OneD, NekDouble> r,
     m_eta[0] = Array<OneD, NekDouble>(m_numPoints);
     m_eta[1] = Array<OneD, NekDouble>(m_numPoints);
 
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         if (fabs(m_xi[1][i] - 1.0) < NekConstants::kNekZeroTol)
         {
@@ -290,7 +288,7 @@ NodalUtilTriangle::NodalUtilTriangle(int degree, Array<OneD, NekDouble> r,
  *
  * @return Vector containing orthogonal basis evaluated at the points #m_xi.
  */
-NekVector<NekDouble> NodalUtilTriangle::v_OrthoBasis(const int mode)
+NekVector<NekDouble> NodalUtilTriangle::v_OrthoBasis(const size_t mode)
 {
     std::vector<NekDouble> jacobi_i(m_numPoints), jacobi_j(m_numPoints);
     std::pair<int, int> modes = m_ordering[mode];
@@ -304,7 +302,7 @@ NekVector<NekDouble> NodalUtilTriangle::v_OrthoBasis(const int mode)
     NekVector<NekDouble> ret(m_numPoints);
     NekDouble sqrt2 = sqrt(2.0);
 
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         ret[i] = sqrt2 * jacobi_i[i] * jacobi_j[i] *
                  pow(1.0 - m_eta[1][i], modes.first);
@@ -327,8 +325,8 @@ NekVector<NekDouble> NodalUtilTriangle::v_OrthoBasis(const int mode)
  * @return Vector containing the derivative of the orthogonal basis evaluated at
  *         the points #m_xi.
  */
-NekVector<NekDouble> NodalUtilTriangle::v_OrthoBasisDeriv(const int dir,
-                                                          const int mode)
+NekVector<NekDouble> NodalUtilTriangle::v_OrthoBasisDeriv(const size_t dir,
+                                                          const size_t mode)
 {
     std::vector<NekDouble> jacobi_i(m_numPoints), jacobi_j(m_numPoints);
     std::vector<NekDouble> jacobi_di(m_numPoints), jacobi_dj(m_numPoints);
@@ -352,7 +350,7 @@ NekVector<NekDouble> NodalUtilTriangle::v_OrthoBasisDeriv(const int dir,
     if (dir == 0)
     {
         // d/d(\xi_1) = 2/(1-\eta_2) d/d(\eta_1)
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] = 2.0 * sqrt2 * jacobi_di[i] * jacobi_j[i];
             if (modes.first > 0)
@@ -364,7 +362,7 @@ NekVector<NekDouble> NodalUtilTriangle::v_OrthoBasisDeriv(const int dir,
     else
     {
         // d/d(\xi_2) = 2(1+\eta_1)/(1-\eta_2) d/d(\eta_1) + d/d(eta_2)
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] = (1 + m_eta[0][i]) * sqrt2 * jacobi_di[i] * jacobi_j[i];
             if (modes.first > 0)
@@ -411,7 +409,8 @@ NekVector<NekDouble> NodalUtilTriangle::v_OrthoBasisDeriv(const int dir,
  * @param t       \f$ \xi_3 \f$-coordinates of nodal points in the standard
  *                element.
  */
-NodalUtilTetrahedron::NodalUtilTetrahedron(int degree, Array<OneD, NekDouble> r,
+NodalUtilTetrahedron::NodalUtilTetrahedron(size_t degree,
+                                           Array<OneD, NekDouble> r,
                                            Array<OneD, NekDouble> s,
                                            Array<OneD, NekDouble> t)
     : NodalUtil(degree, 3), m_eta(3)
@@ -421,11 +420,11 @@ NodalUtilTetrahedron::NodalUtilTetrahedron(int degree, Array<OneD, NekDouble> r,
     m_xi[1]     = s;
     m_xi[2]     = t;
 
-    for (int i = 0; i <= m_degree; ++i)
+    for (size_t i = 0; i <= m_degree; ++i)
     {
-        for (int j = 0; j <= m_degree - i; ++j)
+        for (size_t j = 0; j <= m_degree - i; ++j)
         {
-            for (int k = 0; k <= m_degree - i - j; ++k)
+            for (size_t k = 0; k <= m_degree - i - j; ++k)
             {
                 m_ordering.push_back(Mode(i, j, k));
             }
@@ -437,7 +436,7 @@ NodalUtilTetrahedron::NodalUtilTetrahedron(int degree, Array<OneD, NekDouble> r,
     m_eta[1] = Array<OneD, NekDouble>(m_numPoints);
     m_eta[2] = Array<OneD, NekDouble>(m_numPoints);
 
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         if (fabs(m_xi[2][i] - 1.0) < NekConstants::kNekZeroTol)
         {
@@ -485,12 +484,12 @@ NodalUtilTetrahedron::NodalUtilTetrahedron(int degree, Array<OneD, NekDouble> r,
  *
  * @return Vector containing orthogonal basis evaluated at the points #m_xi.
  */
-NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasis(const int mode)
+NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasis(const size_t mode)
 {
     std::vector<NekDouble> jacA(m_numPoints), jacB(m_numPoints);
     std::vector<NekDouble> jacC(m_numPoints);
 
-    int I, J, K;
+    size_t I, J, K;
     std::tie(I, J, K) = m_ordering[mode];
 
     // Calculate Jacobi polynomials
@@ -503,7 +502,7 @@ NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasis(const int mode)
     NekVector<NekDouble> ret(m_numPoints);
     NekDouble sqrt8 = sqrt(8.0);
 
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         ret[i] = sqrt8 * jacA[i] * jacB[i] * jacC[i] *
                  pow(1.0 - m_eta[1][i], I) * pow(1.0 - m_eta[2][i], I + J);
@@ -526,15 +525,15 @@ NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasis(const int mode)
  * @return Vector containing the derivative of the orthogonal basis evaluated at
  *         the points #m_xi.
  */
-NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasisDeriv(const int dir,
-                                                             const int mode)
+NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasisDeriv(const size_t dir,
+                                                             const size_t mode)
 {
     std::vector<NekDouble> jacA(m_numPoints), jacB(m_numPoints);
     std::vector<NekDouble> jacC(m_numPoints);
     std::vector<NekDouble> jacDerivA(m_numPoints), jacDerivB(m_numPoints);
     std::vector<NekDouble> jacDerivC(m_numPoints);
 
-    int I, J, K;
+    size_t I, J, K;
     std::tie(I, J, K) = m_ordering[mode];
 
     // Calculate Jacobi polynomials
@@ -554,7 +553,7 @@ NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasisDeriv(const int dir,
 
     // Always compute x-derivative since this term appears in the latter two
     // terms.
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         ret[i] = 4.0 * sqrt8 * jacDerivA[i] * jacB[i] * jacC[i];
 
@@ -574,7 +573,7 @@ NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasisDeriv(const int dir,
         // Multiply by (1+a)/2
         NekVector<NekDouble> tmp(m_numPoints);
 
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] *= 0.5 * (m_eta[0][i] + 1.0);
 
@@ -599,7 +598,7 @@ NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasisDeriv(const int dir,
             return ret;
         }
 
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] += 0.5 * (1.0 + m_eta[1][i]) * tmp[i];
 
@@ -642,7 +641,7 @@ NekVector<NekDouble> NodalUtilTetrahedron::v_OrthoBasisDeriv(const int dir,
  * @param t       \f$ \xi_3 \f$-coordinates of nodal points in the standard
  *                element.
  */
-NodalUtilPrism::NodalUtilPrism(int degree, Array<OneD, NekDouble> r,
+NodalUtilPrism::NodalUtilPrism(size_t degree, Array<OneD, NekDouble> r,
                                Array<OneD, NekDouble> s,
                                Array<OneD, NekDouble> t)
     : NodalUtil(degree, 3), m_eta(3)
@@ -652,11 +651,11 @@ NodalUtilPrism::NodalUtilPrism(int degree, Array<OneD, NekDouble> r,
     m_xi[1]     = s;
     m_xi[2]     = t;
 
-    for (int i = 0; i <= m_degree; ++i)
+    for (size_t i = 0; i <= m_degree; ++i)
     {
-        for (int j = 0; j <= m_degree; ++j)
+        for (size_t j = 0; j <= m_degree; ++j)
         {
-            for (int k = 0; k <= m_degree - i; ++k)
+            for (size_t k = 0; k <= m_degree - i; ++k)
             {
                 m_ordering.push_back(Mode(i, j, k));
             }
@@ -668,7 +667,7 @@ NodalUtilPrism::NodalUtilPrism(int degree, Array<OneD, NekDouble> r,
     m_eta[1] = Array<OneD, NekDouble>(m_numPoints);
     m_eta[2] = Array<OneD, NekDouble>(m_numPoints);
 
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         if (fabs(m_xi[2][i] - 1.0) < NekConstants::kNekZeroTol)
         {
@@ -704,12 +703,12 @@ NodalUtilPrism::NodalUtilPrism(int degree, Array<OneD, NekDouble> r,
  *
  * @return Vector containing orthogonal basis evaluated at the points #m_xi.
  */
-NekVector<NekDouble> NodalUtilPrism::v_OrthoBasis(const int mode)
+NekVector<NekDouble> NodalUtilPrism::v_OrthoBasis(const size_t mode)
 {
     std::vector<NekDouble> jacA(m_numPoints), jacB(m_numPoints);
     std::vector<NekDouble> jacC(m_numPoints);
 
-    int I, J, K;
+    size_t I, J, K;
     std::tie(I, J, K) = m_ordering[mode];
 
     // Calculate Jacobi polynomials
@@ -721,7 +720,7 @@ NekVector<NekDouble> NodalUtilPrism::v_OrthoBasis(const int mode)
     NekVector<NekDouble> ret(m_numPoints);
     NekDouble sqrt2 = sqrt(2.0);
 
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         ret[i] =
             sqrt2 * jacA[i] * jacB[i] * jacC[i] * pow(1.0 - m_eta[2][i], I);
@@ -744,15 +743,15 @@ NekVector<NekDouble> NodalUtilPrism::v_OrthoBasis(const int mode)
  * @return Vector containing the derivative of the orthogonal basis evaluated at
  *         the points #m_xi.
  */
-NekVector<NekDouble> NodalUtilPrism::v_OrthoBasisDeriv(const int dir,
-                                                       const int mode)
+NekVector<NekDouble> NodalUtilPrism::v_OrthoBasisDeriv(const size_t dir,
+                                                       const size_t mode)
 {
     std::vector<NekDouble> jacA(m_numPoints), jacB(m_numPoints);
     std::vector<NekDouble> jacC(m_numPoints);
     std::vector<NekDouble> jacDerivA(m_numPoints), jacDerivB(m_numPoints);
     std::vector<NekDouble> jacDerivC(m_numPoints);
 
-    int I, J, K;
+    size_t I, J, K;
     std::tie(I, J, K) = m_ordering[mode];
 
     // Calculate Jacobi polynomials
@@ -770,7 +769,7 @@ NekVector<NekDouble> NodalUtilPrism::v_OrthoBasisDeriv(const int dir,
 
     if (dir == 1)
     {
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] = sqrt2 * jacA[i] * jacDerivB[i] * jacC[i] *
                      pow(1.0 - m_eta[2][i], I);
@@ -778,7 +777,7 @@ NekVector<NekDouble> NodalUtilPrism::v_OrthoBasisDeriv(const int dir,
     }
     else
     {
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] = 2.0 * sqrt2 * jacDerivA[i] * jacB[i] * jacC[i];
 
@@ -793,7 +792,7 @@ NekVector<NekDouble> NodalUtilPrism::v_OrthoBasisDeriv(const int dir,
             return ret;
         }
 
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] *= 0.5 * (1.0 + m_eta[0][i]);
 
@@ -823,7 +822,7 @@ NekVector<NekDouble> NodalUtilPrism::v_OrthoBasisDeriv(const int dir,
  * @param s       \f$ \xi_2 \f$-coordinates of nodal points in the standard
  *                element.
  */
-NodalUtilQuad::NodalUtilQuad(int degree, Array<OneD, NekDouble> r,
+NodalUtilQuad::NodalUtilQuad(size_t degree, Array<OneD, NekDouble> r,
                              Array<OneD, NekDouble> s)
     : NodalUtil(degree, 2)
 {
@@ -834,9 +833,9 @@ NodalUtilQuad::NodalUtilQuad(int degree, Array<OneD, NekDouble> r,
 
     // Construct a mapping (i,j) -> m from the tensor product space (i,j) to a
     // single ordering m.
-    for (int j = 0; j <= m_degree; ++j)
+    for (size_t j = 0; j <= m_degree; ++j)
     {
-        for (int i = 0; i <= m_degree; ++i)
+        for (size_t i = 0; i <= m_degree; ++i)
         {
             m_ordering.push_back(std::make_pair(i, j));
         }
@@ -856,7 +855,7 @@ NodalUtilQuad::NodalUtilQuad(int degree, Array<OneD, NekDouble> r,
  *
  * @param mode  The mode of the orthogonal basis to evaluate.
  */
-NekVector<NekDouble> NodalUtilQuad::v_OrthoBasis(const int mode)
+NekVector<NekDouble> NodalUtilQuad::v_OrthoBasis(const size_t mode)
 {
     std::vector<NekDouble> jacobi_i(m_numPoints), jacobi_j(m_numPoints);
     std::pair<int, int> modes = m_ordering[mode];
@@ -869,7 +868,7 @@ NekVector<NekDouble> NodalUtilQuad::v_OrthoBasis(const int mode)
 
     NekVector<NekDouble> ret(m_numPoints);
 
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         ret[i] = jacobi_i[i] * jacobi_j[i];
     }
@@ -883,8 +882,8 @@ NekVector<NekDouble> NodalUtilQuad::v_OrthoBasis(const int mode)
  *
  * @param mode  The mode of the orthogonal basis to evaluate.
  */
-NekVector<NekDouble> NodalUtilQuad::v_OrthoBasisDeriv(const int dir,
-                                                      const int mode)
+NekVector<NekDouble> NodalUtilQuad::v_OrthoBasisDeriv(const size_t dir,
+                                                      const size_t mode)
 {
     std::vector<NekDouble> jacobi_i(m_numPoints), jacobi_j(m_numPoints);
     std::vector<NekDouble> jacobi_di(m_numPoints), jacobi_dj(m_numPoints);
@@ -906,14 +905,14 @@ NekVector<NekDouble> NodalUtilQuad::v_OrthoBasisDeriv(const int dir,
 
     if (dir == 0)
     {
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] = jacobi_di[i] * jacobi_j[i];
         }
     }
     else
     {
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] = jacobi_i[i] * jacobi_dj[i];
         }
@@ -934,7 +933,7 @@ NekVector<NekDouble> NodalUtilQuad::v_OrthoBasisDeriv(const int dir,
  * @param s       \f$ \xi_2 \f$-coordinates of nodal points in the standard
  *                element.
  */
-NodalUtilHex::NodalUtilHex(int degree, Array<OneD, NekDouble> r,
+NodalUtilHex::NodalUtilHex(size_t degree, Array<OneD, NekDouble> r,
                            Array<OneD, NekDouble> s, Array<OneD, NekDouble> t)
     : NodalUtil(degree, 3)
 {
@@ -946,11 +945,11 @@ NodalUtilHex::NodalUtilHex(int degree, Array<OneD, NekDouble> r,
 
     // Construct a mapping (i,j,k) -> m from the tensor product space (i,j,k) to
     // a single ordering m.
-    for (int k = 0; k <= m_degree; ++k)
+    for (size_t k = 0; k <= m_degree; ++k)
     {
-        for (int j = 0; j <= m_degree; ++j)
+        for (size_t j = 0; j <= m_degree; ++j)
         {
-            for (int i = 0; i <= m_degree; ++i)
+            for (size_t i = 0; i <= m_degree; ++i)
             {
                 m_ordering.push_back(Mode(i, j, k));
             }
@@ -970,12 +969,12 @@ NodalUtilHex::NodalUtilHex(int degree, Array<OneD, NekDouble> r,
  *
  * @param mode  The mode of the orthogonal basis to evaluate.
  */
-NekVector<NekDouble> NodalUtilHex::v_OrthoBasis(const int mode)
+NekVector<NekDouble> NodalUtilHex::v_OrthoBasis(const size_t mode)
 {
     std::vector<NekDouble> jacobi_i(m_numPoints), jacobi_j(m_numPoints);
     std::vector<NekDouble> jacobi_k(m_numPoints);
 
-    int I, J, K;
+    size_t I, J, K;
     std::tie(I, J, K) = m_ordering[mode];
 
     // Calculate Jacobi polynomials
@@ -985,7 +984,7 @@ NekVector<NekDouble> NodalUtilHex::v_OrthoBasis(const int mode)
 
     NekVector<NekDouble> ret(m_numPoints);
 
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         ret[i] = jacobi_i[i] * jacobi_j[i] * jacobi_k[i];
     }
@@ -993,15 +992,15 @@ NekVector<NekDouble> NodalUtilHex::v_OrthoBasis(const int mode)
     return ret;
 }
 
-NekVector<NekDouble> NodalUtilHex::v_OrthoBasisDeriv(const int dir,
-                                                     const int mode)
+NekVector<NekDouble> NodalUtilHex::v_OrthoBasisDeriv(const size_t dir,
+                                                     const size_t mode)
 {
     std::vector<NekDouble> jacobi_i(m_numPoints), jacobi_j(m_numPoints);
     std::vector<NekDouble> jacobi_k(m_numPoints);
     std::vector<NekDouble> jacobi_di(m_numPoints), jacobi_dj(m_numPoints);
     std::vector<NekDouble> jacobi_dk(m_numPoints);
 
-    int I, J, K;
+    size_t I, J, K;
     std::tie(I, J, K) = m_ordering[mode];
 
     // Calculate Jacobi polynomials and their derivatives. Note that we use both
@@ -1018,21 +1017,21 @@ NekVector<NekDouble> NodalUtilHex::v_OrthoBasisDeriv(const int dir,
 
     if (dir == 0)
     {
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] = jacobi_di[i] * jacobi_j[i] * jacobi_k[i];
         }
     }
     else if (dir == 1)
     {
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] = jacobi_dj[i] * jacobi_i[i] * jacobi_k[i];
         }
     }
     else
     {
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret[i] = jacobi_i[i] * jacobi_j[i] * jacobi_dk[i];
         }

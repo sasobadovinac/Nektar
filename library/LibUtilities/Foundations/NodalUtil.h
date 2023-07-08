@@ -28,8 +28,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 2D and 3D Nodal Triangle and Tetrahedron Utilities header file
-//              Basis function, Interpolation, Integral, Derivation, etc.
+// Description: 2D and 3D Nodal Utilities header file Basis function,
+//              Interpolation, Integral, Derivation, etc.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -38,13 +38,10 @@
 
 #include <tuple>
 
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/Points.h>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
 #include <LibUtilities/LinearAlgebra/NekVectorFwd.hpp>
-
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 namespace Nektar
 {
@@ -85,8 +82,8 @@ public:
     LIB_UTILITIES_EXPORT virtual ~NodalUtil() = default;
     LIB_UTILITIES_EXPORT NekVector<NekDouble> GetWeights();
     LIB_UTILITIES_EXPORT SharedMatrix GetVandermonde();
-    LIB_UTILITIES_EXPORT SharedMatrix GetVandermondeForDeriv(int dir);
-    LIB_UTILITIES_EXPORT SharedMatrix GetDerivMatrix(int dir);
+    LIB_UTILITIES_EXPORT SharedMatrix GetVandermondeForDeriv(size_t dir);
+    LIB_UTILITIES_EXPORT SharedMatrix GetDerivMatrix(size_t dir);
     LIB_UTILITIES_EXPORT SharedMatrix
     GetInterpolationMatrix(Array<OneD, Array<OneD, NekDouble>> &xi);
 
@@ -97,16 +94,17 @@ protected:
      * @param dim     Dimension of the element.
      * @param degree  Polynomial degree of the element.
      */
-    NodalUtil(int degree, int dim) : m_dim(dim), m_degree(degree), m_xi(dim)
+    NodalUtil(size_t degree, size_t dim)
+        : m_dim(dim), m_degree(degree), m_xi(dim)
     {
     }
 
     /// Dimension of the nodal element
-    int m_dim;
+    size_t m_dim;
     /// Degree of the nodal element
-    int m_degree;
+    size_t m_degree;
     /// Total number of nodal points
-    int m_numPoints;
+    size_t m_numPoints;
     /// Coordinates of the nodal points defining the basis
     Array<OneD, Array<OneD, NekDouble>> m_xi;
 
@@ -119,7 +117,7 @@ protected:
      *
      * @return Orthogonal mode @p mode evaluated at the nodal points.
      */
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) = 0;
+    virtual NekVector<NekDouble> v_OrthoBasis(const size_t mode) = 0;
 
     /**
      * @brief Return the values of the derivative of the orthogonal basis at the
@@ -129,8 +127,8 @@ protected:
      * @param mode  Mode number, which is between 0 and NodalUtil::v_NumModes()
      *              - 1.
      */
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode) = 0;
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const size_t dir,
+                                                   const size_t mode) = 0;
 
     /**
      * @brief Construct a NodalUtil object of the appropriate element type for a
@@ -159,7 +157,7 @@ protected:
     /**
      * @brief Calculate the number of degrees of freedom for this element.
      */
-    virtual int v_NumModes() = 0;
+    virtual size_t v_NumModes() = 0;
 };
 
 /**
@@ -169,7 +167,8 @@ protected:
 class NodalUtilTriangle : public NodalUtil
 {
 public:
-    LIB_UTILITIES_EXPORT NodalUtilTriangle(int degree, Array<OneD, NekDouble> r,
+    LIB_UTILITIES_EXPORT NodalUtilTriangle(size_t degree,
+                                           Array<OneD, NekDouble> r,
                                            Array<OneD, NekDouble> s);
 
     LIB_UTILITIES_EXPORT virtual ~NodalUtilTriangle()
@@ -184,9 +183,9 @@ protected:
     /// Collapsed coordinates \f$ (\eta_1, \eta_2) \f$ of the nodal points.
     Array<OneD, Array<OneD, NekDouble>> m_eta;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasis(const size_t mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const size_t dir,
+                                                   const size_t mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
         Array<OneD, Array<OneD, NekDouble>> &xi) override
@@ -200,7 +199,7 @@ protected:
         return 2.0 * sqrt(2.0);
     }
 
-    virtual int v_NumModes() override
+    virtual size_t v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 2) / 2;
     }
@@ -215,7 +214,7 @@ class NodalUtilTetrahedron : public NodalUtil
     typedef std::tuple<int, int, int> Mode;
 
 public:
-    LIB_UTILITIES_EXPORT NodalUtilTetrahedron(int degree,
+    LIB_UTILITIES_EXPORT NodalUtilTetrahedron(size_t degree,
                                               Array<OneD, NekDouble> r,
                                               Array<OneD, NekDouble> s,
                                               Array<OneD, NekDouble> t);
@@ -233,9 +232,9 @@ protected:
     /// points.
     Array<OneD, Array<OneD, NekDouble>> m_eta;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasis(const size_t mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const size_t dir,
+                                                   const size_t mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
         Array<OneD, Array<OneD, NekDouble>> &xi) override
@@ -249,7 +248,7 @@ protected:
         return 8.0 * sqrt(2.0) / 3.0;
     }
 
-    virtual int v_NumModes() override
+    virtual size_t v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 2) * (m_degree + 3) / 6;
     }
@@ -264,7 +263,7 @@ class NodalUtilPrism : public NodalUtil
     typedef std::tuple<int, int, int> Mode;
 
 public:
-    LIB_UTILITIES_EXPORT NodalUtilPrism(int degree, Array<OneD, NekDouble> r,
+    LIB_UTILITIES_EXPORT NodalUtilPrism(size_t degree, Array<OneD, NekDouble> r,
                                         Array<OneD, NekDouble> s,
                                         Array<OneD, NekDouble> t);
 
@@ -281,9 +280,9 @@ protected:
     /// points.
     Array<OneD, Array<OneD, NekDouble>> m_eta;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasis(const size_t mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const size_t dir,
+                                                   const size_t mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
         Array<OneD, Array<OneD, NekDouble>> &xi) override
@@ -297,7 +296,7 @@ protected:
         return 4.0 * sqrt(2.0);
     }
 
-    virtual int v_NumModes() override
+    virtual size_t v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 1) * (m_degree + 2) / 2;
     }
@@ -309,7 +308,7 @@ protected:
 class NodalUtilQuad : public NodalUtil
 {
 public:
-    LIB_UTILITIES_EXPORT NodalUtilQuad(int degree, Array<OneD, NekDouble> r,
+    LIB_UTILITIES_EXPORT NodalUtilQuad(size_t degree, Array<OneD, NekDouble> r,
                                        Array<OneD, NekDouble> s);
 
     LIB_UTILITIES_EXPORT virtual ~NodalUtilQuad()
@@ -321,9 +320,9 @@ protected:
     /// ordering.
     std::vector<std::pair<int, int>> m_ordering;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasis(const size_t mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const size_t dir,
+                                                   const size_t mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
         Array<OneD, Array<OneD, NekDouble>> &xi) override
@@ -337,7 +336,7 @@ protected:
         return 4.0;
     }
 
-    virtual int v_NumModes() override
+    virtual size_t v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 1);
     }
@@ -351,7 +350,7 @@ class NodalUtilHex : public NodalUtil
     typedef std::tuple<int, int, int> Mode;
 
 public:
-    LIB_UTILITIES_EXPORT NodalUtilHex(int degree, Array<OneD, NekDouble> r,
+    LIB_UTILITIES_EXPORT NodalUtilHex(size_t degree, Array<OneD, NekDouble> r,
                                       Array<OneD, NekDouble> s,
                                       Array<OneD, NekDouble> t);
 
@@ -364,9 +363,9 @@ protected:
     /// ordering.
     std::vector<Mode> m_ordering;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasis(const size_t mode) override;
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const size_t dir,
+                                                   const size_t mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
         Array<OneD, Array<OneD, NekDouble>> &xi) override
@@ -380,7 +379,7 @@ protected:
         return 8.0;
     }
 
-    virtual int v_NumModes() override
+    virtual size_t v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 1) * (m_degree + 1);
     }

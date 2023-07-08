@@ -34,10 +34,8 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/Foundations/BLPoints.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/Foundations/Points.h>
 
 namespace Nektar
 {
@@ -53,7 +51,7 @@ void BLPoints::v_CalculatePoints()
 {
     // Allocate the storage for points.
     PointsBaseType::v_CalculatePoints();
-    unsigned int npts = m_pointsKey.GetNumPoints();
+    size_t npts = m_pointsKey.GetNumPoints();
 
     // Derived power coefficient.
     NekDouble r = m_pointsKey.GetFactor();
@@ -63,7 +61,7 @@ void BLPoints::v_CalculatePoints()
     if (fabs(r - 1.0) < 1e-6)
     {
         NekDouble tmp = 2.0 / (npts - 1.0);
-        for (unsigned int i = 0; i < npts; ++i)
+        for (size_t i = 0; i < npts; ++i)
         {
             m_points[0][i] = -1.0 + i * tmp;
         }
@@ -73,7 +71,7 @@ void BLPoints::v_CalculatePoints()
         NekDouble a    = 2.0 * (1.0 - r) / (1.0 - pow(r, (double)(npts - 1)));
         m_points[0][0] = -1.0;
 
-        for (unsigned int i = 1; i < npts; ++i)
+        for (size_t i = 1; i < npts; ++i)
         {
             m_points[0][i] = m_points[0][i - 1] + a * pow(r, (double)(i - 1));
         }
@@ -84,12 +82,12 @@ void BLPoints::v_CalculatePoints()
     if (m_pointsKey.GetPointsType() == eBoundaryLayerPointsRev)
     {
         std::vector<NekDouble> tmp(npts);
-        for (unsigned int i = 0; i < npts; ++i)
+        for (size_t i = 0; i < npts; ++i)
         {
             tmp[i] = -m_points[0][npts - 1 - i];
         }
 
-        for (unsigned int i = 0; i < npts; ++i)
+        for (size_t i = 0; i < npts; ++i)
         {
             m_points[0][i] = tmp[i];
         }
@@ -119,54 +117,51 @@ std::shared_ptr<Points<NekDouble>> BLPoints::Create(const PointsKey &key)
 std::shared_ptr<NekMatrix<NekDouble>> BLPoints::CreateMatrix(
     const PointsKey &pkey)
 {
-    int numpoints = pkey.GetNumPoints();
-    Array<OneD, const NekDouble> xpoints;
+    boost::ignore_unused(pkey);
 
-    PointsManager()[pkey]->GetPoints(xpoints);
+    ASSERTL0(false, "CreateMatrix not available for Boundary Layer Points");
 
-    /// Delegate to function below.
-    return GetI(numpoints, xpoints);
+    return nullptr;
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::v_GetI(
     const PointsKey &pkey)
 {
-    ASSERTL0(pkey.GetPointsDim() == 1,
-             "Fourier Points can only interp to other 1d point distributions");
+    boost::ignore_unused(pkey);
 
-    return m_InterpManager[pkey];
+    ASSERTL0(false, "Interp not available for Boundary Layer Points");
+
+    return nullptr;
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::v_GetI(
     const Array<OneD, const NekDouble> &x)
 {
-    int numpoints = 1;
+    boost::ignore_unused(x);
 
-    /// Delegate to function below.
-    return GetI(numpoints, x);
+    ASSERTL0(false, "Interp not available for Boundary Layer Points");
+
+    return nullptr;
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::v_GetI(
-    unsigned int numpoints, const Array<OneD, const NekDouble> &x)
+    size_t numpoints, const Array<OneD, const NekDouble> &x)
 {
-    Array<OneD, NekDouble> interp(GetNumPoints() * numpoints);
+    boost::ignore_unused(numpoints, x);
 
-    CalculateInterpMatrix(numpoints, x, interp);
+    ASSERTL0(false, "Interp not available for Boundary Layer Points");
 
-    NekDouble *t    = interp.data();
-    unsigned int np = GetNumPoints();
-    std::shared_ptr<NekMatrix<NekDouble>> returnval(
-        MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints, np,
-                                                               t));
-
-    return returnval;
+    return nullptr;
 }
 
 void BLPoints::CalculateInterpMatrix(
-    unsigned int npts, const Array<OneD, const NekDouble> &xpoints,
+    size_t npts, const Array<OneD, const NekDouble> &xpoints,
     Array<OneD, NekDouble> &interp)
 {
     boost::ignore_unused(npts, xpoints, interp);
+
+    ASSERTL0(false,
+             "CalculateInterpMatrix not available for Boundary Layer Points");
 }
 } // end of namespace LibUtilities
 } // end of namespace Nektar

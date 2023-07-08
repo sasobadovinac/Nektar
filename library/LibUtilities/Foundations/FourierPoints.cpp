@@ -33,11 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/Foundations/FourierPoints.h>
-#include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
-
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/Foundations/ManagerAccess.h> // for PointsManager, etc
+#include <LibUtilities/Foundations/ManagerAccess.h>
 
 namespace Nektar
 {
@@ -51,20 +47,13 @@ void FourierPoints::v_CalculatePoints()
     // Allocate the storage for points
     PointsBaseType::v_CalculatePoints();
 
-    unsigned int npts = m_pointsKey.GetNumPoints();
+    size_t npts = m_pointsKey.GetNumPoints();
     ASSERTL0(!(npts % 2), "Fourier points need to be of even order");
 
-    if (npts == 1)
+    NekDouble dx = 2.0 / (NekDouble)(npts);
+    for (size_t i = 0; i < npts; ++i)
     {
-        m_points[0][0] = 0.0;
-    }
-    else
-    {
-        NekDouble dx = 2.0 / (NekDouble)(npts);
-        for (unsigned int i = 0; i < npts; ++i)
-        {
-            m_points[0][i] = -1.0 + i * dx;
-        }
+        m_points[0][i] = -1.0 + i * dx;
     }
 }
 
@@ -73,17 +62,10 @@ void FourierPoints::v_CalculateWeights()
     // Allocate the storage for points
     PointsBaseType::v_CalculateWeights();
 
-    unsigned int npts = m_pointsKey.GetNumPoints();
-    if (npts == 1)
+    size_t npts = m_pointsKey.GetNumPoints();
+    for (size_t i = 0; i < npts; ++i)
     {
-        m_weights[0] = 1.0; // midpoint rule
-    }
-    else
-    {
-        for (unsigned int i = 0; i < npts; ++i)
-        {
-            m_weights[i] = 1.0 / (NekDouble)npts;
-        }
+        m_weights[i] = 1.0 / (NekDouble)npts;
     }
 }
 
@@ -92,14 +74,14 @@ void FourierPoints::v_CalculateDerivMatrix()
     //// Allocate the derivative matrix.
     Points<NekDouble>::v_CalculateDerivMatrix();
 
-    unsigned int npts = m_pointsKey.GetNumPoints();
+    size_t npts = m_pointsKey.GetNumPoints();
 
-    for (unsigned int i = 1; i < npts; ++i)
+    for (size_t i = 1; i < npts; ++i)
     {
         m_derivmatrix[0]->SetValue(i, i, 0.0);
     }
 
-    for (unsigned int i = 1; i < npts; ++i)
+    for (size_t i = 1; i < npts; ++i)
     {
         m_derivmatrix[0]->SetValue(0, i,
                                    -0.5 * M_PI * pow(-1.0, NekDouble(i)) *
@@ -107,9 +89,9 @@ void FourierPoints::v_CalculateDerivMatrix()
                                        sin(M_PI * i / npts));
     }
 
-    for (unsigned int i = 1; i < npts; ++i)
+    for (size_t i = 1; i < npts; ++i)
     {
-        for (unsigned int j = 0; j < npts; ++j)
+        for (size_t j = 0; j < npts; ++j)
         {
             m_derivmatrix[0]->SetValue(
                 i, j, (*m_derivmatrix[0])(0, (j - i + npts) % npts));
@@ -130,7 +112,7 @@ std::shared_ptr<Points<NekDouble>> FourierPoints::Create(const PointsKey &key)
 std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::CreateMatrix(
     const PointsKey &pkey)
 {
-    int numpoints = pkey.GetNumPoints();
+    size_t numpoints = pkey.GetNumPoints();
     Array<OneD, const NekDouble> xpoints;
 
     PointsManager()[pkey]->GetPoints(xpoints);
@@ -151,21 +133,21 @@ const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::v_GetI(
 const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::v_GetI(
     const Array<OneD, const NekDouble> &x)
 {
-    int numpoints = 1;
+    size_t numpoints = 1;
 
     /// Delegate to function below.
     return GetI(numpoints, x);
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::v_GetI(
-    unsigned int numpoints, const Array<OneD, const NekDouble> &x)
+    size_t numpoints, const Array<OneD, const NekDouble> &x)
 {
     Array<OneD, NekDouble> interp(GetNumPoints() * numpoints);
 
     CalculateInterpMatrix(numpoints, x, interp);
 
-    NekDouble *t    = interp.data();
-    unsigned int np = GetNumPoints();
+    NekDouble *t = interp.data();
+    size_t np    = GetNumPoints();
     std::shared_ptr<NekMatrix<NekDouble>> returnval(
         MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints, np,
                                                                t));
@@ -174,13 +156,13 @@ const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::v_GetI(
 }
 
 void FourierPoints::CalculateInterpMatrix(
-    unsigned int npts, const Array<OneD, const NekDouble> &xpoints,
+    size_t npts, const Array<OneD, const NekDouble> &xpoints,
     Array<OneD, NekDouble> &interp)
 {
     const NekDouble h = 2.0 / m_pointsKey.GetNumPoints();
-    for (unsigned int i = 0; i < npts; ++i)
+    for (size_t i = 0; i < npts; ++i)
     {
-        for (unsigned int j = 0; j < m_pointsKey.GetNumPoints(); ++j)
+        for (size_t j = 0; j < m_pointsKey.GetNumPoints(); ++j)
         {
             interp[i * m_pointsKey.GetNumPoints() + j] =
                 PeriodicSincFunction(M_PI * (xpoints[i] - m_points[0][j]), h);

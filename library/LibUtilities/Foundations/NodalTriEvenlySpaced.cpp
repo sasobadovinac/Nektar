@@ -34,12 +34,7 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/NodalTriEvenlySpaced.h>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/NekVector.hpp>
 #include <vector>
 
 namespace Nektar
@@ -54,24 +49,24 @@ namespace
 {
 // construct the geometory and set the coordinate of triangle
 // edges and vertices are ordered as anticlockwise
-bool isVertex(int i, int j, int npts)
+bool isVertex(size_t i, size_t j, size_t npts)
 {
     return (i == 0 && j == 0) || (i == (npts - 1) && j == 0) ||
            (i == 0 && j == (npts - 1));
 }
 
-bool isEdge(int i, int j, int npts)
+bool isEdge(size_t i, size_t j, size_t npts)
 {
     return i == 0 || j == 0 || i + j == npts - 1; // i+j=tot num of steps
 }
 
-bool isEdge_1(int i, int j, int npts)
+bool isEdge_1(size_t i, size_t j, size_t npts)
 {
     boost::ignore_unused(j, npts);
     return i == 0;
 }
 
-bool isEdge_2(int i, int j, int npts)
+bool isEdge_2(size_t i, size_t j, size_t npts)
 {
     return i + j == npts - 1;
 }
@@ -83,11 +78,11 @@ void NodalTriEvenlySpaced::v_CalculatePoints()
     PointsBaseType::v_CalculatePoints();
 
     // Populate m_points
-    unsigned int npts = GetNumPoints();
-    NekDouble delta   = 2.0 / (npts - 1.0);
-    for (int i = 0, index = 0; i < npts; ++i)
+    size_t npts     = GetNumPoints();
+    NekDouble delta = 2.0 / (npts - 1.0);
+    for (size_t i = 0, index = 0; i < npts; ++i)
     { // y-direction
-        for (int j = 0; j < npts - i; ++j, ++index)
+        for (size_t j = 0; j < npts - i; ++j, ++index)
         { // x-direction
             NekDouble x        = -1.0 + j * delta;
             NekDouble y        = -1.0 + i * delta;
@@ -156,7 +151,7 @@ std::shared_ptr<PointsBaseType> NodalTriEvenlySpaced::Create(
 
 void NodalTriEvenlySpaced::NodalPointReorder2d()
 {
-    unsigned int npts = GetNumPoints();
+    size_t npts = GetNumPoints();
     using std::vector;
     vector<int> vertex;
     vector<int> iEdge_1; // interior edge points on the bottom triangle edge
@@ -166,9 +161,9 @@ void NodalTriEvenlySpaced::NodalPointReorder2d()
     vector<int> map;
 
     // Build the lattice triangle left to right - bottom to top
-    for (int i = 0, index = 0; i < npts; ++i)
+    for (size_t i = 0, index = 0; i < npts; ++i)
     { // y-direction
-        for (int j = 0; j < npts - i; ++j, ++index)
+        for (size_t j = 0; j < npts - i; ++j, ++index)
         { // x-direction
 
             if (isVertex(i, j, npts))
@@ -205,31 +200,31 @@ void NodalTriEvenlySpaced::NodalPointReorder2d()
 
     // Mapping the vertex, edges, and interior points using the permutation
     // matrix, so the points are ordered anticlockwise.
-    for (unsigned int k = 0; k < vertex.size(); ++k)
+    for (size_t k = 0; k < vertex.size(); ++k)
     {
 
         map.push_back(vertex[k]);
     }
 
-    for (unsigned int k = 0; k < iEdge_1.size(); ++k)
+    for (size_t k = 0; k < iEdge_1.size(); ++k)
     {
 
         map.push_back(iEdge_1[k]);
     }
 
-    for (unsigned int k = 0; k < iEdge_2.size(); ++k)
+    for (size_t k = 0; k < iEdge_2.size(); ++k)
     {
 
         map.push_back(iEdge_2[k]);
     }
 
-    for (unsigned int k = 0; k < iEdge_3.size(); ++k)
+    for (size_t k = 0; k < iEdge_3.size(); ++k)
     {
 
         map.push_back(iEdge_3[k]);
     }
 
-    for (unsigned int k = 0; k < interiorPoints.size(); ++k)
+    for (size_t k = 0; k < interiorPoints.size(); ++k)
     {
 
         map.push_back(interiorPoints[k]);
@@ -238,13 +233,13 @@ void NodalTriEvenlySpaced::NodalPointReorder2d()
     Array<OneD, NekDouble> points[2];
     points[0] = Array<OneD, NekDouble>(GetTotNumPoints());
     points[1] = Array<OneD, NekDouble>(GetTotNumPoints());
-    for (unsigned int index = 0; index < map.size(); ++index)
+    for (size_t index = 0; index < map.size(); ++index)
     {
         points[0][index] = m_points[0][index];
         points[1][index] = m_points[1][index];
     }
 
-    for (unsigned int index = 0; index < map.size(); ++index)
+    for (size_t index = 0; index < map.size(); ++index)
     {
         m_points[0][index] = points[0][map[index]];
         m_points[1][index] = points[1][map[index]];
