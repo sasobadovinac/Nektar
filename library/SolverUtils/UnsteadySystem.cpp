@@ -40,7 +40,6 @@ using namespace std;
 #include <boost/format.hpp>
 
 #include <LibUtilities/BasicUtils/Timer.h>
-#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <SolverUtils/UnsteadySystem.h>
 
@@ -48,6 +47,15 @@ namespace Nektar
 {
 namespace SolverUtils
 {
+std::string UnsteadySystem::cmdSetStartTime =
+    LibUtilities::SessionReader::RegisterCmdLineArgument(
+        "set-start-time", "", "Set the starting time of the simulation.");
+
+std::string UnsteadySystem::cmdSetStartChkNum =
+    LibUtilities::SessionReader::RegisterCmdLineArgument(
+        "set-start-chknumber", "",
+        "Set the starting number of the checkpoint file.");
+
 /**
  * @class UnsteadySystem
  *
@@ -82,7 +90,7 @@ void UnsteadySystem::v_InitObject(bool DeclareField)
 
     m_initialStep = 0;
 
-    // Load SolverInfo parameters
+    // Load SolverInfo parameters.
     m_session->MatchSolverInfo("DIFFUSIONADVANCEMENT", "Explicit",
                                m_explicitDiffusion, true);
     m_session->MatchSolverInfo("ADVECTIONADVANCEMENT", "Explicit",
@@ -94,12 +102,14 @@ void UnsteadySystem::v_InitObject(bool DeclareField)
                                m_flagImplicitItsStatistics, false);
 
     m_session->LoadParameter("CheckAbortSteps", m_abortSteps, 1);
-    // Steady state tolerance
+
+    // Steady state tolerance.
     m_session->LoadParameter("SteadyStateTol", m_steadyStateTol, 0.0);
-    // Frequency for checking steady state
+
+    // Frequency for checking steady state.
     m_session->LoadParameter("SteadyStateSteps", m_steadyStateSteps, 1);
 
-    // For steady problems, we do not initialise the time integration
+    // For steady problems, we do not initialise the time integration.
     if (m_session->DefinesSolverInfo("TimeIntegrationMethod") ||
         m_session->DefinesTimeIntScheme())
     {
@@ -118,26 +128,22 @@ void UnsteadySystem::v_InitObject(bool DeclareField)
                 timeInt.method, timeInt.variant, timeInt.order,
                 timeInt.freeParams);
 
-        // Load generic input parameters
+        // Load generic input parameters.
         m_session->LoadParameter("IO_InfoSteps", m_infosteps, 0);
         m_session->LoadParameter("IO_FiltersInfoSteps", m_filtersInfosteps,
-                                 10.0 * m_infosteps);
+                                 10 * m_infosteps);
         m_session->LoadParameter("CFL", m_cflSafetyFactor, 0.0);
         m_session->LoadParameter("CFLEnd", m_CFLEnd, 0.0);
         m_session->LoadParameter("CFLGrowth", m_CFLGrowth, 1.0);
-        m_session->LoadParameter("CFLGrowth", m_CFLGrowth, 1.0);
 
-        // Time tolerance between filter update time and time integration
-        m_session->LoadParameter("FilterTimeWarning", m_filterTimeWarning, 1);
-
-        // Ensure that there is no conflict of parameters
+        // Ensure that there is no conflict of parameters.
         if (m_cflSafetyFactor > 0.0)
         {
-            // Check final condition
+            // Check final condition.
             ASSERTL0(m_fintime == 0.0 || m_steps == 0,
                      "Final condition not unique: "
                      "fintime > 0.0 and Nsteps > 0");
-            // Check timestep condition
+            // Check timestep condition.
             ASSERTL0(m_timestep == 0.0,
                      "Timestep not unique: timestep > 0.0 & CFL > 0.0");
         }
@@ -146,22 +152,22 @@ void UnsteadySystem::v_InitObject(bool DeclareField)
             ASSERTL0(m_timestep != 0.0, "Need to set either TimeStep or CFL");
         }
 
-        // Ensure that there is no conflict of parameters
+        // Ensure that there is no conflict of parameters.
         if (m_CFLGrowth > 1.0)
         {
-            // Check final condition
+            // Check final condition.
             ASSERTL0(m_CFLEnd >= m_cflSafetyFactor,
                      "m_CFLEnd >= m_cflSafetyFactor required");
         }
 
-        // Set up time to be dumped in field information
+        // Set up time to be dumped in field information.
         m_fieldMetaDataMap["Time"] = boost::lexical_cast<std::string>(m_time);
     }
 
     // By default attempt to forward transform initial condition.
     m_homoInitialFwd = true;
 
-    // Set up filters
+    // Set up filters.
     for (auto &x : m_session->GetFilters())
     {
         m_filters.push_back(make_pair(
@@ -214,7 +220,6 @@ void UnsteadySystem::v_DoSolve()
     int i          = 1;
     int nvariables = 0;
     int nfields    = m_fields.size();
-
     if (m_intVariables.empty())
     {
         for (i = 0; i < nfields; ++i)
@@ -228,7 +233,7 @@ void UnsteadySystem::v_DoSolve()
         nvariables = m_intVariables.size();
     }
 
-    // Integrate in wave-space if using homogeneous1D
+    // Integrate in wave-space if using homogeneous1D.
     if (m_HomogeneousType != eNotHomogeneous && m_homoInitialFwd)
     {
         for (i = 0; i < nfields; ++i)
@@ -247,14 +252,14 @@ void UnsteadySystem::v_DoSolve()
     // Order storage to list time-integrated fields first.
     for (i = 0; i < nvariables; ++i)
     {
-        fields[i] = m_fields[m_intVariables[i]]->GetPhys();
+        fields[i] = m_fields[m_intVariables[i]]->UpdatePhys();
         m_fields[m_intVariables[i]]->SetPhysState(false);
     }
 
-    // Initialise time integration scheme
+    // Initialise time integration scheme.
     m_intScheme->InitializeScheme(m_timestep, fields, m_time, m_ode);
 
-    // Initialise filters
+    // Initialise filters.
     for (auto &x : m_filters)
     {
         x.second->Initialise(m_fields, m_time);
@@ -264,7 +269,6 @@ void UnsteadySystem::v_DoSolve()
     bool doCheckTime        = false;
     int step                = m_initialStep;
     int stepCounter         = 0;
-    int restartStep         = -1;
     NekDouble intTime       = 0.0;
     NekDouble cpuTime       = 0.0;
     NekDouble cpuPrevious   = 0.0;
@@ -285,13 +289,9 @@ void UnsteadySystem::v_DoSolve()
     }
 
     NekDouble tmp_cflSafetyFactor = m_cflSafetyFactor;
-
-    m_timestepMax = m_timestep;
     while ((step < m_steps || m_time < m_fintime - NekConstants::kNekZeroTol) &&
            abortFlags[1] == 0)
     {
-        restartStep++;
-
         if (m_CFLGrowth > 1.0 && m_cflSafetyFactor < m_CFLEnd)
         {
             tmp_cflSafetyFactor =
@@ -300,10 +300,10 @@ void UnsteadySystem::v_DoSolve()
 
         m_flagUpdatePreconMat = true;
 
-        // Flag to update AV
+        // Flag to update AV.
         m_CalcPhysicalAV = true;
 
-        // Frozen preconditioner checks
+        // Frozen preconditioner checks.
         if (!ParallelInTime())
         {
             if (v_UpdateTimeStepCheck())
@@ -342,15 +342,12 @@ void UnsteadySystem::v_DoSolve()
             }
         }
 
-        // Perform any solver-specific pre-integration steps
+        // Perform any solver-specific pre-integration steps.
         timer.Start();
         if (v_PreIntegrate(step))
         {
             break;
         }
-
-        m_StagesPerStep    = 0;
-        m_TotLinItePerStep = 0;
 
         ASSERTL0(m_timestep > 0, "m_timestep < 0");
 
@@ -362,7 +359,7 @@ void UnsteadySystem::v_DoSolve()
         intTime += elapsed;
         cpuTime += elapsed;
 
-        // Write out status information
+        // Write out status information.
         if (m_infosteps &&
             m_session->GetComm()->GetSpaceComm()->GetRank() == 0 &&
             !((step + 1) % m_infosteps))
@@ -400,29 +397,29 @@ void UnsteadySystem::v_DoSolve()
             }
         }
 
-        // Transform data into coefficient space
+        // Transform data into coefficient space.
         for (i = 0; i < nvariables; ++i)
         {
-            // copy fields into ExpList::m_phys and assign the new
-            // array to fields
+            // Copy fields into ExpList::m_phys.
             m_fields[m_intVariables[i]]->SetPhys(fields[i]);
-            fields[i] = m_fields[m_intVariables[i]]->UpdatePhys();
             if (v_RequireFwdTrans())
             {
                 m_fields[m_intVariables[i]]->FwdTransLocalElmt(
-                    fields[i], m_fields[m_intVariables[i]]->UpdateCoeffs());
+                    m_fields[m_intVariables[i]]->GetPhys(),
+                    m_fields[m_intVariables[i]]->UpdateCoeffs());
             }
             m_fields[m_intVariables[i]]->SetPhysState(false);
         }
 
-        // Perform any solver-specific post-integration steps
+        // Perform any solver-specific post-integration steps.
         if (v_PostIntegrate(step))
         {
             break;
         }
 
-        // Check for steady-state
-        if (m_steadyStateTol > 0.0 && (!((step + 1) % m_steadyStateSteps)))
+        // Check for steady-state.
+        if (m_steadyStateSteps && m_steadyStateTol > 0.0 &&
+            (!((step + 1) % m_steadyStateSteps)))
         {
             if (CheckSteadyState(step, intTime))
             {
@@ -435,21 +432,22 @@ void UnsteadySystem::v_DoSolve()
             }
         }
 
-        // test for abort conditions (nan, or abort file)
+        // Test for abort conditions (nan, or abort file).
         if (m_abortSteps && !((step + 1) % m_abortSteps))
         {
             abortFlags[0] = 0;
             for (i = 0; i < nvariables; ++i)
             {
-                if (Vmath::Nnan(fields[i].size(), fields[i], 1) > 0)
+                if (Vmath::Nnan(m_fields[m_intVariables[i]]->GetPhys().size(),
+                                m_fields[m_intVariables[i]]->GetPhys(), 1) > 0)
                 {
                     abortFlags[0] = 1;
                 }
             }
 
-            // rank zero looks for abort file and deletes it
-            // if it exists. The communicates the abort
-            if (m_session->GetComm()->GetRank() == 0)
+            // Rank zero looks for abort file and deletes it
+            // if it exists. Communicates the abort.
+            if (m_session->GetComm()->GetSpaceComm()->GetRank() == 0)
             {
                 if (boost::filesystem::exists(abortFile))
                 {
@@ -458,16 +456,13 @@ void UnsteadySystem::v_DoSolve()
                 }
             }
 
-            if (!ParallelInTime())
-            {
-                m_session->GetComm()->AllReduce(abortFlags,
-                                                LibUtilities::ReduceMax);
-            }
+            m_session->GetComm()->GetSpaceComm()->AllReduce(
+                abortFlags, LibUtilities::ReduceMax);
 
             ASSERTL0(!abortFlags[0], "NaN found during time integration.");
         }
 
-        // Update filters
+        // Update filters.
         for (auto &x : m_filters)
         {
             timer.Start();
@@ -476,7 +471,7 @@ void UnsteadySystem::v_DoSolve()
             elapsed = timer.TimePerTest(1);
             totFilterTime += elapsed;
 
-            // Write out individual filter status information
+            // Write out individual filter status information.
             if (m_filtersInfosteps && m_session->GetComm()->GetRank() == 0 &&
                 !((step + 1) % m_filtersInfosteps) && !m_filters.empty() &&
                 m_session->DefinesCmdLineArgument("verbose"))
@@ -494,7 +489,7 @@ void UnsteadySystem::v_DoSolve()
             }
         }
 
-        // Write out overall filter status information
+        // Write out overall filter status information.
         if (m_filtersInfosteps && m_session->GetComm()->GetRank() == 0 &&
             !((step + 1) % m_filtersInfosteps) && !m_filters.empty())
         {
@@ -505,11 +500,12 @@ void UnsteadySystem::v_DoSolve()
         }
         totFilterTime = 0.0;
 
-        // Write out checkpoint files
+        // Write out checkpoint files.
         if ((m_checksteps && !((step + 1) % m_checksteps)) || doCheckTime)
         {
             if (m_HomogeneousType != eNotHomogeneous)
             {
+                // Transform to physical space for output.
                 vector<bool> transformed(nfields, false);
                 for (i = 0; i < nfields; i++)
                 {
@@ -518,12 +514,13 @@ void UnsteadySystem::v_DoSolve()
                         m_fields[i]->SetWaveSpace(false);
                         m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),
                                               m_fields[i]->UpdatePhys());
-                        m_fields[i]->SetPhysState(true);
                         transformed[i] = true;
                     }
                 }
                 Checkpoint_Output(m_nchk);
                 m_nchk++;
+
+                // Transform back to wave-space after output.
                 for (i = 0; i < nfields; i++)
                 {
                     if (transformed[i])
@@ -544,12 +541,12 @@ void UnsteadySystem::v_DoSolve()
             doCheckTime = false;
         }
 
-        // Step advance
+        // Step advance.
         ++step;
         ++stepCounter;
     }
 
-    // Print out summary statistics
+    // Print out summary statistics.
     if (m_session->GetComm()->GetRank() == 0)
     {
         if (m_cflSafetyFactor > 0.0)
@@ -584,7 +581,6 @@ void UnsteadySystem::v_DoSolve()
                 m_fields[i]->SetWaveSpace(false);
                 m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),
                                       m_fields[i]->UpdatePhys());
-                m_fields[i]->SetPhysState(true);
             }
         }
     }
@@ -592,21 +588,20 @@ void UnsteadySystem::v_DoSolve()
     {
         for (i = 0; i < nvariables; ++i)
         {
-            m_fields[m_intVariables[i]]->SetPhys(fields[i]);
             m_fields[m_intVariables[i]]->SetPhysState(true);
         }
     }
 
-    // Finalise filters
+    // Finalise filters.
     for (auto &x : m_filters)
     {
         x.second->Finalise(m_fields, m_time);
     }
 
-    // Print for 1D problems
+    // Print for 1D problems.
     if (m_spacedim == 1)
     {
-        AppendOutput1D(fields);
+        AppendOutput1D();
     }
 }
 
@@ -654,27 +649,29 @@ void UnsteadySystem::v_GenerateSummary(SummaryList &s)
  * Stores the solution in a file for 1D problems only. This method has
  * been implemented to facilitate the post-processing for 1D problems.
  */
-void UnsteadySystem::AppendOutput1D(
-    Array<OneD, Array<OneD, NekDouble>> &solution1D)
+void UnsteadySystem::AppendOutput1D(void)
 {
-    // Coordinates of the quadrature points in the real physical space
+    // Coordinates of the quadrature points in the real physical space.
     Array<OneD, NekDouble> x(GetNpoints());
     Array<OneD, NekDouble> y(GetNpoints());
     Array<OneD, NekDouble> z(GetNpoints());
     m_fields[0]->GetCoords(x, y, z);
 
-    // Print out the solution in a txt file
+    // Print out the solution in a txt file.
     ofstream outfile;
     outfile.open("solution1D.txt");
     for (int i = 0; i < GetNpoints(); i++)
     {
         outfile << scientific << setw(17) << setprecision(16) << x[i] << "  "
-                << solution1D[0][i] << endl;
+                << m_fields[m_intVariables[0]]->GetPhys()[i] << endl;
     }
     outfile << endl << endl;
     outfile.close();
 }
 
+/**
+ *
+ */
 void UnsteadySystem::CheckForRestartTime(NekDouble &time, int &nchk)
 {
     if (m_session->DefinesFunction("InitialConditions"))
@@ -693,7 +690,7 @@ void UnsteadySystem::CheckForRestartTime(NekDouble &time, int &nchk)
 
                 fs::path pfilename(filename);
 
-                // redefine path for parallel file which is in directory
+                // Redefine path for parallel file which is in directory.
                 if (fs::is_directory(pfilename))
                 {
                     fs::path metafile("Info.xml");
@@ -704,7 +701,7 @@ void UnsteadySystem::CheckForRestartTime(NekDouble &time, int &nchk)
                     LibUtilities::FieldIO::CreateForFile(m_session, filename);
                 fld->ImportFieldMetaData(filename, m_fieldMetaDataMap);
 
-                // check to see if time defined
+                // Check to see if time defined.
                 if (m_fieldMetaDataMap != LibUtilities::NullFieldMetaDataMap)
                 {
                     auto iter = m_fieldMetaDataMap.find("Time");
@@ -743,20 +740,6 @@ void UnsteadySystem::CheckForRestartTime(NekDouble &time, int &nchk)
  * @brief Return the timestep to be used for the next step in the
  * time-marching loop.
  *
- * This function can be overloaded to facilitate solver which utilise a
- * CFL (or other) parameter to determine a maximum timestep under which
- * the problem remains stable.
- */
-NekDouble UnsteadySystem::GetTimeStep(
-    const Array<OneD, const Array<OneD, NekDouble>> &inarray)
-{
-    return v_GetTimeStep(inarray);
-}
-
-/**
- * @brief Return the timestep to be used for the next step in the
- * time-marching loop.
- *
  * @see UnsteadySystem::GetTimeStep
  */
 NekDouble UnsteadySystem::v_GetTimeStep(
@@ -767,18 +750,43 @@ NekDouble UnsteadySystem::v_GetTimeStep(
     return 0.0;
 }
 
+/**
+ *
+ */
 bool UnsteadySystem::v_PreIntegrate(int step)
 {
     boost::ignore_unused(step);
     return false;
 }
 
+/**
+ *
+ */
 bool UnsteadySystem::v_PostIntegrate(int step)
 {
     boost::ignore_unused(step);
     return false;
 }
 
+/**
+ *
+ */
+bool UnsteadySystem::v_RequireFwdTrans(void)
+{
+    return true;
+}
+
+/**
+ *
+ */
+bool UnsteadySystem::v_UpdateTimeStepCheck(void)
+{
+    return true;
+}
+
+/**
+ *
+ */
 void UnsteadySystem::SVVVarDiffCoeff(
     const Array<OneD, Array<OneD, NekDouble>> vel,
     StdRegions::VarCoeffMap &varCoeffMap)
@@ -788,7 +796,7 @@ void UnsteadySystem::SVVVarDiffCoeff(
 
     Array<OneD, NekDouble> varcoeff(phystot), tmp;
 
-    // calculate magnitude of v
+    // Calculate magnitude of v.
     Vmath::Vmul(phystot, vel[0], 1, vel[0], 1, varcoeff, 1);
     for (int n = 1; n < nvel; ++n)
     {
@@ -815,10 +823,13 @@ void UnsteadySystem::SVVVarDiffCoeff(
         Vmath::Smul(nq, h, varcoeff + offset, 1, tmp = varcoeff + offset, 1);
     }
 
-    // set up map with eVarCoffLaplacian key
+    // Set up map with eVarCoffLaplacian key.
     varCoeffMap[StdRegions::eVarCoeffLaplacian] = varcoeff;
 }
 
+/**
+ *
+ */
 void UnsteadySystem::InitializeSteadyState()
 {
     if (m_steadyStateTol > 0.0)
@@ -859,12 +870,7 @@ void UnsteadySystem::InitializeSteadyState()
  * @brief Calculate whether the system has reached a steady state by
  * observing residuals to a user-defined tolerance.
  */
-bool UnsteadySystem::CheckSteadyState(int step)
-{
-    return CheckSteadyState(step, 0.0);
-}
-
-bool UnsteadySystem::CheckSteadyState(int step, NekDouble totCPUTime)
+bool UnsteadySystem::CheckSteadyState(int step, const NekDouble &totCPUTime)
 {
     const int nPoints = GetTotPoints();
     const int nFields = m_fields.size();
@@ -877,7 +883,7 @@ bool UnsteadySystem::CheckSteadyState(int step, NekDouble totCPUTime)
     if (m_infosteps && m_comm->GetRank() == 0 &&
         (((step + 1) % m_infosteps == 0) || ((step == m_initialStep))))
     {
-        // Output time
+        // Output time.
         m_errFile << boost::format("%25.19e") % m_time;
 
         m_errFile << " " << boost::format("%25.19e") % totCPUTime;
@@ -886,7 +892,7 @@ bool UnsteadySystem::CheckSteadyState(int step, NekDouble totCPUTime)
 
         m_errFile << " " << boost::format("%25.19e") % stepp;
 
-        // Output residuals
+        // Output residuals.
         for (int i = 0; i < nFields; ++i)
         {
             m_errFile << " " << boost::format("%25.19e") % L2[i];
@@ -895,7 +901,7 @@ bool UnsteadySystem::CheckSteadyState(int step, NekDouble totCPUTime)
         m_errFile << endl;
     }
 
-    // Calculate maximum L2 error
+    // Calculate maximum L2 error.
     NekDouble maxL2 = Vmath::Vmax(nFields, L2, 1);
 
     if (m_infosteps && m_session->DefinesCmdLineArgument("verbose") &&
@@ -915,12 +921,12 @@ bool UnsteadySystem::CheckSteadyState(int step, NekDouble totCPUTime)
                      1);
     }
 
-    m_steadyStateRes0 = m_steadyStateRes;
-    m_steadyStateRes  = maxL2;
-
     return false;
 }
 
+/**
+ *
+ */
 void UnsteadySystem::v_SteadyStateResidual(int step, Array<OneD, NekDouble> &L2)
 {
     boost::ignore_unused(step);
@@ -946,10 +952,10 @@ void UnsteadySystem::v_SteadyStateResidual(int step, Array<OneD, NekDouble> &L2)
         reference[i] = Vmath::Vsum(nPoints, tmp, 1);
     }
 
-    m_comm->AllReduce(residual, LibUtilities::ReduceSum);
-    m_comm->AllReduce(reference, LibUtilities::ReduceSum);
+    m_comm->GetSpaceComm()->AllReduce(residual, LibUtilities::ReduceSum);
+    m_comm->GetSpaceComm()->AllReduce(reference, LibUtilities::ReduceSum);
 
-    // L2 error
+    // L2 error.
     for (int i = 0; i < nFields; ++i)
     {
         reference[i] = (reference[i] == 0) ? 1 : reference[i];
@@ -957,6 +963,9 @@ void UnsteadySystem::v_SteadyStateResidual(int step, Array<OneD, NekDouble> &L2)
     }
 }
 
+/**
+ *
+ */
 void UnsteadySystem::DoDummyProjection(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
@@ -972,13 +981,5 @@ void UnsteadySystem::DoDummyProjection(
     }
 }
 
-std::string UnsteadySystem::cmdSetStartTime =
-    LibUtilities::SessionReader::RegisterCmdLineArgument(
-        "set-start-time", "", "Set the starting time of the simulation.");
-
-std::string UnsteadySystem::cmdSetStartChkNum =
-    LibUtilities::SessionReader::RegisterCmdLineArgument(
-        "set-start-chknumber", "",
-        "Set the starting number of the checkpoint file.");
 } // namespace SolverUtils
 } // namespace Nektar
