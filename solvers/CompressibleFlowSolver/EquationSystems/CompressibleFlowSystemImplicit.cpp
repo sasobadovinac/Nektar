@@ -374,7 +374,6 @@ void CFSImplicit::DoImplicitSolveCoeff(
     m_TotLinIts += m_nonlinsol->GetNtotLinSysIts();
 
     m_TotImpStages++;
-    m_StagesPerStep++;
 }
 
 void CFSImplicit::CalcRefValues(const Array<OneD, const NekDouble> &inarray)

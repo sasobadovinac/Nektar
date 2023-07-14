@@ -61,8 +61,6 @@ void Dummy::v_InitObject(bool DeclareFields)
 {
     UnsteadySystem::v_InitObject(DeclareFields);
 
-    m_nanSteps = 0;
-
     m_ode.DefineOdeRhs(&Dummy::DoOdeRhs, this);
     m_ode.DefineProjection(&Dummy::DoOdeProjection, this);
 

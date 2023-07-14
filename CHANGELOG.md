@@ -27,6 +27,7 @@ v5.4.0
 - Fix v_Exscan compilation bug (!1566)
 - Tidy-up of comm class (!1572)
 - Tidy-up Nektar tolerances (!1570)
+- Tidy-up UnsteadySystem (!1579)
 - Fix StaticCond approach + GMRES when restarting (!1583)
 - Slightly reduce memory allocation in GMRES (!1586)
 - Tidy-up Advection class (!1580)

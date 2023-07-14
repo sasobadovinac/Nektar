@@ -32,6 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <LibUtilities/BasicUtils/VmathArray.hpp>
+
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 namespace Nektar
@@ -47,20 +49,21 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
       m_t(m_schemeAlgorithm->m_numsteps),
       m_setflag(m_schemeAlgorithm->m_numsteps)
 {
-    m_solVector[0] = y;
-    m_t[0]         = time;
-    m_setflag[0]   = true;
-
     size_t nsteps         = m_schemeAlgorithm->m_numsteps;
     size_t nvar           = y.size();
     size_t npoints        = y[0].size();
     size_t nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
-    for (size_t i = 1; i < nsteps; i++)
+    for (size_t i = 0; i < nsteps; i++)
     {
         m_solVector[i] = Array<OneD, Array<OneD, NekDouble>>(nvar);
         for (size_t j = 0; j < nvar; j++)
         {
             m_solVector[i][j] = Array<OneD, NekDouble>(npoints, 0.0);
+            if (i == 0)
+            {
+                Vmath::Vcopy(npoints, y[j].get(), 1, m_solVector[i][j].get(),
+                             1);
+            }
         }
 
         if (i < nMultiStepVals)
@@ -72,7 +75,7 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
             m_t[i] = timestep;
         }
 
-        m_setflag[i] = false;
+        m_setflag[i] = (i == 0);
     }
 }
 
