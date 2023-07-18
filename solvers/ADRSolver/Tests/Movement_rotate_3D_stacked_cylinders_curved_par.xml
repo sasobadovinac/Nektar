@@ -1228,6 +1228,19 @@
         <E COMPOSITE="C[105]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
         <E COMPOSITE="C[106]" NUMMODES="7" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
+        <MOVEMENT>
+            <ZONES>
+                <ROTATE ID="0" DOMAIN="D[0]" ORIGIN="0,0,0" AXIS="0,0,1" ANGVEL="-PI"/>
+                <ROTATE ID="1" DOMAIN="D[1]" ORIGIN="0,0,0" AXIS="0,0,1" ANGVEL="PI"/>
+            </ZONES>
+            <INTERFACES>
+                <INTERFACE NAME="Rotate">
+                    <LEFT  ID="0" BOUNDARY="C[100]" />
+                    <RIGHT ID="1" BOUNDARY="C[101]"  />
+                </INTERFACE>
+            </INTERFACES>
+        </MOVEMENT>
+
     <CONDITIONS>
         <PARAMETERS>
             <P> FinTime =  0.01 </P>
@@ -1249,19 +1262,6 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
             <I PROPERTY="WEIGHTPARTITIONS" VALUE="DOF" />
         </SOLVERINFO>
-
-        <MOVEMENT>
-            <ZONES>
-                <ROTATE ID="0" DOMAIN="D[0]" ORIGIN="0,0,0" AXIS="0,0,1" ANGVEL="-PI"/>
-                <ROTATE ID="1" DOMAIN="D[1]" ORIGIN="0,0,0" AXIS="0,0,1" ANGVEL="PI"/>
-            </ZONES>
-            <INTERFACES>
-                <INTERFACE NAME="Rotate">
-                    <LEFT  ID="0" BOUNDARY="C[100]" />
-                    <RIGHT ID="1" BOUNDARY="C[101]"  />
-                </INTERFACE>
-            </INTERFACES>
-        </MOVEMENT>
 
         <VARIABLES>
             <V ID="0"> u </V>
