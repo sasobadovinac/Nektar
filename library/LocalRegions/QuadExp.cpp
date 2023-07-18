@@ -625,7 +625,6 @@ NekDouble QuadExp::v_StdPhysEvaluate(
 {
     // Evaluate point in local (eta) coordinates.
     return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
-    return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
 }
 
 NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
