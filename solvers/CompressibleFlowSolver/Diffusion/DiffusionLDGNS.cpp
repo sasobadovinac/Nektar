@@ -224,12 +224,6 @@ void DiffusionLDGNS::v_Diffuse(
         tmp2[i] = Array<OneD, NekDouble>{nCoeffs, 0.0};
     }
     v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp2, pFwd, pBwd);
-
-    // for (int i = 0; i < nConvectiveFields; ++i)
-    // {
-    //     fields[i]->MultiplyByElmtInvMass(tmp2[i], tmp2[i]);
-    // }
-
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
         fields[i]->BwdTrans(tmp2[i], outarray[i]);
@@ -506,7 +500,7 @@ void DiffusionLDGNS::ApplyBCsO1(
                     for (int pt = 0; pt < nBndEdgePts; ++pt)
                     {
                         scalarVariables[i][id2 + pt] = m_gridVelocityTrace
-                            [i][id2 + pt]; // If movement this equals trace grid
+                            [i][pt]; // If movement this equals trace grid
                                            // velocity otherwise 0
                     }
                 }
