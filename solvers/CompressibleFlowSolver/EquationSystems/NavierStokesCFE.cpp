@@ -145,7 +145,8 @@ void NavierStokesCFE::InitObject_Explicit()
 
     // Concluding initialisation of diffusion operator
     m_diffusion->InitObject(m_session, m_fields);
-    m_diffusion->SetGridVelocityTrace(m_gridVelocityTrace); // If not ALE and movement this is just 0s
+    m_diffusion->SetGridVelocityTrace(
+        m_gridVelocityTrace); // If not ALE and movement this is just 0s
 }
 
 void NavierStokesCFE::v_DoDiffusion(

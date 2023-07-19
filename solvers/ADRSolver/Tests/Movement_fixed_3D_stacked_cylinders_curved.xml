@@ -1222,7 +1222,7 @@
             <D ID="0"> C[105] </D>
             <D ID="1"> C[106] </D>
         </DOMAIN>
-        </GEOMETRY>
+    </GEOMETRY>
 
     <EXPANSIONS>
         <E COMPOSITE="C[105]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />

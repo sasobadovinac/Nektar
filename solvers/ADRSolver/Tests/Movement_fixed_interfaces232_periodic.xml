@@ -18,7 +18,7 @@
             <C ID="406"> E[10,13,16] </C>  <!-- left right -->
             <C ID="407"> E[8,11,14] </C>   <!-- right left -->
             <C ID="408"> E[20,23] </C>     <!-- right right -->
-            
+
             <!-- domains -->
             <C ID="409"> Q[0,1] </C>    <!-- left -->
             <C ID="410"> Q[2,3,4] </C>  <!-- middle -->

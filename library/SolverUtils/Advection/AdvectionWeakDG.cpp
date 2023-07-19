@@ -180,16 +180,16 @@ void AdvectionWeakDG::v_AdvectCoeffs(
         timer.Stop();
         timer.AccumulateRegion("AdvWeakDG:_AddTraceIntegral", 10);
     }
-    //jy21: Add flag to aviod problem in implicit solver 
-    if(!fields[0]->GetGraph()->GetMovement()->GetMoveFlag())
+    // jy21: Add flag to aviod problem in implicit solver
+    if (!fields[0]->GetGraph()->GetMovement()->GetMoveFlag())
     {
-    for (int i = 0; i < nConvectiveFields; ++i)
-    {
-        timer.Start();
-        fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
-        timer.Stop();
-        timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass", 10);
-    }
+        for (int i = 0; i < nConvectiveFields; ++i)
+        {
+            timer.Start();
+            fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
+            timer.Stop();
+            timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass", 10);
+        }
     }
 }
 

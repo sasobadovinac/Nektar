@@ -1308,7 +1308,7 @@ void StdExpansion::v_GetCoord(const Array<OneD, const NekDouble> &Lcoord,
 
 int StdExpansion::v_GetCoordim() const
 {
-    return GetShapeDimension(); 
+    return GetShapeDimension();
 }
 
 void StdExpansion::v_GetBoundaryMap(Array<OneD, unsigned int> &outarray)

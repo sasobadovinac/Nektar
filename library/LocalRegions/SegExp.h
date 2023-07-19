@@ -128,13 +128,13 @@ protected:
     //-----------------------------
     // Evaluation functions
     //-----------------------------
-    LOCAL_REGIONS_EXPORT virtual NekDouble
-    v_StdPhysEvaluate(const Array<OneD, const NekDouble> &Lcoord,
-                      const Array<OneD, const NekDouble> &physvals) override;
+    LOCAL_REGIONS_EXPORT virtual NekDouble v_StdPhysEvaluate(
+        const Array<OneD, const NekDouble> &Lcoord,
+        const Array<OneD, const NekDouble> &physvals) override;
 
-    LOCAL_REGIONS_EXPORT virtual NekDouble
-    v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
-                   const Array<OneD, const NekDouble> &physvals) override;
+    LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, const NekDouble> &coord,
+        const Array<OneD, const NekDouble> &physvals) override;
 
     LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, NekDouble> &coord,
@@ -166,7 +166,8 @@ protected:
     LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysVals(
         const int edge, const StdRegions::StdExpansionSharedPtr &EdgeExp,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray, StdRegions::Orientation orient) override;
+        Array<OneD, NekDouble> &outarray,
+        StdRegions::Orientation orient) override;
 
     LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysMap(
         const int vertex, Array<OneD, int> &map) override;

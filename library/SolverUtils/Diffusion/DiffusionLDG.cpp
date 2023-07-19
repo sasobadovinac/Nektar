@@ -163,14 +163,14 @@ void DiffusionLDG::v_DiffuseCoeffs(
         fields[i]->SetPhysState(false);
     }
 
-    //jy21: Add flag to aviod problem in implicit solver 
+    // jy21: Add flag to aviod problem in implicit solver
     if (!fields[0]->GetGraph()->GetMovement()->GetMoveFlag()) // i.e. if
-                                                             // m_ALESolver
+                                                              // m_ALESolver
     {
-    for (std::size_t i = 0; i < nConvectiveFields; ++i)
-    {
-        fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
-    }
+        for (std::size_t i = 0; i < nConvectiveFields; ++i)
+        {
+            fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
+        }
     }
 }
 

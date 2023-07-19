@@ -247,7 +247,7 @@ protected:
     STD_REGIONS_EXPORT void v_HelmholtzMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey) override;
-    
+
     STD_REGIONS_EXPORT virtual void v_GeneralMatrixOp_MatOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey);

@@ -203,7 +203,7 @@ NekDouble ZoneRotate::GetAngularVel(NekDouble &time) const
     NekDouble rampTime = 1;
     if (time < rampTime)
     {
-        return m_angularVelEqn->Evaluate(0, 0, 0, time) * time/rampTime;
+        return m_angularVelEqn->Evaluate(0, 0, 0, time) * time / rampTime;
     }
     else
     {
@@ -219,11 +219,12 @@ bool ZoneRotate::v_Move(NekDouble time)
     NekDouble angle;
     if (time < rampTime)
     {
-        angle = GetAngularVel(time) * (time/rampTime) / 2;
+        angle = GetAngularVel(time) * (time / rampTime) / 2;
     }
     else
     {
-        angle = GetAngularVel(rampTime) * rampTime / 2 + GetAngularVel(time) * (time - rampTime);
+        angle = GetAngularVel(rampTime) * rampTime / 2 +
+                GetAngularVel(time) * (time - rampTime);
     }
 
     // TODO: I want to integrate m_angularVelEqn up to current time
@@ -356,14 +357,15 @@ bool ZonePrescribe::v_Move(NekDouble time)
         newLoc[1] =
             m_yDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(1);
         newLoc[2] =
-            m_zDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(2);*/
+            m_zDeform->Evaluate(coords[0], coords[1], coords[2], time) +
+        pnt(2);*/
 
         newLoc[0] = pnt(0) + 0.5 * sin(2 * M_PI * time / sqrt(50)) *
-                                   sin(2 * M_PI * coords[0] / 20) *
-                                   sin(2 * M_PI * coords[1] / 20);
+                                 sin(2 * M_PI * coords[0] / 20) *
+                                 sin(2 * M_PI * coords[1] / 20);
         newLoc[1] = pnt(1) + 0.5 * sin(2 * M_PI * time / sqrt(50)) *
-                                   sin(2 * M_PI * coords[0] / 20) *
-                                   sin(2 * M_PI * coords[1] / 20);
+                                 sin(2 * M_PI * coords[0] / 20) *
+                                 sin(2 * M_PI * coords[1] / 20);
         newLoc[2] = 0.0;
         vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
     }

@@ -379,7 +379,7 @@
 
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="Vx" VALUE="advx" />
-          <E VAR="Vy" VALUE="advy" />     
+            <E VAR="Vy" VALUE="advy" />
         </FUNCTION>
 
         <FUNCTION NAME="ExactSolution">

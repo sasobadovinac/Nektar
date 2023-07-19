@@ -121,11 +121,11 @@ protected:
     LOCAL_REGIONS_EXPORT virtual void v_AlignVectorToCollapsedDir(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray) override;
-    
+
     LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_MatOp(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-    
+
     LOCAL_REGIONS_EXPORT virtual void v_NormVectorIProductWRTBase(
         const Array<OneD, const NekDouble> &Fx,
         const Array<OneD, const NekDouble> &Fy,

@@ -1318,7 +1318,7 @@ const SpatialDomains::GeomFactorsSharedPtr &QuadExp::v_GetMetricInfo() const
     return m_metricinfo;
 }
 
-int QuadExp::v_GetCoordim() const 
+int QuadExp::v_GetCoordim() const
 {
     return m_geom->GetCoordim();
 }

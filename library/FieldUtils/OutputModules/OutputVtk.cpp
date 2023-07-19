@@ -1646,7 +1646,7 @@ void OutputVtk::v_OutputFromExp(po::variables_map &vm)
     {
         m_cachedMesh = m_vtkMesh;
     }
-    
+
     if (m_config["highorder"].m_beenSet)
     {
         ASSERTL0(!m_config["multiblock"].m_beenSet,

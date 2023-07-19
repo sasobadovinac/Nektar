@@ -746,7 +746,7 @@ StdRegions::StdExpansionSharedPtr SegExp::v_GetLinStdExp(void) const
     return MemoryManager<StdRegions::StdSegExp>::AllocateSharedPtr(bkey0);
 }
 
-int SegExp::v_GetCoordim() const 
+int SegExp::v_GetCoordim() const
 {
     return m_geom->GetCoordim();
 }
@@ -786,8 +786,6 @@ int SegExp::v_NumDGBndryCoeffs() const
 {
     return 2;
 }
-
-
 
 /// Unpack data from input file assuming it comes from
 // the same expansion type

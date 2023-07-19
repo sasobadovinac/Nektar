@@ -1251,7 +1251,6 @@ void HexExp::v_GeneralMatrixOp_MatOp(
     }
 }
 
-
 /**
  * This function is used to compute exactly the advective numerical flux
  * on the interface of two elements with different expansions, hence an

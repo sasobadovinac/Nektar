@@ -70,7 +70,8 @@ void DiffusionLDGNS::v_InitObject(
 
     m_diffDim = m_spaceDim - nDim;
 
-    m_traceVel          = Array<OneD, Array<OneD, NekDouble>>{m_spaceDim}; // @TODO: What is this trace vel used for???
+    m_traceVel = Array<OneD, Array<OneD, NekDouble>>{
+        m_spaceDim}; // @TODO: What is this trace vel used for???
     m_traceNormals      = Array<OneD, Array<OneD, NekDouble>>{m_spaceDim};
     m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble>>{m_spaceDim};
     for (std::size_t i = 0; i < m_spaceDim; ++i)
@@ -306,9 +307,9 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         Vmath::Neg(nCoeffs, tmpOut, 1);
         fields[i]->AddTraceIntegral(viscousFlux[i], tmpOut);
         fields[i]->SetPhysState(false);
-        if (!fields[0]->GetGraph()->GetMovement()->GetMoveFlag()) 
+        if (!fields[0]->GetGraph()->GetMovement()->GetMoveFlag())
         {
-        fields[i]->MultiplyByElmtInvMass(tmpOut, outarray[i]);
+            fields[i]->MultiplyByElmtInvMass(tmpOut, outarray[i]);
         }
     }
 }
@@ -499,9 +500,10 @@ void DiffusionLDGNS::ApplyBCsO1(
                     // Reinforcing bcs for velocity in case of Wall bcs
                     for (int pt = 0; pt < nBndEdgePts; ++pt)
                     {
-                        scalarVariables[i][id2 + pt] = m_gridVelocityTrace
-                            [i][pt]; // If movement this equals trace grid
-                                           // velocity otherwise 0
+                        scalarVariables[i][id2 + pt] =
+                            m_gridVelocityTrace[i][pt]; // If movement this
+                                                        // equals trace grid
+                                                        // velocity otherwise 0
                     }
                 }
                 else if (boost::iequals(
