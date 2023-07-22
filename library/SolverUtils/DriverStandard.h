@@ -70,7 +70,7 @@ protected:
     /// Destructor
     SOLVER_UTILS_EXPORT virtual ~DriverStandard();
 
-    /// Second-stage initialisation
+    /// Virtual function for initialisation implementation.
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
         std::ostream &out = std::cout) override;
 
@@ -80,6 +80,7 @@ protected:
 
     static std::string driverLookupId;
 };
+
 } // namespace SolverUtils
 } // namespace Nektar
 

@@ -284,5 +284,27 @@ GlobalLinSysStaticCondSharedPtr GlobalLinSysDirectStaticCond::v_Recurse(
     sys->Initialise(l2gMap);
     return sys;
 }
+
+/// Solve the linear system for given input and output vectors.
+void GlobalLinSysDirectStaticCond::v_SolveLinearSystem(
+    const int pNumRows, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &pLocToGloMap,
+    const int pNumDir)
+{
+    Array<OneD, NekDouble> tmp(pNumRows);
+    Array<OneD, NekDouble> global(pNumRows, 0.0);
+
+    pLocToGloMap->AssembleBnd(pInput, tmp);
+
+    const int nHomDofs = pNumRows - pNumDir;
+    DNekVec Vin(nHomDofs, tmp + pNumDir);
+
+    Array<OneD, NekDouble> tmp1 = global + pNumDir;
+    DNekVec Vout(nHomDofs, tmp1, eWrapper);
+
+    m_linSys->Solve(Vin, Vout);
+
+    pLocToGloMap->GlobalToLocalBnd(global, pOutput);
+}
 } // namespace MultiRegions
 } // namespace Nektar

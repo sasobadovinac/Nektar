@@ -151,8 +151,11 @@ void GlobalLinSysPETSc::v_SolveLinearSystem(
         m_precon->BuildPreconditioner();
     }
 
+    Array<OneD, NekDouble> Glo(pNumRows);
+    locToGloMap->Assemble(pInput, Glo);
+
     // Populate RHS vector from input
-    VecSetValues(m_b, nHomDofs, &m_reorderedMap[0], &pInput[pNumDir],
+    VecSetValues(m_b, nHomDofs, &m_reorderedMap[0], &Glo[pNumDir],
                  INSERT_VALUES);
 
     // Assemble RHS vector
@@ -174,7 +177,9 @@ void GlobalLinSysPETSc::v_SolveLinearSystem(
     // Copy results into output vector
     PetscScalar *tmp;
     VecGetArray(m_locVec, &tmp);
-    Vmath::Vcopy(nHomDofs, tmp, 1, &pOutput[pNumDir], 1);
+    Vmath::Vcopy(nHomDofs, tmp, 1, &Glo[pNumDir], 1);
+    Vmath::Zero(pNumDir, Glo, 1);
+    locToGloMap->GlobalToLocal(Glo, pOutput);
     VecRestoreArray(m_locVec, &tmp);
 }
 

@@ -39,22 +39,6 @@ namespace Nektar
 namespace LibUtilities
 {
 
-const TripleArray &TimeIntegrationSchemeSDC::v_GetSolutionVector() const
-{
-    return m_Y;
-}
-
-TripleArray &TimeIntegrationSchemeSDC::v_UpdateSolutionVector()
-{
-    return m_Y;
-}
-
-void TimeIntegrationSchemeSDC::v_SetSolutionVector(const size_t Offset,
-                                                   const DoubleArray &y)
-{
-    m_Y[Offset] = y;
-}
-
 std::string TimeIntegrationSchemeSDC::v_GetName() const
 {
     return m_name;
@@ -91,6 +75,22 @@ size_t TimeIntegrationSchemeSDC::v_GetNumIntegrationPhases() const
     return 1;
 }
 
+const TripleArray &TimeIntegrationSchemeSDC::v_GetSolutionVector() const
+{
+    return m_Y;
+}
+
+TripleArray &TimeIntegrationSchemeSDC::v_UpdateSolutionVector()
+{
+    return m_Y;
+}
+
+void TimeIntegrationSchemeSDC::v_SetSolutionVector(const size_t Offset,
+                                                   const DoubleArray &y)
+{
+    m_Y[Offset] = y;
+}
+
 /**
  * @brief Worker method to initialize the integration scheme.
  */
@@ -98,11 +98,11 @@ void TimeIntegrationSchemeSDC::v_InitializeScheme(
     const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
     const TimeIntegrationSchemeOperators &op)
 {
-    boost::ignore_unused(op);
     boost::ignore_unused(deltaT);
 
     if (m_initialized)
     {
+        m_time = time;
         for (size_t i = 0; i < m_nvars; ++i)
         {
             // Store the initial values as the first previous state.
@@ -111,6 +111,7 @@ void TimeIntegrationSchemeSDC::v_InitializeScheme(
     }
     else
     {
+        m_op      = op;
         m_time    = time;
         m_nvars   = y_0.size();
         m_npoints = y_0[0].size();
@@ -185,8 +186,7 @@ void TimeIntegrationSchemeSDC::v_InitializeScheme(
  * @brief Worker method that performs the time integration.
  */
 ConstDoubleArray &TimeIntegrationSchemeSDC::v_TimeIntegrate(
-    const size_t timestep, const NekDouble delta_t,
-    const TimeIntegrationSchemeOperators &op)
+    const size_t timestep, const NekDouble delta_t)
 {
     boost::ignore_unused(timestep);
 
@@ -195,12 +195,12 @@ ConstDoubleArray &TimeIntegrationSchemeSDC::v_TimeIntegrate(
         // Compute initial guess
         if (k == 0)
         {
-            ComputeInitialGuess(delta_t, op);
+            ComputeInitialGuess(delta_t);
         }
         // Apply SDC correction loop
         else
         {
-            SDCIterationLoop(delta_t, op);
+            SDCIterationLoop(delta_t);
         }
     }
 

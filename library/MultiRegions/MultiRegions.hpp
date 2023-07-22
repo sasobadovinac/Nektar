@@ -105,18 +105,6 @@ enum ProjectionType
     eMixed_CG_Discontinuous
 };
 
-enum PreconditionerType
-{
-    eNull, ///< No Solution type specified
-    eDiagonal,
-    eLinearWithDiagonal,
-    eLinear,
-    eLowEnergy,
-    eLinearWithLowEnergy,
-    eBlock,
-    eLinearWithBlock
-};
-
 enum GJPStabilisationType
 {
     eNoGJPStabilisation,
@@ -124,25 +112,16 @@ enum GJPStabilisationType
     eSemiImplicitGJPStabilisation
 };
 
-const char *const PreconditionerTypeMap[] = {
-    "Null",
-    "Diagonal",
-    "FullLinearSpaceWithDiagonal",
-    "FullLinearSpace",
-    "LowEnergyBlock",
-    "FullLinearSpaceWithLowEnergyBlock",
-    "Block",
-    "FullLinearSpaceWithBlock"};
-
 enum LinSysIterSolver
 {
     eNoLinSysIterSolver, ///< No Solution type specified
-    eConjugateGradient,
-    eGMRES
+    eConjugateGradient,  ///< Conjugate Gradient
+    eGMRES,              ///< GMRES
+    eGMRESLoc            ///< GMRES in Local storage
 };
 
-const char *const LinSysIterSolverMap[] = {"NoLinSysIterSolver",
-                                           "ConjugateGradient", "GMRES"};
+const char *const LinSysIterSolverMap[] = {
+    "NoLinSysIterSolver", "ConjugateGradient", "GMRES", "GMRESLoc"};
 
 // let's keep this for linking to external
 // sparse libraries

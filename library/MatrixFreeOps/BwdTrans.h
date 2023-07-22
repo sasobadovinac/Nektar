@@ -91,11 +91,6 @@ struct BwdTransTemplate
         return std::make_shared<BwdTransTemplate<SHAPE_TYPE>>(basis, nElmt);
     }
 
-    NekDouble Ndof() final
-    {
-        return m_nmTot * this->m_nElmt;
-    }
-
     void operator()(const Array<OneD, const NekDouble> &input,
                     Array<OneD, NekDouble> &output) final
     {

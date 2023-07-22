@@ -32,11 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/Vmath.hpp>
-#include <LibUtilities/BasicUtils/VmathArray.hpp>
-#include <LibUtilities/Foundations/Interp.h>
-
 #include <LibUtilities/Foundations/Basis.h>
+#include <LibUtilities/Foundations/Interp.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/Points.h>
 #include <LibUtilities/LinearAlgebra/NekTypeDefs.hpp>
@@ -135,10 +132,10 @@ void Interp2D(const PointsKey &fpoints0, const PointsKey &fpoints1,
     Array<OneD, NekDouble> wsp(tpoints1.GetNumPoints() *
                                fpoints0.GetNumPoints()); // fnp0*tnp1
 
-    int fnp0 = fpoints0.GetNumPoints();
-    int fnp1 = fpoints1.GetNumPoints();
-    int tnp0 = tpoints0.GetNumPoints();
-    int tnp1 = tpoints1.GetNumPoints();
+    size_t fnp0 = fpoints0.GetNumPoints();
+    size_t fnp1 = fpoints1.GetNumPoints();
+    size_t tnp0 = tpoints0.GetNumPoints();
+    size_t tnp1 = tpoints1.GetNumPoints();
 
     if (fpoints1 == tpoints1)
     {
@@ -189,15 +186,15 @@ void Interp3D(const PointsKey &fpoints0, const PointsKey &fpoints1,
               const PointsKey &tpoints0, const PointsKey &tpoints1,
               const PointsKey &tpoints2, NekDouble *to)
 {
-    int i;
+    size_t i;
     DNekMatSharedPtr I0, I1, I2;
 
-    int fnp0 = fpoints0.GetNumPoints();
-    int fnp1 = fpoints1.GetNumPoints();
-    int fnp2 = fpoints2.GetNumPoints();
-    int tnp0 = tpoints0.GetNumPoints();
-    int tnp1 = tpoints1.GetNumPoints();
-    int tnp2 = tpoints2.GetNumPoints();
+    size_t fnp0 = fpoints0.GetNumPoints();
+    size_t fnp1 = fpoints1.GetNumPoints();
+    size_t fnp2 = fpoints2.GetNumPoints();
+    size_t tnp0 = tpoints0.GetNumPoints();
+    size_t tnp1 = tpoints1.GetNumPoints();
+    size_t tnp2 = tpoints2.GetNumPoints();
 
     Array<OneD, NekDouble> wsp1(tnp0 * tnp1 * fnp2);
     Array<OneD, NekDouble> wsp2(tnp0 * fnp1 * fnp2);

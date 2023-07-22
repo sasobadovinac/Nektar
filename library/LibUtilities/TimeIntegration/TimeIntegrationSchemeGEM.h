@@ -143,8 +143,7 @@ protected:
         const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
         const TimeIntegrationSchemeOperators &op) override;
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const size_t timestep, const NekDouble delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+        const size_t timestep, const NekDouble delta_t) override;
     LUE virtual void v_print(std::ostream &os) const override;
     LUE virtual void v_printFull(std::ostream &os) const override;
 
@@ -154,6 +153,7 @@ protected:
     std::string m_variant;
     std::vector<NekDouble> m_freeParams;
     TimeIntegrationSchemeType m_schemeType{eNoTimeIntegrationSchemeType};
+    TimeIntegrationSchemeOperators m_op;
 
     // Storage of previous states and associated timesteps.
     TripleArray m_Y;  /// Array containing the stage values

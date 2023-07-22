@@ -35,7 +35,6 @@
 #ifndef NEKTAR_SOLVERUTILS_DRIVERPARALLELINTIME_H
 #define NEKTAR_SOLVERUTILS_DRIVERPARALLELINTIME_H
 
-#include <FieldUtils/Interpolator.h>
 #include <SolverUtils/Driver.h>
 #include <SolverUtils/UnsteadySystem.h>
 
@@ -57,62 +56,7 @@ protected:
     /// Destructor
     SOLVER_UTILS_EXPORT virtual ~DriverParallelInTime();
 
-    // Interpolator
-    FieldUtils::Interpolator<Array<OneD, MultiRegions::ExpListSharedPtr>>
-        m_interp;
-
-    /// ParallelInTime (coarse solver) session reader object
-    LibUtilities::SessionReaderSharedPtr m_sessionCoarse;
-
-    /// ParallelInTime (coarse solver) MeshGraph object
-    SpatialDomains::MeshGraphSharedPtr m_graphCoarse;
-
-    /// Timestep for fine solver.
-    NekDouble m_fineTimeStep;
-
-    /// Timestep for coarse solver.
-    NekDouble m_coarseTimeStep;
-
-    /// Total time integration interval.
-    NekDouble m_totalTime;
-
-    /// Time for chunks
-    NekDouble m_chunkTime;
-
-    /// Local time
-    NekDouble m_time;
-
-    /// Number of steps for info I/O
-    size_t m_infoSteps = 0;
-
-    /// Number of steps for checkpoint
-    size_t m_checkSteps = 0;
-
-    /// Number of steps for the fine solver
-    size_t m_fineSteps = 1;
-
-    /// Number of steps for the coarse solver
-    size_t m_coarseSteps = 1;
-
-    /// Number of time chunks
-    size_t m_numChunks = 1;
-
-    /// Rank in time
-    size_t m_chunkRank = 0;
-
-    /// Maximum number of parallel-in-time iteration
-    size_t m_iterMaxPIT = 0;
-
-    // Number of windows for parallel-in-time time iteration
-    size_t m_numWindowsPIT = 1;
-
-    /// Using exact solution to compute error norms
-    bool m_exactSolution = 0;
-
-    /// ParallelInTime tolerance
-    NekDouble m_tolerPIT = 1e-15;
-
-    /// Second-stage initialisation
+    /// Virtual function for initialisation implementation.
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
         std::ostream &out = std::cout) override;
 
@@ -211,6 +155,58 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &buffer1,
         Array<OneD, Array<OneD, NekDouble>> &buffer2);
 
+    /// ParallelInTime (coarse solver) session reader object
+    LibUtilities::SessionReaderSharedPtr m_sessionCoarse;
+
+    /// ParallelInTime (coarse solver) MeshGraph object
+    SpatialDomains::MeshGraphSharedPtr m_graphCoarse;
+
+    /// Timestep for fine solver.
+    NekDouble m_fineTimeStep;
+
+    /// Timestep for coarse solver.
+    NekDouble m_coarseTimeStep;
+
+    /// Total time integration interval.
+    NekDouble m_totalTime;
+
+    /// Time for chunks
+    NekDouble m_chunkTime;
+
+    /// Local time
+    NekDouble m_time;
+
+    /// Number of steps for info I/O
+    size_t m_infoSteps = 0;
+
+    /// Number of steps for checkpoint
+    size_t m_checkSteps = 0;
+
+    /// Number of steps for the fine solver
+    size_t m_fineSteps = 1;
+
+    /// Number of steps for the coarse solver
+    size_t m_coarseSteps = 1;
+
+    /// Number of time chunks
+    size_t m_numChunks = 1;
+
+    /// Rank in time
+    size_t m_chunkRank = 0;
+
+    /// Maximum number of parallel-in-time iteration
+    size_t m_iterMaxPIT = 0;
+
+    // Number of windows for parallel-in-time time iteration
+    size_t m_numWindowsPIT = 1;
+
+    /// Using exact solution to compute error norms
+    bool m_exactSolution = 0;
+
+    /// ParallelInTime tolerance
+    NekDouble m_tolerPIT = 1e-15;
+
+    // Temporary storage for parallel-in-time iteration
     size_t m_fineQuadPts;
     size_t m_coarseQuadPts;
     size_t m_fineNpts;
@@ -226,6 +222,10 @@ protected:
     Array<OneD, MultiRegions::ExpListSharedPtr> m_fineFields;
     Array<OneD, MultiRegions::ExpListSharedPtr> m_coarseFields;
 };
+
+/// Interpolate from an expansion to an expansion
+void InterpExp1ToExp2(const Array<OneD, MultiRegions::ExpListSharedPtr> exp1,
+                      Array<OneD, MultiRegions::ExpListSharedPtr> &exp2);
 
 } // namespace SolverUtils
 } // namespace Nektar

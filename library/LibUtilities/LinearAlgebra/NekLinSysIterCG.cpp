@@ -123,7 +123,7 @@ void NekLinSysIterCG::DoConjugateGradient(
     Array<OneD, NekDouble> vExchange(3, 0.0);
 
     // Copy initial residual from input
-    Vmath::Vcopy(nNonDir, tmp = pInput + nDir, 1, r_A, 1);
+    Vmath::Vcopy(nNonDir, pInput + nDir, 1, r_A, 1);
 
     // Zero homogeneous out array ready for solution updates
     // Should not be earlier in case input vector is same as

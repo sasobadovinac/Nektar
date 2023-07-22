@@ -130,8 +130,8 @@ void PressureInflowFileBC::v_Apply(
         // Get internal energy
         Array<OneD, NekDouble> tmpPressure(npts, pressure + id2);
         Array<OneD, NekDouble> rho(npts, Fwd[0] + id2);
-        Array<OneD, NekDouble> e(npts);
-        m_varConv->GetEFromRhoP(rho, tmpPressure, e);
+        Array<OneD, NekDouble> Ei(npts);
+        m_varConv->GetEFromRhoP(rho, tmpPressure, Ei);
 
         // Loop on points of m_bcRegion 'e'
         for (i = 0; i < npts; i++)
@@ -159,7 +159,7 @@ void PressureInflowFileBC::v_Apply(
                           m_fieldStorage[0][id1 + i];
                 }
 
-                rhoeb = Fwd[0][pnt] * e[i] + Ek;
+                rhoeb = Fwd[0][pnt] * Ei[i] + Ek;
 
                 (m_fields[nVariables - 1]
                      ->GetBndCondExpansions()[m_bcRegion]

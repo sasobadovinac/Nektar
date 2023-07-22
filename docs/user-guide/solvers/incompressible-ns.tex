@@ -1541,6 +1541,42 @@ This is required since we need to tell the solver to use the existing
 field as a forcing function to the direct matrix inverse as part of
 the Arnoldi iteration.
 
+If the \inltt{Driver} is \texttt{ModifiedArnoldi}, instead of using the whole flow field, a subdomain or a subgroup of variables can be selected to calculate eigenvalues.
+
+The selected domains are defined by
+\begin{lstlisting}[style=XMLStyle]
+<FUNCTION NAME="SelectEVCalcDomain0">
+  <E VAR="C0" VALUE=" x" />
+  <E VAR="C1" VALUE="-x+1." />
+  <E VAR="C2" VALUE=" y+1.5" />
+  <E VAR="C3" VALUE="-y+1.5" />
+</FUNCTION>
+
+<FUNCTION NAME="SelectEVCalcDomain1">
+  <E VAR="C0" VALUE=" x" />
+  <E VAR="C1" VALUE="-x+1." />
+  <E VAR="C2" VALUE=" y+1.5" />
+  <E VAR="C3" VALUE="-y+1.5" />
+</FUNCTION>
+
+...
+\end{lstlisting}
+The number in \texttt{SelectEVCalcDomain?} and \texttt{C?} should increase continuously from 0 to 9. Empty function will be ignored.
+
+Each function \texttt{SelectEVCalcDomain?} selects elements whose center satisfies C0>0 and C1>0 and C2>0, and so on.
+The finally selected domain is the union of all \texttt{SelectEVCalcDomain?}s.
+
+The selected variables are defined by
+\begin{lstlisting}[style=XMLStyle]
+<FUNCTION NAME="SelectEVCalcVariables">
+  <E VAR="u" VALUE="1" />
+  <E VAR="v" VALUE="1" />
+</FUNCTION>
+\end{lstlisting}
+Empty function will be ignored.
+
+If \texttt{SelectEVCalcDomain?} or \texttt{SelectEVCalcVariables} is defined, both the original eigenvector and the masked eigenvector (with \_masked) will be output.
+
 
 \begin{notebox}
 Examples of the set up of the direct solver stability analysis (and
@@ -1977,7 +2013,7 @@ modified Legendre basis and therefore require the following expansion
 definition.
 \begin{lstlisting}[style=XMLStyle]
 <EXPANSIONS>
-  <E COMPOSITE="C[0]" NUMMODES="6" FIELDS="u,v,p" TYPE="MODIFIED" />
+  <E COMPOSITE="C[0]" NUMMODES="8" FIELDS="u,v,p" TYPE="MODIFIED" />
 </EXPANSIONS>
 \end{lstlisting}
 
@@ -3034,31 +3070,6 @@ We need to set up the base flow that can be specified as a function \texttt{Base
             <F VAR="u,v,p" FILE="ChanStability.rst" />
         </FUNCTION>
                          \end{lstlisting}
-
-\subsubsection{Mask region}
-If the \texttt{ModifiedArnoldi} driver is used, a subregion of the computational domain can be used to calculate the eigenvalues and eigenvectors by defining an unmask function. This can be used to improve the accuracy and to accelerate convergence if the computational domain is large and contains very coarse elements.
-
-\begin{lstlisting}[style=XMLStyle]
-<FUNCTION NAME="Unmask0">
-    <E VAR="C0" VALUE=" x" />
-    <E VAR="C1" VALUE="-x+1." />
-    <E VAR="C2" VALUE=" y+1.5" />
-    <E VAR="C3" VALUE="-y+1.5" />
-</FUNCTION>
-
-<FUNCTION NAME="Unmask1">
-    <E VAR="C0" VALUE=" x" />
-    <E VAR="C1" VALUE="-x+1." />
-    <E VAR="C2" VALUE=" y+1.5" />
-    <E VAR="C3" VALUE="-y+1.5" />
-</FUNCTION>
-
-...
-\end{lstlisting}
-
-Each function \texttt{Unmask0} selects elements whose center satisfies C0>0 and C1>0 and C2>0, and so on. More than one unmasked function can be defined, and the finally selected region is the union of all unmasked regions.
-
-If the unmask function is defined, both the unmasked eigenvector and masked eigenvector (with \_masked) will be output.
 
 \subsubsection{Usage}
 

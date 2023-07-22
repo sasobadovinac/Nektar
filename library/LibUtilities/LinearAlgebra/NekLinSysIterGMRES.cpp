@@ -281,7 +281,6 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
     Array<OneD, NekDouble> hsingle1;
     Array<OneD, NekDouble> hsingle2;
 
-    // Compute r0
     if (restarted)
     {
         // This is A*x

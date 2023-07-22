@@ -32,11 +32,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/Foundations/Foundations.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/PolyEPoints.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <LibUtilities/Polylib/Polylib.h>
 
 namespace Nektar
 {
@@ -50,7 +48,7 @@ void PolyEPoints::v_CalculatePoints()
     // Allocate the storage for points
     PointsBaseType::v_CalculatePoints();
 
-    unsigned int npts = m_pointsKey.GetNumPoints();
+    size_t npts = m_pointsKey.GetNumPoints();
     if (npts == 1)
     {
         m_points[0][0] = 0.0;
@@ -58,7 +56,7 @@ void PolyEPoints::v_CalculatePoints()
     else
     {
         NekDouble dx = 2.0 / (NekDouble)(npts - 1);
-        for (unsigned int i = 0; i < npts; ++i)
+        for (size_t i = 0; i < npts; ++i)
         {
             m_points[0][i] = -1.0 + i * dx;
         }
@@ -70,7 +68,7 @@ void PolyEPoints::v_CalculateWeights()
     // Allocate the storage for points
     PointsBaseType::v_CalculateWeights();
 
-    unsigned int npts = m_pointsKey.GetNumPoints();
+    size_t npts = m_pointsKey.GetNumPoints();
     if (npts == 1)
     {
         m_weights[0] = 2.0; // midpoint rule
@@ -83,12 +81,13 @@ void PolyEPoints::v_CalculateWeights()
         Array<OneD, const NekDouble> w;
 
         ptr->GetZW(z, w);
-        for (unsigned int i = 0; i < npts; ++i)
+        for (size_t i = 0; i < npts; ++i)
         {
             m_weights[i] = 0.0;
             for (unsigned j = 0; j < npts; ++j)
             {
-                m_weights[i] += w[j] * LagrangePoly(z[j], i, npts, m_points[0]);
+                m_weights[i] +=
+                    w[j] * Polylib::laginterp(z[j], i, &m_points[0][0], npts);
             }
         }
     }
@@ -99,26 +98,26 @@ void PolyEPoints::v_CalculateDerivMatrix()
     // Allocate the derivative matrix.
     PointsBaseType::v_CalculateDerivMatrix();
 
-    for (unsigned int i = 0; i < m_pointsKey.GetNumPoints(); ++i)
+    for (size_t i = 0; i < m_pointsKey.GetNumPoints(); ++i)
     {
-        for (unsigned int j = 0; j < m_pointsKey.GetNumPoints(); ++j)
+        for (size_t j = 0; j < m_pointsKey.GetNumPoints(); ++j)
         {
-            (*m_derivmatrix[0])(i, j) = LagrangePolyDeriv(
-                m_points[0][i], j, m_pointsKey.GetNumPoints(), m_points[0]);
+            (*m_derivmatrix[0])(i, j) = Polylib::laginterpderiv(
+                m_points[0][i], j, &m_points[0][0], m_pointsKey.GetNumPoints());
         }
     }
 }
 
 void PolyEPoints::CalculateInterpMatrix(
-    unsigned int npts, const Array<OneD, const NekDouble> &xpoints,
+    size_t npts, const Array<OneD, const NekDouble> &xpoints,
     Array<OneD, NekDouble> &interp)
 {
-    for (unsigned int i = 0; i < npts; ++i)
+    for (size_t i = 0; i < npts; ++i)
     {
-        for (unsigned int j = 0; j < m_pointsKey.GetNumPoints(); ++j)
+        for (size_t j = 0; j < m_pointsKey.GetNumPoints(); ++j)
         {
-            interp[i + j * npts] = LagrangePoly(
-                xpoints[i], j, m_pointsKey.GetNumPoints(), m_points[0]);
+            interp[i + j * npts] = Polylib::laginterp(
+                xpoints[i], j, &m_points[0][0], m_pointsKey.GetNumPoints());
         }
     }
 }
@@ -140,7 +139,7 @@ const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::v_GetI(
     ASSERTL0(pkey.GetPointsDim() == 1,
              "Gauss Points can only interp to other 1d point distributions");
 
-    int numpoints = pkey.GetNumPoints();
+    size_t numpoints = pkey.GetNumPoints();
     Array<OneD, const NekDouble> xpoints;
 
     PointsManager()[pkey]->GetPoints(xpoints);
@@ -151,21 +150,21 @@ const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::v_GetI(
 const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::v_GetI(
     const Array<OneD, const NekDouble> &x)
 {
-    int numpoints = 1;
+    size_t numpoints = 1;
 
     /// Delegate to function below.
     return GetI(numpoints, x);
 }
 
 const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::v_GetI(
-    unsigned int numpoints, const Array<OneD, const NekDouble> &x)
+    size_t numpoints, const Array<OneD, const NekDouble> &x)
 {
     Array<OneD, NekDouble> interp(GetNumPoints() * numpoints);
 
     CalculateInterpMatrix(numpoints, x, interp);
 
-    unsigned int np = GetTotNumPoints();
-    NekDouble *d    = interp.data();
+    size_t np    = GetTotNumPoints();
+    NekDouble *d = interp.data();
     std::shared_ptr<NekMatrix<NekDouble>> returnval(
         MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints, np,
                                                                d));
@@ -173,63 +172,5 @@ const std::shared_ptr<NekMatrix<NekDouble>> PolyEPoints::v_GetI(
     return returnval;
 }
 
-NekDouble PolyEPoints::LagrangeInterpolant(
-    NekDouble x, int npts, const Array<OneD, const NekDouble> &xpts,
-    const Array<OneD, const NekDouble> &funcvals)
-{
-    NekDouble sum = 0.0;
-
-    for (int i = 0; i < npts; ++i)
-    {
-        sum += funcvals[i] * LagrangePoly(x, i, npts, xpts);
-    }
-    return sum;
-}
-
-NekDouble PolyEPoints::LagrangePoly(NekDouble x, int pt, int npts,
-                                    const Array<OneD, const NekDouble> &xpts)
-{
-    NekDouble h = 1.0;
-
-    for (int i = 0; i < pt; ++i)
-    {
-        h = h * (x - xpts[i]) / (xpts[pt] - xpts[i]);
-    }
-
-    for (int i = pt + 1; i < npts; ++i)
-    {
-        h = h * (x - xpts[i]) / (xpts[pt] - xpts[i]);
-    }
-
-    return h;
-}
-
-NekDouble PolyEPoints::LagrangePolyDeriv(
-    NekDouble x, int pt, int npts, const Array<OneD, const NekDouble> &xpts)
-{
-    NekDouble h;
-    NekDouble y = 0.0;
-
-    for (int j = 0; j < npts; ++j)
-    {
-        if (j != pt)
-        {
-            h = 1.0;
-            for (int i = 0; i < npts; ++i)
-            {
-                if (i != pt)
-                {
-                    if (i != j)
-                    {
-                        h = h * (x - xpts[i]);
-                    }
-                    h = h / (xpts[pt] - xpts[i]);
-                }
-            }
-            y = y + h;
-        }
-    }
-    return y;
-}
 } // end of namespace LibUtilities
 } // end of namespace Nektar

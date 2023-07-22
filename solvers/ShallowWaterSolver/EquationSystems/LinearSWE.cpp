@@ -86,19 +86,10 @@ void LinearSWE::v_InitObject(bool DeclareFields)
 
             //---------------------------------------------------------------
             // Setting up advection and diffusion operators
-            // NB: diffusion not set up for SWE at the moment
-            //     but kept here for future use ...
             m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
-            // m_session->LoadSolverInfo("DiffusionType", diffName, "LDGEddy");
             m_advection = SolverUtils::GetAdvectionFactory().CreateInstance(
                 advName, advName);
-            // m_diffusion = SolverUtils::GetDiffusionFactory()
-            //                             .CreateInstance(diffName, diffName);
-
             m_advection->SetFluxVector(&LinearSWE::GetFluxVector, this);
-            // m_diffusion->SetFluxVectorNS(&ShallowWaterSystem::
-            //                                  GetEddyViscosityFluxVector,
-            //                                  this);
 
             // Setting up Riemann solver for advection operator
             m_session->LoadSolverInfo("UpwindType", riemName, "NoSolver");
@@ -109,10 +100,6 @@ void LinearSWE::v_InitObject(bool DeclareFields)
             m_riemannSolver =
                 SolverUtils::GetRiemannSolverFactory().CreateInstance(
                     riemName, m_session);
-
-            // Setting up upwind solver for diffusion operator
-            // m_riemannSolverLDG = SolverUtils::GetRiemannSolverFactory()
-            //                                 .CreateInstance("UpwindLDG");
 
             // Setting up parameters for advection operator Riemann solver
             m_riemannSolver->SetParam("gravity", &LinearSWE::GetGravity, this);
@@ -130,22 +117,9 @@ void LinearSWE::v_InitObject(bool DeclareFields)
             m_riemannSolver->SetScalar("depthBwd", &LinearSWE::GetDepthBwd,
                                        this);
 
-            // Setting up parameters for diffusion operator Riemann solver
-            // m_riemannSolverLDG->AddParam (
-            //                     "gravity",
-            //                     &NonlinearSWE::GetGravity,   this);
-            // m_riemannSolverLDG->SetAuxVec(
-            //                     "vecLocs",
-            //                     &NonlinearSWE::GetVecLocs,  this);
-            // m_riemannSolverLDG->AddVector(
-            //                     "N",
-            //                     &NonlinearSWE::GetNormals, this);
-
-            // Concluding initialisation of advection / diffusion operators
+            // Concluding initialisation of advection operators
             m_advection->SetRiemannSolver(m_riemannSolver);
-            // m_diffusion->SetRiemannSolver   (m_riemannSolverLDG);
             m_advection->InitObject(m_session, m_fields);
-            // m_diffusion->InitObject         (m_session, m_fields);
             break;
         }
         default:

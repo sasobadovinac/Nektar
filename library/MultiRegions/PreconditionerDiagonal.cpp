@@ -32,6 +32,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <MultiRegions/GlobalLinSysIterative.h>
 #include <MultiRegions/GlobalLinSysIterativeStaticCond.h>
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <MultiRegions/PreconditionerDiagonal.h>
@@ -184,18 +185,35 @@ void PreconditionerDiagonal::StaticCondDiagonalPreconditionerSum()
  *
  */
 void PreconditionerDiagonal::v_DoPreconditioner(
-    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &IsLocal)
 {
     auto asmMap = m_locToGloMap.lock();
 
     GlobalSysSolnType solvertype = asmMap->GetGlobalSysSolnType();
 
-    int nGlobal = solvertype == eIterativeFull
-                      ? asmMap->GetNumGlobalCoeffs()
-                      : asmMap->GetNumGlobalBndCoeffs();
+    bool isFull = solvertype == eIterativeFull ? true : false;
+
+    int nGlobal = (isFull) ? asmMap->GetNumGlobalCoeffs()
+                           : asmMap->GetNumGlobalBndCoeffs();
     int nDir    = asmMap->GetNumGlobalDirBndCoeffs();
     int nNonDir = nGlobal - nDir;
-    Vmath::Vmul(nNonDir, &pInput[0], 1, &m_diagonals[0], 1, &pOutput[0], 1);
+
+    if (IsLocal)
+    {
+        Array<OneD, NekDouble> wk(nGlobal);
+        (isFull) ? asmMap->Assemble(pInput, wk)
+                 : asmMap->AssembleBnd(pInput, wk);
+        Vmath::Vmul(nNonDir, wk.data() + nDir, 1, m_diagonals.data(), 1,
+                    wk.data() + nDir, 1);
+        Vmath::Zero(nDir, wk, 1);
+        (isFull) ? asmMap->GlobalToLocal(wk, pOutput)
+                 : asmMap->GlobalToLocalBnd(wk, pOutput);
+    }
+    else
+    {
+        Vmath::Vmul(nNonDir, &pInput[0], 1, &m_diagonals[0], 1, &pOutput[0], 1);
+    }
 }
 
 string PreconditionerNull::className =
@@ -233,9 +251,130 @@ void PreconditionerNull::v_BuildPreconditioner()
  *
  */
 void PreconditionerNull::v_DoPreconditioner(
-    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &isLocal)
+
 {
+    boost::ignore_unused(isLocal);
     Vmath::Vcopy(pInput.size(), pInput, 1, pOutput, 1);
+}
+
+/**
+ * Registers the class with the Factory.
+ */
+string PreconditionerJacobi::className =
+    GetPreconFactory().RegisterCreatorFunction(
+        "Jacobi", PreconditionerJacobi::create, "Jacobi Preconditioning");
+/**
+ * @class PreconditionerJacobi
+ *
+ * This class implements jacobi preconditioning  building on diagonal version
+ * above
+ */
+
+PreconditionerJacobi::PreconditionerJacobi(
+    const std::shared_ptr<GlobalLinSys> &plinsys,
+    const AssemblyMapSharedPtr &pLocToGloMap)
+    : PreconditionerDiagonal(plinsys, pLocToGloMap)
+{
+}
+
+void PreconditionerJacobi::v_InitObject()
+{
+}
+
+void PreconditionerJacobi::v_BuildPreconditioner()
+{
+    PreconditionerDiagonal::v_BuildPreconditioner();
+
+    auto expList = ((m_linsys.lock())->GetLocMat()).lock();
+    std::shared_ptr<LibUtilities::SessionReader> session =
+        expList->GetSession();
+
+    std::string var = m_locToGloMap.lock()->GetVariable();
+
+    if (session->DefinesGlobalSysSolnInfo(var, "JacobiIterations"))
+    {
+        m_niter = boost::lexical_cast<int>(
+            session->GetGlobalSysSolnInfo(var, "JacobiIterations").c_str());
+    }
+    else
+    {
+        m_niter = 3;
+    }
+}
+
+/**
+ *
+ */
+void PreconditionerJacobi::v_DoPreconditioner(
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &IsLocal)
+{
+    auto asmMap = m_locToGloMap.lock();
+
+    GlobalSysSolnType solvertype = asmMap->GetGlobalSysSolnType();
+
+    int nGlobal = solvertype == eIterativeFull
+                      ? asmMap->GetNumGlobalCoeffs()
+                      : asmMap->GetNumGlobalBndCoeffs();
+    int nDir    = asmMap->GetNumGlobalDirBndCoeffs();
+    int nNonDir = nGlobal - nDir;
+    Array<OneD, NekDouble> wk(nGlobal);
+
+    if (IsLocal)
+    {
+        int nLocal = solvertype == eIterativeFull
+                         ? asmMap->GetNumLocalCoeffs()
+                         : asmMap->GetNumLocalBndCoeffs();
+
+        Array<OneD, NekDouble> wk1(nLocal);
+        asmMap->Assemble(pInput, wk);
+        Vmath::Vmul(nNonDir, wk.data() + nDir, 1, m_diagonals.data(), 1,
+                    wk.data() + nDir, 1);
+        Vmath::Zero(nDir, wk, 1);
+
+        for (int n = 1; n < m_niter; ++n)
+        {
+            asmMap->GlobalToLocal(wk, pOutput);
+
+            // do Ax operator
+            std::dynamic_pointer_cast<GlobalLinSysIterative>(m_linsys.lock())
+                ->DoMatrixMultiply(pOutput, wk1);
+
+            Vmath::Vsub(nLocal, pInput, 1, wk1, 1, wk1, 1);
+
+            asmMap->Assemble(wk1, pOutput);
+            Vmath::Vvtvp(nNonDir, pOutput.data() + nDir, 1, m_diagonals.data(),
+                         1, wk.data() + nDir, 1, wk.data() + nDir, 1);
+        }
+
+        asmMap->GlobalToLocal(wk, pOutput);
+    }
+    else
+    {
+        Array<OneD, NekDouble> wk1(nGlobal);
+        Vmath::Vmul(nNonDir, pInput.data(), 1, m_diagonals.data(), 1,
+                    wk.data() + nDir, 1);
+        Vmath::Zero(nDir, wk, 1);
+
+        for (int n = 1; n < m_niter; ++n)
+        {
+            // do Ax operator
+            std::dynamic_pointer_cast<GlobalLinSysIterative>(m_linsys.lock())
+                ->DoMatrixMultiply(wk, wk1);
+
+            // b - Ax
+            Vmath::Vsub(nNonDir, pInput.data(), 1, wk1.data() + nDir, 1,
+                        wk1.data() + nDir, 1);
+
+            // new sol = 1/diag (b-Ax) + old sol
+            Vmath::Vvtvp(nNonDir, wk1.data() + nDir, 1, m_diagonals.data(), 1,
+                         wk.data() + nDir, 1, wk.data() + nDir, 1);
+        }
+
+        Vmath::Vcopy(nNonDir, wk.data() + nDir, 1, pOutput.data(), 1);
+    }
 }
 
 } // namespace MultiRegions

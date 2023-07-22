@@ -77,9 +77,6 @@ public:
 
     SOLVER_UTILS_EXPORT inline Array<OneD, EquationSystemSharedPtr> GetEqu();
 
-    SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetRealEvl(void);
-    SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetImagEvl(void);
-
 protected:
     /// Communication object
     LibUtilities::CommSharedPtr m_comm;
@@ -87,7 +84,7 @@ protected:
     /// Session reader object
     LibUtilities::SessionReaderSharedPtr m_session;
 
-    /// I the Coupling between SFD and arnoldi
+    /// Coupling between SFD and arnoldi
     LibUtilities::SessionReaderSharedPtr session_LinNS;
 
     /// MeshGraph object
@@ -106,15 +103,13 @@ protected:
     Driver(const LibUtilities::SessionReaderSharedPtr pSession,
            const SpatialDomains::MeshGraphSharedPtr pGraph);
 
+    /// Virtual function for initialisation implementation.
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
         std::ostream &out = std::cout);
 
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(
         std::ostream &out = std::cout) = 0;
-
-    SOLVER_UTILS_EXPORT virtual Array<OneD, NekDouble> v_GetRealEvl(void);
-    SOLVER_UTILS_EXPORT virtual Array<OneD, NekDouble> v_GetImagEvl(void);
 
     static std::string evolutionOperatorLookupIds[];
     static std::string evolutionOperatorDef;
@@ -134,16 +129,6 @@ inline void Driver::Execute(std::ostream &out)
 inline Array<OneD, EquationSystemSharedPtr> Driver::GetEqu()
 {
     return m_equ;
-}
-
-inline Array<OneD, NekDouble> Driver::GetRealEvl()
-{
-    return v_GetRealEvl();
-}
-
-inline Array<OneD, NekDouble> Driver::GetImagEvl()
-{
-    return v_GetImagEvl();
 }
 
 } // namespace SolverUtils

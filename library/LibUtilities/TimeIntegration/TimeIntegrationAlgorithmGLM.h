@@ -61,6 +61,8 @@ public:
     {
     }
 
+    void InitializeScheme(const TimeIntegrationSchemeOperators &op);
+
     /**
      * \brief This function initialises the time integration scheme.
      *
@@ -96,8 +98,7 @@ public:
      * can be used to start the actual integration.
      */
     LUE TimeIntegrationSolutionGLMSharedPtr InitializeData(
-        const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
-        const TimeIntegrationSchemeOperators &op);
+        const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time);
 
     /**
      * \brief Explicit integration of an ODE.
@@ -123,15 +124,13 @@ public:
      * level
      *    (which in fact is also embedded in the argument y).
      */
-    LUE ConstDoubleArray &TimeIntegrate(
-        const NekDouble deltaT, TimeIntegrationSolutionGLMSharedPtr &y,
-        const TimeIntegrationSchemeOperators &op);
+    LUE ConstDoubleArray &TimeIntegrate(const NekDouble deltaT,
+                                        TimeIntegrationSolutionGLMSharedPtr &y);
 
     // Does the actual multi-stage multi-step integration.
     LUE void TimeIntegrate(const NekDouble deltaT, ConstTripleArray &y_old,
                            ConstSingleArray &t_old, TripleArray &y_new,
-                           SingleArray &t_new,
-                           const TimeIntegrationSchemeOperators &op);
+                           SingleArray &t_new);
 
     // Check and verify GLM schemes.
     LUE void CheckAndVerify()
@@ -243,6 +242,8 @@ public:
         std::ostream &os, const TimeIntegrationAlgorithmGLMSharedPtr &rhs);
 
 private:
+    TimeIntegrationSchemeOperators m_op;
+
     DoubleArray m_Y;   /// Array containing the stage values
     DoubleArray m_tmp; /// Explicit RHS of each stage equation
 
@@ -259,9 +260,10 @@ private:
     void CheckIfLastStageEqualsNewSolution();
     void VerifyIntegrationSchemeType();
 
-    bool CheckTimeIntegrateArguments(
-        ConstTripleArray &y_old, ConstSingleArray &t_old, TripleArray &y_new,
-        SingleArray &t_new, const TimeIntegrationSchemeOperators &op) const;
+    bool CheckTimeIntegrateArguments(ConstTripleArray &y_old,
+                                     ConstSingleArray &t_old,
+                                     TripleArray &y_new,
+                                     SingleArray &t_new) const;
 
     // Helpers
     inline NekDouble A(const size_t i, const size_t j) const

@@ -96,8 +96,7 @@ protected:
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const size_t timestep, const NekDouble delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+        const size_t timestep, const NekDouble delta_t) override;
 
     LUE virtual void v_InitializeSecondaryData(
         TimeIntegrationAlgorithmGLM *phase, NekDouble deltaT) const;

@@ -61,6 +61,9 @@ std::string Driver::driverDefault =
     LibUtilities::SessionReader::RegisterDefaultSolverInfo("Driver",
                                                            "Standard");
 
+/**
+ *
+ */
 DriverFactory &GetDriverFactory()
 {
     static DriverFactory instance;
@@ -76,6 +79,9 @@ Driver::Driver(const LibUtilities::SessionReaderSharedPtr pSession,
 {
 }
 
+/**
+ *
+ */
 Driver::~Driver()
 
 {
@@ -200,18 +206,6 @@ void Driver::v_InitObject(ostream &out)
         ASSERTL0(e == -1, "No such class class defined.");
         out << "An error occurred during driver initialisation." << endl;
     }
-}
-
-Array<OneD, NekDouble> Driver::v_GetRealEvl(void)
-{
-    ASSERTL0(false, "This routine is not valid in this class");
-    return NullNekDouble1DArray;
-}
-
-Array<OneD, NekDouble> Driver::v_GetImagEvl(void)
-{
-    ASSERTL0(false, "This routine is not valid in this class");
-    return NullNekDouble1DArray;
 }
 
 } // namespace SolverUtils

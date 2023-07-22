@@ -40,7 +40,7 @@ namespace Nektar
 namespace LibUtilities
 {
 
-int GraphVertexObject::m_nextid = 0;
+size_t GraphVertexObject::m_nextid = 0;
 
 GraphVertexObject::~GraphVertexObject()
 {

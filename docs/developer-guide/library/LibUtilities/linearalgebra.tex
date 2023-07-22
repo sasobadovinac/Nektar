@@ -7,20 +7,23 @@ routines and throughout the code, we rely heavily on BLAS (Basic Linear Algebra 
 
 \begin{center}
 \begin{tabular}{|c | c | c |} \hline
-Arpack.hpp &	Blas.hpp & BlasArray.hpp	\\ \hline		
-BlockMatrix.cpp & BlockMatrix.hpp	& CanGetRawPtr.hpp	\\ \hline	
-ExplicitInstantiation.h & Lapack.hpp	& MatrixBase.cpp	\\ \hline		
-MatrixBase.hpp	 & MatrixFuncs.cpp	& MatrixFuncs.h	\\ \hline		
-MatrixOperations.cpp & MatrixOperations.hpp & MatrixStorageType.h	\\ \hline	
-MatrixType.h & MatrixVectorMultiplication.cpp	& NekLinAlgAlgorithms.hpp	\\ \hline	
-NekLinSys.hpp	& NekMatrix.hpp & NekMatrixFwd.hpp	\\ \hline	
-NekPoint.hpp & NekTypeDefs.hpp & NekVector.cpp \\ \hline
-NekVector.hpp & NekVectorFwd.hpp & NistSparseDescriptors.hpp \\ \hline
-PointerWrapper.h & ScaledMatrix.cpp & ScaledMatrix.hpp \\ \hline
-SparseDiagBlkMatrix.cpp & SparseDiagBlkMatrix.hpp & SparseMatrix.cpp \\ \hline
-SparseMatrix.hpp & SparseMatrixFwd.hpp & SparseUtils.cpp \\ \hline
-SparseUtils.hpp & StandardMatrix.cpp & StandardMatrix.hpp \\ \hline
-StorageSmvBsr.cpp & StorageSmvBsr.hpp & TransF77.hpp \\ \hline
-blas.cpp & & \\ \hline
+Arpack.hpp &	blas.cpp & Blas.hpp \\ \hline
+BlasArray.hpp	& BlockMatrix.cpp & BlockMatrix.hpp \\ \hline
+CanGetRawPtr.hpp & ExplicitInstantiation.h & Lapack.hpp \\ \hline
+MatrixBase.cpp	& MatrixBase.hpp	 & MatrixFuncs.cpp	\\ \hline
+MatrixFuncs.h	& MatrixOperations.cpp & MatrixOperations.hpp \\ \hline
+MatrixStorageType.h & MatrixType.h & MatrixVectorMultiplication.cpp	\\ \hline
+NekLinAlgAlgorithms.hpp	& NekLinSys.hpp	& NekLinSysIter.cpp \\ \hline
+NekLinSysIter.h &  NekLinSysIterCG.cpp & NekLinSysIterCG.h \\ \hline
+NekLinSysIterGMRES.cpp & NekLinSysIterGMRES.h & NekMatrix.hpp \\ \hline
+NekMatrixFwd.hpp & NekNonlinSys.cpp & NekNonlinSys.h \\ \hline
+NekNonlinSysNewton.cpp & NekNonlinSysNewton.h & NekPoint.hpp \\ \hline
+NekTypeDefs.hpp &  NekVector.cpp & NekVector.hpp \\ \hline
+NekVectorFwd.hpp & NistSparseDescriptors.hpp & PointerWrapper.h \\ \hline
+ScaledMatrix.cpp & ScaledMatrix.hpp & SparseDiagBlkMatrix.cpp \\ \hline
+SparseDiagBlkMatrix.hpp & SparseMatrix.cpp & SparseMatrix.hpp \\ \hline
+SparseMatrixFwd.hpp & SparseUtils.cpp & SparseUtils.hpp \\ \hline
+StandardMatrix.cpp & StandardMatrix.hpp & StorageSmvBsr.cpp \\ \hline
+StorageSmvBsr.hpp & TransF77.hpp & \\ \hline
 \end{tabular}
 \end{center}

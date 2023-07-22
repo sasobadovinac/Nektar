@@ -94,11 +94,6 @@ struct PhysDerivTemplate
                                                                          nElmt);
     }
 
-    NekDouble Ndof() final
-    {
-        return m_nmTot * this->m_nElmt;
-    }
-
     void operator()(const Array<OneD, const NekDouble> &input,
                     Array<OneD, Array<OneD, NekDouble>> &output) final
     {
@@ -142,9 +137,6 @@ struct PhysDerivTemplate
         {
             dfSize *= nqTot;
         }
-
-        // Workspace for kernels - also checks preconditions
-        // PhysDeriv1DWorkspace<SHAPE_TYPE>(nq0);
 
         // Call 1D kernel
         const vec_t *df_ptr;
@@ -283,9 +275,6 @@ struct PhysDerivTemplate
             dfSize *= nqTot;
         }
 
-        // Workspace for kernels - also checks preconditions
-        // PhysDeriv2DWorkspace<SHAPE_TYPE>(nq0, nq1);
-
         const vec_t *df_ptr;
         vec_t df_tmp[max_ndf]; // max_ndf is a constexpr
 
@@ -347,9 +336,6 @@ struct PhysDerivTemplate
         {
             dfSize *= nqTot;
         }
-
-        // Workspace for kernels - also checks preconditions
-        // PhysDeriv2DWorkspace<SHAPE_TYPE>(nq0, nq1);
 
         const vec_t *df_ptr;
         vec_t df_tmp[max_ndf]; // max_ndf is a constexpr
@@ -562,7 +548,9 @@ struct PhysDerivTemplate
         const std::vector<vec_t, allocator<vec_t>> &D1, const vec_t *df_ptr,
         vec_t *df_tmp, std::vector<vec_t, allocator<vec_t>> *out)
     {
+#if defined(SHAPE_TYPE_QUAD)
         boost::ignore_unused(Z0, Z1);
+#endif
 
         // Results written to out_d0, out_d1
         PhysDerivTensor2DKernel(nq0, nq1, in, D0, D1, out[0], out[1]);
@@ -674,6 +662,19 @@ struct PhysDerivTemplate
 
         constexpr auto ndf = 9;
 
+        if (!DEFORMED)
+        {
+            df_tmp[0] = df_ptr[0];
+            df_tmp[1] = df_ptr[1];
+            df_tmp[2] = df_ptr[2];
+            df_tmp[3] = df_ptr[3];
+            df_tmp[4] = df_ptr[4];
+            df_tmp[5] = df_ptr[5];
+            df_tmp[6] = df_ptr[6];
+            df_tmp[7] = df_ptr[7];
+            df_tmp[8] = df_ptr[8];
+        }
+
 #if defined(SHAPE_TYPE_TET)
         // Tets get special handling.
         {
@@ -737,18 +738,6 @@ struct PhysDerivTemplate
             }
         }
 #endif
-        if (!DEFORMED)
-        {
-            df_tmp[0] = df_ptr[0];
-            df_tmp[1] = df_ptr[1];
-            df_tmp[2] = df_ptr[2];
-            df_tmp[3] = df_ptr[3];
-            df_tmp[4] = df_ptr[4];
-            df_tmp[5] = df_ptr[5];
-            df_tmp[6] = df_ptr[6];
-            df_tmp[7] = df_ptr[7];
-            df_tmp[8] = df_ptr[8];
-        }
 
         for (int k = 0, cnt_ijk = 0; k < nq2; ++k)
         {

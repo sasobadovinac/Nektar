@@ -33,7 +33,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/BasicUtils/Timer.h>
-#include <LibUtilities/Communication/CommSerial.h>
 #include <boost/algorithm/string.hpp>
 #include <iomanip>
 #include <iostream>
@@ -201,6 +200,7 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
         }
     }
 }
+
 // static members init
 std::map<std::string, std::tuple<Timer::Seconds, size_t, int>>
     Timer::m_elapsedRegion{};

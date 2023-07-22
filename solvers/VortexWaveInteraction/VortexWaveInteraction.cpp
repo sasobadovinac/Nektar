@@ -35,7 +35,7 @@
 #include <IncNavierStokesSolver/EquationSystems/IncNavierStokes.h>
 #include <MultiRegions/ExpList.h>
 #include <MultiRegions/GlobalLinSysKey.h>
-#include <SolverUtils/Driver.h>
+#include <SolverUtils/DriverModifiedArnoldi.h>
 #include <VortexWaveInteraction/VortexWaveInteraction.h>
 
 using namespace std;
@@ -548,8 +548,10 @@ void VortexWaveInteraction::ExecuteWave(void)
     std::string vDriverModule;
     m_sessionWave->LoadSolverInfo("Driver", vDriverModule, "ModifiedArnoldi");
     cout << "Setting up linearised NS Solver" << endl;
-    DriverSharedPtr solverWave = GetDriverFactory().CreateInstance(
-        vDriverModule, m_sessionWave, m_graphWave);
+    std::shared_ptr<DriverArnoldi> solverWave =
+        std::dynamic_pointer_cast<SolverUtils::DriverArnoldi>(
+            GetDriverFactory().CreateInstance(vDriverModule, m_sessionWave,
+                                              m_graphWave));
 
     /// Do linearised NavierStokes Session  with Modified Arnoldi
     cout << "Executing wave solution " << endl;

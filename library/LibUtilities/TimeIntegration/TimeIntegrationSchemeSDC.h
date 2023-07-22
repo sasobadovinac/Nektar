@@ -81,47 +81,68 @@ public:
 
         if (m_variant == "Equidistant")
         {
+            ASSERTL0(1 <= m_nQuadPts,
+                     m_variant +
+                         " quadrature require quadrature "
+                         "numbers (>=1" +
+                         "): " + std::to_string(freeParams[1]));
+
             m_first_quadrature = (m_nQuadPts == 1) ? false : true;
             m_last_quadrature  = (m_nQuadPts == 1) ? false : true;
-            m_nQuadMinPts      = 1;
             m_ordermin         = 1;
             m_ordermax         = m_nQuadPts;
+            m_pointsKey        = LibUtilities::PointsKey(
+                m_nQuadPts, LibUtilities::ePolyEvenlySpaced);
         }
         else if (m_variant == "GaussLobattoLegendre")
         {
+            ASSERTL0(2 <= m_nQuadPts,
+                     m_variant +
+                         " quadrature require quadrature "
+                         "numbers (>=2" +
+                         "): " + std::to_string(freeParams[1]));
+
             m_first_quadrature = true;
             m_last_quadrature  = true;
-            m_nQuadMinPts      = 2;
             m_ordermin         = 1;
             m_ordermax         = 2 * m_nQuadPts - 2;
+            m_pointsKey        = LibUtilities::PointsKey(
+                m_nQuadPts, LibUtilities::eGaussLobattoLegendre);
         }
         else if (m_variant == "GaussRadauLegendre")
         {
+            ASSERTL0(2 <= m_nQuadPts,
+                     m_variant +
+                         " quadrature require quadrature "
+                         "numbers (>=1" +
+                         "): " + std::to_string(freeParams[1]));
+
             m_first_quadrature = false;
             m_last_quadrature  = true;
-            m_nQuadMinPts      = 2;
             m_ordermin         = 1;
             m_ordermax         = 2 * m_nQuadPts - 1;
+            m_pointsKey        = LibUtilities::PointsKey(
+                m_nQuadPts, LibUtilities::eGaussRadauPLegendre);
         }
         else if (m_variant == "GaussGaussLegendre")
         {
+            ASSERTL0(1 <= m_nQuadPts,
+                     m_variant +
+                         " quadrature require quadrature "
+                         "numbers (>=1" +
+                         "): " + std::to_string(freeParams[1]));
+
             m_first_quadrature = false;
             m_last_quadrature  = false;
-            m_nQuadMinPts      = 1;
             m_ordermin         = 1;
             m_ordermax         = 2 * m_nQuadPts;
+            m_pointsKey        = LibUtilities::PointsKey(
+                m_nQuadPts, LibUtilities::eGaussGaussLegendre);
         }
         else
         {
             ASSERTL0(false, "unknow variant (quadrature) type");
         }
-
-        ASSERTL0(m_nQuadMinPts <= m_nQuadPts,
-                 m_variant +
-                     " quadrature require quadrature "
-                     "numbers (>=" +
-                     std::to_string(m_nQuadMinPts) +
-                     "): " + std::to_string(m_nQuadPts));
 
         ASSERTL0(m_ordermin <= m_order,
                  "Spectral Deferred Correction Time integration "
@@ -134,28 +155,6 @@ public:
                  "scheme bad order numbers (<=" +
                      std::to_string(m_ordermax) +
                      "): " + std::to_string(m_order));
-
-        // Compute quadrature points
-        if (variant == "Equidistant")
-        {
-            m_pointsKey = LibUtilities::PointsKey(
-                m_nQuadPts, LibUtilities::ePolyEvenlySpaced);
-        }
-        else if (variant == "GaussLobattoLegendre")
-        {
-            m_pointsKey = LibUtilities::PointsKey(
-                m_nQuadPts, LibUtilities::eGaussLobattoLegendre);
-        }
-        else if (variant == "GaussRadauLegendre")
-        {
-            m_pointsKey = LibUtilities::PointsKey(
-                m_nQuadPts, LibUtilities::eGaussRadauPLegendre);
-        }
-        else if (variant == "GaussGaussLegendre")
-        {
-            m_pointsKey = LibUtilities::PointsKey(
-                m_nQuadPts, LibUtilities::eGaussGaussLegendre);
-        }
 
         // Add one extra quadrature points for i.c., if necessary
         if (!m_first_quadrature)
@@ -285,28 +284,24 @@ public:
         return m_FAScorr;
     }
 
-    LUE void ResidualEval(const NekDouble &delta_t, const size_t n,
-                          const TimeIntegrationSchemeOperators &op)
+    LUE void ResidualEval(const NekDouble &delta_t, const size_t n)
     {
-        v_ResidualEval(delta_t, n, op);
+        v_ResidualEval(delta_t, n);
     }
 
-    LUE void ResidualEval(const NekDouble &delta_t,
-                          const TimeIntegrationSchemeOperators &op)
+    LUE void ResidualEval(const NekDouble &delta_t)
     {
-        v_ResidualEval(delta_t, op);
+        v_ResidualEval(delta_t);
     }
 
-    LUE void ComputeInitialGuess(const NekDouble &delta_t,
-                                 const TimeIntegrationSchemeOperators &op)
+    LUE void ComputeInitialGuess(const NekDouble &delta_t)
     {
-        v_ComputeInitialGuess(delta_t, op);
+        v_ComputeInitialGuess(delta_t);
     }
 
-    LUE void SDCIterationLoop(const NekDouble &delta_t,
-                              const TimeIntegrationSchemeOperators &op)
+    LUE void SDCIterationLoop(const NekDouble &delta_t)
     {
-        v_SDCIterationLoop(delta_t, op);
+        v_SDCIterationLoop(delta_t);
     }
 
     LUE void UpdateFirstQuadrature(void);
@@ -343,39 +338,34 @@ protected:
         const TimeIntegrationSchemeOperators &op) override;
 
     LUE virtual ConstDoubleArray &v_TimeIntegrate(
-        const size_t timestep, const NekDouble delta_t,
-        const TimeIntegrationSchemeOperators &op) override;
+        const size_t timestep, const NekDouble delta_t) override;
 
-    LUE virtual void v_ResidualEval(const NekDouble &delta_t, const size_t n,
-                                    const TimeIntegrationSchemeOperators &op)
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t, const size_t n)
     {
         ASSERTL0(false, "Specific version of spectral deferred correction "
                         "not implemented");
-        boost::ignore_unused(delta_t, n, op);
+        boost::ignore_unused(delta_t, n);
     }
 
-    LUE virtual void v_ResidualEval(const NekDouble &delta_t,
-                                    const TimeIntegrationSchemeOperators &op)
+    LUE virtual void v_ResidualEval(const NekDouble &delta_t)
     {
         ASSERTL0(false, "Specific version of spectral deferred correction "
                         "not implemented");
-        boost::ignore_unused(delta_t, op);
+        boost::ignore_unused(delta_t);
     }
 
-    LUE virtual void v_ComputeInitialGuess(
-        const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+    LUE virtual void v_ComputeInitialGuess(const NekDouble &delta_t)
     {
         ASSERTL0(false, "Specific version of spectral deferred correction "
                         "not implemented");
-        boost::ignore_unused(delta_t, op);
+        boost::ignore_unused(delta_t);
     }
 
-    LUE virtual void v_SDCIterationLoop(
-        const NekDouble &delta_t, const TimeIntegrationSchemeOperators &op)
+    LUE virtual void v_SDCIterationLoop(const NekDouble &delta_t)
     {
         ASSERTL0(false, "Specific version of spectral deferred correction "
                         "not implemented");
-        boost::ignore_unused(delta_t, op);
+        boost::ignore_unused(delta_t);
     }
 
     LUE virtual void v_print(std::ostream &os) const override;
@@ -387,6 +377,7 @@ protected:
     std::string m_variant;
     std::vector<NekDouble> m_freeParams;
     TimeIntegrationSchemeType m_schemeType{eNoTimeIntegrationSchemeType};
+    TimeIntegrationSchemeOperators m_op;
 
     // Storage of states and associated timesteps
     PointsKey m_pointsKey; /// Object containing quadrature data
@@ -401,14 +392,13 @@ protected:
     SingleArray m_interp;  /// Array containing the interpolation coefficients
 
     // SDC parameter
-    NekDouble m_theta{1.0};  /// SDC parameter
-    size_t m_ordermin{0};    /// Minimum order of the integration scheme
-    size_t m_ordermax{0};    /// Maximum order of the integration scheme
-    size_t m_order{0};       /// Order of the integration scheme
-    size_t m_nQuadMinPts{0}; /// Mininum number of quadrature points
-    size_t m_nQuadPts{0};    /// Number of quadrature points
-    size_t m_nvars{0};       /// Number of variables in the integration scheme
-    size_t m_npoints{0};     /// Number of points in the integration scheme
+    NekDouble m_theta{1.0}; /// SDC parameter
+    size_t m_ordermin{0};   /// Minimum order of the integration scheme
+    size_t m_ordermax{0};   /// Maximum order of the integration scheme
+    size_t m_order{0};      /// Order of the integration scheme
+    size_t m_nQuadPts{0};   /// Number of quadrature points
+    size_t m_nvars{0};      /// Number of variables in the integration scheme
+    size_t m_npoints{0};    /// Number of points in the integration scheme
     bool m_first_quadrature{true};
     bool m_last_quadrature{true};
     bool m_initialized{false};

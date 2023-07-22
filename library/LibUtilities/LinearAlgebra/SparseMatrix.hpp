@@ -42,7 +42,6 @@
 #include <utility>
 #include <vector>
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 
 #include <boost/call_traits.hpp>

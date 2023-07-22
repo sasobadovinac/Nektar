@@ -6,6 +6,7 @@ v5.4.0
 - Add unit tests for Polylib (!1533)
 - Add the absolution tolerance for the iterative linear system solver (!1549)
 - Redesign of Parareal driver (!1509) 
+- Add PFASST driver (!1501)
 - Add local p-refinement functionality (!1508)
 - Tidy-up SDC schemes (!1550)
 - Add min/max and fmin/fmax function to the interpretor registry (!1552)
@@ -21,16 +22,24 @@ v5.4.0
 - Remove unused files in BasicUtils (!1564)
 - Fix convergence error in Fixed-point Jacobi algorithm (!1561)
 - Update parallel-in-time code base in fieldconvert (!1565)
+- Tidy-up Basis and Points classes (!1568)
 - Remove unused function GetKey in NekFactory (!1567)
 - Fix v_Exscan compilation bug (!1566)
 - Tidy-up of comm class (!1572)
 - Tidy-up Nektar tolerances (!1570)
+- Tidy-up UnsteadySystem (!1579)
 - Fix StaticCond approach + GMRES when restarting (!1583)
 - Slightly reduce memory allocation in GMRES (!1586)
 - Tidy-up Advection class (!1580)
 - Tidy-up diffusion class and subclasses (!1581)
 - Tidy-up NekNonlinSys and fix some issues (!1563)
+- Added a local space version of GMRES and ConjugateGradient (!1575)
+- Added a jacobi preconditioner building on diagonal impelemtation (!1575)
 - Add a priori convergence and null-input check to GMRES (!1590)
+- Tidy-up/removed unused Lapack function definition (!1573)
+- Some Tidy-up in MatrixFreeOps (!1599)
+- Accelerate interpolation for regular and straight-edge elements (!1283)
+- Fix an indexing error in MatrixFreeOps (!1602)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
@@ -39,6 +48,9 @@ v5.4.0
 - Register Projection and GJPStabilisation in SessionReader (!1542)
 - Redesign of AUSM Riemann solver class (!1577)
 - Redesign of PreconCfs class (!1578)
+
+**IncNavierStokesSolver**
+- Add an option to mask variables for the linear stability problem (!1280)
 
 **FieldConvert**
 - Add option to use .csv files in pointdatatofld module (!1545)
@@ -54,6 +66,8 @@ v5.4.0
 - Remove double entry in documentation and slightly tidy-up code (!1530)
 - Fixed deadlock problem for the LowEnergyBlock preconditioner which appeared for specific combinations of meshes and boundary conditions (!1553)
 - Add a check to avoid unnecessary copy in DoOdoProjecton function (!1582)
+- Update user guide and developer guide (!1598)
+- Some various tidy-up (!1585)
 
 **NekMesh**
 - Changed CMake to set NEKTAR_USE_THREAD_SAFETY to ON when MeshGen is set to ON (!1546)

@@ -85,13 +85,6 @@ struct ZoneBase
         return m_id;
     }
 
-    /// Virtual function for movement of the zone at @param time
-    inline virtual bool v_Move(NekDouble time)
-    {
-        boost::ignore_unused(time);
-        return false;
-    }
-
     /// Performs the movement of the zone at @param time
     inline bool Move(NekDouble time)
     {
@@ -141,6 +134,13 @@ protected:
     std::vector<CurveSharedPtr> m_curves;
     /// Vector of all points in the zone at initialisation
     std::vector<PointGeom> m_origVerts;
+
+    /// Virtual function for movement of the zone at @param time
+    inline virtual bool v_Move(NekDouble time)
+    {
+        boost::ignore_unused(time);
+        return false;
+    }
 };
 
 typedef std::shared_ptr<ZoneBase> ZoneBaseShPtr;
@@ -168,9 +168,6 @@ struct ZoneRotate final : public ZoneBase
     /// Return the angular velocity of the zone at @param time
     NekDouble GetAngularVel(NekDouble &time) const;
 
-    /// Virtual function for movement of the zone at @param time
-    virtual bool v_Move(NekDouble time) final;
-
     inline NekPoint<NekDouble> GetOrigin() const
     {
         return m_origin;
@@ -192,6 +189,9 @@ protected:
     DNekMat m_W = DNekMat(3, 3, 0.0);
     /// W^2 matrix Rodrigues' rotation formula, cross product of axis squared
     DNekMat m_W2 = DNekMat(3, 3, 0.0);
+
+    /// Virtual function for movement of the zone at @param time
+    virtual bool v_Move(NekDouble time) final;
 };
 
 /// Translating zone: addition of a constant vector to every point
@@ -223,12 +223,13 @@ struct ZoneTranslate final : public ZoneBase
     /// Returns the displacement of the zone
     std::vector<NekDouble> GetDisp(NekDouble &time) const;
 
-    /// Virtual function for movement of the zone at @param time
-    virtual bool v_Move(NekDouble time) final;
-
 protected:
     Array<OneD, LibUtilities::EquationSharedPtr> m_velocityEqns;
     Array<OneD, LibUtilities::EquationSharedPtr> m_displacementEqns;
+    std::vector<NekDouble> m_velocity;
+
+    /// Virtual function for movement of the zone at @param time
+    virtual bool v_Move(NekDouble time) final;
 };
 
 /// Prescribed zone: applies equation to every point
@@ -301,9 +302,6 @@ struct ZonePrescribe final : public ZoneBase
         return m_zDeform->Evaluate(x, y, z, t);
     }
 
-    /// Virtual function for movement of the zone at @param time
-    virtual bool v_Move(NekDouble time) final;
-
 protected:
     /// Equation specifying prescribed motion in x-direction
     LibUtilities::EquationSharedPtr m_xDeform;
@@ -311,6 +309,9 @@ protected:
     LibUtilities::EquationSharedPtr m_yDeform;
     /// Equation specifying prescribed motion in z-direction
     LibUtilities::EquationSharedPtr m_zDeform;
+
+    /// Virtual function for movement of the zone at @param time
+    virtual bool v_Move(NekDouble time) final;
 };
 
 /// Fixed zone: does not move
@@ -325,6 +326,7 @@ struct ZoneFixed final : public ZoneBase
     /// Default destructor
     virtual ~ZoneFixed() = default;
 
+protected:
     /// Virtual function for movement of the zone at @param time
     virtual bool v_Move(NekDouble time) final;
 };

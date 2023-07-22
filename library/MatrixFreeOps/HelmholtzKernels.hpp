@@ -53,7 +53,7 @@ using vec_t = simd<NekDouble>;
 #if defined(SHAPE_TYPE_TRI)
 
 template <bool DEFORMED>
-NEK_FORCE_INLINE static void HelmholtzTriKernel(
+NEK_FORCE_INLINE static void DiffusionCoeffTriKernel(
     const size_t nq0, const size_t nq1, const bool isConstVarDiff,
     const Array<OneD, NekDouble> &constVarDiff, const bool isVarDiff,
     const Array<OneD, NekDouble> &varD00, const Array<OneD, NekDouble> &varD01,
@@ -164,7 +164,7 @@ NEK_FORCE_INLINE static void HelmholtzTriKernel(
 #elif defined(SHAPE_TYPE_QUAD)
 
 template <bool DEFORMED>
-NEK_FORCE_INLINE static void HelmholtzQuadKernel(
+NEK_FORCE_INLINE static void DiffusionCoeffQuadKernel(
     const size_t nq0, const size_t nq1, const bool isConstVarDiff,
     const Array<OneD, NekDouble> &constVarDiff, const bool isVarDiff,
     const Array<OneD, NekDouble> &varD00, const Array<OneD, NekDouble> &varD01,
@@ -391,7 +391,7 @@ NEK_FORCE_INLINE static void HelmholtzQuadKernel(
 #elif defined(SHAPE_TYPE_HEX)
 
 template <bool DEFORMED>
-NEK_FORCE_INLINE static void HelmholtzHexKernel(
+NEK_FORCE_INLINE static void DiffusionCoeffHexKernel(
     const size_t nq0, const size_t nq1, const size_t nq2,
     const bool isConstVarDiff, const Array<OneD, NekDouble> &constVarDiff,
     const bool isVarDiff, const Array<OneD, NekDouble> &varD00,
@@ -702,7 +702,7 @@ NEK_FORCE_INLINE static void HelmholtzHexKernel(
 #elif defined(SHAPE_TYPE_TET)
 
 template <bool DEFORMED>
-NEK_FORCE_INLINE static void HelmholtzTetKernel(
+NEK_FORCE_INLINE static void DiffusionCoeffTetKernel(
     const size_t nq0, const size_t nq1, const size_t nq2,
     const bool isConstVarDiff, const Array<OneD, NekDouble> &constVarDiff,
     const bool isVarDiff, const Array<OneD, NekDouble> &varD00,
@@ -920,7 +920,7 @@ NEK_FORCE_INLINE static void HelmholtzTetKernel(
 #elif defined(SHAPE_TYPE_PRISM)
 
 template <bool DEFORMED>
-NEK_FORCE_INLINE static void HelmholtzPrismKernel(
+NEK_FORCE_INLINE static void DiffusionCoeffPrismKernel(
     const size_t nq0, const size_t nq1, const size_t nq2,
     const bool isConstVarDiff, const Array<OneD, NekDouble> &constVarDiff,
     const bool isVarDiff, const Array<OneD, NekDouble> &varD00,
@@ -1123,7 +1123,7 @@ NEK_FORCE_INLINE static void HelmholtzPrismKernel(
 #elif defined(SHAPE_TYPE_PYR)
 
 template <bool DEFORMED>
-NEK_FORCE_INLINE static void HelmholtzPyrKernel(
+NEK_FORCE_INLINE static void DiffusionCoeffPyrKernel(
     const size_t nq0, const size_t nq1, const size_t nq2,
     const bool isConstVarDiff, const Array<OneD, NekDouble> &constVarDiff,
     const bool isVarDiff, const Array<OneD, NekDouble> &varD00,
@@ -1440,7 +1440,7 @@ NEK_FORCE_INLINE static void GetHelmholtz3DHalfSpace(
 #if defined(SHAPE_DIMENSION_2D)
 
 template <LibUtilities::ShapeType SHAPE_TYPE, bool DEFORMED>
-NEK_FORCE_INLINE static void Helmholtz2DKernel(
+NEK_FORCE_INLINE static void DiffusionCoeff2DKernel(
     const size_t nq0, const size_t nq1, const bool isConstVarDiff,
     const Array<OneD, NekDouble> &constVarDiff, const bool isVarDiff,
     const Array<OneD, NekDouble> &varD00, const Array<OneD, NekDouble> &varD01,
@@ -1452,21 +1452,21 @@ NEK_FORCE_INLINE static void Helmholtz2DKernel(
     std::vector<vec_t, allocator<vec_t>> &deriv1)
 {
 #if defined(SHAPE_TYPE_TRI)
-    HelmholtzTriKernel<DEFORMED>(nq0, nq1, isConstVarDiff, constVarDiff,
-                                 isVarDiff, varD00, varD01, varD11, df_ptr, h0,
-                                 h1, bwd, deriv0, deriv1);
+    DiffusionCoeffTriKernel<DEFORMED>(nq0, nq1, isConstVarDiff, constVarDiff,
+                                      isVarDiff, varD00, varD01, varD11, df_ptr,
+                                      h0, h1, bwd, deriv0, deriv1);
 #elif defined(SHAPE_TYPE_QUAD)
     boost::ignore_unused(h0, h1);
-    HelmholtzQuadKernel<DEFORMED>(nq0, nq1, isConstVarDiff, constVarDiff,
-                                  isVarDiff, varD00, varD01, varD11, df_ptr,
-                                  bwd, deriv0, deriv1);
+    DiffusionCoeffQuadKernel<DEFORMED>(nq0, nq1, isConstVarDiff, constVarDiff,
+                                       isVarDiff, varD00, varD01, varD11,
+                                       df_ptr, bwd, deriv0, deriv1);
 #endif
 }
 
 #elif defined(SHAPE_DIMENSION_3D)
 
 template <LibUtilities::ShapeType SHAPE_TYPE, bool DEFORMED>
-NEK_FORCE_INLINE static void Helmholtz3DKernel(
+NEK_FORCE_INLINE static void DiffusionCoeff3DKernel(
     const size_t nq0, const size_t nq1, const size_t nq2,
     const bool isConstVarDiff, const Array<OneD, NekDouble> &constVarDiff,
     const bool isVarDiff, const Array<OneD, NekDouble> &varD00,
@@ -1483,25 +1483,25 @@ NEK_FORCE_INLINE static void Helmholtz3DKernel(
 {
 #if defined(SHAPE_TYPE_HEX)
     boost::ignore_unused(h0, h1, h2, h3);
-    HelmholtzHexKernel<DEFORMED>(
+    DiffusionCoeffHexKernel<DEFORMED>(
         nq0, nq1, nq2, isConstVarDiff, constVarDiff, isVarDiff, varD00, varD01,
         varD11, varD02, varD12, varD22, df_ptr, deriv0, deriv1, deriv2);
 #elif defined(SHAPE_TYPE_TET)
-    HelmholtzTetKernel<DEFORMED>(nq0, nq1, nq2, isConstVarDiff, constVarDiff,
-                                 isVarDiff, varD00, varD01, varD11, varD02,
-                                 varD12, varD22, df_ptr, h0, h1, h2, h3, deriv0,
-                                 deriv1, deriv2);
+    DiffusionCoeffTetKernel<DEFORMED>(nq0, nq1, nq2, isConstVarDiff,
+                                      constVarDiff, isVarDiff, varD00, varD01,
+                                      varD11, varD02, varD12, varD22, df_ptr,
+                                      h0, h1, h2, h3, deriv0, deriv1, deriv2);
 #elif defined(SHAPE_TYPE_PRISM)
     boost::ignore_unused(h2, h3);
-    HelmholtzPrismKernel<DEFORMED>(
+    DiffusionCoeffPrismKernel<DEFORMED>(
         nq0, nq1, nq2, isConstVarDiff, constVarDiff, isVarDiff, varD00, varD01,
         varD11, varD02, varD12, varD22, df_ptr, h0, h1, deriv0, deriv1, deriv2);
 #elif defined(SHAPE_TYPE_PYR)
     boost::ignore_unused(h3);
-    HelmholtzPyrKernel<DEFORMED>(nq0, nq1, nq2, isConstVarDiff, constVarDiff,
-                                 isVarDiff, varD00, varD01, varD11, varD02,
-                                 varD12, varD22, df_ptr, h0, h1, h2, deriv0,
-                                 deriv1, deriv2);
+    DiffusionCoeffPyrKernel<DEFORMED>(nq0, nq1, nq2, isConstVarDiff,
+                                      constVarDiff, isVarDiff, varD00, varD01,
+                                      varD11, varD02, varD12, varD22, df_ptr,
+                                      h0, h1, h2, deriv0, deriv1, deriv2);
 #endif
 }
 

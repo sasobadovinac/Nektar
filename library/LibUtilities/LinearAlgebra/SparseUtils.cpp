@@ -39,7 +39,6 @@
 
 #include <LibUtilities/LinearAlgebra/SparseDiagBlkMatrix.hpp>
 #include <LibUtilities/LinearAlgebra/SparseMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 #include <LibUtilities/LinearAlgebra/SparseUtils.hpp>
 #include <LibUtilities/LinearAlgebra/StorageSmvBsr.hpp>
 

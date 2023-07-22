@@ -591,8 +591,7 @@ void UnsteadyAdvectionDiffusion::SubStepAdvance(int nstep, NekDouble time)
 
         for (n = 0; n < nsubsteps; ++n)
         {
-            fields = m_subStepIntegrationScheme->TimeIntegrate(
-                n, dt, m_subStepIntegrationOps);
+            fields = m_subStepIntegrationScheme->TimeIntegrate(n, dt);
         }
 
         // Reset time integrated solution in m_intScheme

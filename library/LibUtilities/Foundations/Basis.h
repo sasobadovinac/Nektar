@@ -35,10 +35,7 @@
 #ifndef NEKTAR_LIB_UTILIITIES_FOUNDATIONS_BASIS_H
 #define NEKTAR_LIB_UTILIITIES_FOUNDATIONS_BASIS_H
 
-#include <LibUtilities/Foundations/Foundations.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 
 namespace Nektar
@@ -59,17 +56,13 @@ public:
     };
 
     /// Constructor
-    BasisKey(const BasisType btype, const int nummodes, const PointsKey pkey)
+    BasisKey(const BasisType btype, const size_t nummodes, const PointsKey pkey)
         : m_nummodes(nummodes), m_basistype(btype), m_pointsKey(pkey)
     {
     }
 
     /// Copy constructor
-    BasisKey(const BasisKey &B)
-        : m_nummodes(B.m_nummodes), m_basistype(B.m_basistype),
-          m_pointsKey(B.m_pointsKey)
-    {
-    }
+    BasisKey(const BasisKey &B) = default;
 
     /// Destructor
     ~BasisKey()
@@ -88,7 +81,7 @@ public:
     /// \todo Generalise to arbitrary polynomials
     inline int GetTotNumModes() const
     {
-        int value = 0;
+        size_t value = 0;
 
         switch (m_basistype)
         {
@@ -96,7 +89,6 @@ public:
             case eModified_B:
                 value = m_nummodes * (m_nummodes + 1) / 2;
                 break;
-
             case eModified_C:
             case eOrtho_C:
                 value = m_nummodes * (m_nummodes + 1) * (m_nummodes + 2) / 6;
@@ -186,23 +178,18 @@ public:
                                                 const BasisKey &y);
     LIB_UTILITIES_EXPORT friend bool operator!=(const BasisKey &x,
                                                 const BasisKey *y);
-
     LIB_UTILITIES_EXPORT friend bool operator<(const BasisKey &lhs,
                                                const BasisKey &rhs);
     LIB_UTILITIES_EXPORT friend bool opLess::operator()(
         const BasisKey &lhs, const BasisKey &rhs) const;
 
 protected:
-    unsigned int m_nummodes; ///< Expansion order.
-    BasisType m_basistype;   ///< Expansion type.
-    PointsKey m_pointsKey;   ///< Points specification.
+    size_t m_nummodes;     ///< Expansion order.
+    BasisType m_basistype; ///< Expansion type.
+    PointsKey m_pointsKey; ///< Points specification.
 
 private:
-    BasisKey() : m_pointsKey(NullPointsKey)
-    {
-        NEKERROR(ErrorUtil::efatal,
-                 "Default Constructor BasisKey should never be called");
-    }
+    BasisKey() = delete;
 };
 
 /// Defines a null basis with no type or points.
@@ -341,17 +328,13 @@ protected:
         m_InterpManager;
 
 private:
-    static bool initBasisManager[];
+    static bool initBasisManager;
 
     /// Private constructor with BasisKey.
     Basis(const BasisKey &bkey);
 
     /// Private default constructor.
-    Basis() : m_basisKey(NullBasisKey)
-    {
-        NEKERROR(ErrorUtil::efatal,
-                 "Default Constructor for Basis should not be called");
-    }
+    Basis() = delete;
 
     std::shared_ptr<NekMatrix<NekDouble>> CalculateInterpMatrix(
         const BasisKey &tbasis0);

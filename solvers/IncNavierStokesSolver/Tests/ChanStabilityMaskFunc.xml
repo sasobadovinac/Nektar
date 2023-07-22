@@ -318,18 +318,22 @@
             <E VAR="p" VALUE="0" />
         </FUNCTION>
 
-        <FUNCTION NAME="Unmask0">
+        <FUNCTION NAME="SelectEVCalcDomain0">
             <E VAR="C0" VALUE=" x+2" />
             <E VAR="C1" VALUE="-x-1." />
             <E VAR="C2" VALUE=" y+0.8" />
             <E VAR="C3" VALUE="-y+0.8" />
         </FUNCTION>
 
-        <FUNCTION NAME="Unmask1">
+        <FUNCTION NAME="SelectEVCalcDomain1">
             <E VAR="C0" VALUE=" x-1" />
             <E VAR="C1" VALUE="-x+2." />
             <E VAR="C2" VALUE=" y+0.8" />
             <E VAR="C3" VALUE="-y+0.8" />
+        </FUNCTION>
+
+        <FUNCTION NAME="SelectEVCalcVariables">
+            <E VAR="u" VALUE="1" />
         </FUNCTION>
 
     </CONDITIONS>

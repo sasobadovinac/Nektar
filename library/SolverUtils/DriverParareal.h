@@ -71,6 +71,10 @@ protected:
     /// Destructor
     SOLVER_UTILS_EXPORT virtual ~DriverParareal();
 
+    /// Virtual function for initialisation implementation.
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        std::ostream &out = std::cout) override;
+
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(
         std::ostream &out = std::cout) override;
@@ -94,6 +98,9 @@ protected:
         NekDouble restTime, NekDouble interTime, NekDouble commTime,
         NekDouble predictorOverheadTime, NekDouble overheadTime) override;
 
+    static std::string driverLookupId;
+
+private:
     void AssertParameters(void);
 
     void RunCoarseSolve(const NekDouble time, const size_t nstep,
@@ -116,8 +123,6 @@ protected:
                         Array<OneD, Array<OneD, NekDouble>> &out);
 
     void CopyConvergedCheckPoints(const size_t w, const size_t k, size_t kmax);
-
-    static std::string driverLookupId;
 };
 
 } // namespace SolverUtils

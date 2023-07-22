@@ -37,11 +37,8 @@
 
 #include <memory>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <LibUtilities/Foundations/NodalUtil.h>
 
 namespace Nektar
 {
@@ -65,18 +62,17 @@ public:
 private:
     static bool initPointsManager[];
 
-    NodalHexElec() : PointsBaseType(NullPointsKey)
-    {
-    }
+    NodalHexElec()                           = delete;
+    NodalHexElec(const NodalHexElec &points) = delete;
 
     /// 1D GLL points.
     Array<OneD, NekDouble> m_e0;
     /// 1D GLL weights.
     Array<OneD, NekDouble> m_ew;
 
-    virtual void v_CalculatePoints() override;
-    virtual void v_CalculateWeights() override;
-    virtual void v_CalculateDerivMatrix() override;
+    virtual void v_CalculatePoints() override final;
+    virtual void v_CalculateWeights() override final;
+    virtual void v_CalculateDerivMatrix() override final;
 };
 } // namespace LibUtilities
 } // namespace Nektar

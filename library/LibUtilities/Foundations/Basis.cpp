@@ -32,19 +32,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/Foundations/Basis.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LinearAlgebra/Blas.hpp>
 #include <LibUtilities/Polylib/Polylib.h>
-#include <boost/math/special_functions/gamma.hpp>
 
 namespace Nektar
 {
 namespace LibUtilities
 {
-bool Basis::initBasisManager[] = {
+bool Basis::initBasisManager = {
     BasisManager().RegisterGlobalCreator(Basis::Create)};
 
 bool operator<(const BasisKey &lhs, const BasisKey &rhs)
@@ -111,7 +107,6 @@ std::shared_ptr<Basis> Basis::Create(const BasisKey &bkey)
 }
 
 void Basis::Initialize()
-
 {
     ASSERTL0(GetNumModes() > 0,
              "Cannot call Basis initialisation with zero or negative order");
@@ -127,7 +122,7 @@ void Basis::Initialize()
 std::shared_ptr<NekMatrix<NekDouble>> Basis::CalculateInterpMatrix(
     const BasisKey &tbasis0)
 {
-    int dim = m_basisKey.GetNumModes();
+    size_t dim = m_basisKey.GetNumModes();
     const PointsKey pkey(dim, LibUtilities::eGaussLobattoLegendre);
     BasisKey fbkey(m_basisKey.GetBasisType(), dim, pkey);
     BasisKey tbkey(tbasis0.GetBasisType(), dim, pkey);
@@ -222,30 +217,30 @@ std::shared_ptr<NekMatrix<NekDouble>> Basis::CalculateInterpMatrix(
  */
 void Basis::GenBasis()
 {
-    int i, p, q;
+    size_t i, p, q;
     NekDouble scal;
     Array<OneD, NekDouble> modeSharedArray;
     NekDouble *mode;
     Array<OneD, const NekDouble> z;
     Array<OneD, const NekDouble> w;
-    const NekDouble *D;
 
     m_points->GetZW(z, w);
 
-    D             = &(m_points->GetD()->GetPtr())[0];
-    int numModes  = GetNumModes();
-    int numPoints = GetNumPoints();
+    const NekDouble *D = &(m_points->GetD()->GetPtr())[0];
+    size_t numModes    = GetNumModes();
+    size_t numPoints   = GetNumPoints();
 
     switch (GetBasisType())
     {
 
         /** \brief Orthogonal basis A
 
-        \f$\tilde \psi_p^a (\eta_1) = L_p(\eta_1) = P_p^{0,0}(\eta_1)\f$
+            \f$\tilde \psi_p^a (\eta_1) = L_p(\eta_1) = P_p^{0,0}(\eta_1)\f$
 
-       */
+        */
         case eOrtho_A:
         case eLegendre:
+        {
             mode = m_bdata.data();
 
             for (p = 0; p < numModes; ++p, mode += numPoints)
@@ -258,34 +253,37 @@ void Basis::GenBasis()
                     mode[i] *= scal;
                 }
             }
-            // define derivative basis
+
+            // Define derivative basis
             Blas::Dgemm('n', 'n', numPoints, numModes, numPoints, 1.0, D,
                         numPoints, m_bdata.data(), numPoints, 0.0,
                         m_dbdata.data(), numPoints);
-            break;
+        } // end scope
+        break;
 
         /** \brief Orthogonal basis B
 
-        \f$\tilde \psi_{pq}^b(\eta_2) = \left ( {1 - \eta_2} \over 2 \right)^p
-        P_q^{2p+1,0}(\eta_2)\f$ \\
+            \f$\tilde \psi_{pq}^b(\eta_2) = \left ( {1 - \eta_2} \over 2
+           \right)^p
+            P_q^{2p+1,0}(\eta_2)\f$ \\
 
-       */
+        */
 
-        // This is tilde psi_pq in Spen's book, page 105
+        // This is tilde psi_pq in Spencer's book, page 105
         // The 3-dimensional array is laid out in memory such that
         // 1) Eta_y values are the changing the fastest, then q and p.
         // 2) q index increases by the stride of numPoints.
         case eOrtho_B:
         {
-            NekDouble *mode = m_bdata.data();
+            mode = m_bdata.data();
 
-            for (int p = 0; p < numModes; ++p)
+            for (size_t p = 0; p < numModes; ++p)
             {
-                for (int q = 0; q < numModes - p; ++q, mode += numPoints)
+                for (size_t q = 0; q < numModes - p; ++q, mode += numPoints)
                 {
                     Polylib::jacobfd(numPoints, z.data(), mode, NULL, q,
                                      2 * p + 1.0, 0.0);
-                    for (int j = 0; j < numPoints; ++j)
+                    for (size_t j = 0; j < numPoints; ++j)
                     {
                         mode[j] *=
                             sqrt(p + q + 1.0) * pow(0.5 * (1.0 - z[j]), p);
@@ -293,7 +291,7 @@ void Basis::GenBasis()
                 }
             }
 
-            // define derivative basis
+            // Define derivative basis
             Blas::Dgemm('n', 'n', numPoints, numModes * (numModes + 1) / 2,
                         numPoints, 1.0, D, numPoints, m_bdata.data(), numPoints,
                         0.0, m_dbdata.data(), numPoints);
@@ -303,28 +301,28 @@ void Basis::GenBasis()
         /** \brief Orthogonal basis C
 
             \f$\tilde \psi_{pqr}^c = \left ( {1 - \eta_3} \over 2 \right)^{p+q}
-           P_r^{2p+2q+2, 0}(\eta_3)\f$ \ \
+            P_r^{2p+2q+2, 0}(\eta_3)\f$ \ \
 
-       */
+        */
 
-        // This is tilde psi_pqr in Spen's book, page 105
+        // This is tilde psi_pqr in Spencer's book, page 105
         // The 4-dimensional array is laid out in memory such that
         // 1) Eta_z values are the changing the fastest, then r, q, and finally
         // p. 2) r index increases by the stride of numPoints.
         case eOrtho_C:
         {
-            int P = numModes - 1, Q = numModes - 1, R = numModes - 1;
-            NekDouble *mode = m_bdata.data();
+            size_t P = numModes - 1, Q = numModes - 1, R = numModes - 1;
+            mode = m_bdata.data();
 
-            for (int p = 0; p <= P; ++p)
+            for (size_t p = 0; p <= P; ++p)
             {
-                for (int q = 0; q <= Q - p; ++q)
+                for (size_t q = 0; q <= Q - p; ++q)
                 {
-                    for (int r = 0; r <= R - p - q; ++r, mode += numPoints)
+                    for (size_t r = 0; r <= R - p - q; ++r, mode += numPoints)
                     {
                         Polylib::jacobfd(numPoints, z.data(), mode, NULL, r,
                                          2 * p + 2 * q + 2.0, 0.0);
-                        for (int k = 0; k < numPoints; ++k)
+                        for (size_t k = 0; k < numPoints; ++k)
                         {
                             // Note factor of 0.5 is part of normalisation
                             mode[k] *= pow(0.5 * (1.0 - z[k]), p + q);
@@ -344,35 +342,35 @@ void Basis::GenBasis()
         }
         break;
 
-            /** \brief Orthogonal basis C for Pyramid expansion
-                (which is richer than tets)
+        /** \brief Orthogonal basis C for Pyramid expansion
+            (which is richer than tets)
 
-                \f$\tilde \psi_{pqr}^c = \left ( {1 - \eta_3} \over
-                2\right)^{pq} P_r^{2pq+2, 0}(\eta_3)\f$ \f$ \mbox{where
-                }pq = max(p+q,0) \f$
+            \f$\tilde \psi_{pqr}^c = \left ( {1 - \eta_3} \over
+            2\right)^{pq} P_r^{2pq+2, 0}(\eta_3)\f$ \f$ \mbox{where
+            }pq = max(p+q,0) \f$
 
-                This orthogonal expansion has modes that are
-                always in the Cartesian space, however the
-                equivalent ModifiedPyr_C has vertex modes that do
-                not lie in this space. If one chooses \f$pq =
-                max(p+q-1,0)\f$ then the expansion will space the
-                same space as the vertices but the order of the
-                expanion in 'r' is reduced by one.
+            This orthogonal expansion has modes that are
+            always in the Cartesian space, however the
+            equivalent ModifiedPyr_C has vertex modes that do
+            not lie in this space. If one chooses \f$pq =
+            max(p+q-1,0)\f$ then the expansion will space the
+            same space as the vertices but the order of the
+            expanion in 'r' is reduced by one.
 
-                1) Eta_z values are the changing the fastest, then
-                 r, q, and finally p.  2) r index increases by the
-                  stride of numPoints.
-            */
+            1) Eta_z values are the changing the fastest, then
+               r, q, and finally p.  2) r index increases by the
+               stride of numPoints.
+        */
         case eOrthoPyr_C:
         {
-            int P = numModes - 1, Q = numModes - 1, R = numModes - 1;
-            NekDouble *mode = m_bdata.data();
+            size_t P = numModes - 1, Q = numModes - 1, R = numModes - 1;
+            mode = m_bdata.data();
 
-            for (int p = 0; p <= P; ++p)
+            for (size_t p = 0; p <= P; ++p)
             {
-                for (int q = 0; q <= Q; ++q)
+                for (size_t q = 0; q <= Q; ++q)
                 {
-                    for (int r = 0; r <= R - std::max(p, q);
+                    for (size_t r = 0; r <= R - std::max(p, q);
                          ++r, mode += numPoints)
                     {
                         // this offset allows for orthogonal
@@ -381,12 +379,12 @@ void Basis::GenBasis()
                         // the cartesian polynomial space
                         // spanned by the expansion is one
                         // order lower.
-                        // int pq = max(p + q -1,0);
-                        int pq = std::max(p + q, 0);
+                        // size_t pq = max(p + q -1,0);
+                        size_t pq = std::max(p + q, size_t(0));
 
                         Polylib::jacobfd(numPoints, z.data(), mode, NULL, r,
                                          2 * pq + 2.0, 0.0);
-                        for (int k = 0; k < numPoints; ++k)
+                        for (size_t k = 0; k < numPoints; ++k)
                         {
                             // Note factor of 0.5 is part of normalisation
                             mode[k] *= pow(0.5 * (1.0 - z[k]), pq);
@@ -407,7 +405,7 @@ void Basis::GenBasis()
         break;
 
         case eModified_A:
-
+        {
             // Note the following packing deviates from the
             // definition in the Book by Karniadakis in that we
             // put the vertex degrees of freedom at the lower
@@ -432,15 +430,15 @@ void Basis::GenBasis()
                 }
             }
 
-            // define derivative basis
+            // Define derivative basis
             Blas::Dgemm('n', 'n', numPoints, numModes, numPoints, 1.0, D,
                         numPoints, m_bdata.data(), numPoints, 0.0,
                         m_dbdata.data(), numPoints);
-            break;
+        }
+        break;
 
         case eModified_B:
         {
-
             // Note the following packing deviates from the
             // definition in the Book by Karniadakis in two
             // ways. 1) We put the vertex degrees of freedom
@@ -566,9 +564,9 @@ void Basis::GenBasis()
 
             // Set up \phi^c_{p,q,r} = \phi^b_{p+q,r}
 
-            int N;
-            int B_offset = 0;
-            int offset   = 0;
+            size_t N;
+            size_t B_offset = 0;
+            size_t offset   = 0;
             for (p = 0; p < numModes; ++p)
             {
                 N = numPoints * (numModes - p) * (numModes - p + 1) / 2;
@@ -614,9 +612,9 @@ void Basis::GenBasis()
             // (numModes*(numModes+1)/2)*numPoints entires of
             // bdata.
 
-            int N;
-            int B_offset = 0;
-            int offset   = 0;
+            size_t N;
+            size_t B_offset = 0;
+            size_t offset   = 0;
 
             // Vertex 0,3,4, edges 3,4,7, face 4
             N = numPoints * (numModes) * (numModes + 1) / 2;
@@ -639,7 +637,6 @@ void Basis::GenBasis()
             B_offset += numPoints * (numModes - 1);
 
             NekDouble *one_m_z_pow, *one_p_z;
-            NekDouble *mode;
 
             mode = m_bdata.data() + offset;
 
@@ -671,7 +668,7 @@ void Basis::GenBasis()
                     mode += numPoints;
 
                     // interior
-                    for (int r = 1; r < numModes - std::max(p, q); ++r)
+                    for (size_t r = 1; r < numModes - std::max(p, q); ++r)
                     {
                         Polylib::jacobfd(numPoints, z.data(), mode, NULL, r - 1,
                                          2 * p + 2 * q - 3, 1.0);
@@ -690,7 +687,7 @@ void Basis::GenBasis()
                         numModes * (numModes + 1) * (2 * numModes + 1) / 6,
                         numPoints, 1.0, D, numPoints, m_bdata.data(), numPoints,
                         0.0, m_dbdata.data(), numPoints);
-        }
+        } // end scope
         break;
 
         case eGLL_Lagrange:
@@ -709,13 +706,14 @@ void Basis::GenBasis()
                 }
             }
 
-            // define derivative basis
+            // Define derivative basis
             Blas::Dgemm('n', 'n', numPoints, numModes, numPoints, 1.0, D,
                         numPoints, m_bdata.data(), numPoints, 0.0,
                         m_dbdata.data(), numPoints);
 
         } // end scope
         break;
+
         case eGauss_Lagrange:
         {
             mode = m_bdata.data();
@@ -732,15 +730,16 @@ void Basis::GenBasis()
                 }
             }
 
-            // define derivative basis
+            // Define derivative basis
             Blas::Dgemm('n', 'n', numPoints, numModes, numPoints, 1.0, D,
                         numPoints, m_bdata.data(), numPoints, 0.0,
                         m_dbdata.data(), numPoints);
 
         } // end scope
         break;
-        case eFourier:
 
+        case eFourier:
+        {
             ASSERTL0(numModes % 2 == 0,
                      "Fourier modes should be a factor of 2");
 
@@ -766,12 +765,12 @@ void Basis::GenBasis()
                         -p * M_PI * cos(p * M_PI * (z[i] + 1));
                 }
             }
-
-            break;
+        } // end scope
+        break;
 
         // Fourier Single Mode (1st mode)
         case eFourierSingleMode:
-
+        {
             for (i = 0; i < numPoints; ++i)
             {
                 m_bdata[i]             = cos(M_PI * (z[i] + 1));
@@ -792,19 +791,24 @@ void Basis::GenBasis()
                     m_dbdata[(2 * p + 1) * numPoints + i] = 0.;
                 }
             }
-            break;
+        } // end scope
+        break;
 
         // Fourier Real Half Mode
         case eFourierHalfModeRe:
+        {
             m_bdata[0]  = cos(M_PI * z[0]);
             m_dbdata[0] = -M_PI * sin(M_PI * z[0]);
-            break;
+        } // end scope
+        break;
 
         // Fourier Imaginary Half Mode
         case eFourierHalfModeIm:
+        {
             m_bdata[0]  = -sin(M_PI * z[0]);
             m_dbdata[0] = -M_PI * cos(M_PI * z[0]);
-            break;
+        } // end scope
+        break;
 
         case eChebyshev:
         {
@@ -827,35 +831,35 @@ void Basis::GenBasis()
             Blas::Dgemm('n', 'n', numPoints, numModes, numPoints, 1.0, D,
                         numPoints, m_bdata.data(), numPoints, 0.0,
                         m_dbdata.data(), numPoints);
-        }
+        } // end scope
         break;
 
         case eMonomial:
         {
-            int P           = numModes - 1;
-            NekDouble *mode = m_bdata.data();
+            mode = m_bdata.data();
 
-            for (int p = 0; p <= P; ++p, mode += numPoints)
+            for (size_t p = 0; p < numModes; ++p, mode += numPoints)
             {
-                for (int i = 0; i < numPoints; ++i)
+                for (size_t i = 0; i < numPoints; ++i)
                 {
                     mode[i] = pow(z[i], p);
                 }
             }
 
-            // define derivative basis
+            // Define derivative basis
             Blas::Dgemm('n', 'n', numPoints, numModes, numPoints, 1.0, D,
                         numPoints, m_bdata.data(), numPoints, 0.0,
                         m_dbdata.data(), numPoints);
         } // end scope
         break;
+
         default:
             NEKERROR(ErrorUtil::efatal, "Basis Type not known or "
                                         "not implemented at this time.");
     }
 }
 
-/** \brief Determine if polynomial basis can be eactly integrated
+/** \brief Determine if polynomial basis can be exactly integrated
  *  with itself
  */
 bool BasisKey::ExactIprodInt(void) const

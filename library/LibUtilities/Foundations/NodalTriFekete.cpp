@@ -32,15 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/NodalTriFekete.h>
 #include <LibUtilities/Foundations/NodalTriFeketeData.h>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/NekVector.hpp>
 
 namespace Nektar
 {
@@ -56,19 +49,18 @@ void NodalTriFekete::v_CalculatePoints()
     // Allocate the storage for points
     PointsBaseType::v_CalculatePoints();
 
-    int index = 0, isum = 0;
-    const int offset = 3; // offset to match Datafile
+    size_t index = 0, isum = 0;
+    const size_t offset = 3; // offset to match Datafile
     NekDouble b, c;
-    unsigned int numPoints = GetNumPoints();
+    size_t numPoints = GetNumPoints();
 
     // initialize values
-    for (unsigned int i = 0; i < numPoints - 2; ++i)
+    for (size_t i = 0; i < numPoints - 2; ++i)
     {
         index += NodalTriFeketeNPTS[i];
     }
 
-    for (unsigned int i = 0; i < NodalTriFeketeNPTS[numPoints - 2];
-         ++i, ++index)
+    for (size_t i = 0; i < NodalTriFeketeNPTS[numPoints - 2]; ++i, ++index)
     {
         if (int(NodalTriFeketeData[index][0]))
         {
@@ -83,7 +75,7 @@ void NodalTriFekete::v_CalculatePoints()
 
         if (int(NodalTriFeketeData[index][1]) == 1)
         {
-            for (unsigned int j = 0; j < 3; ++j)
+            for (size_t j = 0; j < 3; ++j)
             {
                 b = NodalTriFeketeData[index][offset + perm3A_2d[j][1]];
                 c = NodalTriFeketeData[index][offset + perm3A_2d[j][2]];
@@ -96,7 +88,7 @@ void NodalTriFekete::v_CalculatePoints()
 
         if (int(NodalTriFeketeData[index][1]) == 2)
         {
-            for (unsigned int j = 0; j < 3; ++j)
+            for (size_t j = 0; j < 3; ++j)
             {
                 b = NodalTriFeketeData[index][offset + perm3B_2d[j][1]];
                 c = NodalTriFeketeData[index][offset + perm3B_2d[j][2]];
@@ -109,7 +101,7 @@ void NodalTriFekete::v_CalculatePoints()
 
         if (int(NodalTriFeketeData[index][2]))
         {
-            for (unsigned int j = 0; j < 6; ++j)
+            for (size_t j = 0; j < 6; ++j)
             {
                 b = NodalTriFeketeData[index][offset + perm6_2d[j][1]];
                 c = NodalTriFeketeData[index][offset + perm6_2d[j][2]];
@@ -123,7 +115,7 @@ void NodalTriFekete::v_CalculatePoints()
 
     NodalPointReorder2d();
 
-    ASSERTL1((static_cast<unsigned int>(isum) == m_pointsKey.GetTotNumPoints()),
+    ASSERTL1((static_cast<size_t>(isum) == m_pointsKey.GetTotNumPoints()),
              "sum not equal to npts");
 
     m_util = MemoryManager<NodalUtilTriangle>::AllocateSharedPtr(
@@ -179,13 +171,13 @@ std::shared_ptr<PointsBaseType> NodalTriFekete::Create(const PointsKey &key)
 
 void NodalTriFekete::NodalPointReorder2d()
 {
-    int i, j;
-    int cnt;
-    int istart, iend;
+    size_t i, j;
+    size_t cnt;
+    size_t istart, iend;
 
-    const int nVerts              = 3;
-    const int nEdgeInteriorPoints = GetNumPoints() - 2;
-    const int nBoundaryPoints     = 3 * nEdgeInteriorPoints + 3;
+    const size_t nVerts              = 3;
+    const size_t nEdgeInteriorPoints = GetNumPoints() - 2;
+    const size_t nBoundaryPoints     = 3 * nEdgeInteriorPoints + 3;
 
     if (nEdgeInteriorPoints == 0)
     {
@@ -286,7 +278,7 @@ void NodalTriFekete::NodalPointReorder2d()
 
     Array<OneD, NekDouble> xc(m_points[0].size() - iend);
     Array<OneD, NekDouble> yc(m_points[0].size() - iend);
-    int ct = 0;
+    size_t ct = 0;
     for (i = iend; i < m_points[0].size(); i++, ct++)
     {
         xc[ct] = m_points[0][i];
@@ -309,8 +301,8 @@ void NodalTriFekete::NodalPointReorder2d()
         }
     }
 
-    int offset = 0;
-    int npl    = GetNumPoints() - 3;
+    size_t offset = 0;
+    size_t npl    = GetNumPoints() - 3;
     while (npl > 1)
     {
         repeat = true;

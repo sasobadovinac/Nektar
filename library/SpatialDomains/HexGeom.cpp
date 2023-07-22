@@ -96,50 +96,71 @@ void HexGeom::v_GenGeomFactors()
 
     if (m_geomFactorsState != ePtsFilled)
     {
-        int i, f;
         GeomType Gtype = eRegular;
 
         v_FillGeom();
 
         // check to see if expansions are linear
-        for (i = 0; i < m_coordim; ++i)
+        m_straightEdge = true;
+        if (m_xmap->GetBasisNumModes(0) != 2 ||
+            m_xmap->GetBasisNumModes(1) != 2 ||
+            m_xmap->GetBasisNumModes(2) != 2)
         {
-            if (m_xmap->GetBasisNumModes(0) != 2 ||
-                m_xmap->GetBasisNumModes(1) != 2 ||
-                m_xmap->GetBasisNumModes(2) != 2)
-            {
-                Gtype = eDeformed;
-            }
+            Gtype          = eDeformed;
+            m_straightEdge = false;
         }
 
         // check to see if all faces are parallelograms
         if (Gtype == eRegular)
         {
-            const unsigned int faceVerts[kNfaces][QuadGeom::kNverts] = {
-                {0, 1, 2, 3}, {0, 1, 5, 4}, {1, 2, 6, 5},
-                {3, 2, 6, 7}, {0, 3, 7, 4}, {4, 5, 6, 7}};
-
-            for (f = 0; f < kNfaces; f++)
+            m_isoParameter = Array<OneD, Array<OneD, NekDouble>>(3);
+            for (int i = 0; i < 3; ++i)
             {
-                // Ensure each face is a parallelogram? Check this.
-                for (i = 0; i < m_coordim; i++)
+                m_isoParameter[i] = Array<OneD, NekDouble>(8, 0.);
+                NekDouble A       = (*m_verts[0])(i);
+                NekDouble B       = (*m_verts[1])(i);
+                NekDouble C       = (*m_verts[2])(i);
+                NekDouble D       = (*m_verts[3])(i);
+                NekDouble E       = (*m_verts[4])(i);
+                NekDouble F       = (*m_verts[5])(i);
+                NekDouble G       = (*m_verts[6])(i);
+                NekDouble H       = (*m_verts[7])(i);
+                m_isoParameter[i][0] =
+                    0.125 * (A + B + C + D + E + F + G + H); // 1
+
+                m_isoParameter[i][1] =
+                    0.125 * (-A + B + C - D - E + F + G - H); // xi1
+                m_isoParameter[i][2] =
+                    0.125 * (-A - B + C + D - E - F + G + H); // xi2
+                m_isoParameter[i][3] =
+                    0.125 * (-A - B - C - D + E + F + G + H); // xi3
+
+                m_isoParameter[i][4] =
+                    0.125 * (A - B + C - D + E - F + G - H); // xi1*xi2
+                m_isoParameter[i][5] =
+                    0.125 * (A + B - C - D - E - F + G + H); // xi2*xi3
+                m_isoParameter[i][6] =
+                    0.125 * (A - B - C + D - E + F + G - H); // xi1*xi3
+
+                m_isoParameter[i][7] =
+                    0.125 * (-A + B - C + D + E - F + G - H); // xi1*xi2*xi3
+                NekDouble tmp = fabs(m_isoParameter[i][1]) +
+                                fabs(m_isoParameter[i][2]) +
+                                fabs(m_isoParameter[i][3]);
+                tmp *= NekConstants::kNekZeroTol;
+                for (int d = 4; d < 8; ++d)
                 {
-                    if (fabs((*m_verts[faceVerts[f][0]])(i) -
-                             (*m_verts[faceVerts[f][1]])(i) +
-                             (*m_verts[faceVerts[f][2]])(i) -
-                             (*m_verts[faceVerts[f][3]])(i)) >
-                        NekConstants::kNekZeroTol)
+                    if (fabs(m_isoParameter[i][d]) > tmp)
                     {
                         Gtype = eDeformed;
-                        break;
                     }
                 }
-
-                if (Gtype == eDeformed)
-                {
-                    break;
-                }
             }
+        }
+
+        if (Gtype == eRegular)
+        {
+            v_CalculateInverseIsoParam();
         }
 
         m_geomFactors = MemoryManager<GeomFactors>::AllocateSharedPtr(

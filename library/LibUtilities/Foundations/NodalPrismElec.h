@@ -35,13 +35,8 @@
 #ifndef NODALPRISMELEC_H
 #define NODALPRISMELEC_H
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 #include <memory>
 
 namespace Nektar
@@ -79,7 +74,7 @@ protected:
         const Array<OneD, const NekDouble> &z) override
     {
         size_t numpoints = x.size();
-        unsigned int np  = GetTotNumPoints();
+        size_t np        = GetTotNumPoints();
 
         Array<OneD, NekDouble> interp(GetTotNumPoints() * numpoints);
         CalculateInterpMatrix(x, y, z, interp);
@@ -94,16 +89,14 @@ private:
 
     std::shared_ptr<NodalUtilPrism> m_util;
 
-    /// Default constructor should not be called except by Create matrix
-    NodalPrismElec() : PointsBaseType(NullPointsKey)
-    {
-    }
+    NodalPrismElec()                             = delete;
+    NodalPrismElec(const NodalPrismElec &points) = delete;
 
     void NodalPointReorder3d();
 
-    virtual void v_CalculatePoints() override;
-    virtual void v_CalculateWeights() override;
-    virtual void v_CalculateDerivMatrix() override;
+    virtual void v_CalculatePoints() override final;
+    virtual void v_CalculateWeights() override final;
+    virtual void v_CalculateDerivMatrix() override final;
 
     void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xi,
                                const Array<OneD, const NekDouble> &yi,

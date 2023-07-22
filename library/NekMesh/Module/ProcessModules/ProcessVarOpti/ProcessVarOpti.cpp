@@ -439,13 +439,13 @@ public:
     }
 
 protected:
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode)
+    virtual NekVector<NekDouble> v_OrthoBasis(const size_t mode) override
     {
         // Monomial basis.
         std::pair<int, int> modes = m_ordering[mode];
         NekVector<NekDouble> ret(m_numPoints);
 
-        for (int i = 0; i < m_numPoints; ++i)
+        for (size_t i = 0; i < m_numPoints; ++i)
         {
             ret(i) =
                 pow(m_xi[0][i], modes.first) * pow(m_xi[1][i], modes.second);
@@ -454,8 +454,8 @@ protected:
         return ret;
     }
 
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode)
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const size_t dir,
+                                                   const size_t mode) override
     {
         boost::ignore_unused(dir, mode);
         NEKERROR(ErrorUtil::efatal, "OrthoBasisDeriv: not supported");
@@ -463,7 +463,7 @@ protected:
     }
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble>> &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi) override
     {
         return MemoryManager<NodalUtilTriMonomial>::AllocateSharedPtr(
             m_degree, xi[0], xi[1]);

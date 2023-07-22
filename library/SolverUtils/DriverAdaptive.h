@@ -72,7 +72,7 @@ protected:
     /// Destructor
     SOLVER_UTILS_EXPORT virtual ~DriverAdaptive();
 
-    /// Second-stage initialisation
+    /// Virtual function for initialisation implementation.
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
         std::ostream &out = std::cout) override;
 
@@ -80,12 +80,14 @@ protected:
     SOLVER_UTILS_EXPORT virtual void v_Execute(
         std::ostream &out = std::cout) override;
 
+    static std::string driverLookupId;
+
+private:
     SOLVER_UTILS_EXPORT void ReplaceExpansion(
         Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         std::map<int, int> deltaP);
-
-    static std::string driverLookupId;
 };
+
 } // namespace SolverUtils
 } // namespace Nektar
 

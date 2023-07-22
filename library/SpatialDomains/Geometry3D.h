@@ -99,10 +99,15 @@ protected:
                                     const Array<OneD, const NekDouble> &ptsz,
                                     Array<OneD, NekDouble> &Lcoords,
                                     NekDouble &dist);
+    void NewtonIterationForLocCoord(const Array<OneD, const NekDouble> &coords,
+                                    Array<OneD, NekDouble> &Lcoords);
 
     virtual void v_FillGeom() override;
     virtual NekDouble v_GetCoord(
         const int i, const Array<OneD, const NekDouble> &Lcoord) override;
+    virtual void v_CalculateInverseIsoParam() override;
+    virtual int v_AllLeftCheck(
+        const Array<OneD, const NekDouble> &gloCoord) override;
 
     //---------------------------------------
     // Helper functions

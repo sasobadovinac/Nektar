@@ -81,9 +81,14 @@ protected:
                              NullNekDouble1DArray) override;
 
 private:
-    void CreateMap(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
-
     void AssembleMatrixArrays(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+
+    /// Solve the linear system for given input and output vectors.
+    virtual void v_SolveLinearSystem(const int pNumRows,
+                                     const Array<OneD, const NekDouble> &pInput,
+                                     Array<OneD, NekDouble> &pOutput,
+                                     const AssemblyMapSharedPtr &locToGloMap,
+                                     const int pNumDir = 0) override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

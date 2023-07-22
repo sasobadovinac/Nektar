@@ -206,7 +206,6 @@ void MMFDiffusion::DoImplicitSolve(
     for (int n = 1; n < nvariables; ++n)
     {
         F[n] = F[n - 1] + nq;
-        // cout << "F["<< n<<"=" << F[n][1] <<endl;
     }
 
     // We solve ( \nabla^2 - HHlambda ) Y[i] = rhs [i]
@@ -223,21 +222,13 @@ void MMFDiffusion::DoImplicitSolve(
         Vmath::Smul(nq, -factors[StdRegions::eFactorLambda], inarray[i], 1,
                     F[i], 1);
 
-        /* for (int k = 0; k < 15; ++k)
-             cout << "inarray["<<i << "]"<< k<<"=" << inarray[i][k]<<endl;*/
         // Solve a system of equations with Helmholtz solver and transform
         // back into physical space.
         m_fields[i]->HelmSolve(F[i], m_fields[i]->UpdateCoeffs(), factors,
                                m_varcoeff);
 
         m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(), outarray[i]);
-        /* Array<OneD, NekDouble> coefarray = m_fields[i]->GetCoeffs();
-         for (int k = 0; k < 15; ++k)
-             cout << "inarray["<< k<<"=" << coefarray[k]<<endl;*/
     }
-    /* for (int kk = 0; kk < 15; ++kk)
-         cout << "inarray["<< kk<<"=" <<
-       m_varcoeff[StdRegions::eVarCoeffMF3Mag][kk]<<endl;*/
 }
 
 /**
@@ -467,13 +458,6 @@ void MMFDiffusion::v_SetInitialConditions(NekDouble initialtime,
 
             TestCubeProblem(initialtime, u);
             m_fields[0]->SetPhys(u);
-            /*for (int k=0; k<nq; ++k)
-            {
-                //for (int j=0; j<m_spacedim; ++j)
-                //{
-                cout << "_varcoeff" << u[k] <<endl;
-                // }
-            }*/
         }
         break;
 
@@ -754,9 +738,6 @@ Array<OneD, NekDouble> MMFDiffusion::PlanePhiWave()
                 NekDouble radiusofinit = 6.0;
                 NekDouble frontstiff   = 0.1;
 
-                // NekDouble xc = 0.5*(Vmath::Vmax(nq, x, 1) + Vmath::Vmin(nq,
-                // x, 1));
-
                 xp = x[i] - xmin;
                 outarray[i] =
                     1.0 / (1.0 + exp((xp - radiusofinit) / frontstiff));
@@ -883,6 +864,7 @@ void MMFDiffusion::v_GenerateSummary(SolverUtils::SummaryList &s)
     }
 }
 } // namespace Nektar
+
 int main(int argc, char *argv[])
 {
     LibUtilities::SessionReaderSharedPtr session;

@@ -268,7 +268,7 @@ void MMFAdvection::v_DoSolve()
     while (step < m_steps || m_time < m_fintime - NekConstants::kNekZeroTol)
     {
         timer.Start();
-        fields = m_intScheme->TimeIntegrate(step, m_timestep, m_ode);
+        fields = m_intScheme->TimeIntegrate(step, m_timestep);
         timer.Stop();
 
         m_time += m_timestep;

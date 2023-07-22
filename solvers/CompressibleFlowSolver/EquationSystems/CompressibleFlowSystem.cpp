@@ -665,19 +665,6 @@ NekDouble CompressibleFlowSystem::v_GetTimeStep(
     NekDouble TimeStep = Vmath::Vmin(nElements, tstep, 1);
     m_comm->AllReduce(TimeStep, LibUtilities::ReduceMin);
 
-    NekDouble tmp = m_timestep;
-    m_timestep    = TimeStep;
-
-    Array<OneD, NekDouble> cflNonAcoustic(nElements, 0.0);
-    cflNonAcoustic = GetElmtCFLVals(false);
-
-    // Get the minimum time-step limit and return the time-step
-    NekDouble MaxcflNonAcoustic = Vmath::Vmax(nElements, cflNonAcoustic, 1);
-    m_comm->AllReduce(MaxcflNonAcoustic, LibUtilities::ReduceMax);
-
-    m_cflNonAcoustic = MaxcflNonAcoustic;
-    m_timestep       = tmp;
-
     return TimeStep;
 }
 

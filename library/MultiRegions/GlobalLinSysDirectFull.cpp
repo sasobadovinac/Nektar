@@ -111,7 +111,6 @@ void GlobalLinSysDirectFull::v_Solve(
 
     Array<OneD, NekDouble> tmp(nLocDofs);
     Array<OneD, NekDouble> tmp1(nLocDofs);
-    Array<OneD, NekDouble> global(nGlobDofs, 0.0);
 
     if (nDirDofs)
     {
@@ -154,19 +153,15 @@ void GlobalLinSysDirectFull::v_Solve(
             Vmath::Vsub(nLocDofs, pLocInput, 1, tmp, 1, tmp1, 1);
         }
 
-        pLocToGloMap->Assemble(tmp1, tmp);
-
-        SolveLinearSystem(nGlobDofs, tmp, global, pLocToGloMap, nDirDofs);
-        pLocToGloMap->GlobalToLocal(global, tmp);
+        SolveLinearSystem(nGlobDofs, tmp1, tmp, pLocToGloMap, nDirDofs);
 
         // Add back initial condition
         Vmath::Vadd(nLocDofs, tmp, 1, pLocOutput, 1, pLocOutput, 1);
     }
     else
     {
-        pLocToGloMap->Assemble(pLocInput, tmp);
-        SolveLinearSystem(nGlobDofs, tmp, global, pLocToGloMap, nDirDofs);
-        pLocToGloMap->GlobalToLocal(global, pLocOutput);
+        SolveLinearSystem(nGlobDofs, pLocInput, pLocOutput, pLocToGloMap,
+                          nDirDofs);
     }
 }
 
@@ -273,5 +268,28 @@ void GlobalLinSysDirectFull::AssembleFullMatrix(
         m_linSys = MemoryManager<DNekLinSys>::AllocateSharedPtr(Gmat, w);
     }
 }
+
+/// Solve the linear system for given input and output vectors.
+void GlobalLinSysDirectFull::v_SolveLinearSystem(
+    const int pNumRows, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &pLocToGloMap,
+    const int pNumDir)
+{
+    Array<OneD, NekDouble> tmp(pNumRows);
+    Array<OneD, NekDouble> global(pNumRows, 0.0);
+
+    pLocToGloMap->Assemble(pInput, tmp);
+
+    const int nHomDofs = pNumRows - pNumDir;
+    DNekVec Vin(nHomDofs, tmp + pNumDir);
+
+    Array<OneD, NekDouble> tmp1 = global + pNumDir;
+    DNekVec Vout(nHomDofs, tmp1, eWrapper);
+
+    m_linSys->Solve(Vin, Vout);
+
+    pLocToGloMap->GlobalToLocal(global, pOutput);
+}
+
 } // namespace MultiRegions
 } // namespace Nektar

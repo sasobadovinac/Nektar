@@ -89,6 +89,15 @@ std::string GlobalLinSys::def =
 #endif
 
 /**
+ *
+ */
+GlobalLinSysFactory &GetGlobalLinSysFactory()
+{
+    static GlobalLinSysFactory instance;
+    return instance;
+}
+
+/**
  * @class GlobalLinSys
  *
  * Consider the linear system
@@ -197,15 +206,6 @@ GlobalLinSys::GlobalLinSys(const GlobalLinSysKey &pKey,
 }
 
 /**
- *
- */
-GlobalLinSysFactory &GetGlobalLinSysFactory()
-{
-    static GlobalLinSysFactory instance;
-    return instance;
-}
-
-/**
  * @brief Create a preconditioner object from the parameters defined in
  * the supplied assembly map.
  *
@@ -213,8 +213,7 @@ GlobalLinSysFactory &GetGlobalLinSysFactory()
  */
 PreconditionerSharedPtr GlobalLinSys::CreatePrecon(AssemblyMapSharedPtr asmMap)
 {
-    PreconditionerType pType = asmMap->GetPreconType();
-    std::string PreconType   = MultiRegions::PreconditionerTypeMap[pType];
+    std::string PreconType = asmMap->GetPreconType();
     return GetPreconFactory().CreateInstance(PreconType, GetSharedThisPtr(),
                                              asmMap);
 }

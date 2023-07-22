@@ -50,9 +50,14 @@ namespace LibUtilities
 {
 
 ////////////////////////////////////////////////////////////////////////////////
-TimeIntegrationSolutionGLMSharedPtr TimeIntegrationAlgorithmGLM::InitializeData(
-    const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
+void TimeIntegrationAlgorithmGLM::InitializeScheme(
     const TimeIntegrationSchemeOperators &op)
+{
+    m_op = op;
+}
+
+TimeIntegrationSolutionGLMSharedPtr TimeIntegrationAlgorithmGLM::InitializeData(
+    const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time)
 {
     // Create a TimeIntegrationSolutionGLM object based upon the initial value
     // y_0. Initialise all other multi-step values and derivatives to zero.
@@ -63,7 +68,7 @@ TimeIntegrationSolutionGLMSharedPtr TimeIntegrationAlgorithmGLM::InitializeData(
     if (m_schemeType == eExplicit || m_schemeType == eExponential)
     {
         // Ensure initial solution is in correct space.
-        op.DoProjection(y_out->GetSolution(), y_out->UpdateSolution(), time);
+        m_op.DoProjection(y_out->GetSolution(), y_out->UpdateSolution(), time);
     }
 
     // Calculate the initial derivative, if is part of the solution vector of
@@ -83,7 +88,7 @@ TimeIntegrationSolutionGLMSharedPtr TimeIntegrationAlgorithmGLM::InitializeData(
             }
 
             // Calculate the derivative of the initial value.
-            op.DoOdeRhs(y_out->GetSolution(), f_y_0, time);
+            m_op.DoOdeRhs(y_out->GetSolution(), f_y_0, time);
 
             // Multiply by the step size.
             for (size_t i = 0; i < nvar; i++)
@@ -98,8 +103,7 @@ TimeIntegrationSolutionGLMSharedPtr TimeIntegrationAlgorithmGLM::InitializeData(
 }
 
 ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
-    const NekDouble deltaT, TimeIntegrationSolutionGLMSharedPtr &solvector,
-    const TimeIntegrationSchemeOperators &op)
+    const NekDouble deltaT, TimeIntegrationSolutionGLMSharedPtr &solvector)
 {
     size_t nvar    = solvector->GetFirstDim();
     size_t npoints = solvector->GetSecondDim();
@@ -219,7 +223,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
         TimeIntegrate(deltaT, solvector_in->GetSolutionVector(),
                       solvector_in->GetTimeVector(),
                       solvector_out->UpdateSolutionVector(),
-                      solvector_out->UpdateTimeVector(), op);
+                      solvector_out->UpdateTimeVector());
 
         // STEP 3: Copy the information contained in the output vector of the
         //         current scheme to the solution vector of the master scheme.
@@ -286,7 +290,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
             }
 
             // Calculate the derivative of the initial value.
-            op.DoImplicitSolve(y_n, f_impn, t_n + deltaT, deltaT);
+            m_op.DoImplicitSolve(y_n, f_impn, t_n + deltaT, deltaT);
             for (size_t j = 0; j < nvar; j++)
             {
                 Vmath::Vsub(m_npoints, f_impn[j], 1, y_n[j], 1, f_impn[j], 1);
@@ -332,11 +336,11 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
             // Ensure solution is in correct space.
             if (newExpDerivTimeLevel == 1)
             {
-                op.DoProjection(y_n, y_n, t_n);
+                m_op.DoProjection(y_n, y_n, t_n);
             }
 
             // Calculate the derivative.
-            op.DoOdeRhs(y_n, f_expn, t_n);
+            m_op.DoOdeRhs(y_n, f_expn, t_n);
 
             // Multiply by dt (as required by the General Linear Method
             // framework).
@@ -360,7 +364,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
         // Ensure solution is in correct space.
         if (newExpDerivTimeLevel == 1)
         {
-            op.DoProjection(y_n, y_n, t_n);
+            m_op.DoProjection(y_n, y_n, t_n);
         }
 
         solvector->SetValue(0, y_n, t_n);
@@ -410,7 +414,7 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
         TimeIntegrate(deltaT, solvector->GetSolutionVector(),
                       solvector->GetTimeVector(),
                       solvector_new->UpdateSolutionVector(),
-                      solvector_new->UpdateTimeVector(), op);
+                      solvector_new->UpdateTimeVector());
 
         solvector = solvector_new;
     }
@@ -420,14 +424,14 @@ ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
 } // end TimeIntegrate()
 
 // Does the actual multi-stage multi-step integration.
-void TimeIntegrationAlgorithmGLM::TimeIntegrate(
-    const NekDouble deltaT, ConstTripleArray &y_old, ConstSingleArray &t_old,
-    TripleArray &y_new, SingleArray &t_new,
-    const TimeIntegrationSchemeOperators &op)
+void TimeIntegrationAlgorithmGLM::TimeIntegrate(const NekDouble deltaT,
+                                                ConstTripleArray &y_old,
+                                                ConstSingleArray &t_old,
+                                                TripleArray &y_new,
+                                                SingleArray &t_new)
 {
-    ASSERTL1(
-        CheckTimeIntegrateArguments(/*deltaT,*/ y_old, t_old, y_new, t_new, op),
-        "Arguments not well defined");
+    ASSERTL1(CheckTimeIntegrateArguments(y_old, t_old, y_new, t_new),
+             "Arguments not well defined");
 
     TimeIntegrationSchemeType type = m_schemeType;
 
@@ -600,12 +604,12 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             // zero (EDIRK/ESDIRK schemes).
             if ((stage == 0) && (fabs(A(0, 0)) < NekConstants::kNekZeroTol))
             {
-                op.DoOdeRhs(m_Y, m_F[stage], t_old[0]);
+                m_op.DoOdeRhs(m_Y, m_F[stage], t_old[0]);
             }
             // Otherwise, the stage is updated implicitly.
             else
             {
-                op.DoImplicitSolve(m_tmp, m_Y, m_T, A(stage, stage) * deltaT);
+                m_op.DoImplicitSolve(m_tmp, m_Y, m_T, A(stage, stage) * deltaT);
 
                 for (size_t k = 0; k < m_nvars; ++k)
                 {
@@ -633,7 +637,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
 
             if (fabs(A(stage, stage)) > NekConstants::kNekZeroTol)
             {
-                op.DoImplicitSolve(m_tmp, m_Y, m_T, A(stage, stage) * deltaT);
+                m_op.DoImplicitSolve(m_tmp, m_Y, m_T, A(stage, stage) * deltaT);
 
                 for (size_t k = 0; k < m_nvars; k++)
                 {
@@ -644,7 +648,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
                 }
             }
 
-            op.DoOdeRhs(m_Y, m_F_IMEX[stage], m_T);
+            m_op.DoOdeRhs(m_Y, m_F_IMEX[stage], m_T);
         }
         else if (type == eExplicit || type == eExponential)
         {
@@ -665,10 +669,10 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             if (!((stage == 0) && m_firstStageEqualsOldSolution))
             {
                 // Ensure solution is in correct space.
-                op.DoProjection(m_Y, m_Y, m_T);
+                m_op.DoProjection(m_Y, m_Y, m_T);
             }
 
-            op.DoOdeRhs(m_Y, m_F[stage], m_T);
+            m_op.DoOdeRhs(m_Y, m_F[stage], m_T);
         }
     }
 
@@ -756,7 +760,7 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
     if (type == eExplicit || type == eExponential ||
         fabs(m_T - t_new[0]) > NekConstants::kNekZeroTol)
     {
-        op.DoProjection(y_new[0], y_new[0], t_new[0]);
+        m_op.DoProjection(y_new[0], y_new[0], t_new[0]);
     }
 
 } // end TimeIntegrate()
@@ -895,12 +899,10 @@ void TimeIntegrationAlgorithmGLM::VerifyIntegrationSchemeType()
 
 bool TimeIntegrationAlgorithmGLM::CheckTimeIntegrateArguments(
     ConstTripleArray &y_old, ConstSingleArray &t_old, TripleArray &y_new,
-    SingleArray &t_new, const TimeIntegrationSchemeOperators &op) const
+    SingleArray &t_new) const
 {
-#ifdef NEKTAR_DEBUG
-    boost::ignore_unused(op);
-#else
-    boost::ignore_unused(y_old, t_old, y_new, t_new, op);
+#ifndef NEKTAR_DEBUG
+    boost::ignore_unused(y_old, t_old, y_new, t_new);
 #endif
 
     // Check if arrays are all of consistent size

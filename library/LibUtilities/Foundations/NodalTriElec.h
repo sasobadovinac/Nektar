@@ -35,14 +35,9 @@
 #ifndef NODALTRIELEC_H
 #define NODALTRIELEC_H
 
-#include <memory>
-
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <memory>
 
 namespace Nektar
 {
@@ -82,8 +77,8 @@ protected:
         Array<OneD, NekDouble> interp(GetTotNumPoints() * numpoints);
         CalculateInterpMatrix(x, y, interp);
 
-        unsigned int np = GetTotNumPoints();
-        NekDouble *d    = interp.data();
+        size_t np    = GetTotNumPoints();
+        NekDouble *d = interp.data();
         return MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints,
                                                                       np, d);
     }
@@ -93,15 +88,14 @@ private:
 
     std::shared_ptr<NodalUtilTriangle> m_util;
 
-    NodalTriElec() : PointsBaseType(NullPointsKey)
-    {
-    }
+    NodalTriElec()                           = delete;
+    NodalTriElec(const NodalTriElec &points) = delete;
 
     void NodalPointReorder2d();
 
-    virtual void v_CalculatePoints() override;
-    virtual void v_CalculateWeights() override;
-    virtual void v_CalculateDerivMatrix() override;
+    virtual void v_CalculatePoints() override final;
+    virtual void v_CalculateWeights() override final;
+    virtual void v_CalculateDerivMatrix() override final;
 
     void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xia,
                                const Array<OneD, const NekDouble> &yia,
