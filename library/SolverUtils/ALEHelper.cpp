@@ -182,7 +182,9 @@ void ALEHelper::MoveMesh(const NekDouble &time,
             for (const auto &i : conEl[m_fieldsALE[0]->GetShapeDimension() -
                                        1]) // This only takes the trace elements
             {
-                m_fieldsALE[0]->GetTrace()->GetExpFromGeomId(i->GetGlobalID())
+                m_fieldsALE[0]
+                    ->GetTrace()
+                    ->GetExpFromGeomId(i->GetGlobalID())
                     ->Reset();
             }
         }
@@ -392,7 +394,7 @@ void ALEPrescribe::v_UpdateGridVel(
         Array<OneD, NekDouble> tmpx(4), tmpy(4);
         for (int j = 0; j < 4; ++j)
         {
-            auto vert = expansion->GetGeom()->GetVertex(j);
+            auto vert                     = expansion->GetGeom()->GetVertex(j);
             Array<OneD, NekDouble> coords = m_coords[el->GetGlobalID()][j];
             // x/y velocity for each vertex
             /*tmpx[j] = 0.5 * 2 * M_PI / 7.07106781187 *
@@ -404,12 +406,12 @@ void ALEPrescribe::v_UpdateGridVel(
                       sin(2 * M_PI * coords[0] / 20) *
                       sin(2 * M_PI * coords[1] / 20);*/
 
-            tmpx[j] = 0.5 * 2 * M_PI / sqrt(50) * cos(2 * M_PI * time / sqrt(50)) *
-                                                  sin(2 * M_PI * vert->x() / 20) *
-                                                  sin(2 * M_PI * vert->y() / 20);
-            tmpy[j] = 0.5 * 2 * M_PI / sqrt(50) * cos(2 * M_PI * time / sqrt(50)) *
-                                                  sin(2 * M_PI * vert->x() / 20) *
-                                                  sin(2 * M_PI * vert->y() / 20);
+            tmpx[j] =
+                0.5 * 2 * M_PI / sqrt(50) * cos(2 * M_PI * time / sqrt(50)) *
+                sin(2 * M_PI * vert->x() / 20) * sin(2 * M_PI * vert->y() / 20);
+            tmpy[j] =
+                0.5 * 2 * M_PI / sqrt(50) * cos(2 * M_PI * time / sqrt(50)) *
+                sin(2 * M_PI * vert->x() / 20) * sin(2 * M_PI * vert->y() / 20);
         }
 
         // swap to match tensor product order of coefficients

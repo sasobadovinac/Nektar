@@ -194,8 +194,6 @@ public:
                         pBwd);
     }
 
-
-
     // Diffusion Calculate the physical derivatives
     SOLVER_UTILS_EXPORT void DiffuseCalcDerivative(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,

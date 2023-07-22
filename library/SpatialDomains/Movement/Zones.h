@@ -205,7 +205,8 @@ struct ZoneTranslate final : public ZoneBase
      * @param coordDim Coordinate dimension
      * @param velocity Vector of translation velocity in x,y,z direction
      */
-    ZoneTranslate(int id, const CompositeMap &domain, const int coordDim,
+    ZoneTranslate(
+        int id, const CompositeMap &domain, const int coordDim,
         const Array<OneD, LibUtilities::EquationSharedPtr> &velocityEqns,
         const Array<OneD, LibUtilities::EquationSharedPtr> &displacementEqns)
         : ZoneBase(MovementType::eTranslate, id, domain, coordDim),

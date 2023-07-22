@@ -100,8 +100,6 @@ protected:
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
             NullNekDoubleArrayOfArray) override;
-
-
 };
 } // namespace SolverUtils
 } // namespace Nektar

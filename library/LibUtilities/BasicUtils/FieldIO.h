@@ -276,6 +276,7 @@ public:
     {
         return v_GetFileEnding();
     };
+
 protected:
     /// Communicator to use when writing parallel format
     LibUtilities::CommSharedPtr m_comm;

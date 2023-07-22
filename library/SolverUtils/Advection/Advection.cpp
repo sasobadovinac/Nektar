@@ -90,8 +90,8 @@ void Advection::AdvectCoeffs(
     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
     const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
-    v_AdvectCoeffs(nConvectiveFields, pFields, pAdvVel, pInarray, pOutarray, pTime,
-             pFwd, pBwd);
+    v_AdvectCoeffs(nConvectiveFields, pFields, pAdvVel, pInarray, pOutarray,
+                   pTime, pFwd, pBwd);
 }
 
 template <typename DataType, typename TypeNekBlkMatSharedPtr>
@@ -334,17 +334,18 @@ void Advection::v_InitObject(
 }
 
 void Advection::v_AdvectCoeffs(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &advVel,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd)
+    const int nConvectiveFields,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble>> &advVel,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
-    boost::ignore_unused(nConvectiveFields, fields, advVel, inarray, outarray, time, pFwd, pBwd);
-    NEKERROR(ErrorUtil::efatal,
-             "Advection of coefficients not defined for this type of advection object.");
+    boost::ignore_unused(nConvectiveFields, fields, advVel, inarray, outarray,
+                         time, pFwd, pBwd);
+    NEKERROR(ErrorUtil::efatal, "Advection of coefficients not defined for "
+                                "this type of advection object.");
 }
 
 /**

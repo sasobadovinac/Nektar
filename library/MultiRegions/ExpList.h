@@ -1308,7 +1308,7 @@ protected:
                              Array<OneD, NekDouble> &out_d);
 
     virtual void v_Curl(Array<OneD, Array<OneD, NekDouble>> &Vel,
-                            Array<OneD, Array<OneD, NekDouble>> &Q);
+                        Array<OneD, Array<OneD, NekDouble>> &Q);
 
     virtual void v_CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
                             Array<OneD, Array<OneD, NekDouble>> &Q);
