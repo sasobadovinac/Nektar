@@ -58,7 +58,7 @@ std::string GlobalLinSysIterative::IteratSolverdef =
  * Solves a linear system using iterative methods.
  */
 
-/// Constructor for full direct matrix solve.
+/// Constructor for full iterative matrix solve.
 GlobalLinSysIterative::GlobalLinSysIterative(
     const GlobalLinSysKey &pKey, const std::weak_ptr<ExpList> &pExpList,
     const std::shared_ptr<AssemblyMap> &pLocToGloMap)
@@ -67,9 +67,10 @@ GlobalLinSysIterative::GlobalLinSysIterative(
       m_precon(NullPreconditionerSharedPtr), m_totalIterations(0),
       m_useProjection(false), m_numPrevSols(0)
 {
-    m_tolerance        = pLocToGloMap->GetIterativeTolerance();
-    m_maxiter          = pLocToGloMap->GetMaxIterations();
-    m_linSysIterSolver = pLocToGloMap->GetLinSysIterSolver();
+    m_tolerance           = pLocToGloMap->GetIterativeTolerance();
+    m_isAbsoluteTolerance = pLocToGloMap->IsAbsoluteTolerance();
+    m_maxiter             = pLocToGloMap->GetMaxIterations();
+    m_linSysIterSolver    = pLocToGloMap->GetLinSysIterSolver();
 
     LibUtilities::CommSharedPtr vComm =
         m_expList.lock()->GetComm()->GetRowComm();
@@ -80,10 +81,27 @@ GlobalLinSysIterative::GlobalLinSysIterative(
     m_numSuccessiveRHS = std::abs(m_numSuccessiveRHS);
     m_useProjection    = m_numSuccessiveRHS > 0;
 
+    // Check for advection matrix and switch to GMRES, if not already used
+    m_matrixType = StdRegions::MatrixTypeMap[pKey.GetMatrixType()];
+    m_isNonSymmetricLinSys =
+        m_matrixType.find("AdvectionDiffusionReaction") != string::npos;
+    if (m_isNonSymmetricLinSys &&
+        !m_linSysIterSolver.compare("ConjugateGradient"))
+    {
+        m_linSysIterSolver = "GMRES";
+        WARNINGL0(
+            false,
+            "Detected ConjugateGradient solver and a "
+            "Advection-Diffusion-Reaction matrix. "
+            "Switchted to a GMRES solver for this non-symmetric matrix type. "
+            "Change LinSysIterSolver to GMRES in the session file to suppress "
+            "this warning.");
+    }
+
     if (m_isAconjugate && 0 == m_linSysIterSolver.compare("GMRES"))
     {
-        WARNINGL0(false, "To use A-conjugate projection, the matrix should be "
-                         "symmetric positive definite.");
+        WARNINGL0(false, "To use A-conjugate projection, the matrix "
+                         "should be symmetric positive definite.");
     }
 }
 
@@ -481,6 +499,11 @@ void GlobalLinSysIterative::UpdateKnownSolutions(
 
 void GlobalLinSysIterative::Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn)
 {
+    if (m_isAbsoluteTolerance)
+    {
+        m_rhs_magnitude = 1.;
+        return;
+    }
     Array<OneD, NekDouble> vExchange(1, 0.0);
     if (m_map.size() > 0)
     {

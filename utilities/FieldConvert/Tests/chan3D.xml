@@ -22,9 +22,9 @@
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
-  <CONDITIONS>
-    <PARAMETERS>
-      <P> TimeStep      = 0.001     </P>
-    </PARAMETERS>
+    <CONDITIONS>
+        <PARAMETERS>
+            <P> TimeStep      = 0.001     </P>
+        </PARAMETERS>
     </CONDITIONS>
 </NEKTAR>

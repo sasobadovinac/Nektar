@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyInviscidBurger.cpp
+// File: UnsteadyInviscidBurger.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -258,14 +258,17 @@ void UnsteadyInviscidBurger::DoOdeProjection(
             int nQuadraturePts = GetNpoints();
 
             // Just copy over array
-            for (i = 0; i < nVariables; ++i)
+            if (inarray != outarray)
             {
-                Vmath::Vcopy(nQuadraturePts, inarray[i], 1, outarray[i], 1);
+                for (i = 0; i < nVariables; ++i)
+                {
+                    Vmath::Vcopy(nQuadraturePts, inarray[i], 1, outarray[i], 1);
+                }
             }
             break;
         }
 
-            // Continuous projection
+        // Continuous projection
         case MultiRegions::eGalerkin:
         case MultiRegions::eMixed_CG_Discontinuous:
         {

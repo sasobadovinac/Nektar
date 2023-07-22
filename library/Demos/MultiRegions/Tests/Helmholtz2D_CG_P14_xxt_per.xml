@@ -12,21 +12,21 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> Lambda = 1 </P> 
-            <P> IterativeSolverTolerance = 1e-8 </P> 
+            <P> Lambda = 1 </P>
+            <P> IterativeSolverTolerance = 1e-8 </P>
         </PARAMETERS>
-        
+
         <VARIABLES>
             <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[2] </B>
             <B ID="1"> C[3] </B>
             <B ID="2"> C[4] </B>
             <B ID="3"> C[5] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <!--<D VAR="u" VALUE="cos(PI*x)*cos(PI*y)" />-->
@@ -43,7 +43,7 @@
                 <P VAR="u" VALUE="[0]" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="Forcing">
             <E VAR="u" VALUE="-(Lambda+2*PI*PI)*cos(PI*x)*cos(PI*y)" />
         </FUNCTION>

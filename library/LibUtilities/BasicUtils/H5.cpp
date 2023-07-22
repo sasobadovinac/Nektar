@@ -69,7 +69,7 @@ PList::~PList()
 {
     Close();
 }
-void PList::Close()
+void PList::v_Close()
 {
     H5_CALL(H5Pclose, (m_Id));
     m_Id = H5I_INVALID_HID;
@@ -458,7 +458,7 @@ DataSpace::~DataSpace()
     Close();
 }
 
-void DataSpace::Close()
+void DataSpace::v_Close()
 {
     H5_CALL(H5Sclose, (m_Id));
     m_Id = H5I_INVALID_HID;
@@ -532,13 +532,13 @@ DataTypeSharedPtr DataType::String(size_t len)
     return ans;
 }
 
-void CompoundDataType::Close()
+void CompoundDataType::v_Close()
 {
     H5_CALL(H5Tclose, (m_Id));
     m_Id = H5I_INVALID_HID;
 }
 
-void DataType::Close()
+void DataType::v_Close()
 {
     H5_CALL(H5Tclose, (m_Id));
     m_Id = H5I_INVALID_HID;
@@ -571,7 +571,7 @@ PredefinedDataType::PredefinedDataType(hid_t id) : DataType(id)
 {
 }
 
-void PredefinedDataType::Close()
+void PredefinedDataType::v_Close()
 {
     // No-op
     m_Id = H5I_INVALID_HID;
@@ -616,7 +616,7 @@ Attribute::~Attribute()
 {
     Close();
 }
-void Attribute::Close()
+void Attribute::v_Close()
 {
     H5_CALL(H5Aclose, (m_Id));
     m_Id = H5I_INVALID_HID;
@@ -655,12 +655,12 @@ File::~File()
     }
 }
 
-void File::Close()
+void File::v_Close()
 {
     H5_CALL(H5Fclose, (m_Id));
     m_Id = H5I_INVALID_HID;
 }
-hsize_t File::GetNumElements()
+hsize_t File::v_GetNumElements()
 {
     GroupSharedPtr root = OpenGroup("/");
     return root->GetNumElements();
@@ -677,13 +677,13 @@ Group::~Group()
     }
 }
 
-void Group::Close()
+void Group::v_Close()
 {
     H5_CALL(H5Gclose, (m_Id));
     m_Id = H5I_INVALID_HID;
 }
 
-hsize_t Group::GetNumElements()
+hsize_t Group::v_GetNumElements()
 {
     H5G_info_t info;
     H5_CALL(H5Gget_info, (m_Id, &info));
@@ -711,7 +711,7 @@ DataSet::~DataSet()
     Close();
 }
 
-void DataSet::Close()
+void DataSet::v_Close()
 {
     H5_CALL(H5Dclose, (m_Id));
     m_Id = H5I_INVALID_HID;

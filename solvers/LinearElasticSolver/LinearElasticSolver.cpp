@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LinearElasticSolver.cpp
+// File: LinearElasticSolver.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

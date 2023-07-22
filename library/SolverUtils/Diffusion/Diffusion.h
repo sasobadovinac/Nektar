@@ -146,17 +146,10 @@ public:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
-
-    SOLVER_UTILS_EXPORT void DiffuseCoeffs(
-        const std::size_t nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
-            NullNekDoubleArrayOfArray,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray)
+    {
+        v_Diffuse(nConvectiveFields, fields, inarray, outarray, pFwd, pBwd);
+    }
 
     SOLVER_UTILS_EXPORT void Diffuse(
         const std::size_t nConvectiveFields,
@@ -166,19 +159,24 @@ public:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray)
+    {
+        m_time = time;
+        v_Diffuse(nConvectiveFields, fields, inarray, outarray, pFwd, pBwd);
+    }
 
     SOLVER_UTILS_EXPORT void DiffuseCoeffs(
         const std::size_t nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd,
-        TensorOfArray3D<NekDouble> &qfield, Array<OneD, int> &nonZeroIndex)
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray)
     {
         v_DiffuseCoeffs(nConvectiveFields, fields, inarray, outarray, pFwd,
-                        pBwd, qfield, nonZeroIndex);
+                        pBwd);
     }
 
     SOLVER_UTILS_EXPORT void DiffuseCoeffs(
@@ -189,7 +187,14 @@ public:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray)
+    {
+        m_time = time;
+        v_DiffuseCoeffs(nConvectiveFields, fields, inarray, outarray, pFwd,
+                        pBwd);
+    }
+
+
 
     // Diffusion Calculate the physical derivatives
     SOLVER_UTILS_EXPORT void DiffuseCalcDerivative(
@@ -199,7 +204,10 @@ public:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray)
+    {
+        v_DiffuseCalcDerivative(fields, inarray, qfields, pFwd, pBwd);
+    }
 
     /// Diffusion Volume FLux
 
@@ -288,8 +296,6 @@ public:
         TensorOfArray3D<NekDouble> &Fwdflux,
         TensorOfArray3D<NekDouble> &Bwdflux,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
-
-    SOLVER_UTILS_EXPORT void FluxVec(TensorOfArray3D<NekDouble> &fluxvector);
 
     template <typename FuncPointerT, typename ObjectPointerT>
     void SetFluxVector(FuncPointerT func, ObjectPointerT obj)
@@ -388,17 +394,6 @@ public:
         return v_GetFluxTensor();
     }
 
-    /// Get the average and jump value of conservative variables on trace
-    SOLVER_UTILS_EXPORT void ConsVarAveJump(
-        const std::size_t nConvectiveFields, const size_t npnts,
-        const Array<OneD, const Array<OneD, NekDouble>> &vFwd,
-        const Array<OneD, const Array<OneD, NekDouble>> &vBwd,
-        Array<OneD, Array<OneD, NekDouble>> &aver,
-        Array<OneD, Array<OneD, NekDouble>> &jump)
-    {
-        v_ConsVarAveJump(nConvectiveFields, npnts, vFwd, vBwd, aver, jump);
-    }
-
     /// Get trace normal
     SOLVER_UTILS_EXPORT const Array<OneD, const Array<OneD, NekDouble>>
         &GetTraceNormal()
@@ -430,7 +425,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) = 0;
 
     SOLVER_UTILS_EXPORT virtual void v_DiffuseCoeffs(
         const std::size_t nConvectiveFields,
@@ -439,22 +434,6 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd);
-
-    SOLVER_UTILS_EXPORT virtual void v_DiffuseCoeffs(
-        const std::size_t nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, Array<OneD, NekDouble>> &vFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &vBwd,
-        TensorOfArray3D<NekDouble> &qfield, Array<OneD, int> &nonZeroIndex);
-
-    SOLVER_UTILS_EXPORT virtual void v_ConsVarAveJump(
-        const std::size_t nConvectiveFields, const size_t npnts,
-        const Array<OneD, const Array<OneD, NekDouble>> &vFwd,
-        const Array<OneD, const Array<OneD, NekDouble>> &vBwd,
-        Array<OneD, Array<OneD, NekDouble>> &aver,
-        Array<OneD, Array<OneD, NekDouble>> &jump);
 
     /// Diffusion Flux, calculate the physical derivatives
     SOLVER_UTILS_EXPORT virtual void v_DiffuseCalcDerivative(
@@ -541,12 +520,6 @@ protected:
 
     SOLVER_UTILS_EXPORT virtual const Array<OneD, const Array<OneD, NekDouble>>
         &v_GetTraceNormal();
-
-    /// Compute primary derivatives
-    SOLVER_UTILS_EXPORT virtual void v_GetPrimVar(
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &primVar);
 
     /// Compute divergence and curl squared
     SOLVER_UTILS_EXPORT void GetDivCurl(

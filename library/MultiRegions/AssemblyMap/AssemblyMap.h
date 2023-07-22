@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AssemblyMap.h
+// File: AssemblyMap.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -306,6 +306,7 @@ public:
     MULTI_REGIONS_EXPORT GlobalSysSolnType GetGlobalSysSolnType() const;
     MULTI_REGIONS_EXPORT PreconditionerType GetPreconType() const;
     MULTI_REGIONS_EXPORT NekDouble GetIterativeTolerance() const;
+    MULTI_REGIONS_EXPORT bool IsAbsoluteTolerance() const;
     MULTI_REGIONS_EXPORT int GetMaxIterations() const;
     MULTI_REGIONS_EXPORT int GetSuccessiveRHS() const;
     MULTI_REGIONS_EXPORT std::string GetLinSysIterSolver() const;
@@ -407,6 +408,7 @@ protected:
 
     /// Tolerance for iterative solver
     NekDouble m_iterativeTolerance;
+    bool m_isAbsoluteTolerance;
 
     /// sucessive RHS  for iterative solver
     int m_successiveRHS;
@@ -441,10 +443,6 @@ protected:
 
     void GlobalToLocalBndWithoutSign(const Array<OneD, const NekDouble> &global,
                                      Array<OneD, NekDouble> &loc);
-
-private:
-    /// Mapping information for previous level in MultiLevel Solver
-    PatchMapSharedPtr m_patchMapFromPrevLevel;
 
     virtual int v_GetLocalToGlobalMap(const int i) const;
 
@@ -510,6 +508,10 @@ private:
     /// Generate a linear space mapping from existing mapping
     virtual std::shared_ptr<AssemblyMap> v_LinearSpaceMap(
         const ExpList &locexp, GlobalSysSolnType solnType);
+
+private:
+    /// Mapping information for previous level in MultiLevel Solver
+    PatchMapSharedPtr m_patchMapFromPrevLevel;
 };
 
 } // namespace MultiRegions

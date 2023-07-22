@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSysDirectXxt.h
+// File: GlobalLinSysPETScFull.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: GlobalLinSysDirectXxt header
+// Description: GlobalLinSysPETScFull header
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -73,18 +73,20 @@ public:
 
     MULTI_REGIONS_EXPORT virtual ~GlobalLinSysPETScFull();
 
+protected:
+    /// Solve the linear system for given input and output vectors
+    /// using a specified local to global map.
+    virtual void v_Solve(const Array<OneD, const NekDouble> &in,
+                         Array<OneD, NekDouble> &out,
+                         const AssemblyMapSharedPtr &locToGloMap,
+                         const Array<OneD, const NekDouble> &dirForcing =
+                             NullNekDouble1DArray) override;
+    virtual void v_DoMatrixMultiply(const Array<OneD, const NekDouble> &input,
+                                    Array<OneD, NekDouble> &output) override;
+
 private:
     // Local to global map.
     std::shared_ptr<AssemblyMap> m_locToGloMap;
-
-    /// Solve the linear system for given input and output vectors
-    /// using a specified local to global map.
-    virtual void v_Solve(
-        const Array<OneD, const NekDouble> &in, Array<OneD, NekDouble> &out,
-        const AssemblyMapSharedPtr &locToGloMap,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
-    virtual void v_DoMatrixMultiply(const Array<OneD, const NekDouble> &input,
-                                    Array<OneD, NekDouble> &output);
 };
 } // namespace MultiRegions
 } // namespace Nektar

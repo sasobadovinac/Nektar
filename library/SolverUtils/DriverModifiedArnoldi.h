@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File DriverModifiedArnoldi.h
+// File: DriverModifiedArnoldi.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -72,10 +72,10 @@ protected:
     virtual ~DriverModifiedArnoldi();
 
     /// Virtual function for initialisation implementation.
-    virtual void v_InitObject(std::ostream &out = std::cout);
+    virtual void v_InitObject(std::ostream &out = std::cout) override;
 
     /// Virtual function for solve implementation.
-    virtual void v_Execute(std::ostream &out = std::cout);
+    virtual void v_Execute(std::ostream &out = std::cout) override;
 
 private:
     /// Generates a new vector in the sequence by applying the linear operator.

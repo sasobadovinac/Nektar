@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MultiRegsions.hpp
+// File: MultiRegions.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -115,6 +115,13 @@ enum PreconditionerType
     eLinearWithLowEnergy,
     eBlock,
     eLinearWithBlock
+};
+
+enum GJPStabilisationType
+{
+    eNoGJPStabilisation,
+    eExplicitGJPStabilisation,
+    eSemiImplicitGJPStabilisation
 };
 
 const char *const PreconditionerTypeMap[] = {

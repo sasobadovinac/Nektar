@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VelocityCorrectionScheme.h
+// File: VelocityCorrectionScheme.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -64,7 +64,7 @@ public:
 
     virtual ~VelocityCorrectionScheme();
 
-    virtual void v_InitObject(bool DeclareField = true);
+    virtual void v_InitObject(bool DeclareField = true) override;
 
     void SetUpPressureForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
@@ -96,7 +96,10 @@ public:
     void SolveUnsteadyStokesSystem(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
-        const NekDouble a_iixDt);
+        const NekDouble a_iixDt)
+    {
+        v_SolveUnsteadyStokesSystem(inarray, outarray, time, a_iixDt);
+    }
 
     void EvaluateAdvection_SetPressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
@@ -160,24 +163,26 @@ protected:
     /// Value of aii_dt used to compute Stokes flowrate solution.
     NekDouble m_flowrateAiidt;
 
+    static std::string solverTypeLookupId;
+
     void SetupFlowrate(NekDouble aii_dt);
     NekDouble MeasureFlowrate(
         const Array<OneD, Array<OneD, NekDouble>> &inarray);
 
     // Virtual functions
-    virtual bool v_PostIntegrate(int step);
+    virtual bool v_PostIntegrate(int step) override;
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
-    virtual void v_TransCoeffToPhys(void);
+    virtual void v_TransCoeffToPhys(void) override;
 
-    virtual void v_TransPhysToCoeff(void);
+    virtual void v_TransPhysToCoeff(void) override;
 
-    virtual void v_DoInitialise(void);
+    virtual void v_DoInitialise(bool dumpInitialConditions = true) override;
 
-    virtual Array<OneD, bool> v_GetSystemSingularChecks();
+    virtual Array<OneD, bool> v_GetSystemSingularChecks() override;
 
-    virtual int v_GetForceDimension();
+    virtual int v_GetForceDimension() override;
 
     virtual void v_SetUpPressureForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
@@ -194,11 +199,16 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble aii_Dt);
 
+    virtual void v_SolveUnsteadyStokesSystem(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
+        const NekDouble a_iixDt);
+
     virtual void v_EvaluateAdvection_SetPressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    virtual bool v_RequireFwdTrans()
+    virtual bool v_RequireFwdTrans() override
     {
         return false;
     }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MMFSystem.h
+// File: MMFSystem.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,7 +36,6 @@
 #define NEKTAR_SOLVERUTILS_MMFSYSTEM_H
 
 #include <SolverUtils/UnsteadySystem.h>
-// #include <SolverUtils/Advection/Advection.h>
 
 namespace Nektar
 {
@@ -165,7 +164,7 @@ public:
 
     SOLVER_UTILS_EXPORT virtual ~MMFSystem();
 
-    SOLVER_UTILS_EXPORT virtual void v_GenerateSummary(SummaryList &s);
+    SOLVER_UTILS_EXPORT virtual void v_GenerateSummary(SummaryList &s) override;
 
     SOLVER_UTILS_EXPORT void MMFInitObject(
         const Array<OneD, const Array<OneD, NekDouble>> &Anisotropy,
@@ -220,8 +219,6 @@ protected:
         m_dedxi_cdot_e;
 
     SpatialDomains::GeomMMF m_MMFdir;
-
-    Array<OneD, NekDouble> m_MFlength;
 
     void SetUpMovingFrames(
         const Array<OneD, const Array<OneD, NekDouble>> &Anisotropy,

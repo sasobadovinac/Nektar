@@ -31,6 +31,7 @@
 // Description: Body forcing
 //
 ///////////////////////////////////////////////////////////////////////////////
+#include <boost/algorithm/string.hpp>
 
 #include <MultiRegions/ExpList.h>
 #include <SolverUtils/Forcing/ForcingBody.h>
@@ -75,12 +76,8 @@ void ForcingBody::v_InitObject(
     ASSERTL0(m_session->DefinesFunction(m_funcName),
              "Function '" + m_funcName + "' not defined.");
 
-    bool singleMode, halfMode;
-    m_session->MatchSolverInfo("ModeType", "SingleMode", singleMode, false);
-    m_session->MatchSolverInfo("ModeType", "HalfMode", halfMode, false);
-    bool homogeneous = pFields[0]->GetExpType() == MultiRegions::e3DH1D ||
-                       pFields[0]->GetExpType() == MultiRegions::e3DH2D;
-    m_transform = (singleMode || halfMode || homogeneous);
+    m_homogeneous = pFields[0]->GetExpType() == MultiRegions::e3DH1D ||
+                    pFields[0]->GetExpType() == MultiRegions::e3DH2D;
 
     // Time function is optional
     funcNameElmt = pForce->FirstChildElement("BODYFORCETIMEFCN");
@@ -105,16 +102,63 @@ void ForcingBody::v_InitObject(
         m_hasTimeFcnScaling = true;
     }
 
-    m_Forcing = Array<OneD, Array<OneD, NekDouble>>(m_NumVariable);
-    for (int i = 0; i < m_NumVariable; ++i)
-    {
-        m_Forcing[i] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
-    }
-
-    Array<OneD, Array<OneD, NekDouble>> tmp(pFields.size());
+    Array<OneD, Array<OneD, NekDouble>> tmp(m_NumVariable);
     for (int i = 0; i < m_NumVariable; ++i)
     {
         tmp[i] = pFields[i]->GetPhys();
+    }
+
+    std::map<std::string, int> varIndex;
+    for (int i = 0; i < m_NumVariable; ++i)
+    {
+        varIndex[m_session->GetVariable(i)] = i;
+        if (m_session->DefinesFunction(m_funcName, m_session->GetVariable(i)))
+        {
+            m_eqnEvars[i] = vector<int>();
+        }
+    }
+    m_hasEvars = false;
+    for (auto &it : m_eqnEvars)
+    {
+        string varStr = m_session->GetVariable(it.first);
+        if (LibUtilities::eFunctionTypeExpression ==
+            m_session->GetFunctionType(m_funcName, varStr))
+        {
+            LibUtilities::EquationSharedPtr eqn =
+                m_session->GetFunction(m_funcName, varStr);
+            string vlist = eqn->GetVlist();
+            if (!boost::iequals(vlist, "x y z t"))
+            {
+                // Coupled forcing
+                m_hasEvars = true;
+                std::vector<std::string> vars;
+                boost::split(vars, vlist, boost::is_any_of(", "));
+                for (size_t j = 4; j < vars.size(); ++j)
+                {
+                    if (vars[j].size() != 0 &&
+                        varIndex.find(vars[j]) == varIndex.end())
+                    {
+                        NEKERROR(ErrorUtil::efatal,
+                                 "Variable '" + vars[j] +
+                                     "' cannot be used as equation variable in "
+                                     "the body force '" +
+                                     m_funcName + "'.");
+                    }
+                    if (vars[j].size() &&
+                        varIndex.find(vars[j]) != varIndex.end())
+                    {
+                        it.second.push_back(varIndex[vars[j]]);
+                    }
+                }
+            }
+        }
+    }
+
+    m_Forcing = Array<OneD, Array<OneD, NekDouble>>(m_NumVariable);
+    for (const auto &it : m_eqnEvars)
+    {
+        m_Forcing[it.first] =
+            Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
     }
 
     Update(pFields, tmp, 0.0);
@@ -124,49 +168,53 @@ void ForcingBody::Update(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     const Array<OneD, Array<OneD, NekDouble>> &inarray, const NekDouble &time)
 {
-    for (int i = 0; i < m_NumVariable; ++i)
+    std::vector<Array<OneD, const NekDouble>> fielddata;
+    int nq = pFields[0]->GetNpoints();
+    if (m_hasEvars)
     {
-        if (LibUtilities::eFunctionTypeExpression ==
-            m_session->GetFunctionType(m_funcName, m_session->GetVariable(i)))
-        {
-            LibUtilities::EquationSharedPtr eqn =
-                m_session->GetFunction(m_funcName, m_session->GetVariable(i));
-            if (!boost::iequals(eqn->GetVlist(), "x y z t"))
-            {
-                // Coupled forcing
-                int nq = pFields[0]->GetNpoints();
-                Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq), t(nq, time);
-                std::string varstr                                  = "x y z";
-                std::vector<Array<OneD, const NekDouble>> fielddata = {xc, yc,
-                                                                       zc, t};
-
-                for (int j = 0; j < m_NumVariable; ++j)
-                {
-                    varstr += " " + m_session->GetVariable(j);
-                    fielddata.push_back(inarray[j]);
-                }
-
-                // Evaluate function
-                m_session->GetFunction(m_funcName, m_session->GetVariable(i))
-                    ->Evaluate(fielddata, m_Forcing[i]);
-                continue;
-            }
-        }
-        std::string s_FieldStr = m_session->GetVariable(i);
-        ASSERTL0(m_session->DefinesFunction(m_funcName, s_FieldStr),
-                 "Variable '" + s_FieldStr + "' not defined.");
-        GetFunction(pFields, m_session, m_funcName, true)
-            ->Evaluate(s_FieldStr, m_Forcing[i], time);
+        Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq), t(nq, time);
+        pFields[0]->GetCoords(xc, yc, zc);
+        fielddata.push_back(xc);
+        fielddata.push_back(yc);
+        fielddata.push_back(zc);
+        fielddata.push_back(t);
     }
 
-    // If singleMode or halfMode, transform the forcing term to be in
-    // physical space in the plane, but Fourier space in the homogeneous
-    // direction
-    if (m_transform)
+    for (const auto &it : m_eqnEvars)
     {
-        for (int i = 0; i < m_NumVariable; ++i)
+        int i = it.first;
+        if (it.second.size() > 0)
         {
-            pFields[0]->HomogeneousFwdTrans(m_Forcing[i], m_Forcing[i]);
+            // Coupled forcing, reset fielddata for each equation
+            fielddata.resize(4);
+            for (int j : it.second)
+            {
+                if (m_homogeneous && pFields[i]->GetWaveSpace())
+                {
+                    Array<OneD, NekDouble> tmp(nq);
+                    pFields[i]->HomogeneousBwdTrans(nq, inarray[j], tmp);
+                    fielddata.push_back(tmp);
+                }
+                else
+                {
+                    fielddata.push_back(inarray[j]);
+                }
+            }
+            m_session->GetFunction(m_funcName, m_session->GetVariable(i))
+                ->Evaluate(fielddata, m_Forcing[i]);
+        }
+        else
+        {
+            GetFunction(pFields, m_session, m_funcName, true)
+                ->Evaluate(m_session->GetVariable(i), m_Forcing[i], time);
+        }
+
+        // If homogeneous expansion is used, transform the forcing term to
+        // be in the Fourier space
+        if (m_homogeneous)
+        {
+            pFields[i]->HomogeneousFwdTrans(pFields[i]->GetTotPoints(),
+                                            m_Forcing[i], m_Forcing[i]);
         }
     }
 }
@@ -179,11 +227,11 @@ void ForcingBody::v_Apply(
     if (m_hasTimeFcnScaling)
     {
         Array<OneD, NekDouble> TimeFcn(1);
+        EvaluateTimeFunction(time, m_timeFcnEqn, TimeFcn);
 
-        for (int i = 0; i < m_NumVariable; i++)
+        for (const auto &it : m_eqnEvars)
         {
-            EvaluateTimeFunction(time, m_timeFcnEqn, TimeFcn);
-
+            int i = it.first;
             Vmath::Svtvp(outarray[i].size(), TimeFcn[0], m_Forcing[i], 1,
                          outarray[i], 1, outarray[i], 1);
         }
@@ -192,8 +240,9 @@ void ForcingBody::v_Apply(
     {
         Update(fields, inarray, time);
 
-        for (int i = 0; i < m_NumVariable; i++)
+        for (const auto &it : m_eqnEvars)
         {
+            int i = it.first;
             Vmath::Vadd(outarray[i].size(), outarray[i], 1, m_Forcing[i], 1,
                         outarray[i], 1);
         }
@@ -211,13 +260,12 @@ void ForcingBody::v_ApplyCoeff(
     if (m_hasTimeFcnScaling)
     {
         Array<OneD, NekDouble> TimeFcn(1);
+        EvaluateTimeFunction(time, m_timeFcnEqn, TimeFcn);
 
-        for (int i = 0; i < m_NumVariable; ++i)
+        for (const auto &it : m_eqnEvars)
         {
-            EvaluateTimeFunction(time, m_timeFcnEqn, TimeFcn);
-
+            int i = it.first;
             fields[i]->FwdTrans(m_Forcing[i], tmp);
-
             Vmath::Svtvp(ncoeff, TimeFcn[0], tmp, 1, outarray[i], 1,
                          outarray[i], 1);
         }
@@ -226,10 +274,10 @@ void ForcingBody::v_ApplyCoeff(
     {
         Update(fields, inarray, time);
 
-        for (int i = 0; i < m_NumVariable; ++i)
+        for (const auto &it : m_eqnEvars)
         {
+            int i = it.first;
             fields[i]->FwdTrans(m_Forcing[i], tmp);
-
             Vmath::Vadd(ncoeff, outarray[i], 1, tmp, 1, outarray[i], 1);
         }
     }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSysKey.cpp
+// File: GlobalLinSysKey.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -53,14 +53,13 @@ namespace MultiRegions
  * constructors include additional parameters for customising the
  * global operator matrix.
  */
-
 GlobalLinSysKey::GlobalLinSysKey(const StdRegions::MatrixType matrixType,
                                  const AssemblyMapSharedPtr &locToGloMap,
                                  const StdRegions::ConstFactorMap &factors,
                                  const StdRegions::VarCoeffMap &varCoeffs,
                                  const VarFactorsMap &varFactors)
     : GlobalMatrixKey(matrixType, locToGloMap, factors, varCoeffs),
-      m_solnType(locToGloMap->GetGlobalSysSolnType()), m_varFactors(varFactors),
+      m_solnType(eNoSolnType), m_varFactors(varFactors),
       m_varFactors_hashes(varFactors.size())
 {
     // Create hash
@@ -72,6 +71,12 @@ GlobalLinSysKey::GlobalLinSysKey(const StdRegions::MatrixType matrixType,
             x->second.begin(), x->second.begin() + x->second.size());
         boost::hash_combine(m_varFactors_hashes[i], (int)x->first);
         i++;
+    }
+
+    // Check AssemblyMapSharedPtr == Null
+    if (locToGloMap != NullAssemblyMapSharedPtr)
+    {
+        m_solnType = locToGloMap->GetGlobalSysSolnType();
     }
 }
 

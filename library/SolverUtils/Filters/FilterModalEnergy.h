@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterModalEnergy.h
+// File: FilterModalEnergy.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,7 +35,6 @@
 #ifndef NEKTAR_SOLVERUTILS_FILTERS_FILTERMODALENERGY_H
 #define NEKTAR_SOLVERUTILS_FILTERS_FILTERMODALENERGY_H
 
-#include <LibUtilities/BasicUtils/Equation.h>
 #include <MultiRegions/ContField.h>
 #include <MultiRegions/ContField3DHomogeneous1D.h>
 #include <MultiRegions/ContField3DHomogeneous2D.h>
@@ -76,14 +75,14 @@ public:
 protected:
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
-    virtual bool v_IsTimeDependent();
+        const NekDouble &time) override;
+    virtual bool v_IsTimeDependent() override;
     NekDouble L2Error(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         unsigned int field, const NekDouble &time);

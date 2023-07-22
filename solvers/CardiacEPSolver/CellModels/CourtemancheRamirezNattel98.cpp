@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CourtemancheRamirezNattel.cpp
+// File: CourtemancheRamirezNattel98.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -161,6 +161,7 @@ void CourtemancheRamirezNattel98::v_Update(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
+    boost::ignore_unused(time);
     ASSERTL0(inarray.get() != outarray.get(),
              "Must have different arrays for input and output.");
 
@@ -186,8 +187,8 @@ void CourtemancheRamirezNattel98::v_Update(
     //  19  K_i  Potassium
     //  20  Ca_rel Calcium Rel
     //  21  Ca_up  Calcium up
-    int n = m_nq;
-    int i = 0;
+    size_t n = m_nq;
+    size_t i = 0;
     NekDouble alpha, beta;
     Vmath::Zero(n, outarray[0], 1);
 
@@ -626,7 +627,7 @@ void CourtemancheRamirezNattel98::v_SetInitialConditions()
     Vmath::Fill(m_nq, 1.488, m_cellSol[20], 1);
 }
 
-std::string CourtemancheRamirezNattel98::v_GetCellVarName(unsigned int idx)
+std::string CourtemancheRamirezNattel98::v_GetCellVarName(size_t idx)
 {
     switch (idx)
     {

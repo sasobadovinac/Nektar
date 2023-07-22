@@ -57,6 +57,23 @@ protected:
     Advection3DHomogeneous1D(std::string advType);
 
     std::string m_advType;
+
+    virtual void v_InitObject(
+        LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
+
+    virtual void v_Advect(
+        const int nConvField,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray) override;
+
+private:
     SolverUtils::AdvectionSharedPtr m_planeAdv;
     int m_numPoints;
     int m_numPointsPlane;
@@ -72,22 +89,6 @@ protected:
     Array<OneD, Array<OneD, Array<OneD, Array<OneD, NekDouble>>>>
         m_fluxVecPlane;
 
-    virtual void v_InitObject(
-        LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
-
-    virtual void v_Advect(
-        const int nConvField,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &advVel,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
-            NullNekDoubleArrayOfArray,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
-
-private:
     void ModifiedFluxVector(
         const Array<OneD, Array<OneD, NekDouble>> &physfield,
         Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);

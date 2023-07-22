@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AdjointAdvection.h
+// File: AdjointAdvection.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -69,7 +69,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray) override;
 };
 
 } // namespace Nektar

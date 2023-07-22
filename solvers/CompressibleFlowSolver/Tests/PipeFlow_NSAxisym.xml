@@ -2,11 +2,11 @@
 <NEKTAR>
     <EXPANSIONS>
         <E COMPOSITE="C[0]" BASISTYPE="Modified_A,Modified_A" NUMMODES="6,6"
-           POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="12,12"
-           FIELDS="rho,rhou,rhov,E" />
+            POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="12,12"
+            FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
 
-   <CONDITIONS>
+    <CONDITIONS>
         <PARAMETERS>
             <!-- Simulation parameters -->
             <P> CFL            = 0.1                </P>
@@ -37,8 +37,8 @@
             <P> Re             = 1e2                </P>
             <P> Pr             = 0.72               </P>
             <P> mu             = rhoIn*vIn*2 / Re   </P>
-       </PARAMETERS>
-        
+        </PARAMETERS>
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE" VALUE="NavierStokesCFEAxisym" />
             <I PROPERTY="Projection" VALUE="DisContinuous" />
@@ -106,9 +106,9 @@
 
     </CONDITIONS>
 
-   <FORCING>
-       <FORCE TYPE="AxiSymmetric">
-       </FORCE>
+    <FORCING>
+        <FORCE TYPE="AxiSymmetric">
+        </FORCE>
     </FORCING>
 
     <GEOMETRY DIM="2" SPACE="2">

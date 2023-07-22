@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ShallowWaterSystem.cpp
+// File: ShallowWaterSystem.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

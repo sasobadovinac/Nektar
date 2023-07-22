@@ -111,7 +111,6 @@ Restarted Arnoldi Method (ARPACK).
 Navier-Stokes equations (compressible or incompressible).
 \end{itemize}
 
-
 \subsection{Variables}
 
 These define the number (and name) of solution variables. Each variable is
@@ -165,6 +164,13 @@ the pressure variable \texttt{p} is generally stiffer: we therefore opt for a
 more expensive \texttt{FullLinearSpaceWithLowEnergyBlock} preconditioner and a
 larger residual of $10^{-6}$. We now outline the choices that one can use for
 each of these parameters and give a brief description of what they mean.
+
+By default, iterative linear solvers uses a relative tolerance specified in the
+above exmaple. Setting the property \texttt{<I PROPERTY="AbsoluteTolerance" VALUE="True">}
+will override the default and force the solver to use the absolute tolerance.
+Note that the value of tolerance is still
+controlled by setting \texttt{<I PROPERTY=IterativeSolverTolerance" VALUE="1.e-8"/>}
+and if not set the default tolerance will be used.
 
 Defaults for all fields can be defined by setting the equivalent property in
 the \texttt{SOLVERINFO} section. Parameters defined in this section will

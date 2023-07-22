@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdNodalTetExp.h
+// File: StdNodalTetExp.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -51,7 +51,7 @@ public:
                                       const LibUtilities::BasisKey &Bc,
                                       const LibUtilities::PointsType Ntype);
     STD_REGIONS_EXPORT StdNodalTetExp(const StdNodalTetExp &T);
-    STD_REGIONS_EXPORT ~StdNodalTetExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdNodalTetExp() override = default;
 
     //-------------------------------
     // Nodal basis specific routines

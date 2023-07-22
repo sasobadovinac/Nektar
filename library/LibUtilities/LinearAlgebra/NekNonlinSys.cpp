@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File:  NekNonlinSys.cpp
+// File: NekNonlinSys.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,7 +29,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description:  NekNonlinSys definition
+// Description: NekNonlinSys definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -89,7 +89,7 @@ NekNonlinSys::NekNonlinSys(const LibUtilities::SessionReaderSharedPtr &pSession,
 
     if (pSession->DefinesGlobalSysSolnInfo(variable, "NonlinIterTolRelativeL2"))
     {
-        m_NonlinIterTolRelativeL2 = boost::lexical_cast<int>(
+        m_NonlinIterTolRelativeL2 = boost::lexical_cast<NekDouble>(
             pSession->GetGlobalSysSolnInfo(variable, "NonlinIterTolRelativeL2")
                 .c_str());
     }
@@ -103,7 +103,7 @@ NekNonlinSys::NekNonlinSys(const LibUtilities::SessionReaderSharedPtr &pSession,
     if (pSession->DefinesGlobalSysSolnInfo(variable,
                                            "LinSysRelativeTolInNonlin"))
     {
-        m_LinSysRelativeTolInNonlin = boost::lexical_cast<int>(
+        m_LinSysRelativeTolInNonlin = boost::lexical_cast<NekDouble>(
             pSession
                 ->GetGlobalSysSolnInfo(variable, "LinSysRelativeTolInNonlin")
                 .c_str());
@@ -114,9 +114,6 @@ NekNonlinSys::NekNonlinSys(const LibUtilities::SessionReaderSharedPtr &pSession,
                                 m_LinSysRelativeTolInNonlin,
                                 pKey.m_LinSysRelativeTolInNonlin);
     }
-
-    // cout << " m_LinSysRelativeTolInNonlin = " << m_LinSysRelativeTolInNonlin
-    // << endl;
 
     m_LinSysIterSolverType = pKey.m_LinSysIterSolverTypeInNonlin;
     if (pSession->DefinesGlobalSysSolnInfo(variable,
@@ -151,14 +148,6 @@ void NekNonlinSys::v_InitObject()
 
 NekNonlinSys::~NekNonlinSys()
 {
-}
-
-void NekNonlinSys::v_SetupNekNonlinSystem(
-    const int nGlobal, const Array<OneD, const NekDouble> &pInput,
-    const Array<OneD, const NekDouble> &pSource, const int nDir)
-{
-    boost::ignore_unused(nGlobal, pInput, pSource, nDir);
-    NEKERROR(ErrorUtil::efatal, "v_SetupNekNonlinSystem not defined");
 }
 
 } // namespace LibUtilities

@@ -59,7 +59,7 @@ ProcessCreateExp::~ProcessCreateExp()
 {
 }
 
-void ProcessCreateExp::Process(po::variables_map &vm)
+void ProcessCreateExp::v_Process(po::variables_map &vm)
 {
     if (m_f->m_graph)
     {

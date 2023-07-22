@@ -63,6 +63,9 @@ void AdvectionNonConservative::v_InitObject(
     Advection::v_InitObject(pSession, pFields);
 }
 
+/**
+ *
+ */
 void AdvectionNonConservative::v_Advect(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,

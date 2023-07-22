@@ -5,73 +5,73 @@
 
     <CONDITIONS>
 
-      <SOLVERINFO>
+        <SOLVERINFO>
             <I PROPERTY="EQTYPE" VALUE="Helmholtz" />
             <I PROPERTY="Projection" VALUE="Continuous" />
             <I PROPERTY="GLOBALSYSSOLN"  VALUE="IterativeStaticCond" />
-      </SOLVERINFO>
+        </SOLVERINFO>
 
-         
-      <PARAMETERS>
-        <P> Lambda = 1 </P> 
-        <P> IterativeSolverTolerance = 1e-8 </P> 
-      </PARAMETERS>
-      
-      <GLOBALSYSSOLNINFO>
-        <V VAR="u">
-          <I PROPERTY="GlobalSysSoln"    VALUE="IterativeStaticCond" />
-            <I PROPERTY="Preconditioner"   VALUE="LowEnergyBlock"/>
-        </V>
-      </GLOBALSYSSOLNINFO>
-      
-      <VARIABLES>
-        <V ID="0"> u </V>
-      </VARIABLES>
-      
-      <BOUNDARYREGIONS>
-        <B ID="0"> C[2]       </B>  <!-- X=0.1  !-->
-        <B ID="1"> C[3]       </B>  <!-- Y=0    !-->
-        <B ID="2"> C[4]       </B>  <!-- Z=0    !-->
-        <B ID="3"> C[5]       </B>  <!-- Y=0.1  !-->
-        <B ID="4"> C[6]       </B>  <!-- Z=0.1  !-->
-        <B ID="5"> C[7]       </B>  <!-- X=0    !-->
-      </BOUNDARYREGIONS>
-      
-      <BOUNDARYCONDITIONS>
-        <REGION REF="0">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-        <REGION REF="1">
-          <P VAR="u" VALUE="[3]" />
-        </REGION>
-        <REGION REF="2">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-        <REGION REF="3">
-          <P VAR="u" VALUE="[1]" />
-        </REGION>
-        <REGION REF="4">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-        <REGION REF="5">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-      </BOUNDARYCONDITIONS>
-        
-      <FUNCTION NAME="Forcing">
-        <E VAR="u" VALUE="-(Lambda+PI*PI*402)*cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-      </FUNCTION>
 
-      <FUNCTION NAME="ExactSolution">
-        <E VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-      </FUNCTION>
+        <PARAMETERS>
+            <P> Lambda = 1 </P>
+            <P> IterativeSolverTolerance = 1e-8 </P>
+        </PARAMETERS>
+
+        <GLOBALSYSSOLNINFO>
+            <V VAR="u">
+                <I PROPERTY="GlobalSysSoln"    VALUE="IterativeStaticCond" />
+                <I PROPERTY="Preconditioner"   VALUE="LowEnergyBlock"/>
+            </V>
+        </GLOBALSYSSOLNINFO>
+
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[2]       </B>  <!-- X=0.1  !-->
+            <B ID="1"> C[3]       </B>  <!-- Y=0    !-->
+            <B ID="2"> C[4]       </B>  <!-- Z=0    !-->
+            <B ID="3"> C[5]       </B>  <!-- Y=0.1  !-->
+            <B ID="4"> C[6]       </B>  <!-- Z=0.1  !-->
+            <B ID="5"> C[7]       </B>  <!-- X=0    !-->
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+            <REGION REF="1">
+                <P VAR="u" VALUE="[3]" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+            <REGION REF="3">
+                <P VAR="u" VALUE="[1]" />
+            </REGION>
+            <REGION REF="4">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+            <REGION REF="5">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="Forcing">
+            <E VAR="u" VALUE="-(Lambda+PI*PI*402)*cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+        </FUNCTION>
     </CONDITIONS>
-    
+
     <EXPANSIONS>
-      <E COMPOSITE="C[0]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
-      <E COMPOSITE="C[1]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[0]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[1]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
-    
+
     <GEOMETRY DIM="3" SPACE="3">
         <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx9lEkvQ2EUhq+h5nlqUdRcc801HixsbKzYEFZNpBKJH8CyCTZWVEiokJRIpI1FEwvrRsIvIPEPEAsLqaH37c099x5n8+V+z33e7zvnNlWUePX+VZiwqttKkroe+H8rSPE1kuDJOh4x8BQhP3DjPg7l7FKqkA9uEfLB03Tcb7h/uqIvfr8MwUd+puCDZ5neL5jIzxY4/BzTfM3PFTj8PNP5aX6+wOEXsO+DOcAvFOaGKhJ85BcLPngJmz8/v1Tg8MuEuaGsAodv4wKrcmEffgXrXz+HCFWy/vlqZ/fjvErI717dfl2du6FqIR+8RsgHd5j62nu1AodfZ5qv+fUCh9/A+tN/5wg1Chx+ky7fb5h/s8DhO9l35XNsETj8VrbP32sTOPx203xtfh0Ch9/J+uPz6xI4fBfLNfQpcPg9innB7xU4/D71+TLq6LY5Qol7P/rs828LZ9TPuHIYisVia6PgA+w8/jsdFOYP7laf9y2nrfM7AYM/xLh6/i34sNA3+Mi/8wnSqOBhHWPeY/+0xesKk/VlZvP964TG1X1vdMmrKMe0vvyw6PGc0/3H1uXK0xXxP0SeP8F49ufLsKciTEcO651v75omTX0/2ZwXrrKUAE0JfPZrbuP5x/8GBpl97wAA</VERTEX>
         <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1mGd0lUUURZO8JCZgpMRYARNCAAVEBRURJYi9gKJYwN4Fe0EsSLEAdrB3EcQG2AuCvfeu2HsFUbELqH/O/pG9VvLnrNnfvWfu3HlvvnkpKmr6V9yMlkZLogVxxkXNPOeP/DL5w8uVR9wK8oVXNONbKX98W2hMfkvNC19RPtRRJR/4Ssqnjlbyh7dWPrxNUdM/6m4bLRGvjrJ+1rNytCBeo3z4KpqX9a0qH9a3muqnX6srH76G8unjmtFK8XbKh7dXnfS9Q7SF+FpR1sl+1EYL4nXKh3eMlut5fbRC8Z2i7DN1NUTZT+rqrHiedxHn89FVvvC15cvnYx35wrspH949Sv/5PPWIlouvG6UPfM56RqvE11M+fP0o/WXdG0TpL+vopXj8eise/w3lS/xG8iV+Y8XxPekjH/gm8uH701e+8E2VD+8XbaPnm0WrFb95lP3i+9lf9cMbVQ/f2wHRKvEtlA8fqPp4vqXqI36rKOcB3/+tNeb7vE20vfi28uH5duKcI9vLH76DfDkvdpQvfCflwwfJvzY6WPXAd5Y/584uqgc+RPnwXeXPObWb6oQPVd2cX7urHvgeyofvqXo47/ZSPfBh8uccHB6tE99b+fB9VA/n5r7RduL7RVkv5+n+0XrxA5QPP1Cc8/cgzQs/WPNyLh8iX/ihyocfFmW99ONw1U9/jojWRjn3RygfPlL5vA+OjNaJH6V8+NFR+sP745hoV/Fjo6yT98px0S7ixysffkKU/vAeOlH1wE+SP++nUdF68ZOVDx8d7aTnp0QbFH9qlL7x/jtNPvDT5cN7cUy0m/gZyoePjdI36hwXpY/UOV5xvHcnyAd+pnx4H58lX/jZyoefo3lZx0T5sK5JisNvsuLwPzfKPZz7wXnRgvj50TLxC8S5N1woH/hF0ZbiF0e5L+E/RWPipyqe+8cl0VLxS6OV4pfJH3656uf+cYXqh1+p+uBXRbl3Mc/VGhN/jerknnRttEL8OtUNv14+3JNukA/8RuXDp0WrxG+Ksi7mny7OumZEed/R15vF6cdMcXxukT/Pb9WYfbgtyn5xf7092lb8jmi1+CzNy/1ytuqGz4n2Eb9TnH7eFaXP3FPvjlaI36MxPvcqnnnvkz/8fvnAH4jWiD8YpW/sy0NR3u/0Y644+/JwlP3Cf160g+LnizPvI6qH3zOPRqvFH9OY/X1cY/yfiNJf6nxS9bOfT2ncGH062lf8GfnDn43Sf/bnuSj7yO+T5xUPf0H58Bej9I3faS9FW4m/LH/4K1F+19DXV8WJfy3q31evixP/huqk/29G+4m/FeXzxj68HeX+Rt47qhv+brRR/u9FuRfhv0Cc+PcVxz3rA435XHwozvwfRbkf4vexOD6fRNl3fD6N0l/q/Cw6QPzzKP3n/vWFxvTvS3H6+ZXmJf7rKPvO7/9vojXi32pMvd/Jn+ffqx7W9UOU/aLOhYrnPFgUZV/w+TFK/xuji6M9FP+TOPvzszg+v0RZF+tdEuX/EPj/Kl+e/6YxPr9H2Q98/ohyr6Y/f4rTn7+i3DPx+1uc+H+i3GOZd2mUPlDvMo3px3L5w/+NNoj/Jx8+J/xju6eeFxc39afOEsXjXxDHvzS8l3iZOPOWi+P/P6XiyGsA</EDGE>

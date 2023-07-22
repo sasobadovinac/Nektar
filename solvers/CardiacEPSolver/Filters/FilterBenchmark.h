@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterBenchmark.h
+// File: FilterBenchmark.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -73,17 +73,17 @@ protected:
     /// Initialises the benchmark filter and allocates storage.
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     /// Update recorded times.
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     /// Finalises the benchmark filter and write out recorded data.
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     /// Identifies that the benchmark filter is time dependent.
-    virtual bool v_IsTimeDependent();
+    virtual bool v_IsTimeDependent() override;
 
 private:
     /// Storage for activation and repolarisation times.

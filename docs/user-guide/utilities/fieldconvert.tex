@@ -397,6 +397,7 @@ Specifically, FieldConvert has these additional functionalities
 \item \inltt{combineAvg}: Combine two \nekpp binary output (.chk or .fld) field file containing averages of fields (and
 possibly also Reynolds stresses) into single file;
 \item \inltt{concatenate}: Concatenate a \nekpp binary output (.chk or .fld) field file into single file (deprecated);
+\item \inltt{divergence}: Computes the divergence of the velocity field.
 \item \inltt{dof}: Count the total number of DOF;
 \item \inltt{equispacedoutput}: Write data as equi-spaced output using simplices to represent the data for connecting points;
 \item \inltt{extract}: Extract a boundary field;
@@ -428,6 +429,9 @@ possibly also Reynolds stresses) into single file;
 \item \inltt{phifile}: Computes the $\Phi$ function representing a body defined
   in an \inltt{.stl} file. Useful for the Smoothed Profile Method solver.
 \item \inltt{wallNormalData}: Interpolate values for a set of points in the wall-normal direction (for e.g. extract boundary layer profiles).
+\item inltt{bodyFittedVelocity}: Generate a body-fitted coordinate system and then 
+  project the velocity components from Cartesian coordinate system into the new 
+  coordinate system.
 \end{enumerate}
 The module list above can be seen by running the command
 %
@@ -568,7 +572,7 @@ the result either in Tecplot, Paraview or VisIt.
 To sum two .fld files one can use the \inltt{addFld} module of FieldConvert
 %
 \begin{lstlisting}[style=BashInputStyle]
-  FieldConvert -m addfld:fromfld=file1.fld:scale=-1 file1.xml file2.fld \
+  FieldConvert -m addfld:fromfld=file1.fld:scale=-1:fromxml=file1.xml file2.fld \
   file3.fld
 \end{lstlisting}
 %
@@ -684,14 +688,32 @@ a Paraview or VisIt output.
 %
 %
 %
+\subsection{Calculate divergence: \textit{divergence} module}
+To perform the divergence calculation and obtain an output
+field containing the divergence solution, the user can run
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -m divergence test.xml test.fld test-div.fld
+\end{lstlisting}
+where the file \inltt{test-div.fld} can be processed in a similar
+way as described in section \ref{s:utilities:fieldconvert:sub:convert}.
+%
+%
+%
 \subsection{Compute the gradient of a field: \textit{gradient} module}
-To compute the spatial gradients of all fields one can run the following command
+To compute the spatial gradients of fields one can run the following command
 %
 \begin{lstlisting}[style=BashInputStyle]
-FieldConvert -m gradient test.xml  test.fld  test-grad.fld
+FieldConvert -m gradient:vars=u,v,p:dirs=x,y test.xml  test.fld  test-grad.fld
+\end{lstlisting}
+or
+\begin{lstlisting}[style=BashInputStyle]
+  FieldConvert -m gradient:vars=0,1,2:dirs=0,1 test.xml  test.fld  test-grad.fld
 \end{lstlisting}
 %
-where the file \inltt{file-grad.fld} can be processed in a similar
+where \inltt{vars} specifies the field numbers (starting from 0) or variable names to process and
+\inltt{vars} specifies the spatial directions to compute derivatives. All fields will be
+processed if \inltt{vars} is not set. All spatial directions will be used if \inltt{vars} is not set.
+The output file \inltt{file-grad.fld} can be processed in a similar
 way as described in section \ref{s:utilities:fieldconvert:sub:convert}
 to visualise the result either in Tecplot, Paraview or VisIt.
 %
@@ -1331,12 +1353,10 @@ are extracted to different fields. The \inltt{addnormals} is an optional command
 argument which, when turned on, outputs the normal vector of the extracted boundary
 region as well as the shear stress vector and magnitude. This option is off by default.
 To process the output file(s) you will need an xml file of the same region.\\
-The output fields are wall shear stress in streamwise direction (\inltt{Shear\_s}),
-normal direction (\inltt{Shear\_n}) and magnitude of the wall shear stress vector 
+The output fields are the wall shear stress in the streamwise direction
+(\inltt{Shear\_x}), the vertical direction (\inltt{Shear\_y}) and its magnitude
 (\inltt{Shear\_mag}) for 2D simulations. For 3D simulations, wall shear stress in
 the spanwise direction (\inltt{Shear\_z}) is also included in the output fileds.
-Note that the streamwise and normal directions are local at each point on the 
-corresponding boundary.
 %
 %
 %
@@ -1395,10 +1415,11 @@ function.
 
 \subsection{Interpolate values for a point array: 
 \textit{wallNormalData} module}
+\label{s:utilities:fieldconvert:sub:wallNormalData}
 To obtain the values of an array of points in the wall-normal direction, such 
 as boundary layer profiles, the user can run:
 \begin{lstlisting}[style=BashInputStyle]
-FieldConvert -m wss:bnd=0:xorig="0.5,0,0":projDir="0,1,0":maxDist=0.1:\
+FieldConvert -m wallNormalData:bnd=0:xorig="0.5,0,0":projDir="0,1,0":maxDist=0.1:\
     distH=0.1:nptsH=0.01:d=0.2 test.xml test.fld test.pts
 \end{lstlisting}
 The option \inltt{bnd} specifies the target boundary region, to which the input 
@@ -1435,6 +1456,49 @@ and save the result in test.pts.
     \includegraphics[width = 0.9 \textwidth]{img/module_wallNormalData.jpg}
     \caption{(a) Project the input point onto the boundary, (b) Array of 
     points to be interpolated.}
+  \end{center}
+\end{figure}
+%
+%
+%
+
+\subsection{Project velocity into body-fitted coordinate system: 
+\textit{bodyFittedVelocity} module}
+\label{s:utilities:fieldconvert:sub:bodyFittedVelocity}
+To obtain the velocity components in the body-fitted coordinate system, the user
+can run:
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -m bodyFittedVelocity:bnd=0:assistDir="0,0,1":checkAngle=1:\
+    distTol=1.0e-12:bfcOut=1 mesh.xml session.xml field.fld bfvFile.fld  
+\end{lstlisting}
+The option \inltt{bnd} specifies the reference boundary composite to set up
+the body-fitted coordinate system with the help of vector specified by 
+\inltt{assistDir}. For any point inside the domain, the the body-fitted coordinate 
+system has three directions, i.e. main tangantial direction (0), normal direction
+(1) from the nearest point on the wall to the point , and minor tangential direction
+(2) specified by \inltt{assistDir}. Since the directions 1 and 2 are known, the main
+tangantial direction (0) can be computed by the cross product of them.
+
+In general, when the surface is smooth, \inltt{checkAngle} and \inltt{distTol} is
+not needed to set up the body-fitted coordinate system since they are specially
+designed for geometries with surfarce irregularities, such a step or gap. As shown
+in the following sketch, the presence of a gap in 2D geometry introduces fours
+singular points at the cornors, where the body-fited velocity components will 
+experience significant change, leading to jump in the final fields. Considering 
+the surfaces irregularities are typically small in size, the user can choose to 
+exclude the side wall(s) as reference to set up the body-fitted coordinate system
+by setting boundary id=0,2,4 into one composite while id=1,3 into another. Then only
+the first composte id is specified through \inltt{bnd}. In this way the finaly results
+will be comparable with the results using the clean geometry.
+
+Finally, \inltt{bfcOut} is a bool parameter controls whether the fields for body-fitted 
+coordinate system will be output. This file can be read by the \inltt{BodyFittedVelocity}
+filter to process data. See \ref{filters:BodyFittedVelocity}.
+%
+\begin{figure}[!htbp]
+  \begin{center}
+    \includegraphics[width = 0.9 \textwidth]{img/module_bodyFittedVelocity.png}
+    \caption{Body-fitted coordinate system when the geometry has a gap on the surace.}
   \end{center}
 \end{figure}
 %
@@ -1499,7 +1563,7 @@ or
 mpirun -np <nprocs> FieldConvert test.xml test.fld test.vtu
 \end{lstlisting}
 replacing \inltt{<nprocs>} with the number of processors. For the
-\inltt{.dat} and \inltt{.plt} outputs the current version will proudce
+\inltt{.dat} and \inltt{.plt} outputs the current version will produce
 a single output file.  However it is also sometimes useful to produce
 multiple output files, one for each partition, and this
 can be done by using the \inltt{writemultiplefiles} option, i.e.
@@ -1523,6 +1587,24 @@ also be created when running in parallel. In this case when producing
 a .fld file a directory called \inltt{test.fld} (or the specified
 output name) is created with the standard parallel field files placed
 within the directory.
+%
+%
+%
+\section{FieldConvert for parallel-in-time}
+To run FieldConvert in parallel the user needs to compile
+\nekpp with MPI support and can employ the following
+command
+\begin{lstlisting}[style=BashInputStyle]
+  mpirun -np <nprocs> FieldConvert --npt <nprocs> test.xml \
+                 in/test\_<n>.fld out/test\_<n>.vtu
+\end{lstlisting}
+\begin{lstlisting}[style=BashInputStyle]
+  mpirun -np <nprocs> FieldConvert --npt <nprocs> test.xml \
+                 in/test\_<n>.fld out/test\_<n>.dat
+\end{lstlisting}
+replacing \inltt{<nprocs>} with the number of processors and \inltt{<n>} 
+by the starting time index. FieldConvert will then process in parallel 
+time solutions \inltt{test\_<n>}.dat to \inltt{test\_<n>+<nprocs>}.dat.
 %
 %
 %
@@ -1606,7 +1688,7 @@ take a while for many partitions. You can however run this option in
 parallel using a smaller number of cores than the nparts.
 
 For the example of creating a vtu file above you can use 4 processor
-concurrently wiht the command line:
+concurrently with the command line:
 \begin{lstlisting}[style=BashInputStyle]
 mpirun -n 4 FieldConvert --nparts 10   file1\_xml:xml file1.fld file1.vtu
 \end{lstlisting}

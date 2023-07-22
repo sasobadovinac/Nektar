@@ -63,20 +63,20 @@ public:
 
     ~OutputVtk() final = default;
 
-    std::string GetModuleName() final
+protected:
+    virtual std::string v_GetModuleName() override final
     {
         return "OutputVtk";
     }
 
-protected:
     /// Write from pts to output file.
-    void OutputFromPts(po::variables_map &vm) final;
+    virtual void v_OutputFromPts(po::variables_map &vm) override final;
 
     /// Write from m_exp to output file.
-    void OutputFromExp(po::variables_map &vm) final;
+    virtual void v_OutputFromExp(po::variables_map &vm) override final;
 
     /// Write from data to output file.
-    void OutputFromData(po::variables_map &vm) final;
+    virtual void v_OutputFromData(po::variables_map &vm) override final;
 
     /// Cache file for unstructured grid VTK mesh data
     vtkSmartPointer<vtkUnstructuredGrid> m_vtkMesh;

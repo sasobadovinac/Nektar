@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyViscousBurgers.h
+// File: UnsteadyViscousBurgers.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -105,9 +105,9 @@ protected:
         Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &viscousTensor);
 
     /// Compute the RHS
-    virtual void DoOdeRhs(
-        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
     /// Perform the projection
     void DoOdeProjection(
@@ -115,7 +115,7 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
     /// Solve implicitly the diffusion term
-    virtual void DoImplicitSolve(
+    void DoImplicitSolve(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, NekDouble time,
         NekDouble lambda);
@@ -125,10 +125,10 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &inarray);
 
     /// Initialise the object
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
     /// Print Summary
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
 private:
     NekDouble m_waveFreq;

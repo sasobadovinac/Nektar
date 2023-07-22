@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NektarUnivTypeDefs.hpp
+// File: NektarUnivTypeDefs.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -75,6 +75,7 @@ enum Direction
     zDir = 2
 };
 
+/// Enumeration a flags for output format.
 enum OutputFormat
 {
     eTecplot,

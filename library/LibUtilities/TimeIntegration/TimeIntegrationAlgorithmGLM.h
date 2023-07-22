@@ -52,7 +52,7 @@ namespace LibUtilities
 class TimeIntegrationAlgorithmGLM
 {
 public:
-    TimeIntegrationAlgorithmGLM(const TimeIntegrationScheme *parent)
+    TimeIntegrationAlgorithmGLM(const TimeIntegrationSchemeGLM *parent)
         : m_parent(parent)
     {
     }
@@ -133,11 +133,7 @@ public:
                            SingleArray &t_new,
                            const TimeIntegrationSchemeOperators &op);
 
-    inline TimeIntegrationSchemeType GetIntegrationSchemeType() const
-    {
-        return m_schemeType;
-    }
-
+    // Check and verify GLM schemes.
     LUE void CheckAndVerify()
     {
         CheckIfFirstStageEqualsOldSolution();
@@ -145,61 +141,79 @@ public:
         VerifyIntegrationSchemeType();
     };
 
-    inline unsigned int GetNmultiStepValues() const
+    inline TimeIntegrationSchemeType GetIntegrationSchemeType() const
+    {
+        return m_schemeType;
+    }
+
+    inline size_t GetNmultiStepValues() const
     {
         return m_numMultiStepValues;
     }
 
-    inline unsigned int GetNmultiStepDerivs() const
+    inline size_t GetNmultiStepImplicitDerivs() const
     {
-        return m_numMultiStepDerivs;
+        return m_numMultiStepImplicitDerivs;
     }
 
-    inline const Array<OneD, const unsigned int> &GetTimeLevelOffset() const
+    inline size_t GetNmultiStepExplicitDerivs() const
+    {
+        return m_numMultiStepExplicitDerivs;
+    }
+
+    inline const Array<OneD, const size_t> &GetTimeLevelOffset() const
     {
         return m_timeLevelOffset;
     }
 
     // Variables - all public for easy access when setting up the phase.
-    /// Parent scheme object
-    const TimeIntegrationScheme *m_parent{nullptr};
+    /// Parent scheme object.
+    const TimeIntegrationSchemeGLM *m_parent{nullptr};
 
     std::string m_name;
     std::string m_variant;
-    unsigned int m_order{0};
+    size_t m_order{0};
     std::vector<NekDouble> m_freeParams;
 
-    // Type of time integration scheme (Explicit, Implicit, IMEX, etc)
+    // Type of time integration scheme (Explicit, Implicit, IMEX, etc).
     TimeIntegrationSchemeType m_schemeType{eNoTimeIntegrationSchemeType};
 
-    unsigned int m_numstages{0}; //< Number of stages in multi-stage component.
-    unsigned int m_numsteps{0};  //< Number of steps in this integration phase
+    // Number of stages in multi-stage component.
+    size_t m_numstages{0};
 
-    unsigned int m_numMultiStepValues{0}; // number of entries in input and
-                                          // output vector that correspond
-                                          // to VALUES at previous time levels
-    unsigned int m_numMultiStepDerivs{0}; // number of entries in input and
-                                          // output vector that correspond
-                                          // to DERIVATIVES at previous levels
-    Array<OneD, unsigned int>
-        m_timeLevelOffset; // denotes to which time-level the entries in both
-                           // input and output vector correspond, e.g.
-                           //     INPUT VECTOR --------> m_inputTimeLevelOffset
-                           //    _            _               _ _
-                           //   | u^n          |             | 0 |
-                           //   | u^{n-1}      |             | 1 |
-                           //   | u^{n-2}      |  ----->     | 2 |
-                           //   | dt f(u^{n-1})|             | 1 |
-                           //   | dt f(u^{n-2})|             | 2 |
-                           //    -            -               - -
+    // Number of steps in this integration phase.
+    size_t m_numsteps{0};
 
+    // Number of entries in input and output vector that correspond to VALUES at
+    // previous time levels.
+    size_t m_numMultiStepValues{0};
+
+    // Number of entries in input and output vector that correspond to implicit
+    // DERIVATIVES at previous levels.
+    size_t m_numMultiStepImplicitDerivs{0};
+
+    // Number of entries in input and output vector that correspond to explicit
+    // DERIVATIVES at previous levels.
+    size_t m_numMultiStepExplicitDerivs{0};
+
+    // Denotes to which time-level the entries in both input and output vector
+    // correspond, e.g.
+    //     INPUT VECTOR --------> m_inputTimeLevelOffset
+    //    _            _               _ _
+    //   | u^n          |             | 0 |
+    //   | u^{n-1}      |             | 1 |
+    //   | u^{n-2}      |  ----->     | 2 |
+    //   | dt f(u^{n-1})|             | 1 |
+    //   | dt f(u^{n-2})|             | 2 |
+    //    -            -               - -
+    Array<OneD, size_t> m_timeLevelOffset;
     Array<OneD, Array<TwoD, NekDouble>> m_A;
     Array<OneD, Array<TwoD, NekDouble>> m_B;
     Array<TwoD, NekDouble> m_U;
     Array<TwoD, NekDouble> m_V;
 
     // Arrays used for the exponential integrators.
-    Array<OneD, std::complex<NekDouble>> m_L; // Lambda
+    Array<OneD, std::complex<NekDouble>> m_L;
 
     Array<OneD, Array<TwoD, NekDouble>> m_A_phi;
     Array<OneD, Array<TwoD, NekDouble>> m_B_phi;
@@ -207,14 +221,15 @@ public:
     Array<OneD, Array<TwoD, NekDouble>> m_U_phi;
     Array<OneD, Array<TwoD, NekDouble>> m_V_phi;
 
-    bool m_initialised{false}; /// bool to identify array initialization
+    // bool to identify array initialization.
+    bool m_initialised{false};
 
-    // Values uses for exponential integration
+    // Values uses for exponential integration.
     NekDouble m_lastDeltaT{0}; /// Last delta T
     NekDouble m_lastNVars{0};  /// Last number of vars
 
-    int m_nvars;   ///< The number of variables in integration scheme.
-    int m_npoints; ///< The size of inner data which is stored for reuse.
+    size_t m_nvars;   /// The number of variables in integration scheme.
+    size_t m_npoints; /// The size of inner data which is stored for reuse.
 
     // Friend classes
     LUE friend std::ostream &operator<<(std::ostream &os,
@@ -235,61 +250,130 @@ private:
     TripleArray m_F_IMEX; /// Used to store the Explicit stage derivative of
                           /// IMEX schemes
 
-    NekDouble m_T{0}; ///  Time at the different stages
+    NekDouble m_T{0}; ///  ime at the different stages
 
-    bool m_firstStageEqualsOldSolution{false}; //< Optimisation-flag
-    bool m_lastStageEqualsNewSolution{false};  //< Optimisation-flag
+    bool m_firstStageEqualsOldSolution{false}; /// Optimisation-flag
+    bool m_lastStageEqualsNewSolution{false};  /// Optimisation-flag
 
     void CheckIfFirstStageEqualsOldSolution();
     void CheckIfLastStageEqualsNewSolution();
     void VerifyIntegrationSchemeType();
 
-    bool CheckTimeIntegrateArguments( // const NekDouble timestep,
+    bool CheckTimeIntegrateArguments(
         ConstTripleArray &y_old, ConstSingleArray &t_old, TripleArray &y_new,
         SingleArray &t_new, const TimeIntegrationSchemeOperators &op) const;
 
     // Helpers
-    inline NekDouble A(const unsigned int i, const unsigned int j) const
+    inline NekDouble A(const size_t i, const size_t j) const
     {
         return m_A[0][i][j];
     }
-    inline NekDouble B(const unsigned int i, const unsigned int j) const
+
+    // Overloaded accessor for GLM parameter A; both exponential and
+    // conventional schemes are currently supported
+    inline NekDouble A(const size_t k, const size_t i, const size_t j) const
+    {
+        if (m_schemeType == eExponential)
+        {
+            // For exponential schemes, the parameter A is specific for
+            // each variable k
+            return m_A_phi[k][i][j];
+        }
+        else
+        {
+            return m_A[0][i][j];
+        }
+    }
+
+    inline NekDouble B(const size_t i, const size_t j) const
     {
         return m_B[0][i][j];
     }
-    inline NekDouble U(const unsigned int i, const unsigned int j) const
+
+    // Overloaded accessor for GLM parameter B; both exponential and
+    // conventional schemes are currently supported
+    inline NekDouble B(const size_t k, const size_t i, const size_t j) const
+    {
+        if (m_schemeType == eExponential)
+        {
+            // For exponential schemes, the parameter B is specific for
+            // each variable k
+            return m_B_phi[k][i][j];
+        }
+        else
+        {
+            return m_B[0][i][j];
+        }
+    }
+
+    inline NekDouble U(const size_t i, const size_t j) const
     {
         return m_U[i][j];
     }
-    inline NekDouble V(const unsigned int i, const unsigned int j) const
+
+    // Overloaded accessor for GLM parameter U; both exponential and
+    // conventional schemes are currently supported
+    inline NekDouble U(const size_t k, const size_t i, const size_t j) const
+    {
+        if (m_schemeType == eExponential)
+        {
+            // For exponential schemes, the parameter U is specific for
+            // each variable k
+            return m_U_phi[k][i][j];
+        }
+        else
+        {
+            return m_U[i][j];
+        }
+    }
+
+    inline NekDouble V(const size_t i, const size_t j) const
     {
         return m_V[i][j];
     }
 
-    inline NekDouble A_IMEX(const unsigned int i, const unsigned int j) const
+    // Overloaded accessor for GLM parameter V; both exponential and
+    // conventional schemes are currently supported
+    inline NekDouble V(const size_t k, const size_t i, const size_t j) const
+    {
+        if (m_schemeType == eExponential)
+        {
+            // For exponential schemes, the parameter V is specific for
+            // each variable k
+            return m_V_phi[k][i][j];
+        }
+        else
+        {
+            return m_V[i][j];
+        }
+    }
+
+    inline NekDouble A_IMEX(const size_t i, const size_t j) const
     {
         return m_A[1][i][j];
     }
-    inline NekDouble B_IMEX(const unsigned int i, const unsigned int j) const
+
+    inline NekDouble B_IMEX(const size_t i, const size_t j) const
     {
         return m_B[1][i][j];
     }
 
-    inline unsigned int GetNsteps(void) const
+    inline size_t GetNsteps(void) const
     {
         return m_numsteps;
     }
 
-    inline unsigned int GetNstages(void) const
+    inline size_t GetNstages(void) const
     {
         return m_numstages;
     }
 
-    inline int GetFirstDim(ConstTripleArray &y) const
+    inline size_t GetFirstDim(ConstTripleArray &y) const
     {
         return y[0].size();
     }
-    inline int GetSecondDim(ConstTripleArray &y) const
+
+    inline size_t GetSecondDim(ConstTripleArray &y) const
     {
         return y[0][0].size();
     }

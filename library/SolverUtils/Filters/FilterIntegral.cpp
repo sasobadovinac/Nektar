@@ -49,6 +49,9 @@ std::string FilterIntegral::className =
     GetFilterFactory().RegisterCreatorFunction("Integral",
                                                FilterIntegral::create);
 
+/**
+ * @brief Initialise the filter and parse the session file parameters.
+ */
 FilterIntegral::FilterIntegral(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
@@ -149,6 +152,9 @@ FilterIntegral::FilterIntegral(
     }
 }
 
+/**
+ * @brief Parse composite list and geometric entities to integrate over.
+ */
 void FilterIntegral::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
@@ -278,6 +284,9 @@ void FilterIntegral::v_Initialise(
     v_Update(pFields, time);
 }
 
+/**
+ * @brief Calculate integral over requested composites.
+ */
 void FilterIntegral::v_Update(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
@@ -376,6 +385,9 @@ void FilterIntegral::v_Update(
     }
 }
 
+/**
+ * @brief This is a time-dependent filter.
+ */
 void FilterIntegral::v_Finalise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)

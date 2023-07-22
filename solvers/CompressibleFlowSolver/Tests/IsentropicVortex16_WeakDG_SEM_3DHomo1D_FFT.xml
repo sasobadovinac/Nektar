@@ -1166,7 +1166,7 @@
         </BOUNDARYCONDITIONS>
 
         <!-- Initial conditions not necessary
-         since they are imposed analitically -->
+            since they are imposed analitically -->
         <!--FUNCTION NAME="InitialConditions">
             <E VAR="rho"    VALUE="1"/>
             <E VAR="rhou"   VALUE="1"/>

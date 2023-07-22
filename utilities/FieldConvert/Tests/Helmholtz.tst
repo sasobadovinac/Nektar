@@ -2,7 +2,7 @@
 <test>
     <description> Process gradient </description>
     <executable>FieldConvert</executable>
-    <parameters> -f -e -m gradient Helmholtz.xml Helmholtz.fld Helmholtz.dat</parameters>
+    <parameters> -f -e -m gradient:vars=u:dirs=x,y Helmholtz.xml Helmholtz.fld Helmholtz.dat</parameters>
     <files>
         <file description="Session File">Helmholtz.xml</file>
         <file description="Session File">Helmholtz.fld</file>

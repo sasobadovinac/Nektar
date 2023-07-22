@@ -138,7 +138,7 @@ public:
      * Searches the factory's map for the given key and returns a shared
      * base class pointer to a new instance of the associated class.
      * @param   idKey           Key of class to create.
-     * @param   x               Parameter to pass to class constructor.
+     * @param   args            Parameter to pass to class constructor.
      * @returns                 Base class pointer to new instance.
      */
     tBaseSharedPtr CreateInstance(tKey idKey, tParam... args)
@@ -252,26 +252,6 @@ public:
     }
 
     /**
-     * @brief Retrieves a key, given a description
-     */
-    tKey GetKey(std::string pDesc)
-    {
-#ifdef NEKTAR_USE_THREAD_SAFETY
-        ReadLock vReadLock(m_mutex);
-#endif
-
-        for (auto &it : *getMapFactory())
-        {
-            if (it.second.m_desc == pDesc)
-            {
-                return it.first;
-            }
-        }
-        std::string errstr = "Module '" + pDesc + "' is not known.";
-        ASSERTL0(false, errstr);
-    }
-
-    /**
      * @brief Returns the description of a class
      */
     std::string GetClassDescription(tKey idKey)
@@ -300,8 +280,8 @@ protected:
     }
 
 private:
-    NekFactory(const NekFactory &rhs);
-    NekFactory &operator=(const NekFactory &rhs);
+    NekFactory(const NekFactory &rhs) = delete;
+    NekFactory &operator=(const NekFactory &rhs) = delete;
 
     TMapFactory mMapFactory;
 

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  PointGeom.h
+//  File: PointGeom.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -97,8 +97,8 @@ public:
                                                   const PointGeom &y);
 
 protected:
-    virtual void v_GenGeomFactors();
-    virtual PointGeomSharedPtr v_GetVertex(int i) const;
+    virtual void v_GenGeomFactors() override;
+    virtual PointGeomSharedPtr v_GetVertex(int i) const override;
 };
 
 } // namespace SpatialDomains

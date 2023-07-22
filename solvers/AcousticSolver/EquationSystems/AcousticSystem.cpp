@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AcousticSystem.cpp
+// File: AcousticSystem.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -220,9 +220,12 @@ void AcousticSystem::DoOdeProjection(
     int nq         = m_fields[0]->GetNpoints();
 
     // deep copy
-    for (int i = 0; i < nvariables; ++i)
+    if (inarray != outarray)
     {
-        Vmath::Vcopy(nq, inarray[i], 1, outarray[i], 1);
+        for (int i = 0; i < nvariables; ++i)
+        {
+            Vmath::Vcopy(nq, inarray[i], 1, outarray[i], 1);
+        }
     }
 
     UpdateBasefieldFwdBwd();
@@ -262,11 +265,11 @@ void AcousticSystem::SetBoundaryConditions(
             // Wall Boundary Condition
             if (boost::iequals(userDefStr, "Wall"))
             {
-                v_WallBC(n, cnt, Fwd, inarray);
+                WallBC(n, cnt, Fwd, inarray);
             }
             else if (boost::iequals(userDefStr, "WhiteNoise"))
             {
-                v_WhiteNoiseBC(n, cnt, Fwd, bfFwd, inarray);
+                WhiteNoiseBC(n, cnt, Fwd, bfFwd, inarray);
             }
             else if (boost::iequals(userDefStr, "RiemannInvariantBC"))
             {
@@ -303,9 +306,9 @@ void AcousticSystem::SetBoundaryConditions(
 /**
  * @brief Wall boundary conditions for the AcousticSystem equations.
  */
-void AcousticSystem::v_WallBC(int bcRegion, int cnt,
-                              Array<OneD, Array<OneD, NekDouble>> &Fwd,
-                              Array<OneD, Array<OneD, NekDouble>> &physarray)
+void AcousticSystem::WallBC(int bcRegion, int cnt,
+                            Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                            Array<OneD, Array<OneD, NekDouble>> &physarray)
 {
     int nVariables = physarray.size();
 
@@ -360,7 +363,7 @@ void AcousticSystem::v_WallBC(int bcRegion, int cnt,
 /**
  * @brief Wall boundary conditions for the AcousticSystem equations.
  */
-void AcousticSystem::v_WhiteNoiseBC(
+void AcousticSystem::WhiteNoiseBC(
     int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
     Array<OneD, Array<OneD, NekDouble>> &BfFwd,
     Array<OneD, Array<OneD, NekDouble>> &physarray)

@@ -35,6 +35,7 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <GlobalMapping/Mapping.h>
+#include <MultiRegions/DisContField.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -353,7 +354,7 @@ void Mapping::Output(LibUtilities::FieldMetaDataMap &fieldMetaDataMap,
                 // variable
                 for (int j = 0; j < expdim; ++j)
                 {
-                    m_fields[0]->FwdTrans(m_coordsVel[j], fieldcoeffs);
+                    m_fields[0]->FwdTransLocalElmt(m_coordsVel[j], fieldcoeffs);
 
                     for (int i = 0; i < FieldDef.size(); ++i)
                     {
@@ -1153,6 +1154,7 @@ void Mapping::v_UpdateBCs(const NekDouble time)
         {
             BndConds = m_fields[i]->GetBndConditions();
             BndExp   = m_fields[i]->GetBndCondExpansions();
+
             if (BndConds[n]->GetUserDefined() == "" ||
                 BndConds[n]->GetUserDefined() == "MovingBody")
             {
@@ -1182,6 +1184,7 @@ void Mapping::v_UpdateBCs(const NekDouble time)
         // Get boundary condition information
         BndConds = m_fields[i]->GetBndConditions();
         BndExp   = m_fields[i]->GetBndCondExpansions();
+
         for (int n = 0; n < BndConds.size(); ++n)
         {
             if (BndConds[n]->GetBoundaryConditionType() ==

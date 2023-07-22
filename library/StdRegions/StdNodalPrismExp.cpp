@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdNodalPrismExp.cpp
+// File: StdNodalPrismExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -41,6 +41,7 @@ namespace Nektar
 {
 namespace StdRegions
 {
+
 StdNodalPrismExp::StdNodalPrismExp(const LibUtilities::BasisKey &Ba,
                                    const LibUtilities::BasisKey &Bb,
                                    const LibUtilities::BasisKey &Bc,

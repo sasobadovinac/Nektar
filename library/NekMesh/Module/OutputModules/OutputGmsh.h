@@ -43,7 +43,7 @@ namespace Nektar
 namespace NekMesh
 {
 
-struct ElmtConfigHash : std::unary_function<NekMesh::ElmtConfig, std::size_t>
+struct ElmtConfigHash
 {
     std::size_t operator()(NekMesh::ElmtConfig const &el) const
     {

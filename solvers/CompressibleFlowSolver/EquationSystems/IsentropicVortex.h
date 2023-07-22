@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File IsentropicVortex.h
+// File: IsentropicVortex.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -66,15 +66,15 @@ protected:
                      const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     /// Print a summary of time stepping parameters.
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
     virtual void v_SetInitialConditions(NekDouble initialtime      = 0.0,
                                         bool dumpInitialConditions = true,
-                                        const int domain           = 0);
+                                        const int domain = 0) override;
 
     virtual void v_EvaluateExactSolution(unsigned int field,
                                          Array<OneD, NekDouble> &outfield,
-                                         const NekDouble time = 0.0);
+                                         const NekDouble time = 0.0) override;
 
 private:
     /// Isentropic Vortex Test Case.

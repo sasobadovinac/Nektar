@@ -45,5 +45,4 @@
     <EXPANSIONS>
         <E COMPOSITE="C[1]" NUMMODES="2" TYPE="MODIFIED" FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
-    <CONDITIONS />
 </NEKTAR>

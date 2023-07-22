@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdSegExp.cpp
+// File: StdSegExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -68,7 +68,7 @@ LibUtilities::ShapeType StdSegExp::v_DetShapeType() const
     return LibUtilities::eSegment;
 }
 
-bool StdSegExp::v_IsBoundaryInteriorExpansion()
+bool StdSegExp::v_IsBoundaryInteriorExpansion() const
 {
 
     bool returnval = false;
@@ -657,6 +657,12 @@ int StdSegExp::v_GetTraceNcoeffs(const int i) const
 {
     boost::ignore_unused(i);
     return 1;
+}
+
+int StdSegExp::v_GetTraceIntNcoeffs(const int i) const
+{
+    boost::ignore_unused(i);
+    return 0;
 }
 
 int StdSegExp::v_GetTraceNumPoints(const int i) const

@@ -107,8 +107,7 @@ void Diffusion3DHomogeneous1D::v_InitObject(
     m_planeDiff->InitObject(pSession, pFields_plane0);
 
     m_numPoints      = pFields[0]->GetTotPoints();
-    m_planes         = pFields[0]->GetZIDs();
-    m_numPlanes      = m_planes.size();
+    m_numPlanes      = pFields[0]->GetZIDs().size();
     m_numPointsPlane = m_numPoints / m_numPlanes;
     m_homoLen        = pFields[0]->GetHomoLen();
     m_trans          = pFields[0]->GetTransposition();
@@ -284,7 +283,7 @@ void Diffusion3DHomogeneous1D::v_Diffuse(
     {
         for (int j = 0; j < nConvectiveFields; ++j)
         {
-            fields[j]->HomogeneousFwdTrans(inarray[j], tmp);
+            fields[j]->HomogeneousFwdTrans(m_numPoints, inarray[j], tmp);
 
             for (int i = 0; i < m_numPlanes; ++i)
             {
@@ -296,7 +295,7 @@ void Diffusion3DHomogeneous1D::v_Diffuse(
                             &tmp[0] + i * m_numPointsPlane, 1);
             }
 
-            fields[0]->HomogeneousBwdTrans(tmp, tmp);
+            fields[0]->HomogeneousBwdTrans(m_numPoints, tmp, tmp);
 
             Vmath::Vsub(nPointsTot, outarray[j], 1, tmp, 1, outarray[j], 1);
         }

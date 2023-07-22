@@ -61,95 +61,95 @@
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
-  <EXPANSIONS>
-    <E COMPOSITE="C[0]" NUMMODES="3" FIELDS="rho,rhou,rhov,E" TYPE="GLL_LAGRANGE_SEM" />
-  </EXPANSIONS>
+    <EXPANSIONS>
+        <E COMPOSITE="C[0]" NUMMODES="3" FIELDS="rho,rhou,rhov,E" TYPE="GLL_LAGRANGE_SEM" />
+    </EXPANSIONS>
 
-  <CONDITIONS>
-    <!-- Castonguay Test-Case -->
-    <!-- M = 0.2, Re = 200, Pr = 0.72 -->
-    <PARAMETERS>
-      <P> TimeStep              = 0.0001       </P>
-      <P> NumSteps              = 200          </P>
-      <P> FinTime               = 0             </P>
-      <P> IO_CheckSteps         = 500000        </P>
-      <P> IO_InfoSteps          = 500000        </P>
-      <P> GasConstant           = 287.058       </P>
-      <P> Gamma                 = 1.4           </P>
-      <P> pInf                  = 101325        </P>
-      <P> rhoInf                = 1.225         </P>
-      <P> uInf                  = 68.0588       </P>
-      <P> vInf                  = 0.0           </P>
-      <P> Twall                 = 300.15        </P>
-      <P> mu                    = 0.4169        </P>
-      <P> thermalConductivity   = 581.6936      </P>
-    </PARAMETERS>
+    <CONDITIONS>
+        <!-- Castonguay Test-Case -->
+        <!-- M = 0.2, Re = 200, Pr = 0.72 -->
+        <PARAMETERS>
+            <P> TimeStep              = 0.0001       </P>
+            <P> NumSteps              = 200          </P>
+            <P> FinTime               = 0             </P>
+            <P> IO_CheckSteps         = 500000        </P>
+            <P> IO_InfoSteps          = 500000        </P>
+            <P> GasConstant           = 287.058       </P>
+            <P> Gamma                 = 1.4           </P>
+            <P> pInf                  = 101325        </P>
+            <P> rhoInf                = 1.225         </P>
+            <P> uInf                  = 68.0588       </P>
+            <P> vInf                  = 0.0           </P>
+            <P> Twall                 = 300.15        </P>
+            <P> mu                    = 0.4169        </P>
+            <P> thermalConductivity   = 581.6936      </P>
+        </PARAMETERS>
 
-    <SOLVERINFO>
-        <I PROPERTY="EQType"                VALUE="NavierStokesCFE"     />
-        <I PROPERTY="Projection"            VALUE="DisContinuous"       />
-        <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
-        <I PROPERTY="DiffusionType"         VALUE="LDGNS"               />
-        <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-        <I PROPERTY="UpwindType"            VALUE="HLLC"                />
-        <I PROPERTY="ProblemType"           VALUE="General"             />
-        <I PROPERTY="ViscosityType"         VALUE="Constant"            />
-    </SOLVERINFO>
+        <SOLVERINFO>
+            <I PROPERTY="EQType"                VALUE="NavierStokesCFE"     />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"       />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
+            <I PROPERTY="DiffusionType"         VALUE="LDGNS"               />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
+            <I PROPERTY="UpwindType"            VALUE="HLLC"                />
+            <I PROPERTY="ProblemType"           VALUE="General"             />
+            <I PROPERTY="ViscosityType"         VALUE="Constant"            />
+        </SOLVERINFO>
 
-    <VARIABLES>
-      <V ID="0"> rho  </V>
-      <V ID="1"> rhou </V>
-      <V ID="2"> rhov </V>
-      <V ID="3"> E    </V>
-    </VARIABLES>
+        <VARIABLES>
+            <V ID="0"> rho  </V>
+            <V ID="1"> rhou </V>
+            <V ID="2"> rhov </V>
+            <V ID="3"> E    </V>
+        </VARIABLES>
 
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[100] </B>
-      <B ID="1"> C[200] </B>
-      <B ID="2"> C[300] </B>
-      <B ID="3"> C[400] </B>
-    </BOUNDARYREGIONS>
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[100] </B>
+            <B ID="1"> C[200] </B>
+            <B ID="2"> C[300] </B>
+            <B ID="3"> C[400] </B>
+        </BOUNDARYREGIONS>
 
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0">
-        <D VAR="rho"  USERDEFINEDTYPE="WallViscous" VALUE="0" />
-        <D VAR="rhou" USERDEFINEDTYPE="WallViscous" VALUE="0" />
-        <D VAR="rhov" USERDEFINEDTYPE="WallViscous" VALUE="0" />
-        <D VAR="E"    USERDEFINEDTYPE="WallViscous" VALUE="0" />
-      </REGION>
-      <REGION REF="1">
-        <P VAR="rho"  VALUE="[3]" />
-        <P VAR="rhou" VALUE="[3]" />
-        <P VAR="rhov" VALUE="[3]" />
-        <P VAR="E"    VALUE="[3]" />
-      </REGION>
-      <REGION REF="2">
-        <D VAR="rho"  VALUE="rhoInf" />
-        <D VAR="rhou" VALUE="rhoInf * uInf" />
-        <D VAR="rhov" VALUE="rhoInf * vInf" />
-        <D VAR="E"    VALUE="1.05 * Twall * rhoInf * GasConstant / (Gamma - 1)" />
-      </REGION>      
-      <REGION REF="3">
-        <P VAR="rho"  VALUE="[1]" />
-        <P VAR="rhou" VALUE="[1]" />
-        <P VAR="rhov" VALUE="[1]" />
-        <P VAR="E"    VALUE="[1]" />
-      </REGION>
-    </BOUNDARYCONDITIONS>
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="rho"  USERDEFINEDTYPE="WallViscous" VALUE="0" />
+                <D VAR="rhou" USERDEFINEDTYPE="WallViscous" VALUE="0" />
+                <D VAR="rhov" USERDEFINEDTYPE="WallViscous" VALUE="0" />
+                <D VAR="E"    USERDEFINEDTYPE="WallViscous" VALUE="0" />
+            </REGION>
+            <REGION REF="1">
+                <P VAR="rho"  VALUE="[3]" />
+                <P VAR="rhou" VALUE="[3]" />
+                <P VAR="rhov" VALUE="[3]" />
+                <P VAR="E"    VALUE="[3]" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="rho"  VALUE="rhoInf" />
+                <D VAR="rhou" VALUE="rhoInf * uInf" />
+                <D VAR="rhov" VALUE="rhoInf * vInf" />
+                <D VAR="E"    VALUE="1.05 * Twall * rhoInf * GasConstant / (Gamma - 1)" />
+            </REGION>
+            <REGION REF="3">
+                <P VAR="rho"  VALUE="[1]" />
+                <P VAR="rhou" VALUE="[1]" />
+                <P VAR="rhov" VALUE="[1]" />
+                <P VAR="E"    VALUE="[1]" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
 
-    <FUNCTION NAME="InitialConditions">
-        <E VAR="rho"    VALUE="rhoInf"/>
-        <E VAR="rhou"   VALUE="rhoInf * uInf"   />
-        <E VAR="rhov"   VALUE="rhoInf * vInf"   />
-        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>       
-    </FUNCTION>
-    
-    <FUNCTION NAME="ExactSolution">
-        <E VAR="rho"  VALUE="rhoInf" />
-        <E VAR="rhou" VALUE="rhoInf * uInf * y" />
-        <E VAR="rhov" VALUE="rhoInf * vInf" />
-        <E VAR="E"    VALUE="109100 * ((1 / (Gamma - 1)) + (uInf * uInf * y * y / (2 * GasConstant)) / (Twall + 0.05 * y * Twall + 0.72 * uInf * uInf * y * (1 - y) / (2 * 1004.7)))" />
-    </FUNCTION>
-    
-  </CONDITIONS>
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="rho"    VALUE="rhoInf"/>
+            <E VAR="rhou"   VALUE="rhoInf * uInf"   />
+            <E VAR="rhov"   VALUE="rhoInf * vInf"   />
+            <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="rho"  VALUE="rhoInf" />
+            <E VAR="rhou" VALUE="rhoInf * uInf * y" />
+            <E VAR="rhov" VALUE="rhoInf * vInf" />
+            <E VAR="E"    VALUE="109100 * ((1 / (Gamma - 1)) + (uInf * uInf * y * y / (2 * GasConstant)) / (Twall + 0.05 * y * Twall + 0.72 * uInf * uInf * y * (1 - y) / (2 * 1004.7)))" />
+        </FUNCTION>
+
+    </CONDITIONS>
 </NEKTAR>

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File  NekSys.h
+// File: NekSys.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -69,6 +69,7 @@ public:
     NekSysOperators(void) : m_functors1(nfunctor1), m_functors2(nfunctor2)
     {
     }
+
     NekSysOperators(const NekSysOperators &in)
         : m_functors1(nfunctor1), m_functors2(nfunctor2)
     {
@@ -176,11 +177,14 @@ protected:
             Jacobian matrix for Newton method;
         DoNekSysPrecon      :
             Preconditioning operator of the system.
+    */
+    FunctorType1Array m_functors1;
+
+    /* Defines one operator
         DoNekSysFixPointIte  :
             Operator to calculate RHS of fixed point iterations
             (x^{n+1}=M^{-1}(b-N*x^{n}), with M+N=A).
     */
-    FunctorType1Array m_functors1;
     FunctorType2Array m_functors2;
 };
 
@@ -266,10 +270,6 @@ public:
         return v_ConvergenceCheck(nIteration, Residual, tol);
     }
 
-    LIB_UTILITIES_EXPORT virtual void v_NekSysInitialGuess(
-        const Array<OneD, const NekDouble> &pInput,
-        Array<OneD, NekDouble> &pguess);
-
     LIB_UTILITIES_EXPORT void SetFlagWarnings(bool in)
     {
         m_FlagWarnings = in;
@@ -311,6 +311,10 @@ protected:
     virtual bool v_ConvergenceCheck(
         const int nIteration, const Array<OneD, const NekDouble> &Residual,
         const NekDouble tol);
+
+    LIB_UTILITIES_EXPORT virtual void v_NekSysInitialGuess(
+        const Array<OneD, const NekDouble> &pInput,
+        Array<OneD, NekDouble> &pguess);
 };
 } // namespace LibUtilities
 } // namespace Nektar

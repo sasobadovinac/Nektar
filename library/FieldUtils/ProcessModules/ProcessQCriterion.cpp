@@ -60,7 +60,7 @@ ProcessQCriterion::~ProcessQCriterion()
 {
 }
 
-void ProcessQCriterion::Process(po::variables_map &vm)
+void ProcessQCriterion::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -101,6 +101,13 @@ void ProcessQCriterion::Process(po::variables_map &vm)
 
     MultiRegions::ExpListSharedPtr Exp;
 
+    for (s = 0; s < nstrips; ++s) // homogeneous strip varient
+    {
+        Exp     = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
+        m_f->m_exp.insert(it, Exp);
+    }
+
     NekDouble fac = 0.5;
     if (spacedim == 2)
     {
@@ -135,12 +142,10 @@ void ProcessQCriterion::Process(po::variables_map &vm)
             Vmath::Svtvm(npoints, fac, omega, 1, S, 1, outfield, 1);
             Vmath::Smul(npoints, fac, outfield, 1, outfield, 1);
 
-            Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-            Vmath::Vcopy(npoints, outfield, 1, Exp->UpdatePhys(), 1);
-            Exp->FwdTransLocalElmt(outfield, Exp->UpdateCoeffs());
-
-            auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
-            m_f->m_exp.insert(it, Exp);
+            int fid = s * (nfields + 1) + nfields;
+            Vmath::Vcopy(npoints, outfield, 1, m_f->m_exp[fid]->UpdatePhys(),
+                         1);
+            Exp->FwdTransLocalElmt(outfield, m_f->m_exp[fid]->UpdateCoeffs());
         }
     }
     else if (spacedim == 3)
@@ -219,12 +224,10 @@ void ProcessQCriterion::Process(po::variables_map &vm)
 
             Vmath::Smul(npoints, fac, outfield, 1, outfield, 1);
 
-            Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-            Vmath::Vcopy(npoints, outfield, 1, Exp->UpdatePhys(), 1);
-            Exp->FwdTransLocalElmt(outfield, Exp->UpdateCoeffs());
-
-            auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
-            m_f->m_exp.insert(it, Exp);
+            int fid = s * (nfields + 1) + nfields;
+            Vmath::Vcopy(npoints, outfield, 1, m_f->m_exp[fid]->UpdatePhys(),
+                         1);
+            Exp->FwdTransLocalElmt(outfield, m_f->m_exp[fid]->UpdateCoeffs());
         }
     }
 }

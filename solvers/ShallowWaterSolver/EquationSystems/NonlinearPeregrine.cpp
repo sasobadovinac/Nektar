@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NonlinearPeregrine.cpp
+// File: NonlinearPeregrine.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -500,11 +500,14 @@ void NonlinearPeregrine::DoOdeProjection(
         {
 
             // Just copy over array
-            int npoints = GetNpoints();
-
-            for (i = 0; i < nvariables; ++i)
+            if (inarray != outarray)
             {
-                Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                int npoints = GetNpoints();
+
+                for (i = 0; i < nvariables; ++i)
+                {
+                    Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                }
             }
 
             SetBoundaryConditions(outarray, time);

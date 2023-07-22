@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: Vmath.hpp
+// File: Vmath.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -243,7 +243,6 @@ template LIB_UTILITIES_EXPORT void Vmul(int n, const Nektar::NekSingle *x,
                                         const int incz);
 
 /// \brief Scalar multiply  y = alpha*x
-
 template <class T>
 void Smul(int n, const T alpha, const T *x, const int incx, T *y,
           const int incy)
@@ -273,7 +272,6 @@ template LIB_UTILITIES_EXPORT void Smul(int n, const Nektar::NekDouble alpha,
                                         const Nektar::NekDouble *x,
                                         const int incx, Nektar::NekDouble *y,
                                         const int incy);
-
 template LIB_UTILITIES_EXPORT void Smul(int n, const Nektar::NekSingle alpha,
                                         const Nektar::NekSingle *x,
                                         const int incx, Nektar::NekSingle *y,
@@ -312,14 +310,13 @@ template LIB_UTILITIES_EXPORT void Vdiv(int n, const Nektar::NekDouble *x,
                                         const Nektar::NekDouble *y,
                                         const int incy, Nektar::NekDouble *z,
                                         const int incz);
-
 template LIB_UTILITIES_EXPORT void Vdiv(int n, const Nektar::NekSingle *x,
                                         const int incx,
                                         const Nektar::NekSingle *y,
                                         const int incy, Nektar::NekSingle *z,
                                         const int incz);
 
-/// \brief Scalar multiply  y = alpha/y
+/// \brief Scalar multiply  y = alpha/x
 template <class T>
 void Sdiv(int n, const T alpha, const T *x, const int incx, T *y,
           const int incy)
@@ -379,7 +376,7 @@ template LIB_UTILITIES_EXPORT void Vadd(int n, const Nektar::NekSingle *x,
                                         const int incy, Nektar::NekSingle *z,
                                         const int incz);
 
-/// \brief Add vector y = alpha - x
+/// \brief Add scalar y = alpha + x
 template <class T>
 void Sadd(int n, const T alpha, const T *x, const int incx, T *y,
           const int incy)
@@ -453,7 +450,7 @@ template LIB_UTILITIES_EXPORT void Vsub(int n, const Nektar::NekSingle *x,
                                         const int incy, Nektar::NekSingle *z,
                                         const int incz);
 
-/// \brief Add vector y = alpha - x
+/// \brief Substract vector y = alpha - x
 template <class T>
 void Ssub(int n, const T alpha, const T *x, const int incx, T *y,
           const int incy)
@@ -593,7 +590,7 @@ template LIB_UTILITIES_EXPORT void Vvtvp(
     const Nektar::NekSingle *x, const int incx, const Nektar::NekSingle *y,
     const int incy, Nektar::NekSingle *z, const int incz);
 
-/// \brief vvtvm (vector times vector plus vector): z = w*x - y
+/// \brief vvtvm (vector times vector minus vector): z = w*x - y
 template <class T>
 void Vvtvm(int n, const T *w, const int incw, const T *x, const int incx,
            const T *y, const int incy, T *z, const int incz)
@@ -659,7 +656,7 @@ template LIB_UTILITIES_EXPORT void Svtvp(int n, const Nektar::NekSingle alpha,
                                          const int incy, Nektar::NekSingle *z,
                                          const int incz);
 
-/// \brief  svtvp (scalar times vector plus vector): z = alpha*x - y
+/// \brief  svtvm (scalar times vector minus vector): z = alpha*x - y
 template <class T>
 void Svtvm(int n, const T alpha, const T *x, const int incx, const T *y,
            const int incy, T *z, const int incz)
@@ -745,7 +742,7 @@ template LIB_UTILITIES_EXPORT void Vvtvvtm(int n, const Nektar::NekSingle *v,
                                            int incy, Nektar::NekSingle *z,
                                            int incz);
 
-/// \brief  vvtvvtp (scalar times vector plus scalar times vector):
+/// \brief  svtvvtp (scalar times vector plus scalar times vector):
 // z = alpha*x + beta*y
 template <class T>
 void Svtsvtp(int n, const T alpha, const T *x, int incx, const T beta,
@@ -772,7 +769,7 @@ template LIB_UTILITIES_EXPORT void Svtsvtp(int n, const Nektar::NekSingle alpha,
                                            Nektar::NekSingle *z, int incz);
 
 /// \brief  Vstvpp (scalar times vector plus vector plus vector):
-// z = v*w + x*y
+// z = alpha*w + x*y
 template <class T>
 void Vstvpp(int n, const T alpha, const T *v, int incv, const T *w, int incw,
             const T *x, int incx, T *z, int incz)
@@ -1096,7 +1093,7 @@ template LIB_UTILITIES_EXPORT int Nnan(int n, const Nektar::NekSingle *x,
                                        const int incx);
 template LIB_UTILITIES_EXPORT int Nnan(int n, const int *x, const int incx);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot (vector times vector): z = w*x
 template <class T> T Dot(int n, const T *w, const T *x)
 {
     T sum = 0;
@@ -1117,7 +1114,7 @@ template LIB_UTILITIES_EXPORT Nektar::NekSingle Dot(int n,
                                                     const Nektar::NekSingle *w,
                                                     const Nektar::NekSingle *x);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot (vector times vector): z = w*x
 template <class T>
 T Dot(int n, const T *w, const int incw, const T *x, const int incx)
 {
@@ -1143,7 +1140,7 @@ template LIB_UTILITIES_EXPORT Nektar::NekSingle Dot(int n,
                                                     const Nektar::NekSingle *x,
                                                     const int incx);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot2 (vector times vector times vector): z = w*x*y
 template <class T> T Dot2(int n, const T *w, const T *x, const int *y)
 {
     T sum = 0;
@@ -1167,7 +1164,7 @@ template LIB_UTILITIES_EXPORT Nektar::NekSingle Dot2(int n,
                                                      const Nektar::NekSingle *x,
                                                      const int *y);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot2 (vector times vector times vector): z = w*x*y
 template <class T>
 T Dot2(int n, const T *w, const int incw, const T *x, const int incx,
        const int *y, const int incy)
@@ -1190,65 +1187,6 @@ template LIB_UTILITIES_EXPORT Nektar::NekDouble Dot2(
 template LIB_UTILITIES_EXPORT Nektar::NekSingle Dot2(
     int n, const Nektar::NekSingle *w, const int incw,
     const Nektar::NekSingle *x, const int incx, const int *y, const int incy);
-
-/*
-    // \brief copy one int vector to another
-    void Vcopy(int n, const int *x, const int incx, int *y,
-                             const int incy)
-    {
-        if( incx ==1 && incy == 1)
-        {
-            memcpy(y,x,n*sizeof(int));
-        }
-        else
-        {
-            while( n-- )
-            {
-                *y = *x;
-                x += incx;
-                y += incy;
-            }
-        }
-    }
-
-    // \brief copy one unsigned int vector to another
-    void Vcopy(int n, const unsigned int *x, const int incx, unsigned int *y,
-                             const int incy)
-    {
-        if( incx ==1 && incy == 1)
-        {
-            memcpy(y,x,n*sizeof(int));
-        }
-        else
-        {
-            while( n-- )
-            {
-                *y = *x;
-                x += incx;
-                y += incy;
-            }
-        }
-    }
-
-    // \brief copy one double vector to another
-    void Vcopy(int n, const double *x, const int incx, double *y,
-                             const int incy)
-    {
-        if( incx ==1 && incy == 1)
-        {
-            memcpy(y,x,n*sizeof(double));
-        }
-        else
-        {
-            while( n-- )
-            {
-                *y = *x;
-                x += incx;
-                y += incy;
-            }
-        }
-    }
-*/
 
 // \brief copy one vector to another
 template <typename T>
@@ -1281,7 +1219,7 @@ template LIB_UTILITIES_EXPORT void Vcopy(int n, const Nektar::NekSingle *x,
                                          const int incx, Nektar::NekSingle *y,
                                          const int incy);
 
-// \brief reverse the ordering of  vector to another
+// \brief reverse the ordering of vector to another
 template <class T>
 void Reverse(int n, const T *x, const int incx, T *y, const int incy)
 {

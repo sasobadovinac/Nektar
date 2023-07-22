@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: InputCAD.cpp
+//  File: InputMCF.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -396,7 +396,7 @@ void InputMCF::ParseFile(string nm)
         m_nacadomain = ss.str();
     }
 
-    auto sit    = boolparameters.find("SurfaceOptimiser");
+    auto sit    = boolparameters.find("DisableSurfaceOptimiser");
     m_surfopti  = sit != boolparameters.end();
     sit         = boolparameters.find("WriteOctree");
     m_woct      = sit != boolparameters.end();
@@ -641,7 +641,7 @@ void InputMCF::Process()
 
     if (m_surfopti)
     {
-        module->RegisterConfig("opti", "");
+        module->RegisterConfig("no_opti", "");
     }
 
     try

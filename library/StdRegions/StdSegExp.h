@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdSegExp.h
+// File: StdSegExp.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -53,15 +53,15 @@ public:
 
     STD_REGIONS_EXPORT StdSegExp(const StdSegExp &T);
 
-    STD_REGIONS_EXPORT ~StdSegExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdSegExp() override = default;
 
 protected:
     //----------------------------
     // Integration Methods
     //----------------------------
 
-    STD_REGIONS_EXPORT NekDouble
-    v_Integral(const Array<OneD, const NekDouble> &inarray) override;
+    STD_REGIONS_EXPORT virtual NekDouble v_Integral(
+        const Array<OneD, const NekDouble> &inarray) override;
 
     //-----------------------------
     // Differentiation Methods
@@ -136,16 +136,16 @@ protected:
     //----------------------------
     // Evaluations Methods
     //---------------------------
-    STD_REGIONS_EXPORT void v_LocCoordToLocCollapsed(
+    STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
         const Array<OneD, const NekDouble> &xi,
         Array<OneD, NekDouble> &eta) override;
 
-    STD_REGIONS_EXPORT void v_LocCollapsedToLocCoord(
+    STD_REGIONS_EXPORT virtual void v_LocCollapsedToLocCoord(
         const Array<OneD, const NekDouble> &eta,
         Array<OneD, NekDouble> &xi) override;
 
     STD_REGIONS_EXPORT NekDouble v_PhysEvaluateBasis(
-        const Array<OneD, const NekDouble> &coords, int mode) final;
+        const Array<OneD, const NekDouble> &coords, int mode) final override;
 
     STD_REGIONS_EXPORT inline NekDouble v_PhysEvaluate(
         const Array<OneD, NekDouble> &coord,
@@ -166,7 +166,7 @@ protected:
                                                secondOrderDerivs);
     }
 
-    STD_REGIONS_EXPORT void v_LaplacianMatrixOp(
+    STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey) override;
 
@@ -174,7 +174,7 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey) override;
 
-    STD_REGIONS_EXPORT void v_SVVLaplacianFilter(
+    STD_REGIONS_EXPORT virtual void v_SVVLaplacianFilter(
         Array<OneD, NekDouble> &array, const StdMatrixKey &mkey) override;
 
     STD_REGIONS_EXPORT void v_ExponentialFilter(
@@ -185,7 +185,7 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    STD_REGIONS_EXPORT void v_FillMode(
+    STD_REGIONS_EXPORT virtual void v_FillMode(
         const int mode, Array<OneD, NekDouble> &outarray) override;
 
     STD_REGIONS_EXPORT void v_GetCoords(
@@ -196,43 +196,49 @@ protected:
     // Public Mappings
     //---------------------------
 
-    STD_REGIONS_EXPORT void v_GetBoundaryMap(
+    STD_REGIONS_EXPORT virtual void v_GetBoundaryMap(
         Array<OneD, unsigned int> &outarray) override;
 
-    STD_REGIONS_EXPORT void v_GetInteriorMap(
+    STD_REGIONS_EXPORT virtual void v_GetInteriorMap(
         Array<OneD, unsigned int> &outarray) override;
 
-    STD_REGIONS_EXPORT int v_GetVertexMap(
+    STD_REGIONS_EXPORT virtual int v_GetVertexMap(
         int localVertexId, bool useCoeffPacking = false) override;
 
     //----------------------------
     // Helper functions
     //---------------------------
-    STD_REGIONS_EXPORT int v_GetNverts() const override;
-    STD_REGIONS_EXPORT int v_GetNtraces() const override;
-    STD_REGIONS_EXPORT int v_GetTraceNcoeffs(const int i) const override;
-    STD_REGIONS_EXPORT int v_GetTraceNumPoints(const int i) const override;
-    STD_REGIONS_EXPORT int v_NumBndryCoeffs() const override;
-    STD_REGIONS_EXPORT int v_NumDGBndryCoeffs() const override;
-    STD_REGIONS_EXPORT bool v_IsBoundaryInteriorExpansion() override;
-    STD_REGIONS_EXPORT int v_CalcNumberOfCoefficients(
+    STD_REGIONS_EXPORT virtual int v_GetNverts() const final override;
+    STD_REGIONS_EXPORT virtual int v_GetNtraces() const final override;
+    STD_REGIONS_EXPORT virtual int v_GetTraceNcoeffs(
+        const int i) const final override;
+    STD_REGIONS_EXPORT virtual int v_GetTraceIntNcoeffs(
+        const int i) const final override;
+    STD_REGIONS_EXPORT virtual int v_GetTraceNumPoints(
+        const int i) const final override;
+    STD_REGIONS_EXPORT virtual int v_NumBndryCoeffs() const override;
+    STD_REGIONS_EXPORT virtual int v_NumDGBndryCoeffs() const override;
+    STD_REGIONS_EXPORT virtual bool v_IsBoundaryInteriorExpansion()
+        const override;
+    STD_REGIONS_EXPORT virtual int v_CalcNumberOfCoefficients(
         const std::vector<unsigned int> &nummodes, int &modes_offset) override;
-    STD_REGIONS_EXPORT LibUtilities::ShapeType v_DetShapeType() const override;
+    STD_REGIONS_EXPORT virtual LibUtilities::ShapeType v_DetShapeType()
+        const override;
 
     //----------------------------
     // Wrapper functions
     //---------------------------
 
-    STD_REGIONS_EXPORT DNekMatSharedPtr
-    v_GenMatrix(const StdMatrixKey &mkey) override;
+    STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_GenMatrix(
+        const StdMatrixKey &mkey) override;
 
-    STD_REGIONS_EXPORT DNekMatSharedPtr
-    v_CreateStdMatrix(const StdMatrixKey &mkey) override;
+    STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(
+        const StdMatrixKey &mkey) override;
 
     //---------------------------------------
     // Output interpolation functions
     //---------------------------------------
-    STD_REGIONS_EXPORT void v_GetSimplexEquiSpacedConnectivity(
+    STD_REGIONS_EXPORT virtual void v_GetSimplexEquiSpacedConnectivity(
         Array<OneD, int> &conn, bool standard = true) override;
 
     // Operator evaluation functions
@@ -242,7 +248,7 @@ protected:
         int numMin, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    STD_REGIONS_EXPORT void v_GetTraceCoeffMap(
+    STD_REGIONS_EXPORT virtual void v_GetTraceCoeffMap(
         const unsigned int traceid,
         Array<OneD, unsigned int> &maparray) override;
 

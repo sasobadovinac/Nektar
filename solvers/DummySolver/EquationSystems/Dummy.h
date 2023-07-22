@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Dummy.h
+// File: Dummy.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -74,7 +74,7 @@ protected:
     Dummy(const LibUtilities::SessionReaderSharedPtr &pSession,
           const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
     void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                   Array<OneD, Array<OneD, NekDouble>> &outarray,
@@ -84,13 +84,13 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    virtual bool v_PreIntegrate(int step);
+    virtual bool v_PreIntegrate(int step) override;
 
-    virtual bool v_PostIntegrate(int step);
+    virtual bool v_PostIntegrate(int step) override;
 
-    virtual void v_Output();
+    virtual void v_Output() override;
 
-    virtual bool v_RequireFwdTrans()
+    virtual bool v_RequireFwdTrans() override
     {
         return false;
     }

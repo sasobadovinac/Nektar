@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Preconditioner.cpp
+// File: PreconditionerLinearWithBlock.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,11 +28,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Preconditioner definition
+// Description: PreconditionerLinearWithBlock definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VDmathArray.hpp>
 #include <LocalRegions/MatrixKey.h>
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <MultiRegions/PreconditionerLinearWithBlock.h>

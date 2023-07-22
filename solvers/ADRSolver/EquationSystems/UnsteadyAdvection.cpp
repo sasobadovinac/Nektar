@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyAdvection.cpp
+// File: UnsteadyAdvection.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -62,8 +62,8 @@ void UnsteadyAdvection::v_InitObject(bool DeclareFields)
     // Call to the initialisation object of UnsteadySystem
     AdvectionSystem::v_InitObject(DeclareFields);
 
-    m_session->LoadParameter("wavefreq", m_waveFreq, 0.0);
     // Read the advection velocities from session file
+    m_session->LoadParameter("wavefreq", m_waveFreq, 0.0);
 
     // check to see if it is explicity turned off
     m_session->MatchSolverInfo("GJPStabilisation", "False",
@@ -283,10 +283,16 @@ void UnsteadyAdvection::DoOdeProjection(
         // Discontinuous projection
         case MultiRegions::eDiscontinuous:
         {
+            // Number of quadrature points
+            int nQuadraturePts = GetNpoints();
+
             // Just copy over array
-            for (i = 0; i < nVariables; ++i)
+            if (inarray != outarray)
             {
-                Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1);
+                for (i = 0; i < nVariables; ++i)
+                {
+                    Vmath::Vcopy(nQuadraturePts, inarray[i], 1, outarray[i], 1);
+                }
             }
             break;
         }

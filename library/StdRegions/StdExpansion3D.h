@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdExpansion3D.h
+// File: StdExpansion3D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -285,11 +285,6 @@ protected:
 
 private:
     virtual int v_GetShapeDimension() const final
-    {
-        return 3;
-    }
-
-    virtual int v_GetCoordim(void) override
     {
         return 3;
     }

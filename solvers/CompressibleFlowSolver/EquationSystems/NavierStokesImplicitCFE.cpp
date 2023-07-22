@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NavierStokesImplicitCFE.cpp
+// File: NavierStokesImplicitCFE.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -1339,7 +1339,7 @@ void NavierStokesImplicitCFE::v_CalcMuDmuDT(
     }
 }
 
-bool NavierStokesImplicitCFE::SupportsShockCaptType(
+bool NavierStokesImplicitCFE::v_SupportsShockCaptType(
     const std::string type) const
 {
     if (type == "Physical" || type == "Off")

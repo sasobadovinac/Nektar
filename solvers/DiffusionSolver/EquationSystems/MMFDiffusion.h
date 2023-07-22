@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MMFDiffusion.h
+// File: MMFDiffusion.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -107,7 +107,7 @@ protected:
 
     InitWaveType m_InitWaveType;
 
-    virtual void v_InitObject(bool DeclareField = true);
+    virtual void v_InitObject(bool DeclareField = true) override;
 
     /// Solve for the diffusion term.
     void DoImplicitSolve(
@@ -132,16 +132,16 @@ protected:
     Array<OneD, NekDouble> PlanePhiWave();
 
     /// Sets a custom initial condition.
-    virtual void v_SetInitialConditions(NekDouble initialtime,
-                                        bool dumpInitialConditions,
-                                        const int domain);
+    virtual void v_SetInitialConditions(NekDouble initialtime      = 0.0,
+                                        bool dumpInitialConditions = true,
+                                        const int domain = 0) override;
 
     /// Prints a summary of the model parameters.
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
     virtual void v_EvaluateExactSolution(unsigned int field,
                                          Array<OneD, NekDouble> &outfield,
-                                         const NekDouble time);
+                                         const NekDouble time) override;
 
     NekDouble m_InitPtx, m_InitPty, m_InitPtz;
 

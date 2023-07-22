@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdMatrixKey.cpp
+// File: StdMatrixKey.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -57,8 +57,9 @@ StdMatrixKey::StdMatrixKey(const MatrixType matrixType,
     int i = 0;
     for (auto &x : varCoeffMap)
     {
-        m_varcoeff_hashes[i] = hash_range(
-            x.second.begin(), x.second.begin() + stdExpansion.GetTotPoints());
+        m_varcoeff_hashes[i] = hash_range(x.second.GetValue().begin(),
+                                          x.second.GetValue().begin() +
+                                              stdExpansion.GetTotPoints());
         hash_combine(m_varcoeff_hashes[i], (int)x.first);
         i++;
     }
@@ -85,6 +86,11 @@ bool StdMatrixKey::opLess::operator()(const StdMatrixKey &lhs,
                                       const StdMatrixKey &rhs) const
 {
     return (lhs.m_matrixType < rhs.m_matrixType);
+}
+
+StdMatrixKey StdMatrixKey::operator=(const StdMatrixKey &inKey)
+{
+    return StdMatrixKey(inKey);
 }
 
 bool operator<(const StdMatrixKey &lhs, const StdMatrixKey &rhs)
@@ -254,7 +260,7 @@ bool operator==(const StdMatrixKey &lhs, const StdMatrixKey &rhs)
             return false;
         }
 
-        if (x.second != y->second)
+        if (x.second.GetValue() != y->second.GetValue())
         {
             return false;
         }

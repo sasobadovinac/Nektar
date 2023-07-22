@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyDiffusion.cpp
+// File: UnsteadyDiffusion.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -167,7 +167,7 @@ void UnsteadyDiffusion::DoOdeRhs(
     // Number of fields (variables of the problem)
     int nVariables = inarray.size();
 
-    // RHS computation using the new advection base class
+    // RHS computation using the new diffusion base class
     m_diffusion->Diffuse(nVariables, m_fields, inarray, outarray);
 }
 
@@ -191,11 +191,14 @@ void UnsteadyDiffusion::DoOdeProjection(
         case MultiRegions::eDiscontinuous:
         {
             // Just copy over array
-            int npoints = GetNpoints();
-
-            for (i = 0; i < nvariables; ++i)
+            if (inarray != outarray)
             {
-                Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                int npoints = GetNpoints();
+
+                for (i = 0; i < nvariables; ++i)
+                {
+                    Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                }
             }
             break;
         }

@@ -1,0 +1,13 @@
+blas-devel
+boost-devel
+boost-python3-devel
+ccache
+cmake
+gcc-c++
+gcc-gfortran
+lapack-devel
+libXmu-devel
+make
+scotch-devel
+tinyxml-devel
+zlib-devel

@@ -57,7 +57,8 @@ protected:
                               double rhowL, double EL, double rhoR,
                               double rhouR, double rhovR, double rhowR,
                               double ER, double &rhof, double &rhouf,
-                              double &rhovf, double &rhowf, double &Ef);
+                              double &rhovf, double &rhowf,
+                              double &Ef) override;
 };
 } // namespace Nektar
 

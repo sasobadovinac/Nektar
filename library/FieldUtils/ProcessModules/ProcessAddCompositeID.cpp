@@ -63,7 +63,7 @@ ProcessAddCompositeID::~ProcessAddCompositeID()
 {
 }
 
-void ProcessAddCompositeID::Process(po::variables_map &vm)
+void ProcessAddCompositeID::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

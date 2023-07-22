@@ -50,38 +50,56 @@ public:
     OutputFileBase(FieldSharedPtr f);
     virtual ~OutputFileBase();
 
+protected:
     /// Write fld to output file.
-    virtual void Process(po::variables_map &vm);
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "OutputFileBase";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Writing file";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eOutput;
     }
 
-protected:
     /// Write from pts to output file.
-    virtual void OutputFromPts(po::variables_map &vm) = 0;
+    virtual void v_OutputFromPts(po::variables_map &vm) = 0;
 
     /// Write from m_exp to output file.
-    virtual void OutputFromExp(po::variables_map &vm) = 0;
+    virtual void v_OutputFromExp(po::variables_map &vm) = 0;
 
     /// Write from data to output file.
-    virtual void OutputFromData(po::variables_map &vm) = 0;
+    virtual void v_OutputFromData(po::variables_map &vm) = 0;
 
-    virtual fs::path GetPath(std::string &filename, po::variables_map &vm) = 0;
+    virtual fs::path v_GetPath(std::string &filename, po::variables_map &vm)
+    {
+        boost::ignore_unused(filename, vm);
+        NEKERROR(ErrorUtil::efatal, "v_GetPath not coded");
+        return fs::path();
+    }
+    fs::path GetPath(std::string &filename, po::variables_map &vm)
+    {
+        return v_GetPath(filename, vm);
+    }
 
-    virtual fs::path GetFullOutName(std::string &filename,
-                                    po::variables_map &vm) = 0;
+    virtual fs::path v_GetFullOutName(std::string &filename,
+                                      po::variables_map &vm)
+    {
+        boost::ignore_unused(filename, vm);
+        NEKERROR(ErrorUtil::efatal, "v_OutputFromExp not coded");
+        return fs::path();
+    }
+    fs::path GetFullOutName(std::string &filename, po::variables_map &vm)
+    {
+        return v_GetFullOutName(filename, vm);
+    }
 
     bool m_requireEquiSpaced;
 

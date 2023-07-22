@@ -76,7 +76,7 @@ OutputTecplot::~OutputTecplot()
 {
 }
 
-void OutputTecplot::Process(po::variables_map &vm)
+void OutputTecplot::v_Process(po::variables_map &vm)
 {
 
     if (m_config["writemultiplefiles"].as<bool>())
@@ -85,10 +85,10 @@ void OutputTecplot::Process(po::variables_map &vm)
     }
     else
     {
-        m_oneOutputFile = (m_f->m_comm->GetSize() > 1);
+        m_oneOutputFile = (m_f->m_comm->GetSpaceComm()->GetSize() > 1);
     }
 
-    OutputFileBase::Process(vm);
+    OutputFileBase::v_Process(vm);
 }
 
 /**
@@ -148,7 +148,7 @@ void WriteStream(std::ostream &outfile, std::vector<T> data)
     }
 }
 
-void OutputTecplot::OutputFromPts(po::variables_map &vm)
+void OutputTecplot::v_OutputFromPts(po::variables_map &vm)
 {
     LibUtilities::PtsFieldSharedPtr fPts = m_f->m_fieldPts;
 
@@ -158,7 +158,7 @@ void OutputTecplot::OutputFromPts(po::variables_map &vm)
         return;
     }
 
-    int rank    = m_f->m_comm->GetRank();
+    int rank    = m_f->m_comm->GetSpaceComm()->GetRank();
     m_numBlocks = 0;
 
     m_coordim = fPts->GetDim();
@@ -171,7 +171,8 @@ void OutputTecplot::OutputFromPts(po::variables_map &vm)
         case LibUtilities::ePtsFile:
             m_numPoints.resize(1);
             m_numPoints[0] = fPts->GetNpoints();
-            m_f->m_comm->AllReduce(m_numPoints[0], LibUtilities::ReduceSum);
+            m_f->m_comm->GetSpaceComm()->AllReduce(m_numPoints[0],
+                                                   LibUtilities::ReduceSum);
             m_zoneType = eOrdered;
             break;
         case LibUtilities::ePtsLine:
@@ -229,7 +230,7 @@ void OutputTecplot::OutputFromPts(po::variables_map &vm)
     WriteTecplotFile(vm);
 }
 
-void OutputTecplot::OutputFromExp(po::variables_map &vm)
+void OutputTecplot::v_OutputFromExp(po::variables_map &vm)
 {
     m_numBlocks   = 0;
     m_writeHeader = true;
@@ -299,6 +300,7 @@ void OutputTecplot::OutputFromExp(po::variables_map &vm)
         for (int i = 0; i < m_f->m_variables.size(); ++i)
         {
             m_fields[i + m_coordim] = Array<OneD, NekDouble>(totpoints);
+
             Vmath::Vcopy(m_f->m_exp[0]->GetTotPoints(),
                          m_f->m_exp[i]->UpdatePhys(), 1,
                          m_fields[i + m_coordim], 1);
@@ -342,7 +344,7 @@ void OutputTecplot::OutputFromExp(po::variables_map &vm)
     WriteTecplotFile(vm);
 }
 
-void OutputTecplot::OutputFromData(po::variables_map &vm)
+void OutputTecplot::v_OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
@@ -350,17 +352,17 @@ void OutputTecplot::OutputFromData(po::variables_map &vm)
              "OutputTecplot can't write using only FieldData.");
 }
 
-fs::path OutputTecplot::GetPath(std::string &filename, po::variables_map &vm)
+fs::path OutputTecplot::v_GetPath(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
-    int nprocs = m_f->m_comm->GetSize();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
     string returnstr(filename);
 
     // Amend for parallel output if required
     if (nprocs != 1 && !m_oneOutputFile)
     {
-        int rank      = m_f->m_comm->GetRank();
+        int rank      = m_f->m_comm->GetSpaceComm()->GetRank();
         int dot       = filename.find_last_of('.');
         string ext    = filename.substr(dot, filename.length() - dot);
         string procId = "_P" + boost::lexical_cast<std::string>(rank);
@@ -370,8 +372,8 @@ fs::path OutputTecplot::GetPath(std::string &filename, po::variables_map &vm)
     return fs::path(returnstr);
 }
 
-fs::path OutputTecplot::GetFullOutName(std::string &filename,
-                                       po::variables_map &vm)
+fs::path OutputTecplot::v_GetFullOutName(std::string &filename,
+                                         po::variables_map &vm)
 {
     return GetPath(filename, vm);
 }
@@ -383,8 +385,8 @@ void OutputTecplot::WriteTecplotFile(po::variables_map &vm)
     std::vector<string> variables = m_f->m_variables;
     variables.insert(variables.begin(), coordVars, coordVars + m_coordim);
 
-    int nprocs = m_f->m_comm->GetSize();
-    int rank   = m_f->m_comm->GetRank();
+    int nprocs = m_f->m_comm->GetSpaceComm()->GetSize();
+    int rank   = m_f->m_comm->GetSpaceComm()->GetRank();
 
     // Extract the output filename and extension
     string filename = m_config["outfile"].as<string>();
@@ -399,7 +401,8 @@ void OutputTecplot::WriteTecplotFile(po::variables_map &vm)
     if (m_oneOutputFile)
     {
         // Reduce on number of blocks and number of points.
-        m_f->m_comm->AllReduce(m_numBlocks, LibUtilities::ReduceSum);
+        m_f->m_comm->GetSpaceComm()->AllReduce(m_numBlocks,
+                                               LibUtilities::ReduceSum);
 
         // Root process needs to know how much data everyone else has for
         // writing in parallel.
@@ -415,8 +418,10 @@ void OutputTecplot::WriteTecplotFile(po::variables_map &vm)
 
         m_rankConnSizes[rank] = m_totConn;
 
-        m_f->m_comm->AllReduce(m_rankFieldSizes, LibUtilities::ReduceSum);
-        m_f->m_comm->AllReduce(m_rankConnSizes, LibUtilities::ReduceSum);
+        m_f->m_comm->GetSpaceComm()->AllReduce(m_rankFieldSizes,
+                                               LibUtilities::ReduceSum);
+        m_f->m_comm->GetSpaceComm()->AllReduce(m_rankConnSizes,
+                                               LibUtilities::ReduceSum);
     }
 
     if (m_writeHeader)
@@ -443,8 +448,8 @@ void OutputTecplot::WriteTecplotFile(po::variables_map &vm)
  * @param   outfile   Output file name
  * @param   var       Variables names
  */
-void OutputTecplot::WriteTecplotHeader(std::ofstream &outfile,
-                                       std::vector<std::string> &var)
+void OutputTecplot::v_WriteTecplotHeader(std::ofstream &outfile,
+                                         std::vector<std::string> &var)
 {
     outfile << "Variables = " << var[0];
 
@@ -462,10 +467,10 @@ void OutputTecplot::WriteTecplotHeader(std::ofstream &outfile,
  * @param   outfile   Output file name
  * @param   var       Variables names
  */
-void OutputTecplotBinary::WriteTecplotHeader(std::ofstream &outfile,
-                                             std::vector<std::string> &var)
+void OutputTecplotBinary::v_WriteTecplotHeader(std::ofstream &outfile,
+                                               std::vector<std::string> &var)
 {
-    if (m_oneOutputFile && m_f->m_comm->GetRank() > 0)
+    if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() > 0)
     {
         return;
     }
@@ -498,7 +503,7 @@ void OutputTecplotBinary::WriteTecplotHeader(std::ofstream &outfile,
  * @param   outfile    Output file name.
  * @param   expansion  Expansion that is considered
  */
-void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
+void OutputTecplot::v_WriteTecplotZone(std::ofstream &outfile)
 {
     bool useDoubles = m_config["double"].as<bool>();
 
@@ -511,20 +516,26 @@ void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
     // Write either points or finite element block
     if (m_zoneType != eOrdered)
     {
-        if ((m_oneOutputFile && m_f->m_comm->GetRank() == 0) ||
+        if ((m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0) ||
             !m_oneOutputFile)
         {
             // Number of points in zone
-            int nPoints = m_oneOutputFile ? Vmath::Vsum(m_f->m_comm->GetSize(),
-                                                        m_rankFieldSizes, 1)
-                                          : m_fields[0].size();
+            int nPoints =
+                m_oneOutputFile
+                    ? Vmath::Vsum(m_f->m_comm->GetSpaceComm()->GetSize(),
+                                  m_rankFieldSizes, 1)
+                    : m_fields[0].size();
 
             outfile << "Zone, N=" << nPoints << ", E=" << m_numBlocks
-                    << ", F=FEBlock, ET=" << TecplotZoneTypeMap[m_zoneType]
-                    << std::endl;
+                    << ", F=FEBlock, ET=" << TecplotZoneTypeMap[m_zoneType];
+            if (m_f->m_fieldMetaDataMap.count("Time"))
+            {
+                outfile << ", SOLUTIONTIME=" << m_f->m_fieldMetaDataMap["Time"];
+            }
+            outfile << std::endl;
         }
 
-        if (m_oneOutputFile && m_f->m_comm->GetRank() == 0)
+        if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0)
         {
             for (int j = 0; j < m_fields.size(); ++j)
             {
@@ -537,12 +548,12 @@ void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
                     outfile << m_fields[j][i] << " ";
                 }
 
-                for (int n = 1; n < m_f->m_comm->GetSize(); ++n)
+                for (int n = 1; n < m_f->m_comm->GetSpaceComm()->GetSize(); ++n)
                 {
                     if (m_rankFieldSizes[n])
                     {
                         Array<OneD, NekDouble> tmp(m_rankFieldSizes[n]);
-                        m_f->m_comm->Recv(n, tmp);
+                        m_f->m_comm->GetSpaceComm()->Recv(n, tmp);
 
                         for (int i = 0; i < m_rankFieldSizes[n]; ++i)
                         {
@@ -557,13 +568,13 @@ void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
                 outfile << std::endl;
             }
         }
-        else if (m_oneOutputFile && m_f->m_comm->GetRank() > 0)
+        else if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() > 0)
         {
             if (m_fields[0].size())
             {
                 for (int i = 0; i < m_fields.size(); ++i)
                 {
-                    m_f->m_comm->Send(0, m_fields[i]);
+                    m_f->m_comm->GetSpaceComm()->Send(0, m_fields[i]);
                 }
             }
         }
@@ -587,7 +598,7 @@ void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
     }
     else
     {
-        if ((m_oneOutputFile && m_f->m_comm->GetRank() == 0) ||
+        if ((m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0) ||
             !m_oneOutputFile)
         {
             std::string dirs[] = {"I", "J", "K"};
@@ -599,7 +610,7 @@ void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
             outfile << ", F=POINT" << std::endl;
         }
 
-        if (m_oneOutputFile && m_f->m_comm->GetRank() == 0)
+        if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0)
         {
             Array<OneD, NekDouble> tmp(m_fields.size());
             for (int i = 0; i < m_fields[0].size(); ++i)
@@ -611,11 +622,11 @@ void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
                 outfile << std::endl;
             }
 
-            for (int n = 1; n < m_f->m_comm->GetSize(); ++n)
+            for (int n = 1; n < m_f->m_comm->GetSpaceComm()->GetSize(); ++n)
             {
                 for (int i = 0; i < m_rankFieldSizes[n]; ++i)
                 {
-                    m_f->m_comm->Recv(n, tmp);
+                    m_f->m_comm->GetSpaceComm()->Recv(n, tmp);
                     for (int j = 0; j < m_fields.size(); ++j)
                     {
                         outfile << setw(12) << tmp[j] << " ";
@@ -624,7 +635,7 @@ void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
                 }
             }
         }
-        else if (m_oneOutputFile && m_f->m_comm->GetRank() > 0)
+        else if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() > 0)
         {
             Array<OneD, NekDouble> tmp(m_fields.size());
             for (int i = 0; i < m_fields[0].size(); ++i)
@@ -633,7 +644,7 @@ void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
                 {
                     tmp[j] = m_fields[j][i];
                 }
-                m_f->m_comm->Send(0, tmp);
+                m_f->m_comm->GetSpaceComm()->Send(0, tmp);
             }
         }
         else
@@ -686,7 +697,7 @@ void OutputTecplotBinary::WriteDoubleOrFloat(std::ofstream &outfile,
  * @param   outfile    Output file name.
  * @param   expansion  Expansion that is considered
  */
-void OutputTecplotBinary::WriteTecplotZone(std::ofstream &outfile)
+void OutputTecplotBinary::v_WriteTecplotZone(std::ofstream &outfile)
 {
     Array<OneD, NekDouble> fieldMin(m_fields.size());
     Array<OneD, NekDouble> fieldMax(m_fields.size());
@@ -694,13 +705,14 @@ void OutputTecplotBinary::WriteTecplotZone(std::ofstream &outfile)
     // Data format: either double or single depending on user options
     bool useDoubles = m_config["double"].as<bool>();
 
-    if ((m_oneOutputFile && m_f->m_comm->GetRank() == 0) || !m_oneOutputFile)
+    if ((m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0) ||
+        !m_oneOutputFile)
     {
         // Don't bother naming zone
         WriteStream(outfile, 299.0f); // Zone marker
 
         // Write same name as preplot
-        int rank        = m_f->m_comm->GetRank();
+        int rank        = m_f->m_comm->GetSpaceComm()->GetRank();
         string zonename = "ZONE " + boost::lexical_cast<string>(rank);
         WriteStream(outfile, zonename);
 
@@ -731,9 +743,11 @@ void OutputTecplotBinary::WriteTecplotZone(std::ofstream &outfile)
         else
         {
             // Number of points in zone
-            int nPoints = m_oneOutputFile ? Vmath::Vsum(m_f->m_comm->GetSize(),
-                                                        m_rankFieldSizes, 1)
-                                          : m_fields[0].size();
+            int nPoints =
+                m_oneOutputFile
+                    ? Vmath::Vsum(m_f->m_comm->GetSpaceComm()->GetSize(),
+                                  m_rankFieldSizes, 1)
+                    : m_fields[0].size();
 
             WriteStream(outfile, nPoints);     // Total number of points
             WriteStream(outfile, m_numBlocks); // Number of blocks
@@ -771,11 +785,12 @@ void OutputTecplotBinary::WriteTecplotZone(std::ofstream &outfile)
         fieldMax[i] = Vmath::Vmax(m_fields[i].size(), m_fields[i], 1);
     }
 
-    m_f->m_comm->AllReduce(fieldMin, LibUtilities::ReduceMin);
-    m_f->m_comm->AllReduce(fieldMax, LibUtilities::ReduceMax);
+    m_f->m_comm->GetSpaceComm()->AllReduce(fieldMin, LibUtilities::ReduceMin);
+    m_f->m_comm->GetSpaceComm()->AllReduce(fieldMax, LibUtilities::ReduceMax);
 
     // Write out min/max of field data
-    if ((m_oneOutputFile && m_f->m_comm->GetRank() == 0) || !m_oneOutputFile)
+    if ((m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0) ||
+        !m_oneOutputFile)
     {
         for (int i = 0; i < m_fields.size(); ++i)
         {
@@ -784,25 +799,25 @@ void OutputTecplotBinary::WriteTecplotZone(std::ofstream &outfile)
         }
     }
 
-    if (m_oneOutputFile && m_f->m_comm->GetRank() == 0)
+    if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0)
     {
         for (int i = 0; i < m_fields.size(); ++i)
         {
             WriteDoubleOrFloat(outfile, m_fields[i]);
 
-            for (int n = 1; n < m_f->m_comm->GetSize(); ++n)
+            for (int n = 1; n < m_f->m_comm->GetSpaceComm()->GetSize(); ++n)
             {
                 Array<OneD, NekDouble> tmp(m_rankFieldSizes[n]);
-                m_f->m_comm->Recv(n, tmp);
+                m_f->m_comm->GetSpaceComm()->Recv(n, tmp);
                 WriteDoubleOrFloat(outfile, tmp);
             }
         }
     }
-    else if (m_oneOutputFile && m_f->m_comm->GetRank() > 0)
+    else if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() > 0)
     {
         for (int i = 0; i < m_fields.size(); ++i)
         {
-            m_f->m_comm->Send(0, m_fields[i]);
+            m_f->m_comm->GetSpaceComm()->Send(0, m_fields[i]);
         }
     }
     else
@@ -819,7 +834,7 @@ void OutputTecplotBinary::WriteTecplotZone(std::ofstream &outfile)
  *
  * @param   outfile    Output file
  */
-void OutputTecplot::WriteTecplotConnectivity(std::ofstream &outfile)
+void OutputTecplot::v_WriteTecplotConnectivity(std::ofstream &outfile)
 {
     // Ordered data have no connectivity information.
     if (m_zoneType == eOrdered)
@@ -827,7 +842,7 @@ void OutputTecplot::WriteTecplotConnectivity(std::ofstream &outfile)
         return;
     }
 
-    if (m_oneOutputFile && m_f->m_comm->GetRank() > 0)
+    if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() > 0)
     {
         // Need to amalgamate connectivity information
         if (m_totConn)
@@ -842,7 +857,7 @@ void OutputTecplot::WriteTecplotConnectivity(std::ofstream &outfile)
                     cnt += m_conn[i].size();
                 }
             }
-            m_f->m_comm->Send(0, conn);
+            m_f->m_comm->GetSpaceComm()->Send(0, conn);
         }
     }
     else
@@ -862,16 +877,16 @@ void OutputTecplot::WriteTecplotConnectivity(std::ofstream &outfile)
         }
         outfile << endl;
 
-        if (m_oneOutputFile && m_f->m_comm->GetRank() == 0)
+        if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0)
         {
             int offset = m_rankFieldSizes[0];
 
-            for (int n = 1; n < m_f->m_comm->GetSize(); ++n)
+            for (int n = 1; n < m_f->m_comm->GetSpaceComm()->GetSize(); ++n)
             {
                 if (m_rankConnSizes[n])
                 {
                     Array<OneD, int> conn(m_rankConnSizes[n]);
-                    m_f->m_comm->Recv(n, conn);
+                    m_f->m_comm->GetSpaceComm()->Recv(n, conn);
                     for (int j = 0; j < conn.size(); ++j)
                     {
                         outfile << conn[j] + offset + 1 << " ";
@@ -887,9 +902,9 @@ void OutputTecplot::WriteTecplotConnectivity(std::ofstream &outfile)
     }
 }
 
-void OutputTecplotBinary::WriteTecplotConnectivity(std::ofstream &outfile)
+void OutputTecplotBinary::v_WriteTecplotConnectivity(std::ofstream &outfile)
 {
-    if (m_oneOutputFile && m_f->m_comm->GetRank() > 0)
+    if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() > 0)
     {
         // Need to amalgamate connectivity information
         Array<OneD, int> conn(m_totConn);
@@ -898,7 +913,7 @@ void OutputTecplotBinary::WriteTecplotConnectivity(std::ofstream &outfile)
             Vmath::Vcopy(m_conn[i].size(), &m_conn[i][0], 1, &conn[cnt], 1);
             cnt += m_conn[i].size();
         }
-        m_f->m_comm->Send(0, conn);
+        m_f->m_comm->GetSpaceComm()->Send(0, conn);
     }
     else
     {
@@ -907,14 +922,14 @@ void OutputTecplotBinary::WriteTecplotConnectivity(std::ofstream &outfile)
             WriteStream(outfile, m_conn[i]);
         }
 
-        if (m_oneOutputFile && m_f->m_comm->GetRank() == 0)
+        if (m_oneOutputFile && m_f->m_comm->GetSpaceComm()->GetRank() == 0)
         {
             int offset = m_rankFieldSizes[0];
 
-            for (int n = 1; n < m_f->m_comm->GetSize(); ++n)
+            for (int n = 1; n < m_f->m_comm->GetSpaceComm()->GetSize(); ++n)
             {
                 Array<OneD, int> conn(m_rankConnSizes[n]);
-                m_f->m_comm->Recv(n, conn);
+                m_f->m_comm->GetSpaceComm()->Recv(n, conn);
 
                 for (int j = 0; j < conn.size(); ++j)
                 {

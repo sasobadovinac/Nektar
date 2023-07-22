@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CommCwipi.cpp
+// File: CommCwipi.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -37,7 +37,6 @@
 #include "petscsys.h"
 #endif
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Communication/CommCwipi.h>
 
 #include <cwipi.h>

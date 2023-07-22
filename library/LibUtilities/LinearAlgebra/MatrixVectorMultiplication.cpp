@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: MatrixVectorMultiplication.hpp
+// File: MatrixVectorMultiplication.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

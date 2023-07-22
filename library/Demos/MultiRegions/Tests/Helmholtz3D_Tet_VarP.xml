@@ -336,7 +336,7 @@
         </VARIABLES>
 
         <BOUNDARYREGIONS>
-            <B ID="0"> C[1-6] </B> 
+            <B ID="0"> C[1-6] </B>
         </BOUNDARYREGIONS>
 
         <BOUNDARYCONDITIONS>

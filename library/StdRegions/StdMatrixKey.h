@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdMatrixKeys.h
+// File: StdMatrixKey.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -79,6 +79,8 @@ public:
                                              const StdMatrixKey &rhs);
     STD_REGIONS_EXPORT friend bool operator==(const StdMatrixKey &lhs,
                                               const StdMatrixKey &rhs);
+    STD_REGIONS_EXPORT StdMatrixKey operator=(const StdMatrixKey &inKey);
+
     STD_REGIONS_EXPORT friend bool opLess::operator()(
         const StdMatrixKey &lhs, const StdMatrixKey &rhs) const;
 
@@ -154,13 +156,17 @@ public:
         ASSERTL1(x != m_varcoeffs.end(),
                  "Variable coefficient not defined: " +
                      std::string(StdRegions::VarCoeffTypeMap[coeff]));
-        return x->second;
+        return x->second.GetValue();
     }
 
     inline const VarCoeffMap GetVarCoeffAsMap(const VarCoeffType &coeff) const
     {
         VarCoeffMap m;
-        m[coeff] = GetVarCoeff(coeff);
+        auto x = m_varcoeffs.find(coeff);
+        ASSERTL1(x != m_varcoeffs.end(),
+                 "Variable coefficient not defined: " +
+                     std::string(StdRegions::VarCoeffTypeMap[coeff]));
+        m[coeff] = x->second;
         return m;
     }
 

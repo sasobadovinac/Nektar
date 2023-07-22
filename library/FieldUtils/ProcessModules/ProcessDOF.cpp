@@ -57,14 +57,14 @@ ProcessDOF::~ProcessDOF()
 {
 }
 
-void ProcessDOF::Process(po::variables_map &vm)
+void ProcessDOF::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
     int nDOF = m_f->m_exp[0]->GetNcoeffs();
-    m_f->m_comm->AllReduce(nDOF, LibUtilities::ReduceSum);
+    m_f->m_comm->GetSpaceComm()->AllReduce(nDOF, LibUtilities::ReduceSum);
 
-    if (m_f->m_comm->GetRank() == 0)
+    if (m_f->m_comm->GetSpaceComm()->GetRank() == 0)
     {
         cout << "Total number of DOF: " << nDOF << endl;
     }

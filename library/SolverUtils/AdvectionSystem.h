@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AdvectionSystem.h
+// File: AdvectionSystem.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -53,7 +53,8 @@ public:
 
     SOLVER_UTILS_EXPORT virtual ~AdvectionSystem();
 
-    SOLVER_UTILS_EXPORT virtual void v_InitObject(bool DeclareField = true);
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        bool DeclareField = true) override;
 
     /// Returns the advection object held by this instance.
     SOLVER_UTILS_EXPORT AdvectionSharedPtr GetAdvObject()
@@ -63,13 +64,14 @@ public:
 
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetElmtCFLVals(
         const bool FlagAcousticCFL = true);
+
     SOLVER_UTILS_EXPORT NekDouble GetCFLEstimate(int &elmtid);
 
 protected:
     /// Advection term
     SolverUtils::AdvectionSharedPtr m_advObject;
 
-    SOLVER_UTILS_EXPORT virtual bool v_PostIntegrate(int step);
+    SOLVER_UTILS_EXPORT virtual bool v_PostIntegrate(int step) override;
 
     SOLVER_UTILS_EXPORT virtual Array<OneD, NekDouble> v_GetMaxStdVelocity(
         const NekDouble SpeedSoundFactor = 1.0)
@@ -82,7 +84,7 @@ protected:
     }
 
 private:
-    /// dump cfl estimate
+    /// Dump cfl estimate
     int m_cflsteps;
     /// Write field if cfl is higher than IO_CFLWriteFld treshold
     NekDouble m_cflWriteFld;

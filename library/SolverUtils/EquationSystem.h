@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EquationSystem.h
+// File: EquationSystem.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -55,7 +55,7 @@ namespace Nektar
 {
 namespace FieldUtils
 {
-class Interpolator;
+template <typename T> class Interpolator;
 }
 namespace SolverUtils
 {
@@ -86,7 +86,8 @@ public:
     SOLVER_UTILS_EXPORT inline void InitObject(bool DeclareField = true);
 
     /// Perform any initialisation necessary before solving the problem.
-    SOLVER_UTILS_EXPORT inline void DoInitialise();
+    SOLVER_UTILS_EXPORT inline void DoInitialise(
+        bool dumpInitialConditions = true);
 
     /// Solve the problem.
     SOLVER_UTILS_EXPORT inline void DoSolve();
@@ -268,7 +269,7 @@ public:
         const int i, Array<OneD, NekDouble> &output);
 
     SOLVER_UTILS_EXPORT inline void CopyToPhysField(
-        const int i, Array<OneD, NekDouble> &output);
+        const int i, const Array<OneD, const NekDouble> &input);
 
     SOLVER_UTILS_EXPORT inline void SetSteps(const int steps);
 
@@ -298,6 +299,26 @@ public:
         m_checksteps = num;
     }
 
+    SOLVER_UTILS_EXPORT int GetInfoSteps()
+    {
+        return m_infosteps;
+    }
+
+    SOLVER_UTILS_EXPORT void SetInfoSteps(int num)
+    {
+        m_infosteps = num;
+    }
+
+    SOLVER_UTILS_EXPORT void SetIterationNumberPIT(int num)
+    {
+        m_iterPIT = num;
+    }
+
+    SOLVER_UTILS_EXPORT void SetWindowNumberPIT(int num)
+    {
+        m_windowPIT = num;
+    }
+
     SOLVER_UTILS_EXPORT Array<OneD, const Array<OneD, NekDouble>> GetTraceNormals()
     {
         return m_traceNormals;
@@ -306,6 +327,11 @@ public:
     SOLVER_UTILS_EXPORT void SetTime(const NekDouble time)
     {
         m_time = time;
+    }
+
+    SOLVER_UTILS_EXPORT void SetTimeStep(const NekDouble timestep)
+    {
+        m_timestep = timestep;
     }
 
     SOLVER_UTILS_EXPORT void SetInitialStep(const int step)
@@ -319,11 +345,16 @@ public:
     /// Virtual function to identify if operator is negated in DoSolve
     SOLVER_UTILS_EXPORT virtual bool v_NegatedOp();
 
+    /// Check if solver use Parallel-in-Time
+    SOLVER_UTILS_EXPORT bool ParallelInTime()
+    {
+        return m_comm->GetSize() != m_comm->GetSpaceComm()->GetSize();
+    }
+
 protected:
     /// Communicator
     LibUtilities::CommSharedPtr m_comm;
     bool m_verbose;
-    bool m_root;
     /// The session reader
     LibUtilities::SessionReaderSharedPtr m_session;
     /// Map of known SessionFunctions
@@ -364,6 +395,12 @@ protected:
     int m_steps;
     /// Number of steps between checkpoints.
     int m_checksteps;
+    /// Number of time steps between outputting status information.
+    int m_infosteps;
+    /// Number of parallel-in-time time iteration.
+    int m_iterPIT = 0;
+    /// Index of windows for parallel-in-time time iteration.
+    int m_windowPIT = 0;
     /// Spatial dimension (>= expansion dim).
     int m_spacedim;
     /// Expansion dimension.
@@ -439,7 +476,8 @@ protected:
     SOLVER_UTILS_EXPORT virtual void v_InitObject(bool DeclareFeld = true);
 
     /// Virtual function for initialisation implementation.
-    SOLVER_UTILS_EXPORT virtual void v_DoInitialise();
+    SOLVER_UTILS_EXPORT virtual void v_DoInitialise(
+        bool dumpInitialConditions = true);
 
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_DoSolve();
@@ -486,6 +524,7 @@ protected:
         std::vector<std::string> &variables);
 
     static std::string equationSystemTypeLookupIds[];
+    static std::string projectionTypeLookupIds[];
 
 private:
     SOLVER_UTILS_EXPORT virtual Array<OneD, bool> v_GetSystemSingularChecks();
@@ -513,9 +552,9 @@ inline void EquationSystem::InitObject(bool DeclareField)
  *
  * Public interface routine to virtual function implementation.
  */
-inline void EquationSystem::DoInitialise()
+inline void EquationSystem::DoInitialise(bool dumpInitialConditions)
 {
-    v_DoInitialise();
+    v_DoInitialise(dumpInitialConditions);
 }
 
 /**
@@ -615,16 +654,18 @@ inline void EquationSystem::PrintSummary(std::ostream &out)
 
         out << "==============================================================="
                "========"
-            << std::endl;
+            << std::endl
+            << std::flush;
         for (auto &x : vSummary)
         {
             out << "\t";
             out.width(20);
-            out << x.first << ": " << x.second << std::endl;
+            out << x.first << ": " << x.second << std::endl << std::flush;
         }
         out << "==============================================================="
                "========"
-            << std::endl;
+            << std::endl
+            << std::flush;
     }
 }
 
@@ -753,11 +794,12 @@ inline void EquationSystem::CopyFromPhysField(const int i,
     Vmath::Vcopy(output.size(), m_fields[i]->GetPhys(), 1, output, 1);
 }
 
-inline void EquationSystem::CopyToPhysField(const int i,
-                                            Array<OneD, NekDouble> &output)
+inline void EquationSystem::CopyToPhysField(
+    const int i, const Array<OneD, const NekDouble> &input)
 {
-    Vmath::Vcopy(output.size(), output, 1, m_fields[i]->UpdatePhys(), 1);
+    Vmath::Vcopy(input.size(), input, 1, m_fields[i]->UpdatePhys(), 1);
 }
+
 } // namespace SolverUtils
 } // namespace Nektar
 

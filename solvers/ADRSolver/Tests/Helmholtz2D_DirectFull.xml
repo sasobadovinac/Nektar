@@ -18,7 +18,7 @@
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
-        <CONDITIONS>
+    <CONDITIONS>
 
         <PARAMETERS>
             <P> wavefreq       = PI               </P>
@@ -31,7 +31,7 @@
             <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"   />
             <I PROPERTY="GlobalSysSoln"         VALUE="DirectFull" />
             <!--
-            <I PROPERTY="GlobalSysSoln"         VALUE="DirectStaticCond"          />
+                <I PROPERTY="GlobalSysSoln"         VALUE="DirectStaticCond"          />
             -->
         </SOLVERINFO>
 
@@ -50,15 +50,15 @@
             <REGION REF="0">
                 <N VAR="u" VALUE="-wavefreq * sin(wavefreq*x) * cos(wavefreq*y)" />
             </REGION>
-            
+
             <REGION REF="1">
                 <N VAR="u" VALUE="wavefreq * cos(wavefreq*x) * sin(wavefreq*y)" />
             </REGION>
-            
+
             <REGION REF="2">
                 <N VAR="u" VALUE="wavefreq * sin(wavefreq*x) * cos(wavefreq * y)" />
             </REGION>
-            
+
             <REGION REF="3">
                 <N VAR="u" VALUE="-wavefreq * cos(wavefreq*x) * sin(wavefreq*y)" />
             </REGION>

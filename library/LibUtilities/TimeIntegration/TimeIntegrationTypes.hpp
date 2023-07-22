@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationTypes.hpp
+// File: TimeIntegrationTypes.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -61,13 +61,6 @@ typedef const AT<      const std::complex<NekDouble>>   ConstComplexSingleArray;
 typedef       AT<            std::complex<NekDouble>>        ComplexSingleArray;
 // clang-format on
 
-// Functors
-typedef std::function<void(ConstDoubleArray &, DoubleArray &, const NekDouble)>
-    FunctorType1;
-typedef std::function<void(ConstDoubleArray &, DoubleArray &, const NekDouble,
-                           const NekDouble)>
-    FunctorType2;
-
 // Shared pointers
 class TimeIntegrationScheme;
 
@@ -110,6 +103,24 @@ typedef std::shared_ptr<TimeIntegrationSolutionGLM>
 
 typedef std::vector<TimeIntegrationSolutionGLMSharedPtr>
     TimeIntegrationSolutionGLMVector;
+
+//
+class TimeIntegrationSchemeGEM;
+
+typedef std::shared_ptr<TimeIntegrationSchemeGEM>
+    TimeIntegrationSchemeGEMSharedPtr;
+
+typedef std::vector<TimeIntegrationSchemeGEMSharedPtr>
+    TimeIntegrationSchemeGEMVector;
+
+//
+class TimeIntegrationSchemeSDC;
+
+typedef std::shared_ptr<TimeIntegrationSchemeSDC>
+    TimeIntegrationSchemeSDCSharedPtr;
+
+typedef std::vector<TimeIntegrationSchemeSDCSharedPtr>
+    TimeIntegrationSchemeSDCVector;
 
 //
 enum TimeIntegrationSchemeType

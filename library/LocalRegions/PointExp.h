@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PointExp.h
+// File: PointExp.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -50,8 +50,7 @@ class PointExp final : virtual public StdRegions::StdPointExp,
 public:
     LOCAL_REGIONS_EXPORT PointExp(
         const SpatialDomains::PointGeomSharedPtr &m_geom);
-
-    LOCAL_REGIONS_EXPORT ~PointExp() final = default;
+    LOCAL_REGIONS_EXPORT virtual ~PointExp() override = default;
 
     inline const Array<OneD, const NekDouble> &GetCoeffs(void) const
     {
@@ -124,12 +123,13 @@ protected:
                 //!< same as the coefficient but is defined for consistency (It
                 //!< is also used in Robin boundary conditions)
 
-    void v_GetCoords(Array<OneD, NekDouble> &coords_0,
-                     Array<OneD, NekDouble> &coords_1,
-                     Array<OneD, NekDouble> &coords_2) final;
+    virtual void v_GetCoords(Array<OneD, NekDouble> &coords_0,
+                             Array<OneD, NekDouble> &coords_1,
+                             Array<OneD, NekDouble> &coords_2) override;
 
-    void v_NormVectorIProductWRTBase(const Array<OneD, const NekDouble> &Fx,
-                                     Array<OneD, NekDouble> &outarray) final;
+    virtual void v_NormVectorIProductWRTBase(
+        const Array<OneD, const NekDouble> &Fx,
+        Array<OneD, NekDouble> &outarray) override;
 };
 
 typedef std::shared_ptr<PointExp> PointExpSharedPtr;

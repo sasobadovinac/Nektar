@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// File MMFSWE.cpp
+// File: MMFSWE.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -316,7 +316,8 @@ void MMFSWE::v_DoSolve()
         cpuTime += elapsed;
 
         // Write out status information
-        if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
+        if (m_infosteps && !((step + 1) % m_infosteps) &&
+            m_session->GetComm()->GetRank() == 0)
         {
             std::cout << "Steps: " << std::setw(8) << std::left << step + 1
                       << " "
@@ -1536,12 +1537,12 @@ void MMFSWE::WallBoundary2D(int bcRegion, int cnt,
 /**
  *
  */
-void MMFSWE::v_DoInitialise()
+void MMFSWE::v_DoInitialise(bool dumpInitialConditions)
 {
     // Compute m_depth and m_Derivdepth
     EvaluateWaterDepth();
     EvaluateCoriolis();
-    SetInitialConditions();
+    SetInitialConditions(0.0, dumpInitialConditions);
     PrimitiveToConservative();
 
     // transfer the initial conditions to modal values

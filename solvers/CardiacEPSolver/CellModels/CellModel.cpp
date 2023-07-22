@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CellModel.cpp
+// File: CellModel.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -76,7 +76,7 @@ CellModel::CellModel(const LibUtilities::SessionReaderSharedPtr &pSession,
     // Number of points in nodal space is the number of coefficients
     // in modified basis
     std::set<enum LibUtilities::ShapeType> s;
-    for (unsigned int i = 0; i < m_field->GetNumElmts(); ++i)
+    for (size_t i = 0; i < m_field->GetNumElmts(); ++i)
     {
         s.insert(m_field->GetExp(i)->DetShapeType());
     }
@@ -132,13 +132,13 @@ void CellModel::Initialise()
 
     m_cellSol = Array<OneD, Array<OneD, NekDouble>>(m_nvar);
     m_wsp     = Array<OneD, Array<OneD, NekDouble>>(m_nvar);
-    for (unsigned int i = 0; i < m_nvar; ++i)
+    for (size_t i = 0; i < m_nvar; ++i)
     {
         m_cellSol[i] = Array<OneD, NekDouble>(m_nq);
         m_wsp[i]     = Array<OneD, NekDouble>(m_nq);
     }
     m_gates_tau = Array<OneD, Array<OneD, NekDouble>>(m_gates.size());
-    for (unsigned int i = 0; i < m_gates.size(); ++i)
+    for (size_t i = 0; i < m_gates.size(); ++i)
     {
         m_gates_tau[i] = Array<OneD, NekDouble>(m_nq);
     }
@@ -167,7 +167,7 @@ void CellModel::TimeIntegrate(
 {
     int phys_offset = 0;
     int coef_offset = 0;
-    int nvar        = inarray.size();
+    size_t nvar     = inarray.size();
     Array<OneD, NekDouble> tmp;
 
     // ---------------------------
@@ -177,7 +177,7 @@ void CellModel::TimeIntegrate(
         if (!m_nodalTmp.size())
         {
             m_nodalTmp = Array<OneD, Array<OneD, NekDouble>>(nvar);
-            for (unsigned int k = 0; k < nvar; ++k)
+            for (size_t k = 0; k < nvar; ++k)
             {
                 m_nodalTmp[k] = Array<OneD, NekDouble>(m_nq);
             }
@@ -187,9 +187,9 @@ void CellModel::TimeIntegrate(
         Array<OneD, NekDouble> tmpCoeffs(
             max(m_nodalTri->GetNcoeffs(), m_nodalTet->GetNcoeffs()));
 
-        for (unsigned int k = 0; k < nvar; ++k)
+        for (size_t k = 0; k < nvar; ++k)
         {
-            for (unsigned int i = 0; i < m_field->GetNumElmts(); ++i)
+            for (size_t i = 0; i < m_field->GetNumElmts(); ++i)
             {
                 phys_offset = m_field->GetPhys_Offset(i);
                 coef_offset = m_field->GetCoeff_Offset(i);
@@ -223,21 +223,21 @@ void CellModel::TimeIntegrate(
     NekDouble delta_t = (time - m_lastTime) / m_substeps;
 
     // Perform substepping
-    for (unsigned int i = 0; i < m_substeps - 1; ++i)
+    for (size_t i = 0; i < m_substeps - 1; ++i)
     {
         Update(m_cellSol, m_wsp, time);
         // Voltage
         Vmath::Svtvp(m_nq, delta_t, m_wsp[0], 1, m_cellSol[0], 1, m_cellSol[0],
                      1);
         // Ion concentrations
-        for (unsigned int j = 0; j < m_concentrations.size(); ++j)
+        for (size_t j = 0; j < m_concentrations.size(); ++j)
         {
             Vmath::Svtvp(m_nq, delta_t, m_wsp[m_concentrations[j]], 1,
                          m_cellSol[m_concentrations[j]], 1,
                          m_cellSol[m_concentrations[j]], 1);
         }
         // Gating variables: Rush-Larsen scheme
-        for (unsigned int j = 0; j < m_gates.size(); ++j)
+        for (size_t j = 0; j < m_gates.size(); ++j)
         {
             Vmath::Sdiv(m_nq, -delta_t, m_gates_tau[j], 1, m_gates_tau[j], 1);
             Vmath::Vexp(m_nq, m_gates_tau[j], 1, m_gates_tau[j], 1);
@@ -258,9 +258,9 @@ void CellModel::TimeIntegrate(
         Array<OneD, NekDouble> tmpCoeffs(
             max(m_nodalTri->GetNcoeffs(), m_nodalTet->GetNcoeffs()));
 
-        for (unsigned int k = 0; k < nvar; ++k)
+        for (size_t k = 0; k < nvar; ++k)
         {
-            for (unsigned int i = 0; i < m_field->GetNumElmts(); ++i)
+            for (size_t i = 0; i < m_field->GetNumElmts(); ++i)
             {
                 int phys_offset = m_field->GetPhys_Offset(i);
                 int coef_offset = m_field->GetCoeff_Offset(i);
@@ -286,7 +286,7 @@ void CellModel::TimeIntegrate(
     }
 
     // Ion concentrations
-    for (unsigned int j = 0; j < m_concentrations.size(); ++j)
+    for (size_t j = 0; j < m_concentrations.size(); ++j)
     {
         Vmath::Svtvp(m_nq, delta_t, m_wsp[m_concentrations[j]], 1,
                      m_cellSol[m_concentrations[j]], 1,
@@ -294,7 +294,7 @@ void CellModel::TimeIntegrate(
     }
 
     // Gating variables: Rush-Larsen scheme
-    for (unsigned int j = 0; j < m_gates.size(); ++j)
+    for (size_t j = 0; j < m_gates.size(); ++j)
     {
         Vmath::Sdiv(m_nq, -delta_t, m_gates_tau[j], 1, m_gates_tau[j], 1);
         Vmath::Vexp(m_nq, m_gates_tau[j], 1, m_gates_tau[j], 1);
@@ -307,7 +307,7 @@ void CellModel::TimeIntegrate(
     m_lastTime = time;
 }
 
-Array<OneD, NekDouble> CellModel::GetCellSolutionCoeffs(unsigned int idx)
+Array<OneD, NekDouble> CellModel::GetCellSolutionCoeffs(size_t idx)
 {
     ASSERTL0(idx < m_nvar, "Index out of range for cell model.");
 
@@ -316,7 +316,7 @@ Array<OneD, NekDouble> CellModel::GetCellSolutionCoeffs(unsigned int idx)
 
     if (m_useNodal)
     {
-        for (unsigned int i = 0; i < m_field->GetNumElmts(); ++i)
+        for (size_t i = 0; i < m_field->GetNumElmts(); ++i)
         {
             int coef_offset = m_field->GetCoeff_Offset(i);
             if (m_field->GetExp(0)->DetShapeType() == LibUtilities::eTriangle)
@@ -339,7 +339,7 @@ Array<OneD, NekDouble> CellModel::GetCellSolutionCoeffs(unsigned int idx)
     return outarray;
 }
 
-Array<OneD, NekDouble> CellModel::GetCellSolution(unsigned int idx)
+Array<OneD, NekDouble> CellModel::GetCellSolution(size_t idx)
 {
     return m_cellSol[idx];
 }
@@ -348,11 +348,11 @@ void CellModel::LoadCellModel()
 {
     const bool root           = (m_session->GetComm()->GetRank() == 0);
     const std::string fncName = "CellModelInitialConditions";
-    const int nvar            = m_cellSol[0].size();
+    const size_t nvar         = m_cellSol[0].size();
     std::string varName;
     Array<OneD, NekDouble> coeffs(m_field->GetNcoeffs());
     Array<OneD, NekDouble> tmp;
-    int j = 0;
+    size_t j = 0;
 
     SpatialDomains::MeshGraphSharedPtr vGraph = m_field->GetGraph();
 
@@ -424,7 +424,7 @@ void CellModel::LoadCellModel()
             }
 
             // Extract the data into the modal coefficients
-            for (int i = 0; i < FieldDef[file].size(); ++i)
+            for (size_t i = 0; i < FieldDef[file].size(); ++i)
             {
                 m_field->ExtractDataToCoeffs(
                     FieldDef[file][i], FieldData[file][i], varName, coeffs);
@@ -434,7 +434,7 @@ void CellModel::LoadCellModel()
             // otherwise we do a backward transform onto physical points.
             if (m_useNodal)
             {
-                for (unsigned int i = 0; i < m_field->GetNumElmts(); ++i)
+                for (size_t i = 0; i < m_field->GetNumElmts(); ++i)
                 {
                     int coef_offset = m_field->GetCoeff_Offset(i);
                     if (m_field->GetExp(0)->DetShapeType() ==
@@ -469,7 +469,7 @@ void CellModel::LoadCellModel()
                      << endl;
             }
 
-            const unsigned int nphys = m_field->GetNpoints();
+            const size_t nphys = m_field->GetNpoints();
             Array<OneD, NekDouble> x0(nphys);
             Array<OneD, NekDouble> x1(nphys);
             Array<OneD, NekDouble> x2(nphys);
@@ -482,7 +482,7 @@ void CellModel::LoadCellModel()
                     max(m_nodalTri->GetNcoeffs(), m_nodalTet->GetNcoeffs()));
 
                 equ->Evaluate(x0, x1, x2, phys);
-                for (unsigned int i = 0; i < m_field->GetNumElmts(); ++i)
+                for (size_t i = 0; i < m_field->GetNumElmts(); ++i)
                 {
                     int phys_offset = m_field->GetPhys_Offset(i);
                     int coef_offset = m_field->GetCoeff_Offset(i);

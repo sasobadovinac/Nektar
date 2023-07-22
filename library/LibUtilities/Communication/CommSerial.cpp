@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CommSerial.cpp
+// File: CommSerial.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -142,11 +142,11 @@ void CommSerial::v_SendRecv(void *sendbuf, int sendcount, CommDataType sendtype,
 /**
  *
  */
-void CommSerial::v_SendRecvReplace(void *buf, int count, CommDataType dt,
-                                   int pSendProc, int pRecvProc)
-{
-    boost::ignore_unused(buf, count, dt, pSendProc, pRecvProc);
-}
+// void CommSerial::v_SendRecvReplace(void *buf, int count, CommDataType dt,
+//                                    int pSendProc, int pRecvProc)
+// {
+//     boost::ignore_unused(buf, count, dt, pSendProc, pRecvProc);
+// }
 
 /**
  *
@@ -208,13 +208,6 @@ void CommSerial::v_AllGatherv(void *recvbuf, int recvcounts[], int rdispls[],
 void CommSerial::v_Bcast(void *buffer, int count, CommDataType dt, int root)
 {
     boost::ignore_unused(buffer, count, dt, root);
-}
-
-void CommSerial::v_Exscan(Array<OneD, unsigned long long> &pData,
-                          const enum ReduceOperator pOp,
-                          Array<OneD, unsigned long long> &ans)
-{
-    boost::ignore_unused(pData, pOp, ans);
 }
 
 void CommSerial::v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
@@ -298,9 +291,9 @@ CommRequestSharedPtr CommSerial::v_CreateRequest(int num)
 /**
  *
  */
-void CommSerial::v_SplitComm(int pRows, int pColumns)
+void CommSerial::v_SplitComm(int pRows, int pColumns, int pTime)
 {
-    boost::ignore_unused(pRows, pColumns);
+    boost::ignore_unused(pRows, pColumns, pTime);
     ASSERTL0(false, "Cannot split a serial process.");
 }
 

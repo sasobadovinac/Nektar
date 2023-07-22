@@ -1,0 +1,16 @@
+--- src/libscotch/parser_ll.l	2022-10-12 10:54:59.704074458 +0100
++++ src/libscotch/parser_ll.l	2022-10-12 10:54:37.112168311 +0100
+@@ -86,6 +86,13 @@
+ #ifdef FLEX_SCANNER
+ #define YY_ALWAYS_INTERACTIVE       1             /* Set the parser as interactive and read one char at a time */
+ #define YY_INPUT(buf,result,max_size) { int c = stratParserInput (); result = (c == 0) ? YY_NULL : ((buf)[0] = c, 1); }
++
++# if YY_FLEX_MAJOR_VERSION == 2 && YY_FLEX_MINOR_VERSION == 6 && YY_FLEX_SUBMINOR_VERSION == 3
++ int yywrap() { return 1; }
++# else
++#  define yywrap()                  (1)           /* Always return end-of-file on end-of-string  */
++# endif
++
+ #else /* FLEX_SCANNER */
+ #undef  getc                                      /* Redirect I/O functions */
+ #define getc                        yygetc

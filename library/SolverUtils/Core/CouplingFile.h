@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CouplingFile.h
+// File: CouplingFile.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -65,17 +65,17 @@ public:
     SOLVER_UTILS_EXPORT virtual ~CouplingFile();
 
 protected:
-    SOLVER_UTILS_EXPORT virtual void v_Init();
+    SOLVER_UTILS_EXPORT virtual void v_Init() override;
 
     SOLVER_UTILS_EXPORT virtual void v_Send(
         const int step, const NekDouble time,
         const Array<OneD, const Array<OneD, NekDouble>> &field,
-        std::vector<std::string> &varNames);
+        std::vector<std::string> &varNames) override;
 
     SOLVER_UTILS_EXPORT virtual void v_Receive(
         const int step, const NekDouble time,
         Array<OneD, Array<OneD, NekDouble>> &field,
-        std::vector<std::string> &varNames);
+        std::vector<std::string> &varNames) override;
 
 private:
     int m_lastSend;

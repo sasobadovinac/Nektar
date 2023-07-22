@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Transposition.cpp
+// File: Transposition.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,11 +36,9 @@
 
 #include <LibUtilities/Communication/Transposition.h>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>   // for ASSERTL0, etc
-#include <LibUtilities/BasicUtils/SharedArray.hpp> // for Array
-#include <LibUtilities/BasicUtils/Vmath.hpp>       // for Vcopy
-#include <LibUtilities/Foundations/Basis.h>        // for BasisKey
-#include <LibUtilities/Foundations/Foundations.hpp>
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp> // for ASSERTL0, etc
+#include <LibUtilities/BasicUtils/Vmath.hpp>     // for Vcopy
+#include <LibUtilities/Foundations/Basis.h>      // for BasisKey
 
 namespace Nektar
 {
@@ -203,7 +201,8 @@ unsigned int Transposition::GetStripID(void)
  * Main method: General transposition, the dir parameters define if
  * 1D,2D,3D and which transposition is required at the same time
  */
-void Transposition::Transpose(const Array<OneD, const NekDouble> &inarray,
+void Transposition::Transpose(const int npts,
+                              const Array<OneD, const NekDouble> &inarray,
                               Array<OneD, NekDouble> &outarray, bool UseNumMode,
                               TranspositionDir dir)
 {
@@ -211,32 +210,32 @@ void Transposition::Transpose(const Array<OneD, const NekDouble> &inarray,
     {
         case eXYtoZ:
         {
-            TransposeXYtoZ(inarray, outarray, UseNumMode);
+            TransposeXYtoZ(npts, inarray, outarray, UseNumMode);
         }
         break;
         case eZtoXY:
         {
-            TransposeZtoXY(inarray, outarray, UseNumMode);
+            TransposeZtoXY(npts, inarray, outarray, UseNumMode);
         }
         break;
         case eXtoYZ:
         {
-            TransposeXtoYZ(inarray, outarray, UseNumMode);
+            TransposeXtoYZ(npts, inarray, outarray, UseNumMode);
         }
         break;
         case eYZtoX:
         {
-            TransposeYZtoX(inarray, outarray, UseNumMode);
+            TransposeYZtoX(npts, inarray, outarray, UseNumMode);
         }
         break;
         case eYZtoZY:
         {
-            TransposeYZtoZY(inarray, outarray, UseNumMode);
+            TransposeYZtoZY(npts, inarray, outarray, UseNumMode);
         }
         break;
         case eZYtoYZ:
         {
-            TransposeZYtoYZ(inarray, outarray, UseNumMode);
+            TransposeZYtoYZ(npts, inarray, outarray, UseNumMode);
         }
         break;
         case eXtoY:
@@ -264,7 +263,8 @@ void Transposition::Transpose(const Array<OneD, const NekDouble> &inarray,
 /**
  * Homogeneous 1D transposition from SEM to Homogeneous ordering.
  */
-void Transposition::TransposeXYtoZ(const Array<OneD, const NekDouble> &inarray,
+void Transposition::TransposeXYtoZ(const int npts,
+                                   const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray,
                                    bool UseNumMode)
 {
@@ -276,7 +276,7 @@ void Transposition::TransposeXYtoZ(const Array<OneD, const NekDouble> &inarray,
         int index    = 0;
         int cnt      = 0;
 
-        int num_dofs             = inarray.size();
+        int num_dofs             = npts;
         int num_points_per_plane = num_dofs / m_num_points_per_proc[0];
         int num_pencil_per_proc =
             (num_points_per_plane / m_num_processes[0]) +
@@ -339,7 +339,7 @@ void Transposition::TransposeXYtoZ(const Array<OneD, const NekDouble> &inarray,
     else
     {
         int i, pts_per_plane;
-        int n = inarray.size();
+        int n = npts;
         int packed_len;
 
         pts_per_plane = n / m_num_points_per_proc[0];
@@ -367,7 +367,8 @@ void Transposition::TransposeXYtoZ(const Array<OneD, const NekDouble> &inarray,
 /**
  * Homogeneous 1D transposition from Homogeneous to SEM ordering.
  */
-void Transposition::TransposeZtoXY(const Array<OneD, const NekDouble> &inarray,
+void Transposition::TransposeZtoXY(const int npts,
+                                   const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray,
                                    bool UseNumMode)
 {
@@ -379,7 +380,7 @@ void Transposition::TransposeZtoXY(const Array<OneD, const NekDouble> &inarray,
         int index    = 0;
         int cnt      = 0;
 
-        int num_dofs             = outarray.size();
+        int num_dofs             = npts; // outarray.size();
         int num_points_per_plane = num_dofs / m_num_points_per_proc[0];
         int num_pencil_per_proc =
             (num_points_per_plane / m_num_processes[0]) +
@@ -443,7 +444,7 @@ void Transposition::TransposeZtoXY(const Array<OneD, const NekDouble> &inarray,
     else
     {
         int i, pts_per_plane;
-        int n = inarray.size();
+        int n = npts;
         int packed_len;
 
         // use length of inarray to determine data storage type
@@ -473,7 +474,8 @@ void Transposition::TransposeZtoXY(const Array<OneD, const NekDouble> &inarray,
 /**
  * Homogeneous 2D transposition from SEM to Homogeneous(YZ) ordering.
  */
-void Transposition::TransposeXtoYZ(const Array<OneD, const NekDouble> &inarray,
+void Transposition::TransposeXtoYZ(const int npts,
+                                   const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray,
                                    bool UseNumMode)
 {
@@ -485,7 +487,7 @@ void Transposition::TransposeXtoYZ(const Array<OneD, const NekDouble> &inarray,
     else
     {
         int i, pts_per_line;
-        int n = inarray.size();
+        int n = npts;
         int packed_len;
 
         pts_per_line =
@@ -516,7 +518,8 @@ void Transposition::TransposeXtoYZ(const Array<OneD, const NekDouble> &inarray,
 /**
  * Homogeneous 2D transposition from Homogeneous (YZ) ordering to SEM.
  */
-void Transposition::TransposeYZtoX(const Array<OneD, const NekDouble> &inarray,
+void Transposition::TransposeYZtoX(const int npts,
+                                   const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray,
                                    bool UseNumMode)
 {
@@ -528,7 +531,7 @@ void Transposition::TransposeYZtoX(const Array<OneD, const NekDouble> &inarray,
     else
     {
         int i, pts_per_line;
-        int n = inarray.size();
+        int n = npts;
         int packed_len;
 
         pts_per_line =
@@ -559,7 +562,8 @@ void Transposition::TransposeYZtoX(const Array<OneD, const NekDouble> &inarray,
 /**
  * Homogeneous 2D transposition from Y ordering to Z.
  */
-void Transposition::TransposeYZtoZY(const Array<OneD, const NekDouble> &inarray,
+void Transposition::TransposeYZtoZY(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool UseNumMode)
 {
@@ -573,7 +577,7 @@ void Transposition::TransposeYZtoZY(const Array<OneD, const NekDouble> &inarray,
     else
     {
         int n = m_num_homogeneous_points[0] * m_num_homogeneous_points[1];
-        int s = inarray.size();
+        int s = npts;
 
         int pts_per_line = s / n;
 
@@ -590,7 +594,8 @@ void Transposition::TransposeYZtoZY(const Array<OneD, const NekDouble> &inarray,
 /**
  * Homogeneous 2D transposition from Z ordering to Y.
  */
-void Transposition::TransposeZYtoYZ(const Array<OneD, const NekDouble> &inarray,
+void Transposition::TransposeZYtoYZ(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool UseNumMode)
 {
@@ -604,7 +609,7 @@ void Transposition::TransposeZYtoYZ(const Array<OneD, const NekDouble> &inarray,
     else
     {
         int n = m_num_homogeneous_points[0] * m_num_homogeneous_points[1];
-        int s = inarray.size();
+        int s = npts;
 
         int pts_per_line = s / n;
 
@@ -618,6 +623,5 @@ void Transposition::TransposeZYtoYZ(const Array<OneD, const NekDouble> &inarray,
     }
 }
 
-// TODO: Impelement 2D and 3D transposition routines
 } // namespace LibUtilities
 } // namespace Nektar

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VortexWaveInteractionSolver.cpp
+// File: VortexWaveInteractionSolver.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

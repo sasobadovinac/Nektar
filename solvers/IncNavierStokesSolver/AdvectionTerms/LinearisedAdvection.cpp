@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LinearisedAdvection.cpp
+// File: LinearisedAdvection.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -34,6 +34,7 @@
 
 #include <IncNavierStokesSolver/AdvectionTerms/LinearisedAdvection.h>
 #include <StdRegions/StdSegExp.h>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -148,18 +149,18 @@ void LinearisedAdvection::v_InitObject(
                         // (homogeneous) expansions
     }
 
-    int nvar   = m_session->GetVariables().size();
-    m_baseflow = Array<OneD, Array<OneD, NekDouble>>(nvar);
-    for (int i = 0; i < nvar; ++i)
+    size_t nvar = m_session->GetVariables().size();
+    m_baseflow  = Array<OneD, Array<OneD, NekDouble>>(nvar);
+    for (size_t i = 0; i < nvar; ++i)
     {
         m_baseflow[i] = Array<OneD, NekDouble>(pFields[i]->GetTotPoints(), 0.0);
     }
 
-    int nBaseDerivs = (m_halfMode || m_singleMode) ? 2 : m_spacedim;
-    m_gradBase      = Array<OneD, Array<OneD, NekDouble>>(nvar * nBaseDerivs);
-    for (int i = 0; i < nvar; ++i)
+    size_t nBaseDerivs = (m_halfMode || m_singleMode) ? 2 : m_spacedim;
+    m_gradBase = Array<OneD, Array<OneD, NekDouble>>(nvar * nBaseDerivs);
+    for (size_t i = 0; i < nvar; ++i)
     {
-        for (int j = 0; j < nBaseDerivs; ++j)
+        for (size_t j = 0; j < nBaseDerivs; ++j)
         {
             m_gradBase[i * nBaseDerivs + j] =
                 Array<OneD, NekDouble>(pFields[i]->GetTotPoints(), 0.0);
@@ -186,7 +187,7 @@ void LinearisedAdvection::v_InitObject(
             m_isperiodic = m_interporder < 2;
             m_session->LoadParameter("N_start", m_start, 0);
             m_session->LoadParameter("N_skip", m_skip, 1);
-            DFT(file, pFields, m_slices);
+            DFT(file, pFields);
         }
         else
         {
@@ -208,7 +209,7 @@ void LinearisedAdvection::v_InitObject(
         // analytic base flow
         else
         {
-            int nq = pFields[0]->GetNpoints();
+            size_t nq = pFields[0]->GetNpoints();
             Array<OneD, NekDouble> x0(nq);
             Array<OneD, NekDouble> x1(nq);
             Array<OneD, NekDouble> x2(nq);
@@ -217,7 +218,7 @@ void LinearisedAdvection::v_InitObject(
             // discretisation)
             pFields[0]->GetCoords(x0, x1, x2);
 
-            for (unsigned int i = 0; i < pFields.size(); i++)
+            for (size_t i = 0; i < pFields.size(); i++)
             {
                 LibUtilities::EquationSharedPtr ifunc =
                     m_session->GetFunction("BaseFlow", i);
@@ -227,7 +228,7 @@ void LinearisedAdvection::v_InitObject(
         }
     }
 
-    for (int i = 0; i < nvar; ++i)
+    for (size_t i = 0; i < nvar; ++i)
     {
         UpdateGradBase(i, pFields[i]);
     }
@@ -275,21 +276,22 @@ void LinearisedAdvection::v_Advect(
     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
     const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
+    boost::ignore_unused(pFwd, pBwd);
     ASSERTL1(nConvectiveFields == inarray.size(),
              "Number of convective fields and Inarray are not compatible");
 
-    int nPointsTot  = fields[0]->GetNpoints();
-    int ndim        = advVel.size();
-    int nBaseDerivs = (m_halfMode || m_singleMode) ? 2 : m_spacedim;
-    int nDerivs     = (m_halfMode) ? 2 : m_spacedim;
+    size_t nPointsTot  = fields[0]->GetNpoints();
+    size_t ndim        = advVel.size();
+    size_t nBaseDerivs = (m_halfMode || m_singleMode) ? 2 : m_spacedim;
+    size_t nDerivs     = (m_halfMode) ? 2 : m_spacedim;
 
     Array<OneD, Array<OneD, NekDouble>> velocity(ndim);
-    for (int i = 0; i < ndim; ++i)
+    for (size_t i = 0; i < ndim; ++i)
     {
         if (fields[i]->GetWaveSpace() && !m_singleMode && !m_halfMode)
         {
             velocity[i] = Array<OneD, NekDouble>(nPointsTot, 0.0);
-            fields[i]->HomogeneousBwdTrans(advVel[i], velocity[i]);
+            fields[i]->HomogeneousBwdTrans(nPointsTot, advVel[i], velocity[i]);
         }
         else
         {
@@ -298,7 +300,7 @@ void LinearisedAdvection::v_Advect(
     }
 
     Array<OneD, Array<OneD, NekDouble>> grad(nDerivs);
-    for (int i = 0; i < nDerivs; ++i)
+    for (size_t i = 0; i < nDerivs; ++i)
     {
         grad[i] = Array<OneD, NekDouble>(nPointsTot);
     }
@@ -306,15 +308,15 @@ void LinearisedAdvection::v_Advect(
     // Evaluation of the base flow for periodic cases
     if (m_slices > 1)
     {
-        for (int i = 0; i < ndim; ++i)
+        for (size_t i = 0; i < ndim; ++i)
         {
-            UpdateBase(m_slices, m_interp[i], m_baseflow[i], time, m_period);
+            UpdateBase(m_interp[i], m_baseflow[i], time);
             UpdateGradBase(i, fields[i]);
         }
     }
 
     // Evaluate the linearised advection term
-    for (int i = 0; i < nConvectiveFields; ++i)
+    for (size_t i = 0; i < (size_t)nConvectiveFields; ++i)
     {
         // Calculate gradient
         switch (nDerivs)
@@ -335,9 +337,12 @@ void LinearisedAdvection::v_Advect(
                 if (m_multipleModes)
                 {
                     // transform gradients into physical Fourier space
-                    fields[i]->HomogeneousBwdTrans(grad[0], grad[0]);
-                    fields[i]->HomogeneousBwdTrans(grad[1], grad[1]);
-                    fields[i]->HomogeneousBwdTrans(grad[2], grad[2]);
+                    fields[i]->HomogeneousBwdTrans(nPointsTot, grad[0],
+                                                   grad[0]);
+                    fields[i]->HomogeneousBwdTrans(nPointsTot, grad[1],
+                                                   grad[1]);
+                    fields[i]->HomogeneousBwdTrans(nPointsTot, grad[2],
+                                                   grad[2]);
                 }
             }
             break;
@@ -345,19 +350,19 @@ void LinearisedAdvection::v_Advect(
 
         // Calculate U_j du'_i/dx_j
         Vmath::Vmul(nPointsTot, grad[0], 1, m_baseflow[0], 1, outarray[i], 1);
-        for (int j = 1; j < nDerivs; ++j)
+        for (size_t j = 1; j < nDerivs; ++j)
         {
             Vmath::Vvtvp(nPointsTot, grad[j], 1, m_baseflow[j], 1, outarray[i],
                          1, outarray[i], 1);
         }
 
         // Add u'_j dU_i/dx_j
-        int lim = (m_halfMode || m_singleMode) ? 2 : ndim;
+        size_t lim = (m_halfMode || m_singleMode) ? 2 : ndim;
         if (m_halfMode && i == 2)
         {
             lim = 0;
         }
-        for (int j = 0; j < lim; ++j)
+        for (size_t j = 0; j < lim; ++j)
         {
             Vmath::Vvtvp(nPointsTot, m_gradBase[i * nBaseDerivs + j], 1,
                          velocity[j], 1, outarray[i], 1, outarray[i], 1);
@@ -365,7 +370,8 @@ void LinearisedAdvection::v_Advect(
 
         if (m_multipleModes)
         {
-            fields[i]->HomogeneousFwdTrans(outarray[i], outarray[i]);
+            fields[i]->HomogeneousFwdTrans(nPointsTot, outarray[i],
+                                           outarray[i]);
         }
         Vmath::Neg(nPointsTot, outarray[i], 1);
     }
@@ -390,9 +396,9 @@ void LinearisedAdvection::v_SetBaseFlow(
             "Number of base flow variables does not match what is expected.");
     }
 
-    int npts = inarray[0].size();
+    size_t npts = inarray[0].size();
 
-    for (int i = 0; i < inarray.size(); ++i)
+    for (size_t i = 0; i < inarray.size(); ++i)
     {
         ASSERTL1(npts == m_baseflow[i].size(),
                  "Size of base flow array does not match expected.");
@@ -415,14 +421,14 @@ void LinearisedAdvection::ImportFldBase(
     std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef;
     std::vector<std::vector<NekDouble>> FieldData;
 
-    int nqtot = m_baseflow[0].size();
+    size_t nqtot = m_baseflow[0].size();
     Array<OneD, NekDouble> tmp_coeff(pFields[0]->GetNcoeffs(), 0.0);
 
-    int numexp = pFields[0]->GetExpSize();
+    size_t numexp = pFields[0]->GetExpSize();
     Array<OneD, int> ElementGIDs(numexp);
 
     // Define list of global element ids
-    for (int i = 0; i < numexp; ++i)
+    for (size_t i = 0; i < numexp; ++i)
     {
         ElementGIDs[i] = pFields[0]->GetExp(i)->GetGeom()->GetGlobalID();
     }
@@ -433,63 +439,63 @@ void LinearisedAdvection::ImportFldBase(
     fld->Import(pInfile, FieldDef, FieldData,
                 LibUtilities::NullFieldMetaDataMap, ElementGIDs);
 
-    int nSessionVar     = m_session->GetVariables().size();
-    int nSessionConvVar = nSessionVar - 1;
-    int nFileVar        = FieldDef[0]->m_fields.size();
-    int nFileConvVar    = nFileVar - 1; // Ignore pressure
-    if (m_halfMode)
+    size_t nSessionVar     = m_session->GetVariables().size();
+    size_t nSessionConvVar = nSessionVar - 1;
+    size_t nFileVar        = FieldDef[0]->m_fields.size();
+
+    std::unordered_map<int, int> zIdToPlane;
+    if (m_singleMode || m_halfMode)
     {
-        ASSERTL0(nFileVar == 3, "For half mode, expect 2D2C base flow.");
-        nFileConvVar = 2;
+        zIdToPlane[0] = 0;
     }
 
-    for (int j = 0; j < nFileConvVar; ++j)
+    for (size_t j = 0; j < nFileVar; ++j)
     {
-        for (int i = 0; i < FieldDef.size(); ++i)
+        size_t k = 0;
+        for (; k < nSessionConvVar; ++k)
         {
-            bool flag = FieldDef[i]->m_fields[j] == m_session->GetVariable(j);
-
-            ASSERTL0(flag, (std::string("Order of ") + pInfile +
-                            std::string(" data and that defined in "
-                                        "the session file differs"))
-                               .c_str());
-
-            pFields[j]->ExtractDataToCoeffs(
-                FieldDef[i], FieldData[i], FieldDef[i]->m_fields[j], tmp_coeff);
+            if (m_session->GetVariable(k) == FieldDef[0]->m_fields[j])
+            {
+                break;
+            }
+        }
+        if (k == nSessionConvVar)
+        {
+            continue;
+        }
+        for (size_t i = 0; i < FieldDef.size(); ++i)
+        {
+            pFields[j]->ExtractDataToCoeffs(FieldDef[i], FieldData[i],
+                                            FieldDef[i]->m_fields[j], tmp_coeff,
+                                            zIdToPlane);
         }
 
         if (m_singleMode || m_halfMode)
         {
-            pFields[j]->GetPlane(0)->BwdTrans(tmp_coeff, m_baseflow[j]);
+            pFields[j]->GetPlane(0)->BwdTrans(tmp_coeff, m_baseflow[k]);
 
             if (m_singleMode)
             {
                 // copy the bwd trans into the second plane for single
                 // Mode Analysis
                 int ncplane = (pFields[0]->GetNpoints()) / m_npointsZ;
-                Vmath::Vcopy(ncplane, &m_baseflow[j][0], 1,
-                             &m_baseflow[j][ncplane], 1);
+                Vmath::Vcopy(ncplane, &m_baseflow[k][0], 1,
+                             &m_baseflow[k][ncplane], 1);
             }
         }
         else // fully 3D base flow - put in physical space.
         {
             bool oldwavespace = pFields[j]->GetWaveSpace();
             pFields[j]->SetWaveSpace(false);
-            pFields[j]->BwdTrans(tmp_coeff, m_baseflow[j]);
+            pFields[j]->BwdTrans(tmp_coeff, m_baseflow[k]);
             pFields[j]->SetWaveSpace(oldwavespace);
         }
-    }
-
-    // Zero unused fields (e.g. w in a 2D2C base flow).
-    for (int j = nFileConvVar; j < nSessionConvVar; ++j)
-    {
-        Vmath::Fill(nqtot, 0.0, m_baseflow[j], 1);
     }
 
     // If time-periodic, put loaded data into the slice storage.
     if (m_slices > 1)
     {
-        for (int i = 0; i < nSessionConvVar; ++i)
+        for (size_t i = 0; i < nSessionConvVar; ++i)
         {
             Vmath::Vcopy(nqtot, &m_baseflow[i][0], 1,
                          &m_interp[i][pSlice * nqtot], 1);
@@ -498,14 +504,13 @@ void LinearisedAdvection::ImportFldBase(
 }
 
 void LinearisedAdvection::UpdateBase(
-    const NekDouble m_slices, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const NekDouble m_time,
-    const NekDouble m_period)
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const NekDouble time)
 {
     int npoints = m_baseflow[0].size();
     if (m_isperiodic)
     {
-        NekDouble BetaT = 2 * M_PI * fmod(m_time, m_period) / m_period;
+        NekDouble BetaT = 2 * M_PI * fmod(time, m_period) / m_period;
         NekDouble phase;
         Array<OneD, NekDouble> auxiliary(npoints);
 
@@ -525,7 +530,7 @@ void LinearisedAdvection::UpdateBase(
     }
     else
     {
-        NekDouble x = m_time;
+        NekDouble x = time;
         x           = x / m_period * (m_slices - 1);
         int ix      = x;
         if (ix < 0)
@@ -623,9 +628,11 @@ void LinearisedAdvection::UpdateGradBase(
 DNekBlkMatSharedPtr LinearisedAdvection::GetFloquetBlockMatrix(
     FloquetMatType mattype, bool UseContCoeffs) const
 {
+    boost::ignore_unused(mattype, UseContCoeffs);
+
     DNekMatSharedPtr loc_mat;
     DNekBlkMatSharedPtr BlkMatrix;
-    int n_exp = 0;
+    size_t n_exp = 0;
 
     n_exp = m_baseflow[0].size(); // will operatore on m_phys
 
@@ -650,7 +657,7 @@ DNekBlkMatSharedPtr LinearisedAdvection::GetFloquetBlockMatrix(
     loc_mat = StdSeg.GetStdMatrix(matkey);
 
     // set up array of block matrices.
-    for (int i = 0; i < n_exp; ++i)
+    for (size_t i = 0; i < n_exp; ++i)
     {
         BlkMatrix->SetBlock(i, i, loc_mat);
     }
@@ -660,14 +667,13 @@ DNekBlkMatSharedPtr LinearisedAdvection::GetFloquetBlockMatrix(
 
 // Discrete Fourier Transform for Floquet analysis
 void LinearisedAdvection::DFT(
-    const string file, Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble m_slices)
+    const string file, Array<OneD, MultiRegions::ExpListSharedPtr> &pFields)
 {
-    int ConvectedFields = m_baseflow.size() - 1;
-    int npoints         = m_baseflow[0].size();
-    m_interp            = Array<OneD, Array<OneD, NekDouble>>(ConvectedFields);
+    size_t ConvectedFields = m_baseflow.size() - 1;
+    size_t npoints         = m_baseflow[0].size();
+    m_interp = Array<OneD, Array<OneD, NekDouble>>(ConvectedFields);
 
-    for (int i = 0; i < ConvectedFields; ++i)
+    for (size_t i = 0; i < ConvectedFields; ++i)
     {
         m_interp[i] = Array<OneD, NekDouble>(npoints * m_slices, 0.0);
     }
@@ -681,25 +687,24 @@ void LinearisedAdvection::DFT(
              "Since N_slices is specified, the filename provided for function "
              "'BaseFlow' must include exactly one instance of the format "
              "specifier '%d', to index the time-slices.");
-    char *buffer = new char[file.length() + 8];
-    int nstart   = m_start;
-    for (int i = nstart; i < nstart + m_slices * m_skip; i += m_skip)
+    size_t nstart = m_start;
+    for (size_t i = nstart; i < nstart + m_slices * m_skip; i += m_skip)
     {
-        snprintf(buffer, file.length() + 8, file.c_str(), i);
-        ImportFldBase(buffer, pFields, (i - nstart) / m_skip);
+        boost::format filename(file);
+        filename % i;
+        ImportFldBase(filename.str(), pFields, (i - nstart) / m_skip);
         if (m_session->GetComm()->GetRank() == 0)
         {
-            cout << "read base flow file " << buffer << endl;
+            cout << "read base flow file " << filename.str() << endl;
         }
     }
-    delete[] buffer;
     if (!m_isperiodic)
     {
         return;
     }
 
     // Discrete Fourier Transform of the fields
-    for (int k = 0; k < ConvectedFields; ++k)
+    for (size_t k = 0; k < ConvectedFields; ++k)
     {
 #ifdef NEKTAR_USING_FFTW
 
@@ -721,7 +726,7 @@ void LinearisedAdvection::DFT(
                                                                    m_slices);
 
         // FFT Transform
-        for (int i = 0; i < npoints; i++)
+        for (size_t i = 0; i < npoints; i++)
         {
             m_FFT->FFTFwdTrans(m_tmpIN  = fft_in + i * m_slices,
                                m_tmpOUT = fft_out + i * m_slices);
@@ -768,7 +773,7 @@ void LinearisedAdvection::DFT(
                          &m_interp[k][s * npoints], 1);
         }
 
-        for (int r = 0; r < sortedinarray.size(); ++r)
+        for (size_t r = 0; r < sortedinarray.size(); ++r)
         {
             sortedinarray[0]  = 0;
             sortedoutarray[0] = 0;

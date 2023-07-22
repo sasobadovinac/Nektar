@@ -1,6 +1,6 @@
 diff -Naur cwipi-0.11.1.old/cmake/modules/default_flags.cmake cwipi-0.11.1/cmake/modules/default_flags.cmake
---- cwipi-0.11.1.old/cmake/modules/default_flags.cmake	2020-11-09 14:55:03.634116018 +0000
-+++ cwipi-0.11.1/cmake/modules/default_flags.cmake	2020-11-09 14:53:59.757846889 +0000
+--- cwipi-0.11.1.old/cmake/modules/default_flags.cmake	2020-03-27 10:29:35
++++ cwipi-0.11.1/cmake/modules/default_flags.cmake	2022-12-13 21:52:16
 @@ -16,7 +16,7 @@
  
    link_libraries("m")
@@ -28,7 +28,7 @@ diff -Naur cwipi-0.11.1.old/cmake/modules/default_flags.cmake cwipi-0.11.1/cmake
  
    set (CMAKE_Fortran_FLAGS_RELEASE         "-fast")
    set (CMAKE_Fortran_FLAGS_DEBUG           "-g  -ffortran-bounds-check")
-@@ -141,7 +141,7 @@
+@@ -143,7 +143,7 @@
  
    link_libraries ("m")
  
@@ -37,7 +37,7 @@ diff -Naur cwipi-0.11.1.old/cmake/modules/default_flags.cmake cwipi-0.11.1/cmake
  
    set (CMAKE_C_FLAGS_RELEASE         "-O3")
    set (CMAKE_C_FLAGS_DEBUG           "-O0 -g")
-@@ -151,7 +151,7 @@
+@@ -153,7 +153,7 @@
  
  elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
  
@@ -46,7 +46,7 @@ diff -Naur cwipi-0.11.1.old/cmake/modules/default_flags.cmake cwipi-0.11.1/cmake
  
    set (CMAKE_C_FLAGS_RELEASE "-O3")
  
-@@ -161,7 +161,7 @@
+@@ -163,7 +163,7 @@
    set (CMAKE_C_FLAGS_MINSIZEREL      "-O2 -g")
  
  elseif (CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
@@ -55,7 +55,7 @@ diff -Naur cwipi-0.11.1.old/cmake/modules/default_flags.cmake cwipi-0.11.1/cmake
  
    set (CMAKE_C_FLAGS_RELEASE "-O3")
    set (CMAKE_C_FLAGS_DEBUG "-g -O0")
-@@ -238,7 +238,7 @@
+@@ -240,7 +240,7 @@
  if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
  
    link_libraries ("m")
@@ -64,7 +64,25 @@ diff -Naur cwipi-0.11.1.old/cmake/modules/default_flags.cmake cwipi-0.11.1/cmake
  
    set (CMAKE_CXX_FLAGS_RELEASE         "-O3")
    set (CMAKE_CXX_FLAGS_DEBUG           "-O0 -g")
-@@ -316,7 +316,7 @@
+@@ -253,7 +253,7 @@
+ 
+ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+ 
+-  set (CMAKE_CXX_FLAGS "-std=c++11 -fpic -funsigned-char -Wall -Wcheck -Wshadow -Wpointer-arith -Wmissing-prototypes -Wuninitialized -Wunused -wd869,3656,177")
++  set (CMAKE_CXX_FLAGS "-std=c++11 -fpic -funsigned-char -w")
+ 
+   set (CMAKE_CXX_FLAGS_RELEASE "-O3")
+ 
+@@ -266,7 +266,7 @@
+   set (CXX_LIBRARIES_FLAG        )
+ 
+ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+-  set (CMAKE_CXX_FLAGS "-std=c++11 -Wall -pedantic -Wshadow -Wpointer-arith -Wmissing-prototypes -Wuninitialized -Wunused -Wempty-translation-unit -Wno-unused-function")
++  set (CMAKE_CXX_FLAGS "-std=c++11 -w")
+   set (CMAKE_CXX_FLAGS_RELEASE "-O3")
+   set (CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+   set (CMAKE_CXX_FLAGS_PROFILING       "${CMAKE_CXX_FLAGS_RELEASE} -p")
+@@ -318,7 +318,7 @@
  
  elseif (CMAKE_CXX_COMPILER_ID STREQUAL "PathScale")
  

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// File EquationSystem.cpp
+// File: EquationSystem.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -68,6 +68,23 @@ std::string EquationSystem::equationSystemTypeLookupIds[2] = {
     LibUtilities::SessionReader::RegisterEnumValue("DEALIASING", "True", 0),
     LibUtilities::SessionReader::RegisterEnumValue("DEALIASING", "False", 1)};
 
+std::string EquationSystem::projectionTypeLookupIds[7] = {
+    LibUtilities::SessionReader::RegisterEnumValue("Projection", "Continuous",
+                                                   MultiRegions::eGalerkin),
+    LibUtilities::SessionReader::RegisterEnumValue("Projection", "CONTINUOUS",
+                                                   MultiRegions::eGalerkin),
+    LibUtilities::SessionReader::RegisterEnumValue("Projection", "Galerkin",
+                                                   MultiRegions::eGalerkin),
+    LibUtilities::SessionReader::RegisterEnumValue("Projection", "GALERKIN",
+                                                   MultiRegions::eGalerkin),
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "Projection", "DisContinuous", MultiRegions::eDiscontinuous),
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "Projection", "Mixed_CG_Discontinuous",
+        MultiRegions::eMixed_CG_Discontinuous),
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "Projection", "MixedCGDG", MultiRegions::eMixed_CG_Discontinuous),
+};
 /**
  * @class EquationSystem
  *
@@ -97,7 +114,8 @@ EquationSystem::EquationSystem(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : m_comm(pSession->GetComm()), m_session(pSession), m_graph(pGraph),
-      m_lambda(0), m_fieldMetaDataMap(LibUtilities::NullFieldMetaDataMap)
+      m_lambda(0), m_infosteps(10),
+      m_fieldMetaDataMap(LibUtilities::NullFieldMetaDataMap)
 {
     // set up session names in fieldMetaDataMap
     const vector<std::string> filenames = m_session->GetFilenames();
@@ -140,11 +158,6 @@ void EquationSystem::v_InitObject(bool DeclareFields)
     m_HomogeneousType    = eNotHomogeneous;
 
     m_verbose = m_session->DefinesCmdLineArgument("verbose");
-    m_root    = false;
-    if (0 == m_comm->GetRank())
-    {
-        m_root = true;
-    }
 
     if (m_session->DefinesSolverInfo("HOMOGENEOUS"))
     {
@@ -305,7 +318,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                         for (i = 0; i < m_fields.size(); i++)
                         {
                             m_fields[i] = MemoryManager<
-                                MultiRegions ::ContField3DHomogeneous2D>::
+                                MultiRegions::ContField3DHomogeneous2D>::
                                 AllocateSharedPtr(m_session, BkeyY, BkeyZ,
                                                   m_LhomY, m_LhomZ, m_useFFT,
                                                   m_homogen_dealiasing, m_graph,
@@ -343,7 +356,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                             for (i = 0; i < m_fields.size(); i++)
                             {
                                 m_fields[i] = MemoryManager<
-                                    MultiRegions ::ContField3DHomogeneous1D>::
+                                    MultiRegions::ContField3DHomogeneous1D>::
                                     AllocateSharedPtr(
                                         m_session, BkeyZ, m_LhomZ, m_useFFT,
                                         m_homogen_dealiasing, m_graph,
@@ -371,7 +384,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                                 if (m_session->GetVariable(i).compare("w") == 0)
                                 {
                                     m_fields[i] = MemoryManager<
-                                        MultiRegions ::
+                                        MultiRegions::
                                             ContField3DHomogeneous1D>::
                                         AllocateSharedPtr(
                                             m_session, BkeyZI, m_LhomZ,
@@ -382,7 +395,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                                 else
                                 {
                                     m_fields[i] = MemoryManager<
-                                        MultiRegions ::
+                                        MultiRegions::
                                             ContField3DHomogeneous1D>::
                                         AllocateSharedPtr(
                                             m_session, BkeyZR, m_LhomZ,
@@ -403,7 +416,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                             for (i = 0; i < m_fields.size(); i++)
                             {
                                 m_fields[i] = MemoryManager<
-                                    MultiRegions ::ContField3DHomogeneous1D>::
+                                    MultiRegions::ContField3DHomogeneous1D>::
                                     AllocateSharedPtr(
                                         m_session, BkeyZ, m_LhomZ, m_useFFT,
                                         m_homogen_dealiasing, m_graph,
@@ -439,7 +452,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                             else
                             {
                                 m_fields[i] =
-                                    MemoryManager<MultiRegions ::ContField>::
+                                    MemoryManager<MultiRegions::ContField>::
                                         AllocateSharedPtr(
                                             m_session, m_graph,
                                             m_session->GetVariable(i),
@@ -485,7 +498,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                                 m_session->GetVariable(i)))
                         {
                             m_fields[i] =
-                                MemoryManager<MultiRegions ::ContField>::
+                                MemoryManager<MultiRegions::ContField>::
                                     AllocateSharedPtr(
                                         *firstfield, m_graph,
                                         m_session->GetVariable(i),
@@ -495,7 +508,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                         else
                         {
                             m_fields[i] =
-                                MemoryManager<MultiRegions ::ContField>::
+                                MemoryManager<MultiRegions::ContField>::
                                     AllocateSharedPtr(
                                         m_session, m_graph,
                                         m_session->GetVariable(i),
@@ -552,7 +565,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                         for (i = 0; i < m_fields.size(); i++)
                         {
                             m_fields[i] = MemoryManager<
-                                MultiRegions ::DisContField3DHomogeneous2D>::
+                                MultiRegions::DisContField3DHomogeneous2D>::
                                 AllocateSharedPtr(m_session, BkeyY, BkeyZ,
                                                   m_LhomY, m_LhomZ, m_useFFT,
                                                   m_homogen_dealiasing, m_graph,
@@ -585,7 +598,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
                         for (i = 0; i < m_fields.size(); i++)
                         {
                             m_fields[i] = MemoryManager<
-                                MultiRegions ::DisContField3DHomogeneous1D>::
+                                MultiRegions::DisContField3DHomogeneous1D>::
                                 AllocateSharedPtr(m_session, BkeyZ, m_LhomZ,
                                                   m_useFFT,
                                                   m_homogen_dealiasing, m_graph,
@@ -702,7 +715,8 @@ void EquationSystem::v_InitObject(bool DeclareFields)
              "should be set!");
     m_session->LoadParameter("TimeIncrementFactor", m_TimeIncrementFactor, 1.0);
 
-    m_nchk = 0;
+    m_nchk    = 0;
+    m_iterPIT = 0;
 }
 
 /**
@@ -991,7 +1005,6 @@ void EquationSystem::v_SetInitialConditions(NekDouble initialtime,
 
         if (m_session->GetComm()->GetRank() == 0)
         {
-
             for (int i = 0; i < m_fields.size(); ++i)
             {
                 std::string varName = m_session->GetVariable(i);
@@ -1019,9 +1032,22 @@ void EquationSystem::v_SetInitialConditions(NekDouble initialtime,
         }
     }
 
-    if (dumpInitialConditions && m_checksteps && m_nchk == 0)
+    if (dumpInitialConditions && m_checksteps && m_nchk == 0 &&
+        !ParallelInTime())
     {
         Checkpoint_Output(m_nchk);
+    }
+    else if (dumpInitialConditions && m_nchk == 0 && ParallelInTime())
+    {
+        std::string newdir = m_sessionName + ".pit";
+        if (!fs::is_directory(newdir))
+        {
+            fs::create_directory(newdir);
+        }
+        if (m_comm->GetTimeComm()->GetRank() == 0)
+        {
+            WriteFld(newdir + "/" + m_sessionName + "_0.fld");
+        }
     }
     ++m_nchk;
 }
@@ -1043,8 +1069,9 @@ void EquationSystem::v_EvaluateExactSolution(unsigned int field,
 /**
  * By default, nothing needs initialising at the EquationSystem level.
  */
-void EquationSystem::v_DoInitialise()
+void EquationSystem::v_DoInitialise(bool dumpInitialConditions)
 {
+    boost::ignore_unused(dumpInitialConditions);
 }
 
 /**
@@ -1090,7 +1117,25 @@ void EquationSystem::v_GenerateSummary(SummaryList &l)
  */
 void EquationSystem::v_Output(void)
 {
-    WriteFld(m_sessionName + ".fld");
+    if (!ParallelInTime())
+    {
+        // Serial-in-time
+        WriteFld(m_sessionName + ".fld");
+    }
+    else
+    {
+        // Parallel-in-time
+        std::string newdir = m_sessionName + ".pit";
+        if (!fs::is_directory(newdir))
+        {
+            fs::create_directory(newdir);
+        }
+        WriteFld(newdir + "/" + m_sessionName + "_" +
+                 boost::lexical_cast<std::string>(
+                     m_windowPIT * m_comm->GetTimeComm()->GetSize() +
+                     m_comm->GetTimeComm()->GetRank() + 1) +
+                 ".fld");
+    }
 }
 
 /**
@@ -1123,9 +1168,27 @@ void EquationSystem::FwdTransFields(void)
  */
 void EquationSystem::Checkpoint_Output(const int n)
 {
-    std::string outname =
-        m_sessionName + "_" + boost::lexical_cast<std::string>(n);
-    WriteFld(outname + ".chk");
+    if (!ParallelInTime())
+    {
+        // Serial-in-time
+        std::string outname =
+            m_sessionName + "_" + boost::lexical_cast<std::string>(n);
+        WriteFld(outname + ".chk");
+    }
+    else
+    {
+        // Parallel-in-time
+        std::string paradir = m_sessionName + "_" +
+                              boost::lexical_cast<std::string>(m_iterPIT) +
+                              ".pit";
+        if (!fs::is_directory(paradir))
+        {
+            fs::create_directory(paradir);
+        }
+        std::string outname = paradir + "/" + m_sessionName + "_" +
+                              boost::lexical_cast<std::string>(n);
+        WriteFld(outname + ".chk");
+    }
 }
 
 /**
@@ -1137,9 +1200,27 @@ void EquationSystem::Checkpoint_Output(
     std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
     std::vector<std::string> &variables)
 {
-    std::string outname =
-        m_sessionName + "_" + boost::lexical_cast<std::string>(n);
-    WriteFld(outname, field, fieldcoeffs, variables);
+    if (!ParallelInTime())
+    {
+        // Serial-in-time
+        std::string outname =
+            m_sessionName + "_" + boost::lexical_cast<std::string>(n);
+        WriteFld(outname, field, fieldcoeffs, variables);
+    }
+    else
+    {
+        // Parallel-in-time
+        std::string paradir = m_sessionName + "_" +
+                              boost::lexical_cast<std::string>(m_iterPIT) +
+                              ".pit";
+        if (!fs::is_directory(paradir))
+        {
+            fs::create_directory(paradir);
+        }
+        std::string outname = paradir + "/" + m_sessionName + "_" +
+                              boost::lexical_cast<std::string>(n);
+        WriteFld(outname, field, fieldcoeffs, variables);
+    }
 }
 
 /**
@@ -1245,13 +1326,8 @@ void EquationSystem::WriteFld(const std::string &outname,
         }
     }
 
-#ifdef NEKTAR_DISABLE_BACKUPS
-    bool backup = false;
-#else
-    bool backup = true;
-#endif
-
-    m_fld->Write(outname, FieldDef, FieldData, fieldMetaDataMap, backup);
+    m_fld->Write(outname, FieldDef, FieldData, fieldMetaDataMap,
+                 m_session->GetBackups());
 }
 
 /**

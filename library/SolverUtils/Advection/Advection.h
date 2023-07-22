@@ -50,6 +50,19 @@ namespace Nektar
 namespace SolverUtils
 {
 
+class Advection;
+
+/// A shared pointer to an Advection object.
+typedef std::shared_ptr<Advection> AdvectionSharedPtr;
+
+/// Datatype of the NekFactory used to instantiate classes derived
+/// from the Advection class.
+typedef LibUtilities::NekFactory<std::string, Advection, std::string>
+    AdvectionFactory;
+
+/// Gets the factory for initialising advection objects.
+SOLVER_UTILS_EXPORT AdvectionFactory &GetAdvectionFactory();
+
 /**
  * Defines a callback function type which evaluates the flux vector \f$ F(u) \f$
  * in a conservative advection of the form \f$ \nabla\cdot F(u) \f$.
@@ -88,42 +101,8 @@ public:
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
             NullNekDoubleArrayOfArray);
 
-    /// Interface function to advect the Volume field.
-    SOLVER_UTILS_EXPORT void AdvectVolumeFlux(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const Array<OneD, Array<OneD, NekDouble>> &pAdvVel,
-        const Array<OneD, Array<OneD, NekDouble>> &pInarray,
-        TensorOfArray3D<NekDouble> &pVolumeFlux, const NekDouble &pTime)
-    {
-        v_AdvectVolumeFlux(nConvectiveFields, pFields, pAdvVel, pInarray,
-                           pVolumeFlux, pTime);
-    }
-
-    /// Interface function to advect the Trace field.
-    SOLVER_UTILS_EXPORT void AdvectTraceFlux(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const Array<OneD, Array<OneD, NekDouble>> &pAdvVel,
-        const Array<OneD, Array<OneD, NekDouble>> &pInarray,
-        Array<OneD, Array<OneD, NekDouble>> &pTraceFlux, const NekDouble &pTime,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
-            NullNekDoubleArrayOfArray,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray)
-    {
-        v_AdvectTraceFlux(nConvectiveFields, pFields, pAdvVel, pInarray,
-                          pTraceFlux, pTime, pFwd, pBwd);
-    }
-
-    /**
-     * @brief Similar with Advection::Advect(): calculate the advection flux
-     * The difference is in the outarray:
-     *  it is the coefficients of basis for AdvectCoeffs()
-     *  it is the physics on quadrature points for Advect()
-     */
     SOLVER_UTILS_EXPORT void AdvectCoeffs(
-        const int nConvectiveFields,
+        const int nConvective,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &advVel,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -196,15 +175,6 @@ public:
         Array<OneD, DNekMatSharedPtr> &TraceJacFwd,
         Array<OneD, DNekMatSharedPtr> &TraceJacBwd);
 
-    SOLVER_UTILS_EXPORT void AddVolumJacToMat(
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const int &nConvectiveFields,
-        const TensorOfArray5D<NekDouble> &ElmtJacArray,
-        Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> &gmtxarray)
-    {
-        v_AddVolumJacToMat(pFields, nConvectiveFields, ElmtJacArray, gmtxarray);
-    }
-
 protected:
     /// Callback function to the flux vector (set when advection is in
     /// conservative form).
@@ -231,28 +201,8 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
             NullNekDoubleArrayOfArray) = 0;
 
-    /// Advects Volume Flux.
-    SOLVER_UTILS_EXPORT virtual void v_AdvectVolumeFlux(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &advVel,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        TensorOfArray3D<NekDouble> &pVolumeFlux, const NekDouble &time);
-
-    /// Advects Trace Flux.
-    SOLVER_UTILS_EXPORT virtual void v_AdvectTraceFlux(
-        const int nConvectiveFields,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &advVel,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &pTraceFlux, const NekDouble &time,
-        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
-            NullNekDoubleArrayOfArray,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
-
     SOLVER_UTILS_EXPORT virtual void v_AdvectCoeffs(
-        const int nConvectiveFields,
+        const int nConvective,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &advVel,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -266,24 +216,7 @@ protected:
     SOLVER_UTILS_EXPORT virtual void v_SetBaseFlow(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
-
-    SOLVER_UTILS_EXPORT virtual void v_AddVolumJacToMat(
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const int &nConvectiveFields,
-        const TensorOfArray5D<NekDouble> &ElmtJacArray,
-        Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> &gmtxarray);
 };
-
-/// A shared pointer to an Advection object.
-typedef std::shared_ptr<Advection> AdvectionSharedPtr;
-
-/// Datatype of the NekFactory used to instantiate classes derived
-/// from the Advection class.
-typedef LibUtilities::NekFactory<std::string, Advection, std::string>
-    AdvectionFactory;
-
-/// Gets the factory for initialising advection objects.
-SOLVER_UTILS_EXPORT AdvectionFactory &GetAdvectionFactory();
 
 } // namespace SolverUtils
 } // namespace Nektar

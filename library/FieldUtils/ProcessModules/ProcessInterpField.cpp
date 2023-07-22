@@ -82,7 +82,7 @@ ProcessInterpField::~ProcessInterpField()
 {
 }
 
-void ProcessInterpField::Process(po::variables_map &vm)
+void ProcessInterpField::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -206,14 +206,8 @@ void ProcessInterpField::Process(po::variables_map &vm)
     set<int> sinmode;
     if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
     {
-        vector<int> value;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     m_config["realmodetoimag"].as<string>(), value),
-                 "Failed to interpret realmodetoimag string");
-        for (int j : value)
-        {
-            sinmode.insert(j);
-        }
+        ParseUtils::GenerateVariableSet(m_config["realmodetoimag"].as<string>(),
+                                        m_f->m_variables, sinmode);
     }
     for (int j = 0; j < nfields; ++j)
     {
@@ -256,12 +250,14 @@ void ProcessInterpField::Process(po::variables_map &vm)
         }
     }
 
-    Interpolator interp;
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>> interp;
     if (m_f->m_verbose && m_f->m_comm->TreatAsRankZero())
     {
         interp.SetProgressCallback(&ProcessInterpField::PrintProgressbar, this);
     }
+
     interp.Interpolate(fromField->m_exp, m_f->m_exp);
+
     if (m_f->m_verbose && m_f->m_comm->TreatAsRankZero())
     {
         cout << endl;

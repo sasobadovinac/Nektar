@@ -3,7 +3,7 @@
 
     <EXPANSIONS>
         <E COMPOSITE="C[0]" FIELDS="u" BASISTYPE="Gauss_Lagrange, Gauss_Lagrange"
-        NUMMODES="4,4" POINTSTYPE="GaussGaussLegendre, GaussGaussLegendre" NUMPOINTS="5,5"/>
+            NUMMODES="4,4" POINTSTYPE="GaussGaussLegendre, GaussGaussLegendre" NUMPOINTS="5,5"/>
     </EXPANSIONS>
 
     <CONDITIONS>

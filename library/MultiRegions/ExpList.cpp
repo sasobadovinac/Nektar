@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// File ExpList.cpp
+// File: ExpList.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -93,9 +93,7 @@ namespace MultiRegions
  *
  * The class stores a vector of expansions, \a m_exp, (each derived from
  * StdRegions#StdExpansion) which define the constituent components of
- * the domain. The coefficients from these expansions are concatenated
- * in \a m_coeffs, while the expansion evaluated at the quadrature
- * points is stored in \a m_phys.
+ * the domain.
  */
 
 /**
@@ -119,6 +117,7 @@ ExpList::ExpList(const ExpansionType type)
  */
 ExpList::ExpList(const ExpList &in, const bool DeclareCoeffPhysArrays)
     : std::enable_shared_from_this<ExpList>(in), m_expType(in.m_expType),
+
       m_comm(in.m_comm), m_session(in.m_session), m_graph(in.m_graph),
       m_ncoeffs(in.m_ncoeffs), m_npoints(in.m_npoints), m_physState(false),
       m_exp(in.m_exp), m_collections(in.m_collections),
@@ -133,6 +132,31 @@ ExpList::ExpList(const ExpList &in, const bool DeclareCoeffPhysArrays)
     // Set up m_coeffs, m_phys and offset arrays.
     // use this to keep memory declaration in one place
     SetupCoeffPhys(DeclareCoeffPhysArrays, false);
+}
+
+ExpList::ExpList(const ExpListSharedPtr &in, const bool DeclareCoeffArrays,
+                 const bool DeclarePhysArrays)
+    : m_expType(in->m_expType),
+
+      m_comm(in->m_comm), m_session(in->m_session), m_graph(in->m_graph),
+      m_ncoeffs(in->m_ncoeffs), m_npoints(in->m_npoints),
+      m_physState(in->m_physState), m_exp(in->m_exp),
+      m_collections(in->m_collections),
+      m_collectionsDoInit(in->m_collectionsDoInit),
+      m_coll_coeff_offset(in->m_coll_coeff_offset),
+      m_coll_phys_offset(in->m_coll_phys_offset),
+      m_coeff_offset(in->m_coeff_offset), m_phys_offset(in->m_phys_offset),
+      m_coeffsToElmt(in->m_coeffsToElmt), m_blockMat(in->m_blockMat),
+      m_WaveSpace(in->m_WaveSpace), m_elmtToExpId(in->m_elmtToExpId)
+{
+    if (DeclareCoeffArrays)
+    {
+        m_coeffs = Array<OneD, NekDouble>(m_ncoeffs, 0.0);
+    }
+    if (DeclarePhysArrays)
+    {
+        m_phys = Array<OneD, NekDouble>(m_npoints, 0.0);
+    }
 }
 
 /**
@@ -167,8 +191,7 @@ ExpList::ExpList(const ExpList &in, const std::vector<unsigned int> &eIDs,
  * constructor fills the list of local expansions
  * \texttt{m_exp} with the proper expansions, calculates the
  * total number of quadrature points \f$x_i\f$ and local
- * expansion coefficients \f$\hat{u}^e_n\f$ and allocates
- * memory for the arrays #m_coeffs and #m_phys.
+ * expansion coefficients \f$\hat{u}^e_n\f$ and
  *
  * @param  pSession    A session within information about expansion
  *
@@ -212,8 +235,7 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
  * expansions \texttt{m_exp} with the proper expansions,
  * calculates the total number of quadrature points
  * \f$\boldsymbol{x}_i\f$ and local expansion coefficients
- * \f$\hat{u}^e_n\f$ and allocates memory for the arrays
- * #m_coeffs and #m_phys.
+ * \f$\hat{u}^e_n\f$.
  *
  * @param  pSession      A session within information about expansion
  * @param expansions     A vector containing information about the
@@ -1092,7 +1114,7 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * Each expansion (local element) is processed in turn to
  * determine the number of coefficients and physical data
- * points it contributes to the domain. Twoe arrays,
+ * points it contributes to the domain. Two arrays,
  * #m_coeff_offset are #m_phys_offset are also initialised and
  * updated to store the data offsets of each element in the
  * #m_coeffs and #m_phys arrays, and the element id that each
@@ -1653,6 +1675,59 @@ void ExpList::v_PhysDeriv(Direction edir,
     }
 }
 
+/* Computes the curl of velocity = \nabla \times u
+ * if m_expType == 2D, Q = [omg_z, (nothing done)]
+ * if m_expType == 3D, Q = [omg_x, omg_y, omg_z]
+ */
+void ExpList::v_Curl(Array<OneD, Array<OneD, NekDouble>> &Vel,
+                     Array<OneD, Array<OneD, NekDouble>> &Q)
+{
+    int nq = GetTotPoints();
+    Array<OneD, NekDouble> Vx(nq);
+    Array<OneD, NekDouble> Uy(nq);
+    Array<OneD, NekDouble> Dummy(nq);
+
+    switch (m_expType)
+    {
+        case e2D:
+        {
+            PhysDeriv(xDir, Vel[yDir], Vx);
+            PhysDeriv(yDir, Vel[xDir], Uy);
+
+            Vmath::Vsub(nq, Vx, 1, Uy, 1, Q[0], 1);
+        }
+        break;
+
+        case e3D:
+        {
+            Array<OneD, NekDouble> Vz(nq);
+            Array<OneD, NekDouble> Uz(nq);
+            Array<OneD, NekDouble> Wx(nq);
+            Array<OneD, NekDouble> Wy(nq);
+
+            PhysDeriv(Vel[xDir], Dummy, Uy, Uz);
+            PhysDeriv(Vel[yDir], Vx, Dummy, Vz);
+            PhysDeriv(Vel[zDir], Wx, Wy, Dummy);
+
+            Vmath::Vsub(nq, Wy, 1, Vz, 1, Q[0], 1);
+            Vmath::Vsub(nq, Uz, 1, Wx, 1, Q[1], 1);
+            Vmath::Vsub(nq, Vx, 1, Uy, 1, Q[2], 1);
+        }
+        break;
+        default:
+            ASSERTL0(0, "Dimension not supported by ExpList::Curl");
+            break;
+    }
+}
+
+/* Computes the curl of vorticity = \nabla \times \nabla \times u
+ * if m_expType == 2D, Q = [dy omg_z, -dx omg_z, 0]
+ *
+ * if m_expType == 3D, Q = [dy omg_z - dz omg_y,
+ *                          dz omg_x - dx omg_z,
+ *                          dx omg_y - dy omg_x]
+ *
+ */
 void ExpList::v_CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
                          Array<OneD, Array<OneD, NekDouble>> &Q)
 {
@@ -1999,10 +2074,9 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
         eid = elmt_id[i];
         if (nvarcoeffs > 0)
         {
-            for (auto &x : gkey.GetVarCoeffs())
-            {
-                varcoeffs[x.first] = x.second + m_phys_offset[eid];
-            }
+            varcoeffs = StdRegions::RestrictCoeffMap(
+                gkey.GetVarCoeffs(), m_phys_offset[i],
+                (*m_exp)[i]->GetTotPoints());
         }
 
         LocalRegions::MatrixKey matkey(
@@ -2110,10 +2184,9 @@ void ExpList::GeneralMatrixOp(const GlobalMatrixKey &gkey,
 
             if (nvarcoeffs > 0)
             {
-                for (auto &x : gkey.GetVarCoeffs())
-                {
-                    varcoeffs[x.first] = x.second + m_phys_offset[i];
-                }
+                varcoeffs = StdRegions::RestrictCoeffMap(
+                    gkey.GetVarCoeffs(), m_phys_offset[i],
+                    (*m_exp)[i]->GetTotPoints());
             }
 
             StdRegions::StdMatrixKey mkey(
@@ -2205,10 +2278,9 @@ GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
         eid = n;
         if (nvarcoeffs > 0)
         {
-            for (auto &x : mkey.GetVarCoeffs())
-            {
-                varcoeffs[x.first] = x.second + m_phys_offset[eid];
-            }
+            varcoeffs = StdRegions::RestrictCoeffMap(
+                mkey.GetVarCoeffs(), m_phys_offset[eid],
+                (*m_exp)[eid]->GetTotPoints());
         }
 
         LocalRegions::MatrixKey matkey(
@@ -2310,12 +2382,12 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
 
             break;
         default: // Assume general matrix - currently only set up
-                 // for full invert
-        {
-            matStorage = eFULL;
-            Gmat = MemoryManager<DNekMat>::AllocateSharedPtr(rows, cols, zero,
-                                                             matStorage);
-        }
+            // for full invert
+            {
+                matStorage = eFULL;
+                Gmat       = MemoryManager<DNekMat>::AllocateSharedPtr(
+                    rows, cols, zero, matStorage);
+            }
     }
 
     // fill global symmetric matrix
@@ -2328,10 +2400,9 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
         eid = n;
         if (nvarcoeffs > 0)
         {
-            for (auto &x : mkey.GetVarCoeffs())
-            {
-                varcoeffs[x.first] = x.second + m_phys_offset[eid];
-            }
+            varcoeffs = StdRegions::RestrictCoeffMap(
+                mkey.GetVarCoeffs(), m_phys_offset[eid],
+                (*m_exp)[eid]->GetTotPoints());
         }
 
         LocalRegions::MatrixKey matkey(
@@ -3132,7 +3203,9 @@ void ExpList::v_WriteVtkPieceData(std::ostream &outfile, int expansion,
     outfile << "        <DataArray type=\"Float64\" Name=\"" << var << "\">"
             << endl;
     outfile << "          ";
+
     const Array<OneD, NekDouble> phys = m_phys + m_phys_offset[expansion];
+
     for (i = 0; i < nq; ++i)
     {
         outfile << (fabs(phys[i]) < NekConstants::kNekZeroTol ? 0 : phys[i])
@@ -3327,13 +3400,35 @@ Array<OneD, const unsigned int> ExpList::v_GetYIDs(void)
 void ExpList::v_ClearGlobalLinSysManager(void)
 {
     NEKERROR(ErrorUtil::efatal,
-             "This method is not defined or valid for this class type");
+             "ClearGlobalLinSysManager not implemented for ExpList.");
 }
 
-void ExpList::ExtractFileBCs(const std::string &fileName,
-                             LibUtilities::CommSharedPtr comm,
-                             const std::string &varName,
-                             const std::shared_ptr<ExpList> locExpList)
+int ExpList::v_GetPoolCount(std::string poolName)
+{
+    boost::ignore_unused(poolName);
+    NEKERROR(ErrorUtil::efatal, "GetPoolCount not implemented for ExpList.");
+    return -1;
+}
+
+void ExpList::v_UnsetGlobalLinSys(GlobalLinSysKey key, bool clearLocalMatrices)
+{
+    boost::ignore_unused(key, clearLocalMatrices);
+    NEKERROR(ErrorUtil::efatal,
+             "UnsetGlobalLinSys not implemented for ExpList.");
+}
+
+LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+    &ExpList::v_GetGlobalLinSysManager(void)
+{
+    NEKERROR(ErrorUtil::efatal,
+             "GetGlobalLinSysManager not implemented for ExpList.");
+    return NullGlobalLinSysManager;
+}
+
+void ExpList::ExtractCoeffsFromFile(const std::string &fileName,
+                                    LibUtilities::CommSharedPtr comm,
+                                    const std::string &varName,
+                                    Array<OneD, NekDouble> &coeffs)
 {
     string varString = fileName.substr(0, fileName.find_last_of("."));
     int j, k, len = varString.length();
@@ -3357,9 +3452,8 @@ void ExpList::ExtractFileBCs(const std::string &fileName,
             if (FieldDef[j]->m_fields[k] == varName)
             {
                 // Copy FieldData into locExpList
-                locExpList->ExtractDataToCoeffs(FieldDef[j], FieldData[j],
-                                                FieldDef[j]->m_fields[k],
-                                                locExpList->UpdateCoeffs());
+                ExtractDataToCoeffs(FieldDef[j], FieldData[j],
+                                    FieldDef[j]->m_fields[k], coeffs);
                 found = true;
             }
         }
@@ -3367,7 +3461,6 @@ void ExpList::ExtractFileBCs(const std::string &fileName,
 
     ASSERTL0(found, "Could not find variable '" + varName +
                         "' in file boundary condition " + fileName);
-    locExpList->BwdTrans(locExpList->GetCoeffs(), locExpList->UpdatePhys());
 }
 
 /**
@@ -3567,9 +3660,9 @@ void ExpList::v_AppendFieldData(
 void ExpList::ExtractDataToCoeffs(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
     std::vector<NekDouble> &fielddata, std::string &field,
-    Array<OneD, NekDouble> &coeffs)
+    Array<OneD, NekDouble> &coeffs, std::unordered_map<int, int> zIdToPlane)
 {
-    v_ExtractDataToCoeffs(fielddef, fielddata, field, coeffs);
+    v_ExtractDataToCoeffs(fielddef, fielddata, field, coeffs, zIdToPlane);
 }
 
 void ExpList::ExtractCoeffsToCoeffs(
@@ -3591,8 +3684,9 @@ void ExpList::ExtractCoeffsToCoeffs(
 void ExpList::v_ExtractDataToCoeffs(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
     std::vector<NekDouble> &fielddata, std::string &field,
-    Array<OneD, NekDouble> &coeffs)
+    Array<OneD, NekDouble> &coeffs, std::unordered_map<int, int> zIdToPlane)
 {
+    boost::ignore_unused(zIdToPlane);
     int i, expId;
     int offset       = 0;
     int modes_offset = 0;
@@ -4509,28 +4603,31 @@ void ExpList::v_MultiplyByInvMassMatrix(
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                          Array<OneD, NekDouble> &outarray,
-                          const StdRegions::ConstFactorMap &factors,
-                          const StdRegions::VarCoeffMap &varcoeff,
-                          const MultiRegions::VarFactorsMap &varfactors,
-                          const Array<OneD, const NekDouble> &dirForcing,
-                          const bool PhysSpaceForcing)
+GlobalLinSysKey ExpList::v_HelmSolve(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &varcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
     boost::ignore_unused(inarray, outarray, factors, varcoeff, varfactors,
                          dirForcing, PhysSpaceForcing);
     NEKERROR(ErrorUtil::efatal, "HelmSolve not implemented.");
+    return NullGlobalLinSysKey;
 }
 
-void ExpList::v_LinearAdvectionDiffusionReactionSolve(
-    const Array<OneD, Array<OneD, NekDouble>> &velocity,
+GlobalLinSysKey ExpList::v_LinearAdvectionDiffusionReactionSolve(
     const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const NekDouble lambda,
-    const Array<OneD, const NekDouble> &dirForcing)
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &varcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
-    boost::ignore_unused(velocity, inarray, outarray, lambda, dirForcing);
+    boost::ignore_unused(inarray, outarray, factors, varcoeff, varfactors,
+                         dirForcing, PhysSpaceForcing);
     NEKERROR(ErrorUtil::efatal,
-             "This method is not defined or valid for this class type");
+             "LinearAdvectionDiffusionReactionSolve not implemented.");
+    return NullGlobalLinSysKey;
 }
 
 void ExpList::v_LinearAdvectionReactionSolve(
@@ -4544,39 +4641,42 @@ void ExpList::v_LinearAdvectionReactionSolve(
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
+void ExpList::v_HomogeneousFwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff, bool UnShuff)
 {
-    boost::ignore_unused(inarray, outarray, Shuff, UnShuff);
+    boost::ignore_unused(npts, inarray, outarray, Shuff, UnShuff);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_HomogeneousBwdTrans(const Array<OneD, const NekDouble> &inarray,
+void ExpList::v_HomogeneousBwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff, bool UnShuff)
 {
-    boost::ignore_unused(inarray, outarray, Shuff, UnShuff);
+    boost::ignore_unused(npts, inarray, outarray, Shuff, UnShuff);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+void ExpList::v_DealiasedProd(const int npts,
+                              const Array<OneD, NekDouble> &inarray1,
                               const Array<OneD, NekDouble> &inarray2,
                               Array<OneD, NekDouble> &outarray)
 {
-    boost::ignore_unused(inarray1, inarray2, outarray);
+    boost::ignore_unused(npts, inarray1, inarray2, outarray);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
 void ExpList::v_DealiasedDotProd(
-    const Array<OneD, Array<OneD, NekDouble>> &inarray1,
+    const int npts, const Array<OneD, Array<OneD, NekDouble>> &inarray1,
     const Array<OneD, Array<OneD, NekDouble>> &inarray2,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    boost::ignore_unused(inarray1, inarray2, outarray);
+    boost::ignore_unused(npts, inarray1, inarray2, outarray);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
@@ -4651,17 +4751,19 @@ void ExpList::v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
 
 /**
  */
-void ExpList::v_FillBndCondFromField()
+void ExpList::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
 {
+    boost::ignore_unused(coeffs);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
 /**
  */
-void ExpList::v_FillBndCondFromField(const int nreg)
+void ExpList::v_FillBndCondFromField(const int nreg,
+                                     const Array<OneD, NekDouble> coeffs)
 {
-    boost::ignore_unused(nreg);
+    boost::ignore_unused(nreg, coeffs);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
@@ -5292,6 +5394,27 @@ void ExpList::CreateCollections(Collections::ImplementationType ImpType)
 void ExpList::ClearGlobalLinSysManager(void)
 {
     v_ClearGlobalLinSysManager();
+}
+
+/**
+ * Added for access to the pool count by external code (e.g. UnitTests)
+ * which can't access the static pool across compilation units on
+ * Windows builds.
+ */
+int ExpList::GetPoolCount(std::string poolName)
+{
+    return v_GetPoolCount(poolName);
+}
+
+void ExpList::UnsetGlobalLinSys(GlobalLinSysKey key, bool clearLocalMatrices)
+{
+    v_UnsetGlobalLinSys(key, clearLocalMatrices);
+}
+
+LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+    &ExpList::GetGlobalLinSysManager(void)
+{
+    return v_GetGlobalLinSysManager();
 }
 
 void ExpList::v_PhysInterp1DScaled(const NekDouble scale,

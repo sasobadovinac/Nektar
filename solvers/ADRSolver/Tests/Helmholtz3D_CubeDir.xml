@@ -5,73 +5,73 @@
 
     <CONDITIONS>
 
-      <SOLVERINFO>
+        <SOLVERINFO>
             <I PROPERTY="EQTYPE" VALUE="Helmholtz" />
             <I PROPERTY="Projection" VALUE="Continuous" />
             <I PROPERTY="GLOBALSYSSOLN"  VALUE="IterativeStaticCond" />
-      </SOLVERINFO>
+        </SOLVERINFO>
 
-         
-      <PARAMETERS>
-        <P> Lambda = 1 </P> 
-        <P> IterativeSolverTolerance = 1e-8 </P> 
-      </PARAMETERS>
-      
-      <GLOBALSYSSOLNINFO>
-        <V VAR="u">
-          <I PROPERTY="GlobalSysSoln"    VALUE="IterativeStaticCond" />
-            <I PROPERTY="Preconditioner"   VALUE="Diagonal"/>
-        </V>
-      </GLOBALSYSSOLNINFO>
-      
-      <VARIABLES>
-        <V ID="0"> u </V>
-      </VARIABLES>
-      
-      <BOUNDARYREGIONS>
-        <B ID="0"> C[2]       </B>  <!-- X=0.1  -->
-        <B ID="1"> C[3]       </B>  <!-- Y=0    -->
-        <B ID="2"> C[4]       </B>  <!-- Z=0    -->
-        <B ID="3"> C[5]       </B>  <!-- Y=0.1  -->
-        <B ID="4"> C[6]       </B>  <!-- Z=0.1  -->
-        <B ID="5"> C[7]       </B>  <!-- X=0    -->
-      </BOUNDARYREGIONS>
-      
-      <BOUNDARYCONDITIONS>
-        <REGION REF="0">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-        <REGION REF="1">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-        <REGION REF="2">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-        <REGION REF="3">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-        <REGION REF="4">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-        <REGION REF="5">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-        </REGION>
-      </BOUNDARYCONDITIONS>
-        
-      <FUNCTION NAME="Forcing">
-        <E VAR="u" VALUE="-(Lambda+PI*PI*402)*cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-      </FUNCTION>
 
-      <FUNCTION NAME="ExactSolution">
-        <E VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
-      </FUNCTION>
+        <PARAMETERS>
+            <P> Lambda = 1 </P>
+            <P> IterativeSolverTolerance = 1e-8 </P>
+        </PARAMETERS>
+
+        <GLOBALSYSSOLNINFO>
+            <V VAR="u">
+                <I PROPERTY="GlobalSysSoln"    VALUE="IterativeStaticCond" />
+                <I PROPERTY="Preconditioner"   VALUE="Diagonal"/>
+            </V>
+        </GLOBALSYSSOLNINFO>
+
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[2]       </B>  <!-- X=0.1  -->
+            <B ID="1"> C[3]       </B>  <!-- Y=0    -->
+            <B ID="2"> C[4]       </B>  <!-- Z=0    -->
+            <B ID="3"> C[5]       </B>  <!-- Y=0.1  -->
+            <B ID="4"> C[6]       </B>  <!-- Z=0.1  -->
+            <B ID="5"> C[7]       </B>  <!-- X=0    -->
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+            <REGION REF="3">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+            <REGION REF="4">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+            <REGION REF="5">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="Forcing">
+            <E VAR="u" VALUE="-(Lambda+PI*PI*402)*cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y/0.1)" />
+        </FUNCTION>
     </CONDITIONS>
-    
+
     <EXPANSIONS>
-      <E COMPOSITE="C[0]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
-      <E COMPOSITE="C[1]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[0]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[1]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
-    
+
     <GEOMETRY DIM="3" SPACE="3">
         <VERTEX>
             <V ID="0">7.50000000e-02 7.50000000e-02 0.00000000e+00</V>

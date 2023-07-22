@@ -64,7 +64,7 @@ OutputInfo::~OutputInfo()
 {
 }
 
-void OutputInfo::Process(po::variables_map &vm)
+void OutputInfo::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

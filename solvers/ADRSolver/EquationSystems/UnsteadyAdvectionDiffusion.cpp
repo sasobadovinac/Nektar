@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyAdvectionDiffusion.cpp
+// File: UnsteadyAdvectionDiffusion.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -340,9 +340,15 @@ void UnsteadyAdvectionDiffusion::DoOdeProjection(
     {
         case MultiRegions::eDiscontinuous:
         {
-            for (int i = 0; i < nvariables; ++i)
+            // Just copy over array
+            if (inarray != outarray)
             {
-                Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1);
+                int npoints = GetNpoints();
+
+                for (int i = 0; i < nvariables; ++i)
+                {
+                    Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                }
             }
             break;
         }

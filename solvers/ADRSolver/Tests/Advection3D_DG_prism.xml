@@ -149,7 +149,7 @@
             <E VAR="u" VALUE="1.0" />
         </FUNCTION>
 
-	    <FUNCTION NAME="Forcing">
+        <FUNCTION NAME="Forcing">
             <E VAR="u" VALUE="0" />
         </FUNCTION>
 

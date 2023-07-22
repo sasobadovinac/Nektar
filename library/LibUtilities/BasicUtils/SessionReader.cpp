@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SessionReader.cpp
+// File: SessionReader.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -332,6 +332,12 @@ void SessionReader::InitSession(const std::vector<std::string> &filenames)
     // Verify SOLVERINFO values
     VerifySolverInfo();
 
+    // Disable backups if NEKTAR_DISABLE_BACKUPS is set.
+    if (std::getenv("NEKTAR_DISABLE_BACKUPS") != nullptr)
+    {
+        m_backups = false;
+    }
+
     // In verbose mode, print out parameters and solver info sections
     if (m_verbose && m_comm)
     {
@@ -401,7 +407,7 @@ void SessionReader::TestSharedFilesystem()
 std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
                                                                   char *argv[])
 {
-    // List the publically visible options (listed using --help)
+    // List the publically visible options (listed using --help).
     po::options_description desc("Allowed options");
 
     // clang-format off
@@ -421,20 +427,22 @@ std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
                                  "number of procs in Z-dir")
                 ("nsz",          po::value<int>(),
                                  "number of slices in Z-dir")
+                ("npt",          po::value<int>(),
+                                 "number of procs in T-dir (parareal)")
                 ("part-only",    po::value<int>(),
                                  "only partition mesh into N partitions.")
                 ("part-only-overlapping",    po::value<int>(),
                                  "only partition mesh into N overlapping partitions.")
                 ("part-info",    "Output partition information")
-#ifdef NEKTAR_USE_CWIPI
-                ("cwipi",        po::value<std::string>(),
-                                 "set CWIPI name")
-#endif
+                ("forceoutput,f",  "Disables backups files and forces output to be "
+                                 "written without any checks")
                 ("writeoptfile", "write an optimisation file")
                 ("useoptfile",   po::value<std::string>(),
-                                 "use an optimisation file")
-                ;
+                                 "use an optimisation file");
     // clang-format on
+#ifdef NEKTAR_USE_CWIPI
+    desc.add_options()("cwipi", po::value<std::string>(), "set CWIPI name");
+#endif
 
     for (auto &cmdIt : GetCmdLineArgMap())
     {
@@ -458,12 +466,8 @@ std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
     // specified using the input-file option by the user).
     po::options_description hidden("Hidden options");
 
-    // clang-format off
-            hidden.add_options()
-                    ("input-file", po::value< vector<string> >(),
-                                   "input filename")
-            ;
-    // clang-format on
+    hidden.add_options()("input-file", po::value<vector<string>>(),
+                         "input filename");
 
     // Combine all options for the parser
     po::options_description all("All options");
@@ -528,6 +532,16 @@ std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
     else
     {
         m_verbose = false;
+    }
+
+    // Disable backups
+    if (m_cmdLineOptions.count("forceoutput"))
+    {
+        m_backups = false;
+    }
+    else
+    {
+        m_backups = true;
     }
 
     // Enable update optimisation file
@@ -785,6 +799,38 @@ void SessionReader::LoadParameter(const std::string &pName, int &pVar,
 /**
  *
  */
+void SessionReader::LoadParameter(const std::string &pName, size_t &pVar) const
+{
+    std::string vName = boost::to_upper_copy(pName);
+    auto paramIter    = m_parameters.find(vName);
+    ASSERTL0(paramIter != m_parameters.end(),
+             "Required parameter '" + pName + "' not specified in session.");
+    NekDouble param = round(paramIter->second);
+    pVar            = checked_cast<int>(param);
+}
+
+/**
+ *
+ */
+void SessionReader::LoadParameter(const std::string &pName, size_t &pVar,
+                                  const size_t &pDefault) const
+{
+    std::string vName = boost::to_upper_copy(pName);
+    auto paramIter    = m_parameters.find(vName);
+    if (paramIter != m_parameters.end())
+    {
+        NekDouble param = round(paramIter->second);
+        pVar            = checked_cast<int>(param);
+    }
+    else
+    {
+        pVar = pDefault;
+    }
+}
+
+/**
+ *
+ */
 void SessionReader::LoadParameter(const std::string &pName,
                                   NekDouble &pVar) const
 {
@@ -817,6 +863,15 @@ void SessionReader::LoadParameter(const std::string &pName, NekDouble &pVar,
  *
  */
 void SessionReader::SetParameter(const std::string &pName, int &pVar)
+{
+    std::string vName   = boost::to_upper_copy(pName);
+    m_parameters[vName] = pVar;
+}
+
+/**
+ *
+ */
+void SessionReader::SetParameter(const std::string &pName, size_t &pVar)
 {
     std::string vName   = boost::to_upper_copy(pName);
     m_parameters[vName] = pVar;
@@ -1140,6 +1195,14 @@ std::vector<std::string> SessionReader::GetVariables() const
 /**
  *
  */
+bool SessionReader::GetBackups() const
+{
+    return m_backups;
+}
+
+/**
+ *
+ */
 bool SessionReader::DefinesFunction(const std::string &pName) const
 {
     std::string vName = boost::to_upper_copy(pName);
@@ -1439,7 +1502,7 @@ void SessionReader::LoadDoc(const std::string &pFilename,
     {
         fs::path pdirname(pFilename);
         boost::format pad("P%1$07d.xml");
-        pad % m_comm->GetRank();
+        pad % m_comm->GetSpaceComm()->GetRank();
         fs::path pRankFilename(pad.str());
         fs::path fullpath = pdirname / pRankFilename;
 
@@ -1596,6 +1659,7 @@ void SessionReader::PartitionComm()
         int nProcY  = 1;
         int nProcX  = 1;
         int nStripZ = 1;
+        int nTime   = 1;
         if (DefinesCmdLineArgument("npx"))
         {
             nProcX = GetCmdLineArgument<int>("npx");
@@ -1612,7 +1676,13 @@ void SessionReader::PartitionComm()
         {
             nStripZ = GetCmdLineArgument<int>("nsz");
         }
-        ASSERTL0(m_comm->GetSize() % (nProcZ * nProcY * nProcX) == 0,
+        if (DefinesCmdLineArgument("npt"))
+        {
+            nTime = GetCmdLineArgument<int>("npt");
+        }
+        ASSERTL0(m_comm->GetSize() % nTime == 0,
+                 "Cannot exactly partition time using npt value.");
+        ASSERTL0((m_comm->GetSize() / nTime) % (nProcZ * nProcY * nProcX) == 0,
                  "Cannot exactly partition using PROC_Z value.");
         ASSERTL0(nProcZ % nProcY == 0,
                  "Cannot exactly partition using PROC_Y value.");
@@ -1624,9 +1694,9 @@ void SessionReader::PartitionComm()
 
         // Number of processes associated with the spectral element
         // method.
-        int nProcSem = m_comm->GetSize() / nProcSm;
+        int nProcSem = m_comm->GetSize() / nTime / nProcSm;
 
-        m_comm->SplitComm(nProcSm, nProcSem);
+        m_comm->SplitComm(nProcSm, nProcSem, nTime);
         m_comm->GetColumnComm()->SplitComm(nProcZ / nStripZ, nStripZ);
         m_comm->GetColumnComm()->GetColumnComm()->SplitComm((nProcY * nProcX),
                                                             nProcZ / nStripZ);
@@ -2299,7 +2369,21 @@ void SessionReader::ReadFunctions(TiXmlElement *conditions)
                              "filename:var1,var2");
 
                 // set the filename
-                funcDef.m_filename = fSplit[0];
+                fs::path fullpath = fSplit[0];
+                fs::path ftype    = fullpath.extension();
+                if (fullpath.parent_path().extension() == ".pit")
+                {
+                    string filename = fullpath.stem().string();
+                    fullpath        = fullpath.parent_path();
+                    size_t start    = filename.find_last_of("_") + 1;
+                    int index =
+                        atoi(filename.substr(start, filename.size()).c_str());
+                    fullpath /= filename.substr(0, start) +
+                                std::to_string(
+                                    index + m_comm->GetTimeComm()->GetRank()) +
+                                ftype.string();
+                }
+                funcDef.m_filename = fullpath.string();
 
                 if (fSplit.size() == 2)
                 {
@@ -2519,11 +2603,6 @@ void SessionReader::VerifySolverInfo()
                                                         solverProperty + "'");
         }
     }
-}
-
-void SessionReader::SetUpXmlDoc(void)
-{
-    m_xmlDoc = MergeDoc(m_filenames);
 }
 
 InterpreterSharedPtr SessionReader::GetInterpreter()

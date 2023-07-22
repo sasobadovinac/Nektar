@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Xxt.hpp
+// File: Xxt.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -37,9 +37,6 @@
 
 #include <iostream>
 
-#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <LibUtilities/BasicUtils/VmathArray.hpp>
 #include <LibUtilities/Communication/Comm.h>
 #ifdef NEKTAR_USE_MPI
 #include <LibUtilities/Communication/CommMpi.h>

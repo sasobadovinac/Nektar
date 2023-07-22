@@ -71,27 +71,28 @@ public:
     OutputTecplot(FieldSharedPtr f);
     virtual ~OutputTecplot();
 
-    virtual void Process(po::variables_map &vm);
+protected:
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "OutputTecplot";
     }
 
-protected:
     /// Write from pts to output file.
-    virtual void OutputFromPts(po::variables_map &vm);
+    virtual void v_OutputFromPts(po::variables_map &vm) override;
 
     /// Write from m_exp to output file.
-    virtual void OutputFromExp(po::variables_map &vm);
+    virtual void v_OutputFromExp(po::variables_map &vm) override;
 
     /// Write from data to output file.
-    virtual void OutputFromData(po::variables_map &vm);
+    virtual void v_OutputFromData(po::variables_map &vm) override;
 
-    virtual fs::path GetPath(std::string &filename, po::variables_map &vm);
+    virtual fs::path v_GetPath(std::string &filename,
+                               po::variables_map &vm) override;
 
-    virtual fs::path GetFullOutName(std::string &filename,
-                                    po::variables_map &vm);
+    virtual fs::path v_GetFullOutName(std::string &filename,
+                                      po::variables_map &vm) override;
 
     /// True if writing binary field output
     bool m_binary;
@@ -118,10 +119,23 @@ protected:
     /// Field data to output
     Array<OneD, Array<OneD, NekDouble>> m_fields;
 
-    virtual void WriteTecplotHeader(std::ofstream &outfile,
-                                    std::vector<std::string> &var);
-    virtual void WriteTecplotZone(std::ofstream &outfile);
-    virtual void WriteTecplotConnectivity(std::ofstream &outfile);
+    virtual void v_WriteTecplotHeader(std::ofstream &outfile,
+                                      std::vector<std::string> &var);
+    void WriteTecplotHeader(std::ofstream &outfile,
+                            std::vector<std::string> &var)
+    {
+        v_WriteTecplotHeader(outfile, var);
+    }
+    virtual void v_WriteTecplotZone(std::ofstream &outfile);
+    void WriteTecplotZone(std::ofstream &outfile)
+    {
+        v_WriteTecplotZone(outfile);
+    }
+    virtual void v_WriteTecplotConnectivity(std::ofstream &outfile);
+    void WriteTecplotConnectivity(std::ofstream &outfile)
+    {
+        v_WriteTecplotConnectivity(outfile);
+    }
 
     void WriteTecplotFile(po::variables_map &vm);
 
@@ -154,10 +168,10 @@ public:
 protected:
     void WriteDoubleOrFloat(std::ofstream &outfile,
                             Array<OneD, NekDouble> &data);
-    virtual void WriteTecplotHeader(std::ofstream &outfile,
-                                    std::vector<std::string> &var);
-    virtual void WriteTecplotZone(std::ofstream &outfile);
-    virtual void WriteTecplotConnectivity(std::ofstream &outfile);
+    virtual void v_WriteTecplotHeader(std::ofstream &outfile,
+                                      std::vector<std::string> &var) override;
+    virtual void v_WriteTecplotZone(std::ofstream &outfile) override;
+    virtual void v_WriteTecplotConnectivity(std::ofstream &outfile) override;
 };
 
 } // namespace FieldUtils

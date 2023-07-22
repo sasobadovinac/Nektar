@@ -37,6 +37,7 @@
 void export_StdExpansion();
 void export_StdMatrixKey();
 void export_StdElements();
+void export_VarCoeffEntry();
 
 BOOST_PYTHON_MODULE(_StdRegions)
 {
@@ -45,4 +46,5 @@ BOOST_PYTHON_MODULE(_StdRegions)
     export_StdExpansion();
     export_StdMatrixKey();
     export_StdElements();
+    export_VarCoeffEntry();
 }

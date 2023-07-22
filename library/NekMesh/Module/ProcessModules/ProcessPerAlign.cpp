@@ -237,10 +237,10 @@ void ProcessPerAlign::Process()
 
     // Loop over elements, calculate centroids of elements in c2.
     map<int, Node> centroidMap;
-    for (int i = 0; i < c2->m_items.size(); ++i)
+    for (size_t i = 0; i < c2->m_items.size(); ++i)
     {
         Node centroid;
-        for (int j = 0; j < c2->m_items[i]->GetVertexCount(); ++j)
+        for (size_t j = 0; j < c2->m_items[i]->GetVertexCount(); ++j)
         {
             centroid += *(c2->m_items[i]->GetVertex(j));
         }
@@ -258,10 +258,10 @@ void ProcessPerAlign::Process()
     map<int, int> elmtPairs;
     map<int, int> vertCheck;
 
-    for (int i = 0; i < c1->m_items.size(); ++i)
+    for (size_t i = 0; i < c1->m_items.size(); ++i)
     {
         Node centroid;
-        for (int j = 0; j < c1->m_items[i]->GetVertexCount(); ++j)
+        for (size_t j = 0; j < c1->m_items[i]->GetVertexCount(); ++j)
         {
             centroid += *(c1->m_items[i]->GetVertex(j));
         }
@@ -317,16 +317,16 @@ void ProcessPerAlign::Process()
                 elmtPairs[i] = it.first;
 
                 // Identify periodic vertices
-                int nVerts = c1->m_items[i]->GetVertexCount();
+                size_t nVerts = c1->m_items[i]->GetVertexCount();
                 vector<int> perVerts(nVerts, 0), perVertsInv(nVerts, 0);
 
                 if (orient)
                 {
-                    for (int k = 0; k < nVerts; ++k)
+                    for (size_t k = 0; k < nVerts; ++k)
                     {
                         NodeSharedPtr n1 =
                             c1->m_items[i]->GetFaceLink()->m_vertexList[k];
-                        int l;
+                        size_t l;
                         NekDouble mindn = 1000;
 
                         for (l = 0; l < nVerts; ++l)
@@ -391,7 +391,7 @@ void ProcessPerAlign::Process()
                     }
 
                     int tot1 = 0, tot2 = 0;
-                    for (int k = 0; k < nVerts; ++k)
+                    for (size_t k = 0; k < nVerts; ++k)
                     {
                         tot1 += perVerts[k];
                         tot2 += perVertsInv[k];
@@ -425,7 +425,7 @@ void ProcessPerAlign::Process()
     // Reorder vectors.
     vector<ElementSharedPtr> tmp = c2->m_items;
 
-    for (int i = 0; i < tmp.size(); ++i)
+    for (size_t i = 0; i < tmp.size(); ++i)
     {
         c2->m_items[i] = tmp[elmtPairs[i]];
     }

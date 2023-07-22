@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Basis.h
+// File: Basis.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -330,7 +330,7 @@ public:
         return m_basisKey;
     }
 
-    LIB_UTILITIES_EXPORT virtual void Initialize();
+    LIB_UTILITIES_EXPORT void Initialize();
 
 protected:
     BasisKey m_basisKey;             ///< Basis specification.

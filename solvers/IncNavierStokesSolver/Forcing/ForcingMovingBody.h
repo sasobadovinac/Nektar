@@ -74,12 +74,14 @@ protected:
 
     virtual void v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const unsigned int &pNumForcingFields, const TiXmlElement *pForce);
+        const unsigned int &pNumForcingFields,
+        const TiXmlElement *pForce) override;
 
     virtual void v_Apply(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const NekDouble &time) override;
 
 private:
     ForcingMovingBody(
@@ -111,9 +113,9 @@ private:
 
     void RollOver(Array<OneD, Array<OneD, NekDouble>> &input);
 
-    int m_movingBodyCalls; ///< number of times the movbody have been called
-    int m_np;              ///< number of planes per processors
-    int m_vdim;            ///< vibration dimension
+    size_t m_movingBodyCalls; ///< number of times the movbody have been called
+    size_t m_np;              ///< number of planes per processors
+    size_t m_vdim;            ///< vibration dimension
 
     NekDouble m_structrho;  ///< mass of the cable per unit length
     NekDouble m_structdamp; ///< damping ratio of the cable

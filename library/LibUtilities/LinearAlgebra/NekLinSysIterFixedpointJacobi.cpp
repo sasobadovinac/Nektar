@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File:  NekLinSysIterFixedpointJacobi.cpp
+// File: NekLinSysIterFixedpointJacobi.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,7 +29,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description:  NekLinSysIterFixedpointJacobi definition
+// Description: NekLinSysIterFixedpointJacobi definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -77,7 +77,7 @@ int NekLinSysIterFixedpointJacobi::v_SolveSystem(
     Array<OneD, NekDouble> &pSolution, const int nDir, const NekDouble tol,
     const NekDouble factor)
 {
-    boost::ignore_unused(tol, nDir);
+    boost::ignore_unused(nDir);
 
     int niterations = 0;
     m_tolerance     = max(tol, 1.0E-16);
@@ -89,9 +89,9 @@ int NekLinSysIterFixedpointJacobi::v_SolveSystem(
     {
         m_operator.DoNekSysFixPointIte(pRhs, pSol0, pSolution);
         Vmath::Vsub(nGlobal, pSolution, 1, pSol0, 1, pSol0, 1);
+        m_converged = ConvergenceCheck(i, pSol0, m_tolerance);
         Vmath::Vcopy(nGlobal, pSolution, 1, pSol0, 1);
         niterations++;
-        m_converged = ConvergenceCheck(i, pSol0, m_tolerance);
         if (m_converged)
         {
             break;

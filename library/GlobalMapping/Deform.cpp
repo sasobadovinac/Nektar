@@ -60,7 +60,7 @@ namespace GlobalMapping
  */
 void UpdateGeometry(SpatialDomains::MeshGraphSharedPtr graph,
                     Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                    bool modal)
+                    Array<OneD, Array<OneD, NekDouble>> &PhysVals, bool modal)
 {
     // Clear existing curvature.
     SpatialDomains::CurveMap &curvedEdges = graph->GetCurvedEdges();
@@ -87,8 +87,7 @@ void UpdateGeometry(SpatialDomains::MeshGraphSharedPtr graph,
         // elemental coordinates.
         for (j = 0; j < dim; ++j)
         {
-            phys[j] =
-                Array<OneD, NekDouble>(nquad, fields[j]->UpdatePhys() + offset);
+            phys[j]  = Array<OneD, NekDouble>(nquad, PhysVals[j] + offset);
             coord[j] = Array<OneD, NekDouble>(nquad);
         }
 

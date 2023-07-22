@@ -20,6 +20,8 @@ SET(SOLVER_UTILS_SOURCES
   DriverAdaptive.cpp
   DriverArnoldi.cpp
   DriverModifiedArnoldi.cpp
+  DriverParallelInTime.cpp
+  DriverParareal.cpp
   DriverStandard.cpp
   DriverSteadyState.cpp	
   EquationSystem.cpp
@@ -39,6 +41,7 @@ SET(SOLVER_UTILS_SOURCES
   Filters/FilterFieldConvert.cpp
   Filters/FilterThresholdMax.cpp
   Filters/FilterThresholdMin.cpp
+  Filters/FilterBodyFittedVelocity.cpp
   RiemannSolvers/RiemannSolver.cpp
   RiemannSolvers/UpwindSolver.cpp
   RiemannSolvers/UpwindLDGSolver.cpp
@@ -74,6 +77,8 @@ SET(SOLVER_UTILS_HEADERS
   DriverAdaptive.h
   DriverArnoldi.h
   DriverModifiedArnoldi.h
+  DriverParallelInTime.h
+  DriverParareal.h
   DriverStandard.h
   DriverSteadyState.h
   EquationSystem.h
@@ -94,6 +99,7 @@ SET(SOLVER_UTILS_HEADERS
   Filters/FilterFieldConvert.h
   Filters/FilterThresholdMax.h
   Filters/FilterThresholdMin.h
+  Filters/FilterBodyFittedVelocity.h
   RiemannSolvers/RiemannSolver.h
   RiemannSolvers/UpwindSolver.h
   RiemannSolvers/UpwindLDGSolver.h

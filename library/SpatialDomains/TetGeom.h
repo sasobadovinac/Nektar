@@ -59,14 +59,15 @@ public:
     SPATIAL_DOMAINS_EXPORT static const std::string XMLElementType;
 
 protected:
-    virtual int v_GetVertexEdgeMap(const int i, const int j) const;
-    virtual int v_GetVertexFaceMap(const int i, const int j) const;
-    virtual int v_GetEdgeFaceMap(const int i, const int j) const;
-    virtual int v_GetEdgeNormalToFaceVert(const int i, const int j) const;
-    virtual int v_GetDir(const int faceidx, const int facedir) const;
-    virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
-    virtual void v_Setup();
-    virtual void v_GenGeomFactors();
+    virtual int v_GetVertexEdgeMap(const int i, const int j) const override;
+    virtual int v_GetVertexFaceMap(const int i, const int j) const override;
+    virtual int v_GetEdgeFaceMap(const int i, const int j) const override;
+    virtual int v_GetEdgeNormalToFaceVert(const int i,
+                                          const int j) const override;
+    virtual int v_GetDir(const int faceidx, const int facedir) const override;
+    virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces) override;
+    virtual void v_Setup() override;
+    virtual void v_GenGeomFactors() override;
 
 private:
     void SetUpLocalEdges();

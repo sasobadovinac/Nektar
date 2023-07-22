@@ -75,7 +75,7 @@ InputXml::~InputXml()
 /**
  *
  */
-void InputXml::Process(po::variables_map &vm)
+void InputXml::v_Process(po::variables_map &vm)
 {
     LibUtilities::Timer timerpart;
     if (m_f->m_verbose)
@@ -211,6 +211,13 @@ void InputXml::Process(po::variables_map &vm)
         cmdArgs.push_back(boost::lexical_cast<string>(vm["npz"].as<int>()));
     }
 
+    // Parallel-in-time
+    if (vm.count("npt"))
+    {
+        cmdArgs.push_back("--npt");
+        cmdArgs.push_back(boost::lexical_cast<string>(vm["npt"].as<int>()));
+    }
+
     int argc          = cmdArgs.size();
     const char **argv = new const char *[argc];
     for (int i = 0; i < argc; ++i)
@@ -226,7 +233,7 @@ void InputXml::Process(po::variables_map &vm)
         // make sure have pre-partitioned mesh for nparts option
         ASSERTL0(boost::icontains(files[0], "_xml"),
                  "Expect the mesh to have been pre-partitioned when "
-                 " using the\"--nparts\" option. Please use \"--part-only\" "
+                 " using the \"--nparts\" option. Please use \"--part-only\" "
                  "option to prepartition xml file.");
     }
 

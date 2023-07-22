@@ -141,16 +141,16 @@ public:
     LIB_UTILITIES_EXPORT static std::shared_ptr<ThisType> CreateWrapper(
         const std::shared_ptr<ThisType> &rhs);
 
-public:
-private:
+protected:
     LIB_UTILITIES_EXPORT virtual
         typename boost::call_traits<NumberType>::value_type
-        v_GetValue(unsigned int row, unsigned int column) const;
+        v_GetValue(unsigned int row, unsigned int column) const override;
 
-    LIB_UTILITIES_EXPORT virtual unsigned int v_GetStorageSize() const;
+    LIB_UTILITIES_EXPORT virtual unsigned int v_GetStorageSize() const override;
 
-    LIB_UTILITIES_EXPORT virtual char v_GetTransposeFlag() const;
+    LIB_UTILITIES_EXPORT virtual char v_GetTransposeFlag() const override;
 
+private:
     std::shared_ptr<const InnerType> m_matrix;
     NumberType m_scale;
 };

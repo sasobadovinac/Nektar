@@ -84,24 +84,26 @@ public:
 protected:
     virtual void v_EvaluatePressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
-        const Array<OneD, const Array<OneD, NekDouble>> &N, NekDouble kinvis);
+        const Array<OneD, const Array<OneD, NekDouble>> &N,
+        NekDouble kinvis) override;
 
     virtual void v_SubSteppingTimeIntegration(
-        const LibUtilities::TimeIntegrationSchemeSharedPtr &IntegrationScheme);
+        const LibUtilities::TimeIntegrationSchemeSharedPtr &IntegrationScheme)
+        override;
 
-    virtual void v_SubStepSaveFields(int nstep);
+    virtual void v_SubStepSaveFields(int nstep) override;
 
     virtual void v_SubStepSetPressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        NekDouble Aii_Dt, NekDouble kinvis);
+        NekDouble Aii_Dt, NekDouble kinvis) override;
 
-    virtual void v_SubStepAdvance(int nstep, NekDouble time);
+    virtual void v_SubStepAdvance(int nstep, NekDouble time) override;
 
-    virtual void v_MountHOPBCs(int HBCdata, NekDouble kinvis,
-                               Array<OneD, NekDouble> &Q,
-                               Array<OneD, const NekDouble> &Advection);
+    virtual void v_MountHOPBCs(
+        int HBCdata, NekDouble kinvis, Array<OneD, NekDouble> &Q,
+        Array<OneD, const NekDouble> &Advection) override;
 
-    virtual std::string v_GetSubStepName(void);
+    virtual std::string v_GetSubStepName(void) override;
 
     void SubStepAdvection(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,

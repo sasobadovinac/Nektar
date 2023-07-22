@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SubStructuredGraph.h
+// File: SubStructuredGraph.h
 //
 // For more information, please see: http://www.nektar.info
 //

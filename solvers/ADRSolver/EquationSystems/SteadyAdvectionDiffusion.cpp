@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-// File SteadAdvectionDiffusion.cpp
+// File: SteadyAdvectionDiffusion.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -81,21 +81,38 @@ void SteadyAdvectionDiffusion::v_GenerateSummary(SolverUtils::SummaryList &s)
     SolverUtils::AddSummaryItem(s, "Lambda", m_lambda);
 }
 
-void SteadyAdvectionDiffusion::v_DoInitialise()
+void SteadyAdvectionDiffusion::v_DoInitialise(bool dumpInitialConditions)
 {
+    boost::ignore_unused(dumpInitialConditions);
+
     // set initial forcing from session file
     GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
 }
 
 void SteadyAdvectionDiffusion::v_DoSolve()
 {
+    StdRegions::ConstFactorMap factors;
+    StdRegions::VarCoeffMap varcoeffs;
+
+    factors[StdRegions::eFactorLambda] = m_lambda;
+
+    // Set advection velocities
+    StdRegions::VarCoeffType varcoefftypes[] = {StdRegions::eVarCoeffVelX,
+                                                StdRegions::eVarCoeffVelY,
+                                                StdRegions::eVarCoeffVelZ};
+    for (int i = 0; i < m_spacedim; i++)
+    {
+        varcoeffs[varcoefftypes[i]] = m_velocity[i];
+    }
+
+    // Solve for velocity
     for (int i = 0; i < m_fields.size(); ++i)
     {
         // Zero initial guess
         Vmath::Zero(m_fields[i]->GetNcoeffs(), m_fields[i]->UpdateCoeffs(), 1);
         m_fields[i]->LinearAdvectionDiffusionReactionSolve(
-            m_velocity, m_fields[i]->GetPhys(), m_fields[i]->UpdateCoeffs(),
-            m_lambda);
+            m_fields[i]->GetPhys(), m_fields[i]->UpdateCoeffs(), factors,
+            varcoeffs);
         m_fields[i]->SetPhysState(false);
     }
 }

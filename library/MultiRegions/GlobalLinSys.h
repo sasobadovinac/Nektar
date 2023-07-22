@@ -106,6 +106,7 @@ public:
 
     inline int GetNumBlocks();
     inline DNekScalMatSharedPtr GetBlock(unsigned int n);
+    inline void DropBlock(unsigned int n);
     inline DNekScalBlkMatSharedPtr GetStaticCondBlock(unsigned int n);
     inline void DropStaticCondBlock(unsigned int n);
 
@@ -126,16 +127,6 @@ protected:
     // Provide verbose output
     bool m_verbose;
 
-    virtual int v_GetNumBlocks();
-    virtual DNekScalMatSharedPtr v_GetBlock(unsigned int n);
-    virtual DNekScalBlkMatSharedPtr v_GetStaticCondBlock(unsigned int n);
-    virtual void v_DropStaticCondBlock(unsigned int n);
-
-    PreconditionerSharedPtr CreatePrecon(AssemblyMapSharedPtr asmMap);
-
-private:
-    LocalRegions::MatrixKey GetBlockMatrixKey(unsigned int n);
-
     /// Solve a linear system based on mapping.
     virtual void v_Solve(const Array<OneD, const NekDouble> &in,
                          Array<OneD, NekDouble> &out,
@@ -152,6 +143,17 @@ private:
 
     virtual void v_InitObject();
     virtual void v_Initialise(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+
+    virtual int v_GetNumBlocks();
+    virtual DNekScalMatSharedPtr v_GetBlock(unsigned int n);
+    virtual void v_DropBlock(unsigned int n);
+    virtual DNekScalBlkMatSharedPtr v_GetStaticCondBlock(unsigned int n);
+    virtual void v_DropStaticCondBlock(unsigned int n);
+
+    PreconditionerSharedPtr CreatePrecon(AssemblyMapSharedPtr asmMap);
+
+private:
+    LocalRegions::MatrixKey GetBlockMatrixKey(unsigned int n);
 
     static std::string lookupIds[];
     static std::string def;
@@ -209,6 +211,11 @@ inline void GlobalLinSys::Initialise(
 inline DNekScalMatSharedPtr GlobalLinSys::GetBlock(unsigned int n)
 {
     return v_GetBlock(n);
+}
+
+inline void GlobalLinSys::DropBlock(unsigned int n)
+{
+    return v_DropBlock(n);
 }
 
 inline DNekScalBlkMatSharedPtr GlobalLinSys::GetStaticCondBlock(unsigned int n)

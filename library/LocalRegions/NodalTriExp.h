@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalTriExp.h
+// File: NodalTriExp.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -64,7 +64,7 @@ public:
     LOCAL_REGIONS_EXPORT NodalTriExp(const NodalTriExp &T);
 
     /// Destructor
-    LOCAL_REGIONS_EXPORT ~NodalTriExp() final = default;
+    LOCAL_REGIONS_EXPORT virtual ~NodalTriExp() override = default;
 
     LOCAL_REGIONS_EXPORT void GetCoords(
         Array<OneD, NekDouble> &coords_1, Array<OneD, NekDouble> &coords_2,
@@ -185,11 +185,13 @@ protected:
                                Array<OneD, NekDouble> &outarray,
                                const StdRegions::StdMatrixKey &mkey);
 
-    StdRegions::StdExpansionSharedPtr v_GetStdExp(void) const final;
+    virtual StdRegions::StdExpansionSharedPtr v_GetStdExp(void) const override;
 
-    StdRegions::StdExpansionSharedPtr v_GetLinStdExp(void) const final;
+    virtual StdRegions::StdExpansionSharedPtr v_GetLinStdExp(
+        void) const override;
 
-    DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey) final;
+    virtual DNekMatSharedPtr v_GenMatrix(
+        const StdRegions::StdMatrixKey &mkey) override;
 
 private:
     LibUtilities::NekManager<MatrixKey, DNekScalMat, MatrixKey::opLess>
@@ -210,40 +212,39 @@ private:
     void v_GetCoords(
         Array<OneD, NekDouble> &coords_0,
         Array<OneD, NekDouble> &coords_1 = NullNekDouble1DArray,
-        Array<OneD, NekDouble> &coords_2 = NullNekDouble1DArray) final
+        Array<OneD, NekDouble> &coords_2 = NullNekDouble1DArray) override
     {
         GetCoords(coords_0, coords_1, coords_2);
     }
 
-    void v_GetCoord(const Array<OneD, const NekDouble> &lcoord,
-                    Array<OneD, NekDouble> &coord) final
+    virtual void v_GetCoord(const Array<OneD, const NekDouble> &lcoord,
+                            Array<OneD, NekDouble> &coord) override
     {
         GetCoord(lcoord, coord);
     }
-
     virtual void v_GetNodalPoints(Array<OneD, const NekDouble> &x,
                                   Array<OneD, const NekDouble> &y)
     {
         return StdNodalTriExp::GetNodalPoints(x, y);
     }
-
     /** \brief Virtual call to integrate the physical point list \a inarray
         over region (see SegExp::Integral) */
-    NekDouble v_Integral(const Array<OneD, const NekDouble> &inarray) final
+    virtual NekDouble v_Integral(
+        const Array<OneD, const NekDouble> &inarray) override
     {
         return Integral(inarray);
     }
 
     /** \brief Virtual call to TriExp::IProduct_WRT_B */
-    void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
-                           Array<OneD, NekDouble> &outarray) final
+    virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
+                                   Array<OneD, NekDouble> &outarray) override
     {
         IProductWRTBase(inarray, outarray);
     }
 
-    void v_IProductWRTDerivBase(const int dir,
-                                const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD, NekDouble> &outarray) final
+    virtual void v_IProductWRTDerivBase(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray) override
     {
         IProductWRTDerivBase(dir, inarray, outarray);
     }
@@ -251,7 +252,7 @@ private:
     void v_StdPhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
-        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final
+        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override
     {
         StdTriExp::v_PhysDeriv(inarray, out_d0, out_d1, out_d2);
     }
@@ -259,14 +260,15 @@ private:
     void v_PhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
-        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final
+        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override
     {
         boost::ignore_unused(out_d2);
         PhysDeriv(inarray, out_d0, out_d1);
     }
 
-    void v_PhysDeriv(const int dir, const Array<OneD, const NekDouble> &inarray,
-                     Array<OneD, NekDouble> &outarray) final
+    virtual void v_PhysDeriv(const int dir,
+                             const Array<OneD, const NekDouble> &inarray,
+                             Array<OneD, NekDouble> &outarray) override
     {
         Array<OneD, NekDouble> tmp;
         switch (dir)
@@ -290,55 +292,52 @@ private:
     }
 
     /// Virtual call to SegExp::FwdTrans
-    void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray) final
+    virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
+                            Array<OneD, NekDouble> &outarray) override
     {
         FwdTrans(inarray, outarray);
     }
 
     /// Virtual call to TriExp::Evaluate
-    NekDouble v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
-                             const Array<OneD, const NekDouble> &physvals) final
-
+    virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, const NekDouble> &coord,
+        const Array<OneD, const NekDouble> &physvals) override
     {
         return PhysEvaluate(coord, physvals);
     }
 
-    DNekMatSharedPtr v_CreateStdMatrix(
-        const StdRegions::StdMatrixKey &mkey) final
+    virtual DNekMatSharedPtr v_CreateStdMatrix(
+        const StdRegions::StdMatrixKey &mkey) override
     {
         return CreateStdMatrix(mkey);
     }
 
-    DNekScalMatSharedPtr v_GetLocMatrix(const MatrixKey &mkey) final
+    virtual DNekScalMatSharedPtr v_GetLocMatrix(const MatrixKey &mkey) override
     {
         return m_matrixManager[mkey];
     }
 
-    //            virtual DNekScalMatSharedPtr v_GetLocMatrix(const
-    //            StdRegions::MatrixType mtype, NekDouble lambdaval, NekDouble
-    //            tau)
-    //            {
-    //                MatrixKey
-    //                mkey(mtype,DetExpansionType(),*this,lambdaval,tau); return
-    //                m_matrixManager[mkey];
-    //            }
+    virtual void v_DropLocMatrix(const MatrixKey &mkey) override
+    {
+        m_matrixManager.DeleteObject(mkey);
+    }
 
-    DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
-        const MatrixKey &mkey) final
+    virtual DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
+        const MatrixKey &mkey) override
     {
         return m_staticCondMatrixManager[mkey];
     }
 
-    void v_BwdTrans_SumFac(const Array<OneD, const NekDouble> &inarray,
-                           Array<OneD, NekDouble> &outarray) final
+    virtual void v_BwdTrans_SumFac(const Array<OneD, const NekDouble> &inarray,
+                                   Array<OneD, NekDouble> &outarray) override
     {
         StdNodalTriExp::v_BwdTrans_SumFac(inarray, outarray);
     }
 
-    void v_IProductWRTBase_SumFac(const Array<OneD, const NekDouble> &inarray,
-                                  Array<OneD, NekDouble> &outarray,
-                                  bool multiplybyweights = true) final
+    virtual void v_IProductWRTBase_SumFac(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        bool multiplybyweights = true) override
     {
         boost::ignore_unused(multiplybyweights);
         IProductWRTBase_SumFac(inarray, outarray);
@@ -346,53 +345,55 @@ private:
 
     void v_IProductWRTDerivBase_SumFac(
         const int dir, const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray) final
+        Array<OneD, NekDouble> &outarray) override
     {
         IProductWRTDerivBase_SumFac(dir, inarray, outarray);
     }
 
     void v_AlignVectorToCollapsedDir(
         const int dir, const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray) final;
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
-    void v_MassMatrixOp(const Array<OneD, const NekDouble> &inarray,
-                        Array<OneD, NekDouble> &outarray,
-                        const StdRegions::StdMatrixKey &mkey) final
+    virtual void v_MassMatrixOp(const Array<OneD, const NekDouble> &inarray,
+                                Array<OneD, NekDouble> &outarray,
+                                const StdRegions::StdMatrixKey &mkey) override
     {
         MassMatrixOp(inarray, outarray, mkey);
     }
 
-    void v_LaplacianMatrixOp(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::StdMatrixKey &mkey) final
+    virtual void v_LaplacianMatrixOp(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override
     {
         LaplacianMatrixOp(inarray, outarray, mkey);
     }
 
-    void v_LaplacianMatrixOp(const int k1, const int k2,
-                             const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::StdMatrixKey &mkey) final
+    virtual void v_LaplacianMatrixOp(
+        const int k1, const int k2, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override
     {
         LaplacianMatrixOp(k1, k2, inarray, outarray, mkey);
     }
 
-    void v_WeakDerivMatrixOp(const int i,
-                             const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::StdMatrixKey &mkey) final
+    virtual void v_WeakDerivMatrixOp(
+        const int i, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override
     {
         WeakDerivMatrixOp(i, inarray, outarray, mkey);
     }
 
-    void v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::StdMatrixKey &mkey) final
+    virtual void v_HelmholtzMatrixOp(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override
     {
         HelmholtzMatrixOp(inarray, outarray, mkey);
     }
 
-    void v_ComputeTraceNormal(const int edge) final;
+    void v_ComputeTraceNormal(const int edge) override;
 };
 
 typedef std::shared_ptr<NodalTriExp> NodalTriExpSharedPtr;

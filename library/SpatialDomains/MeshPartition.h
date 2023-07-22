@@ -157,23 +157,23 @@ protected:
     void CreateGraph();
     void PartitionGraph(int nParts, bool overlapping = false);
 
-    virtual void PartitionGraphImpl(int &nVerts, int &nVertConds,
-                                    Nektar::Array<Nektar::OneD, int> &xadj,
-                                    Nektar::Array<Nektar::OneD, int> &adjcy,
-                                    Nektar::Array<Nektar::OneD, int> &vertWgt,
-                                    Nektar::Array<Nektar::OneD, int> &vertSize,
-                                    Nektar::Array<Nektar::OneD, int> &edgeWgt,
-                                    int &nparts, int &volume,
-                                    Nektar::Array<Nektar::OneD, int> &part) = 0;
-
     void CheckPartitions(int nParts, Array<OneD, int> &pPart);
     int CalculateElementWeight(LibUtilities::ShapeType elmtType, bool bndWeight,
                                int na, int nb, int nc);
     int CalculateEdgeWeight(LibUtilities::ShapeType elmtType, int na, int nb,
                             int nc);
+
+    virtual void v_PartitionGraphImpl(
+        int &nVerts, int &nVertConds, Nektar::Array<Nektar::OneD, int> &xadj,
+        Nektar::Array<Nektar::OneD, int> &adjcy,
+        Nektar::Array<Nektar::OneD, int> &vertWgt,
+        Nektar::Array<Nektar::OneD, int> &vertSize,
+        Nektar::Array<Nektar::OneD, int> &edgeWgt, int &nparts, int &volume,
+        Nektar::Array<Nektar::OneD, int> &part) = 0;
 };
 
 typedef std::shared_ptr<MeshPartition> MeshPartitionSharedPtr;
+
 } // namespace SpatialDomains
 } // namespace Nektar
 

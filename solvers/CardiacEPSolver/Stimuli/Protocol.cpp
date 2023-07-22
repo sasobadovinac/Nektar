@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Protocol.cpp
+// File: Protocol.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -59,6 +59,7 @@ Protocol::Protocol(const LibUtilities::SessionReaderSharedPtr &pSession,
                    const TiXmlElement *pXml)
     : m_session(pSession)
 {
+    boost::ignore_unused(pXml);
 }
 
 /**

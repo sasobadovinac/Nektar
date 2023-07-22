@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Comm.cpp
+// File: Comm.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -45,29 +45,36 @@ Comm::Comm(int narg, char *arg[])
     boost::ignore_unused(narg, arg);
 }
 
+/**
+ *
+ */
 Comm::Comm()
 {
 }
 
+/**
+ *
+ */
 Comm::~Comm()
 {
 }
 
-// Method to enforce that all existing files are removed
-bool Comm::v_RemoveExistingFiles(void)
-{
-    return true;
-}
-
-std::pair<CommSharedPtr, CommSharedPtr> Comm::v_SplitCommNode()
-{
-    return std::make_pair(CommSharedPtr(), CommSharedPtr());
-}
-
+/**
+ *
+ */
 CommFactory &GetCommFactory()
 {
     static CommFactory instance;
     return instance;
 }
+
+/**
+ *
+ */
+std::pair<CommSharedPtr, CommSharedPtr> Comm::v_SplitCommNode()
+{
+    return std::make_pair(CommSharedPtr(), CommSharedPtr());
+}
+
 } // namespace LibUtilities
 } // namespace Nektar

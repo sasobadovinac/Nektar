@@ -59,7 +59,7 @@ ProcessStreamFunction::~ProcessStreamFunction()
 {
 }
 
-void ProcessStreamFunction::Process(po::variables_map &vm)
+void ProcessStreamFunction::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

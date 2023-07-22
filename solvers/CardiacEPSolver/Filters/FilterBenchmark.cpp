@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterBenchmark.cpp
+// File: FilterBenchmark.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -107,6 +107,8 @@ void FilterBenchmark::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
+    boost::ignore_unused(time);
+
     m_threshold.push_back(
         Array<OneD, NekDouble>(pFields[0]->GetNpoints(), m_initialValue));
 
@@ -132,7 +134,8 @@ void FilterBenchmark::v_Update(
     }
 
     // Examine each point in turn
-    for (int i = 0; i < pFields[0]->GetNpoints(); ++i)
+    size_t nPts = pFields[0]->GetNpoints();
+    for (size_t i = 0; i < nPts; ++i)
     {
         if ((m_polarity[i] == -1 &&
              pFields[0]->GetPhys()[i] > m_thresholdValue) ||
@@ -156,7 +159,7 @@ void FilterBenchmark::v_Update(
 
     // Allocate additional storage if any point has as many crossings as
     // current storage permits.
-    int max_idx = Vmath::Vmax(pFields[0]->GetNpoints(), m_idx, 1);
+    size_t max_idx = Vmath::Vmax(pFields[0]->GetNpoints(), m_idx, 1);
     pFields[0]->GetSession()->GetComm()->AllReduce(max_idx,
                                                    LibUtilities::ReduceMax);
     if (m_threshold.size() == max_idx)
@@ -175,20 +178,22 @@ void FilterBenchmark::v_Finalise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
-    for (int i = 0; i < m_threshold.size() - 1; ++i)
+    boost::ignore_unused(time);
+
+    for (size_t j = 0; j < m_threshold.size() - 1; ++j)
     {
         std::stringstream vOutputFilename;
-        vOutputFilename << m_outputFile << "_" << i << ".fld";
+        vOutputFilename << m_outputFile << "_" << j << ".fld";
 
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
             pFields[0]->GetFieldDefinitions();
         std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
 
         Array<OneD, NekDouble> vCoeffs(pFields[0]->GetNcoeffs());
-        pFields[0]->FwdTransLocalElmt(m_threshold[i], vCoeffs);
+        pFields[0]->FwdTransLocalElmt(m_threshold[j], vCoeffs);
 
         // copy Data into FieldData and set variable
-        for (int i = 0; i < FieldDef.size(); ++i)
+        for (size_t i = 0; i < FieldDef.size(); ++i)
         {
             // Could do a search here to find correct variable
             FieldDef[i]->m_fields.push_back("m");

@@ -121,7 +121,7 @@ void PtsField::AddField(const Array<OneD, NekDouble> &pts,
 {
     size_t nTotvars = m_pts.size();
 
-    ASSERTL1(pts.size() == m_pts[0].size(), "Field size mismatch");
+    ASSERTL1(pts.size() >= m_pts[0].size(), "Field size mismatch");
 
     // redirect existing pts
     Array<OneD, Array<OneD, NekDouble>> newpts(nTotvars + 1);
@@ -129,7 +129,7 @@ void PtsField::AddField(const Array<OneD, NekDouble> &pts,
     {
         newpts[i] = m_pts[i];
     }
-    newpts[nTotvars] = pts;
+    newpts[nTotvars] = Array<OneD, NekDouble>(m_pts[0].size(), pts.data());
 
     m_pts = newpts;
 

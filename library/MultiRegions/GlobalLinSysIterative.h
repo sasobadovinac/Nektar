@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSysIterative.h
+// File: GlobalLinSysIterative.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -96,7 +96,10 @@ protected:
     Array<OneD, int> m_ipivot;
     int m_numSuccessiveRHS;
     bool m_isAconjugate;
+    std::string m_matrixType;
+    bool m_isNonSymmetricLinSys;
     int m_numPrevSols;
+    bool m_isAbsoluteTolerance;
 
     LibUtilities::NekSysOperators m_NekSysOp;
 
@@ -114,6 +117,16 @@ protected:
     void Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn);
 
     virtual void v_UniqueMap() = 0;
+
+    /// Solve the matrix system
+    virtual void v_SolveLinearSystem(const int pNumRows,
+                                     const Array<OneD, const NekDouble> &pInput,
+                                     Array<OneD, NekDouble> &pOutput,
+                                     const AssemblyMapSharedPtr &locToGloMap,
+                                     const int pNumDir) override;
+
+    virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput) = 0;
 
 private:
     void UpdateKnownSolutions(const int pGlobalBndDofs,
@@ -140,16 +153,6 @@ private:
 
         m_precon->DoPreconditioner(pInput, pOutput);
     }
-
-    /// Solve the matrix system
-    virtual void v_SolveLinearSystem(const int pNumRows,
-                                     const Array<OneD, const NekDouble> &pInput,
-                                     Array<OneD, NekDouble> &pOutput,
-                                     const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir);
-
-    virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput) = 0;
 };
 } // namespace MultiRegions
 } // namespace Nektar

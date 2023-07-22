@@ -80,8 +80,8 @@ AdvectionFR::AdvectionFR(std::string advType) : m_advType(advType)
  * @brief Initiliase AdvectionFR objects and store them before starting
  * the time-stepping.
  *
- * This routine calls the virtual functions #v_SetupMetrics and
- * #v_SetupCFunctions to  initialise the objects needed by AdvectionFR.
+ * This routine calls the functions #SetupMetrics and
+ * #SetupCFunctions to  initialise the objects needed by AdvectionFR.
  *
  * @param pSession  Pointer to session reader.
  * @param pFields   Pointer to fields.
@@ -91,8 +91,8 @@ void AdvectionFR::v_InitObject(
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
 {
     Advection::v_InitObject(pSession, pFields);
-    v_SetupMetrics(pSession, pFields);
-    v_SetupCFunctions(pSession, pFields);
+    SetupMetrics(pSession, pFields);
+    SetupCFunctions(pSession, pFields);
 }
 
 /**
@@ -111,7 +111,7 @@ void AdvectionFR::v_InitObject(
  *
  * \todo Add the metric terms for 3D Hexahedra.
  */
-void AdvectionFR::v_SetupMetrics(
+void AdvectionFR::SetupMetrics(
     LibUtilities::SessionReaderSharedPtr pSession,
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
 {
@@ -269,14 +269,14 @@ void AdvectionFR::v_SetupMetrics(
  *      #eDG_SD_Left - #eDG_SD_Left which recovers the SD scheme,
  *      #eDG_HU_Left - #eDG_HU_Left which recovers the Huynh scheme.
  * The values of the derivatives of the correction function are then
- * stored into global variables and reused into the virtual functions
- * #v_DivCFlux_1D, #v_DivCFlux_2D, #v_DivCFlux_3D to compute the
+ * stored into global variables and reused into the functions
+ * #DivCFlux_1D, #DivCFlux_2D, #DivCFlux_3D to compute the
  * the divergence of the correction flux for 1D, 2D or 3D problems.
  *
  * @param pSession  Pointer to session reader.
  * @param pFields   Pointer to fields.
  */
-void AdvectionFR::v_SetupCFunctions(
+void AdvectionFR::SetupCFunctions(
     LibUtilities::SessionReaderSharedPtr pSession,
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
 {
@@ -910,8 +910,8 @@ void AdvectionFR::v_Advect(
                 }
 
                 // Get the correction flux divergence
-                v_DivCFlux_1D(nConvectiveFields, fields, fluxvector[i][0],
-                              numflux[i], divFC);
+                DivCFlux_1D(nConvectiveFields, fields, fluxvector[i][0],
+                            numflux[i], divFC);
 
                 // Back to the physical space using global operations
                 Vmath::Vdiv(nSolutionPts, &divFC[0], 1, &m_jac[0], 1,
@@ -983,13 +983,13 @@ void AdvectionFR::v_Advect(
                     Basis[1]->GetPointsType() ==
                         LibUtilities::eGaussGaussLegendre)
                 {
-                    v_DivCFlux_2D_Gauss(nConvectiveFields, fields, f_hat, g_hat,
-                                        numflux[i], divFC);
+                    DivCFlux_2D_Gauss(nConvectiveFields, fields, f_hat, g_hat,
+                                      numflux[i], divFC);
                 }
                 else
                 {
-                    v_DivCFlux_2D(nConvectiveFields, fields, fluxvector[i][0],
-                                  fluxvector[i][1], numflux[i], divFC);
+                    DivCFlux_2D(nConvectiveFields, fields, fluxvector[i][0],
+                                fluxvector[i][1], numflux[i], divFC);
                 }
 
                 // Divergence of the final flux
@@ -1027,7 +1027,7 @@ void AdvectionFR::v_Advect(
  * @param divCFlux            Divergence of the corrective flux.
  *
  */
-void AdvectionFR::v_DivCFlux_1D(
+void AdvectionFR::DivCFlux_1D(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, const NekDouble> &fluxX1,
@@ -1132,7 +1132,7 @@ void AdvectionFR::v_DivCFlux_1D(
  *
  * \todo: Switch on shapes eventually here.
  */
-void AdvectionFR::v_DivCFlux_2D(
+void AdvectionFR::DivCFlux_2D(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, const NekDouble> &fluxX1,
@@ -1316,7 +1316,7 @@ void AdvectionFR::v_DivCFlux_2D(
  * \todo: Switch on shapes eventually here.
  */
 
-void AdvectionFR::v_DivCFlux_2D_Gauss(
+void AdvectionFR::DivCFlux_2D_Gauss(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, const NekDouble> &fluxX1,
@@ -1648,7 +1648,7 @@ void AdvectionFR::v_DivCFlux_2D_Gauss(
  *
  * \todo: To be implemented. Switch on shapes eventually here.
  */
-void AdvectionFR::v_DivCFlux_3D(
+void AdvectionFR::DivCFlux_3D(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, const NekDouble> &fluxX1,

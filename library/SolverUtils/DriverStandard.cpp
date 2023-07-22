@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File DriverStandard.cpp
+// File: DriverStandard.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,12 +28,13 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Incompressible Navier Stokes solver
+// Description: Driver class for the standard solver
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <iomanip>
 
+#include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/DriverStandard.h>
 
 using namespace std;
@@ -75,23 +76,23 @@ void DriverStandard::v_InitObject(ostream &out)
 void DriverStandard::v_Execute(ostream &out)
 
 {
-    clock_t starttime, endtime;
+    Nektar::LibUtilities::Timer timer;
     NekDouble CPUtime;
 
     m_equ[0]->PrintSummary(out);
 
-    starttime = clock();
+    timer.Start();
 
     m_equ[0]->DoInitialise();
     m_equ[0]->DoSolve();
 
-    endtime = clock();
+    timer.Stop();
 
     m_equ[0]->Output();
 
     if (m_comm->GetRank() == 0)
     {
-        CPUtime = (endtime - starttime) / NekDouble(CLOCKS_PER_SEC);
+        CPUtime = timer.Elapsed().count();
         cout << "-------------------------------------------" << endl;
         cout << "Total Computation Time = " << CPUtime << "s" << endl;
         cout << "-------------------------------------------" << endl;

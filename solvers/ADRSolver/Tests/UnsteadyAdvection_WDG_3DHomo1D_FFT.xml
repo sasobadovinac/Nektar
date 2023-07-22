@@ -58,7 +58,7 @@
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"           />
             <I PROPERTY="Projection"            VALUE="DisContinuous"               />
             <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                          />
-             <I PROPERTY="AdvectionAdvancement"  VALUE="Explicit"                    />
+            <I PROPERTY="AdvectionAdvancement"  VALUE="Explicit"                    />
             <I PROPERTY="AdvectionType"         VALUE="WeakDG3DHomogeneous1D"       />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"        />
             <I PROPERTY="UpwindType"            VALUE="Upwind"                      />
@@ -87,7 +87,7 @@
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                VALUE="sin(wavefreq*(x-t))*sin(wavefreq*(y-t))*sin(2*wavefreq/LZ*(z-t))" />
+                    VALUE="sin(wavefreq*(x-t))*sin(wavefreq*(y-t))*sin(2*wavefreq/LZ*(z-t))" />
             </REGION>
         </BOUNDARYCONDITIONS>
 

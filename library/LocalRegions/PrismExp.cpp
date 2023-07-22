@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PrismExp.cpp
+// File: PrismExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -546,11 +546,6 @@ NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
 // Helper functions
 //---------------------------------------
 
-int PrismExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
-}
-
 void PrismExp::v_ExtractDataToCoeffs(
     const NekDouble *data, const std::vector<unsigned int> &nummodes,
     const int mode_offset, NekDouble *coeffs,
@@ -1022,29 +1017,6 @@ void PrismExp::v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
     PrismExp::v_HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
 }
 
-void PrismExp::v_GeneralMatrixOp_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey)
-{
-    DNekScalMatSharedPtr mat = GetLocMatrix(mkey);
-
-    if (inarray.get() == outarray.get())
-    {
-        Array<OneD, NekDouble> tmp(m_ncoeffs);
-        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
-
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    tmp.get(), 1, 0.0, outarray.get(), 1);
-    }
-    else
-    {
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    inarray.get(), 1, 0.0, outarray.get(), 1);
-    }
-}
-
 void PrismExp::v_SVVLaplacianFilter(Array<OneD, NekDouble> &array,
                                     const StdRegions::StdMatrixKey &mkey)
 {
@@ -1114,6 +1086,11 @@ DNekMatSharedPtr PrismExp::v_CreateStdMatrix(
 DNekScalMatSharedPtr PrismExp::v_GetLocMatrix(const MatrixKey &mkey)
 {
     return m_matrixManager[mkey];
+}
+
+void PrismExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
 }
 
 DNekScalBlkMatSharedPtr PrismExp::v_GetLocStaticCondMatrix(
@@ -1663,19 +1640,20 @@ void PrismExp::v_NormalTraceDerivFactors(
         {
             for (int i = 0; i < nquad0; ++i)
             {
-                d0factors[1][i] = df[0][j * nquad0 * nquad1 + i] *
-                                  normal_1[0][j * nquad0 + i];
-                d0factors[3][i] =
+                d0factors[1][j * nquad0 + i] = df[0][j * nquad0 * nquad1 + i] *
+                                               normal_1[0][j * nquad0 + i];
+                d1factors[1][j * nquad0 + i] = df[1][j * nquad0 * nquad1 + i] *
+                                               normal_1[0][j * nquad0 + i];
+                d2factors[1][j * nquad0 + i] = df[2][j * nquad0 * nquad1 + i] *
+                                               normal_1[0][j * nquad0 + i];
+
+                d0factors[3][j * nquad0 + i] =
                     df[0][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
                     normal_3[0][j * nquad0 + i];
-                d1factors[1][i] = df[1][j * nquad0 * nquad1 + i] *
-                                  normal_1[0][j * nquad0 + i];
-                d1factors[3][i] =
+                d1factors[3][j * nquad0 + i] =
                     df[1][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
                     normal_3[0][j * nquad0 + i];
-                d2factors[1][i] = df[2][j * nquad0 * nquad1 + i] *
-                                  normal_1[0][j * nquad0 + i];
-                d2factors[3][i] =
+                d2factors[3][j * nquad0 + i] =
                     df[2][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
                     normal_3[0][j * nquad0 + i];
             }
@@ -1687,21 +1665,25 @@ void PrismExp::v_NormalTraceDerivFactors(
             {
                 for (int i = 0; i < nquad0; ++i)
                 {
-                    d0factors[1][i] = df[3 * n][j * nquad0 * nquad1 + i] *
-                                      normal_1[0][j * nquad0 + i];
-                    d0factors[3][i] =
+                    d0factors[1][j * nquad0 + i] +=
+                        df[3 * n][j * nquad0 * nquad1 + i] *
+                        normal_1[n][j * nquad0 + i];
+                    d1factors[1][j * nquad0 + i] +=
+                        df[3 * n + 1][j * nquad0 * nquad1 + i] *
+                        normal_1[n][j * nquad0 + i];
+                    d2factors[1][j * nquad0 + i] +=
+                        df[3 * n + 2][j * nquad0 * nquad1 + i] *
+                        normal_1[n][j * nquad0 + i];
+
+                    d0factors[3][j * nquad0 + i] +=
                         df[3 * n][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
-                        normal_3[0][j * nquad0 + i];
-                    d1factors[1][i] = df[3 * n + 1][j * nquad0 * nquad1 + i] *
-                                      normal_1[0][j * nquad0 + i];
-                    d1factors[3][i] =
+                        normal_3[n][j * nquad0 + i];
+                    d1factors[3][j * nquad0 + i] +=
                         df[3 * n + 1][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
-                        normal_3[0][j * nquad0 + i];
-                    d2factors[1][i] = df[3 * n + 2][j * nquad0 * nquad1 + i] *
-                                      normal_1[0][j * nquad0 + i];
-                    d2factors[3][i] =
+                        normal_3[n][j * nquad0 + i];
+                    d2factors[3][j * nquad0 + i] +=
                         df[3 * n + 2][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
-                        normal_3[0][j * nquad0 + i];
+                        normal_3[n][j * nquad0 + i];
                 }
             }
         }
@@ -1714,18 +1696,19 @@ void PrismExp::v_NormalTraceDerivFactors(
                 d0factors[2][j * nquad1 + i] =
                     df[0][j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
                     normal_2[0][j * nquad1 + i];
-                d0factors[4][j * nquad1 + i] =
-                    df[0][j * nquad0 * nquad1 + i * nquad0] *
-                    normal_4[0][j * nquad1 + i];
                 d1factors[2][j * nquad1 + i] =
                     df[1][j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
                     normal_2[0][j * nquad1 + i];
-                d1factors[4][j * nquad1 + i] =
-                    df[1][j * nquad0 * nquad1 + i * nquad0] *
-                    normal_4[0][j * nquad1 + i];
                 d2factors[2][j * nquad1 + i] =
                     df[2][j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
                     normal_2[0][j * nquad1 + i];
+
+                d0factors[4][j * nquad1 + i] =
+                    df[0][j * nquad0 * nquad1 + i * nquad0] *
+                    normal_4[0][j * nquad1 + i];
+                d1factors[4][j * nquad1 + i] =
+                    df[1][j * nquad0 * nquad1 + i * nquad0] *
+                    normal_4[0][j * nquad1 + i];
                 d2factors[4][j * nquad1 + i] =
                     df[2][j * nquad0 * nquad1 + i * nquad0] *
                     normal_4[0][j * nquad1 + i];
@@ -1740,24 +1723,25 @@ void PrismExp::v_NormalTraceDerivFactors(
                 {
                     d0factors[2][j * nquad1 + i] +=
                         df[3 * n][j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
-                        normal_2[n][j * nquad0 + i];
-                    d0factors[4][j * nquad0 + i] +=
-                        df[3 * n][i * nquad0 + j * nquad0 * nquad1] *
-                        normal_4[n][j * nquad0 + i];
+                        normal_2[n][j * nquad1 + i];
                     d1factors[2][j * nquad1 + i] +=
                         df[3 * n + 1]
                           [j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
-                        normal_2[n][j * nquad0 + i];
-                    d1factors[4][j * nquad0 + i] +=
-                        df[3 * n + 1][i * nquad0 + j * nquad0 * nquad1] *
-                        normal_4[n][j * nquad0 + i];
+                        normal_2[n][j * nquad1 + i];
                     d2factors[2][j * nquad1 + i] +=
                         df[3 * n + 2]
                           [j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
-                        normal_2[n][j * nquad0 + i];
-                    d2factors[4][j * nquad0 + i] +=
-                        df[3 * n + 2][i * nquad0 + j * nquad0 * nquad1] *
-                        normal_4[n][j * nquad0 + i];
+                        normal_2[n][j * nquad1 + i];
+
+                    d0factors[4][j * nquad1 + i] +=
+                        df[3 * n][j * nquad0 * nquad1 + i * nquad0] *
+                        normal_4[n][j * nquad1 + i];
+                    d1factors[4][j * nquad1 + i] +=
+                        df[3 * n + 1][j * nquad0 * nquad1 + i * nquad0] *
+                        normal_4[n][j * nquad1 + i];
+                    d2factors[4][j * nquad1 + i] +=
+                        df[3 * n + 2][j * nquad0 * nquad1 + i * nquad0] *
+                        normal_4[n][j * nquad1 + i];
                 }
             }
         }

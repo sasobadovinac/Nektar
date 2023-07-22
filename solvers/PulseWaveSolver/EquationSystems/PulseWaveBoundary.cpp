@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWaveBoundary.cpp
+// File: PulseWaveBoundary.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

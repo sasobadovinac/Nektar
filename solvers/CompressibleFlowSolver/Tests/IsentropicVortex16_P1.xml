@@ -1114,11 +1114,11 @@
 
     <EXPANSIONS>
         <E COMPOSITE="C[0]"
-           BASISTYPE="GLL_Lagrange,GLL_Lagrange"
-           NUMMODES="1,1"
-           POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre"
-           NUMPOINTS="1,1"
-           FIELDS="rho,rhou,rhov,E" />
+            BASISTYPE="GLL_Lagrange,GLL_Lagrange"
+            NUMMODES="1,1"
+            POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre"
+            NUMPOINTS="1,1"
+            FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
 
     <CONDITIONS>
@@ -1165,7 +1165,7 @@
         </BOUNDARYCONDITIONS>
 
         <!-- Initial conditions not necessary
-         since they are imposed analitically -->
+            since they are imposed analitically -->
         <!--FUNCTION NAME="InitialConditions">
             <E VAR="rho"    VALUE="1"/>
             <E VAR="rhou"   VALUE="1"/>

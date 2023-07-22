@@ -164,9 +164,15 @@ vector<Array<OneD, int>> TetGenInterface::Extract()
 
 void TetGenInterface::freetet()
 {
+#ifdef TETGEN_HAS_DEINITIALIZE
     surface.deinitialize();
     input.deinitialize();
     output.deinitialize();
+#else
+    surface.clean_memory();
+    input.clean_memory();
+    output.clean_memory();
+#endif
 }
 } // namespace NekMesh
 } // namespace Nektar

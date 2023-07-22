@@ -43,11 +43,9 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
-#include <LibUtilities/TimeIntegration/EulerTimeIntegrationSchemes.h>
-#include <LibUtilities/TimeIntegration/IMEXdirkTimeIntegrationSchemes.h>
+#include <LibUtilities/TimeIntegration/DIRKTimeIntegrationSchemes.h>
 
 namespace Nektar
 {
@@ -60,7 +58,7 @@ namespace LibUtilities
 class AdamsMoultonTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    AdamsMoultonTimeIntegrationScheme(std::string variant, unsigned int order,
+    AdamsMoultonTimeIntegrationScheme(std::string variant, size_t order,
                                       std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
@@ -71,7 +69,7 @@ public:
 
         m_integration_phases = TimeIntegrationAlgorithmGLMVector(order);
 
-        for (unsigned int n = 0; n < order; ++n)
+        for (size_t n = 0; n < order; ++n)
         {
             m_integration_phases[n] = TimeIntegrationAlgorithmGLMSharedPtr(
                 new TimeIntegrationAlgorithmGLM(this));
@@ -79,8 +77,10 @@ public:
 
         // Next to last phase
         if (order > 1)
+        {
             AdamsMoultonTimeIntegrationScheme::SetupSchemeData(
                 m_integration_phases[order - 2], order - 1);
+        }
 
         // Last phase
         AdamsMoultonTimeIntegrationScheme::SetupSchemeData(
@@ -94,25 +94,22 @@ public:
                 break;
 
             case 2:
-                // Why forward euler and not backward euler???
-                EulerTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[0], "Forward");
+                // Intial phase set above
                 break;
 
             case 3:
-                // The first and second phases needed to be set correctly
-                EulerTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[0], "Forward");
-                IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[1], 3, std::vector<NekDouble>{3, 4});
+                // Order 2
+                DIRKTimeIntegrationScheme::SetupSchemeData(
+                    m_integration_phases[0], 2);
                 break;
 
             case 4:
-                // The first and second phases needed to be set correctly
-                IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[0], 3, std::vector<NekDouble>{2, 3});
-                IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-                    m_integration_phases[1], 3, std::vector<NekDouble>{2, 3});
+                // Order 3
+                DIRKTimeIntegrationScheme::SetupSchemeData(
+                    m_integration_phases[0], 3);
+                // Order 3
+                DIRKTimeIntegrationScheme::SetupSchemeData(
+                    m_integration_phases[1], 3);
                 break;
 
             default:
@@ -127,8 +124,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<AdamsMoultonTimeIntegrationScheme>::AllocateSharedPtr(
@@ -139,23 +135,11 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetName() const
-    {
-        return std::string("AdamsMoulton");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
-                                    int order)
+                                    size_t order)
     {
-        // The 3rd and 4th order tableaus have not been validated!!!!!
-
         // clang-format off
-        const NekDouble coefficients[5][4] =
+        constexpr NekDouble coefficients[5][4] =
             { {      0.,       0.,      0.,     0. },
               // 1st Order
               {      1.,       0.,      0.,     0. },
@@ -189,9 +173,6 @@ public:
 
         // Coefficients
 
-        // When multiple steps are taken A/B[0][0] and U/V[0][1...s]
-        // must be weighted so the time contribution is correct.
-
         // A/B Coefficient for first row first column
         phase->m_A[0][0][0] = coefficients[phase->m_order][0];
         phase->m_B[0][0][0] = coefficients[phase->m_order][0];
@@ -199,7 +180,7 @@ public:
         // B evaluation value shuffling second row first column
         if (phase->m_order > 1)
         {
-            phase->m_B[0][1][0] = 1.0; // constant 1
+            phase->m_B[0][1][0] = 1.0;
         }
 
         // U/V Coefficient for first row first column
@@ -207,30 +188,42 @@ public:
         phase->m_V[0][0] = 1.0;
 
         // U/V Coefficients for first row additional columns
-        for (int n = 1; n < phase->m_order; ++n)
+        for (size_t n = 1; n < phase->m_order; ++n)
         {
             phase->m_U[0][n] = coefficients[phase->m_order][n];
             phase->m_V[0][n] = coefficients[phase->m_order][n];
         }
 
         // V evaluation value shuffling row n column n-1
-        for (int n = 2; n < phase->m_order; ++n)
+        for (size_t n = 2; n < phase->m_order; ++n)
         {
             phase->m_V[n][n - 1] = 1.0;
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = phase->m_order - 1;
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = phase->m_order - 1;
+        phase->m_numMultiStepExplicitDerivs = 0;
+        phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
         // For order > 1 derivatives are needed.
-        for (int n = 1; n < phase->m_order; ++n)
+        for (size_t n = 1; n < phase->m_order; ++n)
         {
             phase->m_timeLevelOffset[n] = n - 1;
         }
 
         phase->CheckAndVerify();
+    }
+
+protected:
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("AdamsMoulton");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
     }
 
 }; // end class AdamsMoultonTimeIntegrationScheme
@@ -241,8 +234,7 @@ class AdamsMoultonOrder1TimeIntegrationScheme
     : public AdamsMoultonTimeIntegrationScheme
 {
 public:
-    AdamsMoultonOrder1TimeIntegrationScheme(std::string variant,
-                                            unsigned int order,
+    AdamsMoultonOrder1TimeIntegrationScheme(std::string variant, size_t order,
                                             std::vector<NekDouble> freeParams)
         : AdamsMoultonTimeIntegrationScheme("", 1, freeParams)
     {
@@ -251,8 +243,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -266,14 +257,16 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class AdamsMoultonOrder1TimeIntegrationScheme
 
 class AdamsMoultonOrder2TimeIntegrationScheme
     : public AdamsMoultonTimeIntegrationScheme
 {
 public:
-    AdamsMoultonOrder2TimeIntegrationScheme(std::string variant,
-                                            unsigned int order,
+    AdamsMoultonOrder2TimeIntegrationScheme(std::string variant, size_t order,
                                             std::vector<NekDouble> freeParams)
         : AdamsMoultonTimeIntegrationScheme("", 2, freeParams)
     {
@@ -282,8 +275,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -297,14 +289,16 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class AdamsMoultonOrder2TimeIntegrationScheme
 
 class AdamsMoultonOrder3TimeIntegrationScheme
     : public AdamsMoultonTimeIntegrationScheme
 {
 public:
-    AdamsMoultonOrder3TimeIntegrationScheme(std::string variant,
-                                            unsigned int order,
+    AdamsMoultonOrder3TimeIntegrationScheme(std::string variant, size_t order,
                                             std::vector<NekDouble> freeParams)
         : AdamsMoultonTimeIntegrationScheme("", 3, freeParams)
     {
@@ -313,8 +307,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -328,14 +321,16 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class AdamsMoultonOrder3TimeIntegrationScheme
 
 class AdamsMoultonOrder4TimeIntegrationScheme
     : public AdamsMoultonTimeIntegrationScheme
 {
 public:
-    AdamsMoultonOrder4TimeIntegrationScheme(std::string variant,
-                                            unsigned int order,
+    AdamsMoultonOrder4TimeIntegrationScheme(std::string variant, size_t order,
                                             std::vector<NekDouble> freeParams)
         : AdamsMoultonTimeIntegrationScheme("", 4, freeParams)
     {
@@ -344,8 +339,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -358,6 +352,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class AdamsMoultonOrder4TimeIntegrationScheme
 

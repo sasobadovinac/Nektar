@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CFSImplicit.cpp
+// File: CompressibleFlowSystemImplicit.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,6 +35,7 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <CompressibleFlowSolver/EquationSystems/CompressibleFlowSystemImplicit.h>
+#include <SolverUtils/Advection/AdvectionWeakDG.h>
 
 #include <LibUtilities/BasicUtils/Timer.h>
 
@@ -115,8 +116,8 @@ void CFSImplicit::InitialiseNonlinSysSolver()
             locTraceToTraceMap->GetLocTracephysToTraceIDMap());
     }
 
-    m_preconCfs = GetPreconCfsOpFactory().CreateInstance(
-        "PreconCfsBRJ", m_fields, m_session, m_comm);
+    m_preconCfs = GetPreconCfsFactory().CreateInstance("PreconCfsBRJ", m_fields,
+                                                       m_session, m_comm);
     NekPreconCfsOperators tmpPreconOp;
     tmpPreconOp.DefineCalcPreconMatBRJCoeff(&CFSImplicit::CalcPreconMatBRJCoeff,
                                             this);
@@ -306,8 +307,12 @@ void CFSImplicit::DoAdvectionCoeff(
     int nvariables = inarray.size();
     Array<OneD, Array<OneD, NekDouble>> advVel(m_spacedim);
 
-    m_advObject->AdvectCoeffs(nvariables, m_fields, advVel, inarray, outarray,
-                              time, pFwd, pBwd);
+    auto advWeakDGObject =
+        std::dynamic_pointer_cast<SolverUtils::AdvectionWeakDG>(m_advObject);
+    ASSERTL0(advWeakDGObject,
+             "Use WeakDG for implicit compressible flow solver!");
+    advWeakDGObject->AdvectCoeffs(nvariables, m_fields, advVel, inarray,
+                                  outarray, time, pFwd, pBwd);
 }
 
 void CFSImplicit::DoImplicitSolve(
@@ -360,12 +365,11 @@ void CFSImplicit::DoImplicitSolveCoeff(
         CalcRefValues(inarray);
     }
 
-    NekDouble tol2 =
-        m_inArrayNorm * m_newtonAbsoluteIteTol * m_newtonAbsoluteIteTol;
+    NekDouble tol = std::sqrt(m_inArrayNorm) * m_newtonAbsoluteIteTol;
 
-    m_nonlinsol->v_SetupNekNonlinSystem(ntotal, inarray, inarray, 0);
+    m_nonlinsol->SetupNekNonlinSystem(ntotal, inarray, inarray, 0);
 
-    m_TotNewtonIts += m_nonlinsol->SolveSystem(ntotal, inarray, out, 0, tol2);
+    m_TotNewtonIts += m_nonlinsol->SolveSystem(ntotal, inarray, out, 0, tol);
 
     m_TotLinIts += m_nonlinsol->GetNtotLinSysIts();
 
@@ -413,7 +417,7 @@ void CFSImplicit::CalcRefValues(const Array<OneD, const NekDouble> &inarray)
     {
         m_magnitdEstimat[i] = sqrt(m_magnitdEstimat[i] * invTotalDOF);
     }
-    if (m_root && m_verbose)
+    if (m_comm->GetRank() == 0 && m_verbose)
     {
         for (int i = 0; i < nvariables; ++i)
         {
@@ -1332,9 +1336,14 @@ void CFSImplicit::CalcTraceNumericalFlux(
 
     if (m_advectionJacFlag)
     {
-        m_advObject->AdvectTraceFlux(nConvectiveFields, m_fields, AdvVel,
-                                     inarray, traceflux, m_bndEvaluateTime,
-                                     vFwd, vBwd);
+        auto advWeakDGObject =
+            std::dynamic_pointer_cast<SolverUtils::AdvectionWeakDG>(
+                m_advObject);
+        ASSERTL0(advWeakDGObject,
+                 "Use WeakDG for implicit compressible flow solver!");
+        advWeakDGObject->AdvectTraceFlux(nConvectiveFields, m_fields, AdvVel,
+                                         inarray, traceflux, m_bndEvaluateTime,
+                                         vFwd, vBwd);
     }
     else
     {
@@ -1919,7 +1928,7 @@ void CFSImplicit::PointFluxJacobianPoint(const Array<OneD, NekDouble> &Fwd,
     FJacData[4 + nVar4] = c5 + l1;
 }
 
-bool CFSImplicit::UpdateTimeStepCheck()
+bool CFSImplicit::v_UpdateTimeStepCheck()
 {
     bool flag =
         (m_time + m_timestep > m_fintime && m_fintime > 0.0) ||

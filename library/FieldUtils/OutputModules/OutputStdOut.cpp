@@ -59,7 +59,7 @@ OutputStdOut::~OutputStdOut()
 {
 }
 
-void OutputStdOut::Process(po::variables_map &vm)
+void OutputStdOut::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 }

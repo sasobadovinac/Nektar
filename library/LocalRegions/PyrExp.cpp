@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PyrExp.cpp
+// File: PyrExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -630,11 +630,6 @@ NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
 // Helper functions
 //---------------------------------------
 
-int PyrExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
-}
-
 void PyrExp::v_GetTracePhysMap(const int face, Array<OneD, int> &outarray)
 {
     int nquad0 = m_base[0]->GetNumPoints();
@@ -1084,6 +1079,11 @@ DNekScalMatSharedPtr PyrExp::v_GetLocMatrix(const MatrixKey &mkey)
     return m_matrixManager[mkey];
 }
 
+void PyrExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
+}
+
 DNekScalBlkMatSharedPtr PyrExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)
 {
     return m_staticCondMatrixManager[mkey];
@@ -1443,19 +1443,20 @@ void PyrExp::v_NormalTraceDerivFactors(
         {
             for (int i = 0; i < nquad0; ++i)
             {
-                d0factors[1][i] = df[0][j * nquad0 * nquad1 + i] *
-                                  normal_1[0][j * nquad0 + i];
-                d0factors[3][i] =
+                d0factors[1][j * nquad0 + i] = df[0][j * nquad0 * nquad1 + i] *
+                                               normal_1[0][j * nquad0 + i];
+                d1factors[1][j * nquad0 + i] = df[1][j * nquad0 * nquad1 + i] *
+                                               normal_1[0][j * nquad0 + i];
+                d2factors[1][j * nquad0 + i] = df[2][j * nquad0 * nquad1 + i] *
+                                               normal_1[0][j * nquad0 + i];
+
+                d0factors[3][j * nquad0 + i] =
                     df[0][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
                     normal_3[0][j * nquad0 + i];
-                d1factors[1][i] = df[1][j * nquad0 * nquad1 + i] *
-                                  normal_1[0][j * nquad0 + i];
-                d1factors[3][i] =
+                d1factors[3][j * nquad0 + i] =
                     df[1][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
                     normal_3[0][j * nquad0 + i];
-                d2factors[1][i] = df[2][j * nquad0 * nquad1 + i] *
-                                  normal_1[0][j * nquad0 + i];
-                d2factors[3][i] =
+                d2factors[3][j * nquad0 + i] =
                     df[2][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
                     normal_3[0][j * nquad0 + i];
             }
@@ -1467,19 +1468,23 @@ void PyrExp::v_NormalTraceDerivFactors(
             {
                 for (int i = 0; i < nquad0; ++i)
                 {
-                    d0factors[1][i] = df[3 * n][j * nquad0 * nquad1 + i] *
-                                      normal_1[0][j * nquad0 + i];
-                    d0factors[3][i] =
+                    d0factors[1][j * nquad0 + i] +=
+                        df[3 * n][j * nquad0 * nquad1 + i] *
+                        normal_1[0][j * nquad0 + i];
+                    d1factors[1][j * nquad0 + i] +=
+                        df[3 * n + 1][j * nquad0 * nquad1 + i] *
+                        normal_1[0][j * nquad0 + i];
+                    d2factors[1][j * nquad0 + i] +=
+                        df[3 * n + 2][j * nquad0 * nquad1 + i] *
+                        normal_1[0][j * nquad0 + i];
+
+                    d0factors[3][j * nquad0 + i] +=
                         df[3 * n][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
                         normal_3[0][j * nquad0 + i];
-                    d1factors[1][i] = df[3 * n + 1][j * nquad0 * nquad1 + i] *
-                                      normal_1[0][j * nquad0 + i];
-                    d1factors[3][i] =
+                    d1factors[3][j * nquad0 + i] +=
                         df[3 * n + 1][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
                         normal_3[0][j * nquad0 + i];
-                    d2factors[1][i] = df[3 * n + 2][j * nquad0 * nquad1 + i] *
-                                      normal_1[0][j * nquad0 + i];
-                    d2factors[3][i] =
+                    d2factors[3][j * nquad0 + i] +=
                         df[3 * n + 2][(j + 1) * nquad0 * nquad1 - nquad0 + i] *
                         normal_3[0][j * nquad0 + i];
                 }
@@ -1494,18 +1499,19 @@ void PyrExp::v_NormalTraceDerivFactors(
                 d0factors[2][j * nquad1 + i] =
                     df[0][j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
                     normal_2[0][j * nquad1 + i];
-                d0factors[4][j * nquad1 + i] =
-                    df[0][j * nquad0 * nquad1 + i * nquad0] *
-                    normal_4[0][j * nquad1 + i];
                 d1factors[2][j * nquad1 + i] =
                     df[1][j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
                     normal_2[0][j * nquad1 + i];
-                d1factors[4][j * nquad1 + i] =
-                    df[1][j * nquad0 * nquad1 + i * nquad0] *
-                    normal_4[0][j * nquad1 + i];
                 d2factors[2][j * nquad1 + i] =
                     df[2][j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
                     normal_2[0][j * nquad1 + i];
+
+                d0factors[4][j * nquad1 + i] =
+                    df[0][j * nquad0 * nquad1 + i * nquad0] *
+                    normal_4[0][j * nquad1 + i];
+                d1factors[4][j * nquad1 + i] =
+                    df[1][j * nquad0 * nquad1 + i * nquad0] *
+                    normal_4[0][j * nquad1 + i];
                 d2factors[4][j * nquad1 + i] =
                     df[2][j * nquad0 * nquad1 + i * nquad0] *
                     normal_4[0][j * nquad1 + i];
@@ -1520,24 +1526,25 @@ void PyrExp::v_NormalTraceDerivFactors(
                 {
                     d0factors[2][j * nquad1 + i] +=
                         df[3 * n][j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
-                        normal_2[n][j * nquad0 + i];
-                    d0factors[4][j * nquad0 + i] +=
-                        df[3 * n][i * nquad0 + j * nquad0 * nquad1] *
-                        normal_4[n][j * nquad0 + i];
+                        normal_2[n][j * nquad1 + i];
                     d1factors[2][j * nquad1 + i] +=
                         df[3 * n + 1]
                           [j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
-                        normal_2[n][j * nquad0 + i];
-                    d1factors[4][j * nquad0 + i] +=
-                        df[3 * n + 1][i * nquad0 + j * nquad0 * nquad1] *
-                        normal_4[n][j * nquad0 + i];
+                        normal_2[n][j * nquad1 + i];
                     d2factors[2][j * nquad1 + i] +=
                         df[3 * n + 2]
                           [j * nquad0 * nquad1 + (i + 1) * nquad0 - 1] *
-                        normal_2[n][j * nquad0 + i];
-                    d2factors[4][j * nquad0 + i] +=
+                        normal_2[n][j * nquad1 + i];
+
+                    d0factors[4][j * nquad1 + i] +=
+                        df[3 * n][i * nquad0 + j * nquad0 * nquad1] *
+                        normal_4[n][j * nquad1 + i];
+                    d1factors[4][j * nquad1 + i] +=
+                        df[3 * n + 1][i * nquad0 + j * nquad0 * nquad1] *
+                        normal_4[n][j * nquad1 + i];
+                    d2factors[4][j * nquad1 + i] +=
                         df[3 * n + 2][i * nquad0 + j * nquad0 * nquad1] *
-                        normal_4[n][j * nquad0 + i];
+                        normal_4[n][j * nquad1 + i];
                 }
             }
         }

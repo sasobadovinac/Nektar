@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CompressibleFlowSystemImplicit.h
+// File: CompressibleFlowSystemImplicit.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -111,7 +111,7 @@ protected:
 
     LibUtilities::NekNonlinSysSharedPtr m_nonlinsol;
 
-    PreconCfsOpSharedPtr m_preconCfs;
+    PreconCfsSharedPtr m_preconCfs;
 
     // flag to update shock capturing artificial viscosity. this flag is
     // switched on/off in DoImplicitSolve() to ensure that the AV is only
@@ -375,7 +375,7 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, DNekMatSharedPtr>> &ElmtJac);
 
-    virtual bool UpdateTimeStepCheck() override;
+    virtual bool v_UpdateTimeStepCheck() override;
 };
 } // namespace Nektar
 #endif

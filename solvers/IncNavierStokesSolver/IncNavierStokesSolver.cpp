@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File IncNavierStokesSolver.cpp
+// File: IncNavierStokesSolver.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

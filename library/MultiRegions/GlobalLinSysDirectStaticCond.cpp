@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSys.cpp
+// File: GlobalLinSysDirectStaticCond.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: GlobalLinSys definition
+// Description: GlobalLinSysDirectStaticCond definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -148,6 +148,7 @@ MatrixStorage GlobalLinSysDirectStaticCond::DetermineMatrixStorage(
             }
         }
         break;
+        case StdRegions::eLinearAdvection:
         case StdRegions::eLinearAdvectionReaction:
         case StdRegions::eLinearAdvectionDiffusionReaction:
         default:

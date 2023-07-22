@@ -49,7 +49,7 @@
 
         <FUNCTION NAME="ExactSolution">
             <E VAR="u"
-               VALUE="exp(-2.0*wavefreq*wavefreq*FinTime)*sin(wavefreq*x)*cos(wavefreq*y)" />
+                VALUE="exp(-2.0*wavefreq*wavefreq*FinTime)*sin(wavefreq*x)*cos(wavefreq*y)" />
         </FUNCTION>
 
         <FUNCTION NAME="InitialConditions">

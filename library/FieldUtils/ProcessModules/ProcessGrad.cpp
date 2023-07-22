@@ -39,6 +39,7 @@ using namespace std;
 #include <boost/core/ignore_unused.hpp>
 
 #include <GlobalMapping/Mapping.h>
+#include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include "ProcessGrad.h"
@@ -55,55 +56,69 @@ ModuleKey ProcessGrad::className = GetModuleFactory().RegisterCreatorFunction(
 
 ProcessGrad::ProcessGrad(FieldSharedPtr f) : ProcessModule(f)
 {
+    m_config["vars"] = ConfigOption(false, "NotSet", "Select variables");
+    m_config["dirs"] = ConfigOption(false, "NotSet", "Select directions");
 }
 
 ProcessGrad::~ProcessGrad()
 {
 }
 
-void ProcessGrad::Process(po::variables_map &vm)
+void ProcessGrad::ParserOptions(std::set<int> &variables,
+                                std::set<int> &directions)
 {
-    m_f->SetUpExp(vm);
-
-    int i, j;
-    int expdim    = m_f->m_graph->GetMeshDimension();
-    int spacedim  = m_f->m_numHomogeneousDir + expdim;
-    int nfields   = m_f->m_variables.size();
-    int addfields = nfields * spacedim;
-
-    for (i = 0; i < nfields; ++i)
+    if (m_config["vars"].as<string>().compare("NotSet"))
     {
-        if (spacedim == 1)
+        ParseUtils::GenerateVariableSet(m_config["vars"].as<string>(),
+                                        m_f->m_variables, variables);
+    }
+    else
+    {
+        for (int v = 0; v < m_f->m_variables.size(); ++v)
         {
-            m_f->m_variables.push_back(m_f->m_variables[i] + "_x");
-        }
-        else if (spacedim == 2)
-        {
-            m_f->m_variables.push_back(m_f->m_variables[i] + "_x");
-            m_f->m_variables.push_back(m_f->m_variables[i] + "_y");
-        }
-        else if (spacedim == 3)
-        {
-            m_f->m_variables.push_back(m_f->m_variables[i] + "_x");
-            m_f->m_variables.push_back(m_f->m_variables[i] + "_y");
-            m_f->m_variables.push_back(m_f->m_variables[i] + "_z");
+            variables.insert(v);
         }
     }
-
-    // Skip in case of empty partition
-    if (m_f->m_exp[0]->GetNumElmts() == 0)
+    vector<string> coords = {"x", "y", "z"};
+    int spacedim = m_f->m_numHomogeneousDir + m_f->m_graph->GetMeshDimension();
+    coords.resize(spacedim);
+    if (m_config["dirs"].as<string>().compare("NotSet"))
     {
-        return;
+        ParseUtils::GenerateVariableSet(m_config["dirs"].as<string>(), coords,
+                                        directions);
     }
+    else
+    {
+        for (int d = 0; d < spacedim; ++d)
+        {
+            directions.insert(d);
+        }
+    }
+}
+
+void ProcessGrad::ProcessCartesianFld(Array<OneD, Array<OneD, NekDouble>> &grad)
+{
+    // Calculate Gradient
+    int n = 0;
+    for (int i : m_selectedVars)
+    {
+        for (int j : m_directions)
+        {
+            m_f->m_exp[i]->PhysDeriv(MultiRegions::DirCartesianMap[j],
+                                     m_f->m_exp[i]->GetPhys(), grad[n]);
+            ++n;
+        }
+    }
+}
+
+void ProcessGrad::ProcessMappingFld(Array<OneD, Array<OneD, NekDouble>> &grad)
+{
+    int expdim   = m_f->m_graph->GetMeshDimension();
+    int spacedim = m_f->m_numHomogeneousDir + expdim;
+    int nfields  = m_f->m_variables.size();
+    bool hasvel = m_selectedVars.size() && (*m_selectedVars.begin() < spacedim);
 
     int npoints = m_f->m_exp[0]->GetNpoints();
-    Array<OneD, Array<OneD, NekDouble>> grad(addfields);
-    m_f->m_exp.resize(nfields + addfields);
-
-    for (i = 0; i < addfields; ++i)
-    {
-        grad[i] = Array<OneD, NekDouble>(npoints);
-    }
 
     Array<OneD, Array<OneD, NekDouble>> tmp(spacedim);
     for (int i = 0; i < spacedim; i++)
@@ -117,7 +132,7 @@ void ProcessGrad::Process(po::variables_map &vm)
     // Get velocity and convert to Cartesian system,
     //      if it is still in transformed system
     Array<OneD, Array<OneD, NekDouble>> vel(spacedim);
-    if (m_f->m_fieldMetaDataMap.count("MappingCartesianVel"))
+    if (hasvel && m_f->m_fieldMetaDataMap.count("MappingCartesianVel"))
     {
         if (m_f->m_fieldMetaDataMap["MappingCartesianVel"] == "False")
         {
@@ -127,8 +142,8 @@ void ProcessGrad::Process(po::variables_map &vm)
                 vel[i] = Array<OneD, NekDouble>(npoints);
                 if (m_f->m_exp[0]->GetWaveSpace())
                 {
-                    m_f->m_exp[0]->HomogeneousBwdTrans(m_f->m_exp[i]->GetPhys(),
-                                                       vel[i]);
+                    m_f->m_exp[0]->HomogeneousBwdTrans(
+                        npoints, m_f->m_exp[i]->GetPhys(), vel[i]);
                 }
                 else
                 {
@@ -143,7 +158,7 @@ void ProcessGrad::Process(po::variables_map &vm)
             {
                 for (int i = 0; i < spacedim; ++i)
                 {
-                    m_f->m_exp[0]->HomogeneousFwdTrans(vel[i], vel[i]);
+                    m_f->m_exp[0]->HomogeneousFwdTrans(npoints, vel[i], vel[i]);
                 }
             }
         }
@@ -156,7 +171,7 @@ void ProcessGrad::Process(po::variables_map &vm)
             }
         }
     }
-    else
+    else if (hasvel)
     {
         for (int i = 0; i < spacedim && i < nfields; ++i)
         {
@@ -166,9 +181,10 @@ void ProcessGrad::Process(po::variables_map &vm)
     }
 
     // Calculate Gradient
-    for (i = 0; i < nfields; ++i)
+    int n = 0;
+    for (int i : m_selectedVars)
     {
-        for (j = 0; j < spacedim; ++j)
+        for (int j = 0; j < spacedim; ++j)
         {
             if (i < spacedim)
             {
@@ -182,15 +198,58 @@ void ProcessGrad::Process(po::variables_map &vm)
             }
         }
         mapping->CovarToCartesian(tmp, tmp);
-        for (int j = 0; j < spacedim; j++)
+        for (int j : m_directions)
         {
-            Vmath::Vcopy(npoints, tmp[j], 1, grad[i * spacedim + j], 1);
+            Vmath::Vcopy(npoints, tmp[j], 1, grad[n], 1);
+            ++n;
+        }
+    }
+}
+
+void ProcessGrad::v_Process(po::variables_map &vm)
+{
+    m_f->SetUpExp(vm);
+    ParserOptions(m_selectedVars, m_directions);
+
+    int nfields   = m_f->m_variables.size();
+    int addfields = m_selectedVars.size() * m_directions.size();
+    m_f->m_exp.resize(nfields + addfields);
+
+    vector<string> coords = {"x", "y", "z"};
+    for (int i : m_selectedVars)
+    {
+        for (int j : m_directions)
+        {
+            m_f->m_variables.push_back(m_f->m_variables[i] + "_" + coords[j]);
         }
     }
 
-    for (i = 0; i < addfields; ++i)
+    // Skip in case of empty partition
+    if (m_f->m_exp[0]->GetNumElmts() == 0)
+    {
+        return;
+    }
+
+    int npoints = m_f->m_exp[0]->GetNpoints();
+    Array<OneD, Array<OneD, NekDouble>> grad(addfields);
+    for (int i = 0; i < addfields; ++i)
+    {
+        grad[i] = Array<OneD, NekDouble>(npoints);
+    }
+
+    if (m_f->m_fieldMetaDataMap.count("MappingType"))
+    {
+        ProcessMappingFld(grad);
+    }
+    else
+    {
+        ProcessCartesianFld(grad);
+    }
+
+    for (int i = 0; i < addfields; ++i)
     {
         m_f->m_exp[nfields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+
         Vmath::Vcopy(npoints, grad[i], 1, m_f->m_exp[nfields + i]->UpdatePhys(),
                      1);
         m_f->m_exp[nfields + i]->FwdTransLocalElmt(

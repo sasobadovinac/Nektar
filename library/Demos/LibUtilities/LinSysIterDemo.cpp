@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: LinSysDemo.cpp
+// File: LinSysIterDemo.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -87,7 +87,6 @@ public:
 
         int ntmpIts =
             m_linsol->SolveSystem(m_matDim, m_SysRhs, pOutput, 0, 1.0E-9);
-        boost::ignore_unused(ntmpIts);
         // The number of sigificant digits
         int ndigits = 6;
         // Extra width to place -, E, and power

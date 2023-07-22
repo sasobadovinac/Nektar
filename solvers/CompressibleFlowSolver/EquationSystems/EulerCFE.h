@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EulerCFE.h
+// File: EulerCFE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -67,13 +67,13 @@ protected:
 
     virtual void v_InitObject(bool DeclareFields = true) override;
 
-    void v_DoDiffusion(
+    virtual void v_DoDiffusion(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd) override final;
 
-    virtual bool SupportsShockCaptType(const std::string type) const override;
+    virtual bool v_SupportsShockCaptType(const std::string type) const override;
 };
 } // namespace Nektar
 #endif

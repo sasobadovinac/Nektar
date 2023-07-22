@@ -72,23 +72,28 @@ public:
 protected:
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const unsigned int &pNumForcingFields, const TiXmlElement *pForce);
+        const unsigned int &pNumForcingFields,
+        const TiXmlElement *pForce) override;
 
     SOLVER_UTILS_EXPORT virtual void v_Apply(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const NekDouble &time) override;
 
     SOLVER_UTILS_EXPORT virtual void v_ApplyCoeff(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const NekDouble &time) override;
 
 private:
     std::string m_funcName;
     bool m_hasTimeFcnScaling;
     LibUtilities::EquationSharedPtr m_timeFcnEqn;
-    bool m_transform;
+    bool m_homogeneous;
+    bool m_hasEvars;
+    std::map<int, std::vector<int>> m_eqnEvars;
 
     ForcingBody(const LibUtilities::SessionReaderSharedPtr &pSession,
                 const std::weak_ptr<EquationSystem> &pEquation);

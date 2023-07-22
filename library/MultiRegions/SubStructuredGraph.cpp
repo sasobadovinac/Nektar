@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SubStructuredGraph.cpp
+// File: SubStructuredGraph.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -801,9 +801,9 @@ void MultiLevelBisectionReordering(
         //
 
         // Pass the adjaceny graph into Scotch.
-        SCOTCH_Graph scGraph;
+        SCOTCH_Graph *scGraph = SCOTCH_graphAlloc();
         SCOTCH_CALL(SCOTCH_graphBuild,
-                    (&scGraph, 0, nNonPartition, &xadj[0], &xadj[1], NULL, NULL,
+                    (scGraph, 0, nNonPartition, &xadj[0], &xadj[1], NULL, NULL,
                      xadj[nNonPartition], &adjncy[0], NULL));
 
         // This horrible looking string defines the Scotch graph
@@ -860,11 +860,11 @@ void MultiLevelBisectionReordering(
         Array<OneD, int> rangtab(nNonPartition + 1);
         int cblknbr = 0;
         SCOTCH_CALL(SCOTCH_graphOrder,
-                    (&scGraph, &strat, &iperm_tmp[0], &perm_tmp[0], &cblknbr,
+                    (scGraph, &strat, &iperm_tmp[0], &perm_tmp[0], &cblknbr,
                      &rangtab[0], &treetab[0]));
 
         // We're now done with Scotch: clean up the created structures.
-        SCOTCH_graphExit(&scGraph);
+        SCOTCH_graphExit(scGraph);
         SCOTCH_stratExit(&strat);
 
         //

@@ -18,7 +18,6 @@
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
-    <CONDITIONS />
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>

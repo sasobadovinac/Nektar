@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWavePropagation.h
+// File: PulseWavePropagation.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -93,7 +93,7 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    virtual void v_InitObject(bool DeclareField = false);
+    virtual void v_InitObject(bool DeclareField = false) override;
 
     /// DG Pulse Wave Propagation routines:
     void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
@@ -104,7 +104,7 @@ protected:
 
     Array<OneD, PulseWaveBoundarySharedPtr> m_Boundary;
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 };
 
 } // namespace Nektar

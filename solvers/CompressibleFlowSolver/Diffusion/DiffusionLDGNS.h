@@ -70,6 +70,7 @@ protected:
     Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
     LibUtilities::SessionReaderSharedPtr m_session;
     NekDouble m_Twall;
+
     /// Equation of system for computing temperature
     EquationOfStateSharedPtr m_eos;
 
@@ -82,7 +83,7 @@ protected:
 
     virtual void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
 
     virtual void v_Diffuse(
         const std::size_t nConvective,
@@ -90,27 +91,30 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
+
     virtual void v_DiffuseCoeffs(
         const std::size_t nConvective,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
 
     virtual void v_DiffuseCalcDerivative(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         TensorOfArray3D<NekDouble> &qfields,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
 
     virtual void v_DiffuseVolumeFlux(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         TensorOfArray3D<NekDouble> &qfields,
-        TensorOfArray3D<NekDouble> &VolumeFlux, Array<OneD, int> &nonZeroIndex);
+        TensorOfArray3D<NekDouble> &VolumeFlux,
+        Array<OneD, int> &nonZeroIndex) override;
+
     virtual void v_DiffuseTraceFlux(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -119,8 +123,20 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &TraceFlux,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd,
-        Array<OneD, int> &nonZeroIndex);
+        Array<OneD, int> &nonZeroIndex) override;
 
+    virtual void v_SetHomoDerivs(
+        Array<OneD, Array<OneD, NekDouble>> &deriv) override
+    {
+        m_homoDerivs = deriv;
+    }
+
+    virtual TensorOfArray3D<NekDouble> &v_GetFluxTensor() override
+    {
+        return m_viscTensor;
+    }
+
+private:
     void NumericalFluxO1(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
@@ -147,21 +163,6 @@ protected:
                     const Array<OneD, const NekDouble> &qFwd,
                     const Array<OneD, const NekDouble> &qBwd,
                     Array<OneD, NekDouble> &penaltyflux);
-
-    virtual void v_SetHomoDerivs(Array<OneD, Array<OneD, NekDouble>> &deriv)
-    {
-        m_homoDerivs = deriv;
-    }
-
-    virtual TensorOfArray3D<NekDouble> &v_GetFluxTensor()
-    {
-        return m_viscTensor;
-    }
-
-    virtual void v_GetPrimVar(
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &primVar);
 };
 
 typedef std::shared_ptr<DiffusionLDGNS> DiffusionLDGNSSharedPtr;

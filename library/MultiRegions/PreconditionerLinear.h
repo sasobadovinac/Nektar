@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Preconditioner.h
+// File: PreconditionerLinear.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Preconditioner header
+// Description: PreconditionerLinear header
 //
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLINEAR_H
@@ -84,21 +84,21 @@ protected:
     GlobalLinSysSharedPtr m_vertLinsys;
     std::shared_ptr<AssemblyMap> m_vertLocToGloMap;
 
-private:
-    static std::string solveType;
-    static std::string solveTypeIds[];
-
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual void v_DoPreconditionerWithNonVertOutput(
         const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
         const Array<OneD, NekDouble> &pNonVertOutput,
-        Array<OneD, NekDouble> &pVertForce);
+        Array<OneD, NekDouble> &pVertForce) override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
+                                    Array<OneD, NekDouble> &pOutput) override;
 
-    virtual void v_BuildPreconditioner();
+    virtual void v_BuildPreconditioner() override;
+
+private:
+    static std::string solveType;
+    static std::string solveTypeIds[];
 };
 } // namespace MultiRegions
 } // namespace Nektar

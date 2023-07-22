@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Implementation of the LInf metric.
+// Description: Implementation of the File metric.
 //
 ///////////////////////////////////////////////////////////////////////////////
 

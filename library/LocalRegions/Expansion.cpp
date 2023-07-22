@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Expansion.cpp
+// File: Expansion.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -89,6 +89,11 @@ DNekScalMatSharedPtr Expansion::GetLocMatrix(
     const LocalRegions::MatrixKey &mkey)
 {
     return v_GetLocMatrix(mkey);
+}
+
+void Expansion::DropLocMatrix(const LocalRegions::MatrixKey &mkey)
+{
+    return v_DropLocMatrix(mkey);
 }
 
 DNekMatSharedPtr Expansion::BuildTransformationMatrix(
@@ -410,6 +415,12 @@ DNekScalBlkMatSharedPtr Expansion::CreateStaticCondMatrix(const MatrixKey &mkey)
     return returnval;
 }
 
+void Expansion::v_DropLocMatrix(const LocalRegions::MatrixKey &mkey)
+{
+    boost::ignore_unused(mkey);
+    NEKERROR(ErrorUtil::efatal, "This function is only valid for LocalRegions");
+}
+
 void Expansion::v_MultiplyByQuadratureMetric(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
@@ -624,7 +635,7 @@ void Expansion::ComputeGmatcdotMF(const Array<TwoD, const NekDouble> &df,
 }
 
 // Get Moving frames
-Array<OneD, NekDouble> Expansion::v_GetMF(
+Array<OneD, NekDouble> Expansion::GetMF(
     const int dir, const int shapedim, const StdRegions::VarCoeffMap &varcoeffs)
 {
     int coordim = GetCoordim();
@@ -668,7 +679,7 @@ Array<OneD, NekDouble> Expansion::v_GetMF(
     {
         StdRegions::VarCoeffMap::const_iterator MFdir =
             varcoeffs.find(MMFCoeffs[5 * dir + k]);
-        tmp = MFdir->second;
+        tmp = MFdir->second.GetValue();
 
         Vmath::Vcopy(nqtot, &tmp[0], 1, &MF[k * nqtot], 1);
     }
@@ -677,7 +688,7 @@ Array<OneD, NekDouble> Expansion::v_GetMF(
 }
 
 // Get magnitude of MF
-Array<OneD, NekDouble> Expansion::v_GetMFDiv(
+Array<OneD, NekDouble> Expansion::GetMFDiv(
     const int dir, const StdRegions::VarCoeffMap &varcoeffs)
 {
     int indxDiv = 3;
@@ -694,13 +705,13 @@ Array<OneD, NekDouble> Expansion::v_GetMFDiv(
 
     StdRegions::VarCoeffMap::const_iterator MFdir =
         varcoeffs.find(MMFCoeffs[5 * dir + indxDiv]);
-    Array<OneD, NekDouble> MFDiv = MFdir->second;
+    Array<OneD, NekDouble> MFDiv = MFdir->second.GetValue();
 
     return MFDiv;
 }
 
 // Get magnitude of MF
-Array<OneD, NekDouble> Expansion::v_GetMFMag(
+Array<OneD, NekDouble> Expansion::GetMFMag(
     const int dir, const StdRegions::VarCoeffMap &varcoeffs)
 {
     int indxMag = 4;
@@ -717,7 +728,7 @@ Array<OneD, NekDouble> Expansion::v_GetMFMag(
 
     StdRegions::VarCoeffMap::const_iterator MFdir =
         varcoeffs.find(MMFCoeffs[5 * dir + indxMag]);
-    Array<OneD, NekDouble> MFmag = MFdir->second;
+    Array<OneD, NekDouble> MFmag = MFdir->second.GetValue();
 
     return MFmag;
 }

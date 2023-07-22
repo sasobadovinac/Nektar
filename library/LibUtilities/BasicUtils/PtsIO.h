@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PtsIO.h
+// File: PtsIO.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -86,12 +86,11 @@ protected:
         const std::string inFile, PtsFieldSharedPtr &ptsField,
         DomainRangeShPtr &Range = NullDomainRangeShPtr);
 
-    LIB_UTILITIES_EXPORT void SetUpFieldMetaData(const std::string outname);
-
-    LIB_UTILITIES_EXPORT virtual std::string GetFileEnding() const
+    LIB_UTILITIES_EXPORT virtual std::string v_GetFileEnding() const override
     {
         return "pts";
     };
+    LIB_UTILITIES_EXPORT void SetUpFieldMetaData(const std::string outname);
 };
 
 typedef std::shared_ptr<PtsIO> PtsIOSharedPtr;

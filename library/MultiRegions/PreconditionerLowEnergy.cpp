@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Preconditioner.cpp
+// File: PreconditionerLowEnergy.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,11 +28,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Preconditioner definition
+// Description: PreconditionerLowEnergy definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VDmathArray.hpp>
 #include <LocalRegions/MatrixKey.h>
 #include <MultiRegions/GlobalLinSys.h>
 #include <MultiRegions/GlobalLinSysIterativeStaticCond.h>
@@ -710,7 +709,6 @@ void PreconditionerLowEnergy::v_BuildPreconditioner()
         // loop over edges of the element and return the edge map
         for (eid = 0; eid < nEdges; ++eid)
         {
-
             meshEdgeId = locExpansion->as<LocalRegions::Expansion3D>()
                              ->GetGeom3D()
                              ->GetEid(eid);
@@ -840,12 +838,9 @@ void PreconditionerLowEnergy::v_BuildPreconditioner()
         cnt += nCoeffs;
     }
 
-    if (nNonDirVerts != 0)
-    {
-        // Exchange vertex data over different processes
-        Gs::gs_data *tmp = Gs::Init(VertBlockToUniversalMap, m_comm, verbose);
-        Gs::Gather(vertArray, Gs::gs_add, tmp);
-    }
+    // Exchange vertex data over different processes
+    Gs::gs_data *tmp = Gs::Init(VertBlockToUniversalMap, m_comm, verbose);
+    Gs::Gather(vertArray, Gs::gs_add, tmp);
 
     Array<OneD, NekDouble> GlobalBlock(ntotalentries, 0.0);
     if (ntotalentries)
@@ -1625,7 +1620,6 @@ void PreconditionerLowEnergy::SetUpReferenceElements(
     map<ShapeType, Array<OneD, unsigned int>> &vertMapMaxR,
     map<ShapeType, Array<OneD, Array<OneD, unsigned int>>> &edgeMapMaxR)
 {
-
     std::shared_ptr<MultiRegions::ExpList> expList =
         ((m_linsys.lock())->GetLocMat()).lock();
     GlobalLinSysKey linSysKey = (m_linsys.lock())->GetKey();
@@ -1812,7 +1806,6 @@ void PreconditionerLowEnergy::SetUpReferenceElements(
         }
         else
         {
-
             // Get prismatic transformation matrix
             LocalRegions::MatrixKey PrismR(PreconR, ePrism, *PrismExp,
                                            linSysKey.GetConstFactors());
@@ -2108,7 +2101,6 @@ void PreconditionerLowEnergy::ReSetPrismMaxRMat(
     }
     else
     {
-
         // set diagonal to 1
         for (int i = 0; i < nRows; ++i)
         {
@@ -2343,7 +2335,6 @@ DNekMatSharedPtr PreconditionerLowEnergy::ExtractLocMat(
 
             for (int j = 0; j < nEdgeInteriorCoeffs; ++j)
             {
-
                 for (int i = 0; i < nFaceInteriorCoeffs; ++i)
                 {
                     val = (*maxRmat)(emap[e][j], fmapRmat[i]);

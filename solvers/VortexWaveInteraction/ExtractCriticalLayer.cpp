@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExtractCriticalLayer.cpp
+// File: ExtractCriticalLayer.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

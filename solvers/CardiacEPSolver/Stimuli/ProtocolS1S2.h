@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ProtocolS1S2.h
+// File: ProtocolS1S2.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -73,9 +73,9 @@ protected:
     NekDouble m_s2cyclelength;
     NekDouble m_s2start;
 
-    virtual NekDouble v_GetAmplitude(const NekDouble time);
+    virtual NekDouble v_GetAmplitude(const NekDouble time) override;
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
     virtual void v_SetInitialConditions();
 

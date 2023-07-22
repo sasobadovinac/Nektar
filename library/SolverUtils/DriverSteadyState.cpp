@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File DriverSteadyState.cpp
+// File: DriverSteadyState.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Incompressible Navier Stokes solver
+// Description: Driver class for the steady-state solver
 //
 ///////////////////////////////////////////////////////////////////////////////
 

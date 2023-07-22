@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/fix/halfmodetofourier</GitBranch>
+            <GitSHA1>0354292bb7bbb2daab3c2f4f9c87dd0b191d66d1</GitSHA1>
+            <Hostname>ubuntu22</Hostname>
+            <NektarVersion>5.3.0</NektarVersion>
+            <Timestamp>03-Feb-2023 11:56:26</Timestamp>
+        </Provenance>
+        <ChkFileNum>1</ChkFileNum>
+        <Kinvis>1</Kinvis>
+        <SessionName0>TriQuad.xml</SessionName0>
+        <Time>0.30000000000000021</Time>
+        <TimeStep>0.001</TimeStep>
+    </Metadata>
+    <ELEMENTS FIELDS="u,v,w,p" SHAPE="Triangle-HomogenousExp1D" BASIS="Modified_A,Modified_B,FourierHalfModeRe" HOMOGENEOUSLENGTHS="1" HOMOGENEOUSZIDS="0" NUMMODESPERDIR="UNIORDER:3,3,1" ID="0-3" COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJyT1HUJ+a0o6aB0R7FRZgazrTmEf4ABCpSbT/wOfaCxlwENwNQrLmJpWKTLtlcSag66fnQgC5WXxKEOZi6Mv3fKtOumkr9s0PXD3MUIFv2wX22ZXeAD7lt77CF8e5j6Cu6yA1fXPdoDVWePSz1MHF0/DMDk2dHUo8nbw8yFyWujmQfTD3PXv/8g8N6+4djXWHvPzTas/MwH3rz6ZgMTP3UwUZyh+ckePg/xhilmR+HhAFPPOd+0eN78/3BzYPph6mDiML7vPc6Uuy+e7UEXh5kPMxcmrqr7YS9ryAW4eph+mLuaweL8B14td+FWPyCyF2Ihv8OWv+x3/Pid9jLXcXm3LwyBxGeCB4RWMLaFqwcBloC9MHNg+iHqE2xh5oD5K2xsW6Dy4WABAYi6bV4Q+TMOqOYC1UN8IbgXZg5MP8xdAA9d/DYA</ELEMENTS>
+    <ELEMENTS FIELDS="u,v,w,p" SHAPE="Quadrilateral-HomogenousExp1D" BASIS="Modified_A,Modified_A,FourierHalfModeRe" HOMOGENEOUSLENGTHS="1" HOMOGENEOUSZIDS="0" NUMMODESPERDIR="UNIORDER:3,3,1" ID="4-5" COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxjYIAApTuKjTIzmG0VF7E0LNJl2yup6xLyW1HyAAMOMGvj40RFO6W9bSx54f5/DWwZ0MyByUPNccBlzt4p066bSv6yyWNtYdJJVtnLCBb9sF9tmV3gA+5be+whfHuYOEwflG8P4z9fEmkjNY1nb39b/I36RRpw98DMgcnDzMFlnjaUvusyTbzJ2QhuTsOxr7H2npttOOebFs+b/3/Pv/8g8H4/jObzEG+YYnZ0D0z97r/btnbG/LSxZd8Q8VSP2xamDmYOTB4mjh4uMPNUdT/sZQ25sOcRK3+ElJjYXrCkgrHtq+Uu3OoHRCB8loC9J8Hm8DucWn5I/GynLUS8Jg7ifoO0vVULV2pPcQ6yrS95dnRHeJotTB3MHJh8KViDwAEwtcIG6v8EsHkNivlQvuBeN1ZVjTUJhXsBYXSyzwAA</ELEMENTS>
+</NEKTAR>

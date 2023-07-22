@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AssemblyMapDG.h
+// File: AssemblyMapDG.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -106,41 +106,44 @@ protected:
 
     void SetUpUniversalDGMap(const ExpList &locExp);
 
-    virtual int v_GetLocalToGlobalMap(const int i) const;
+    virtual int v_GetLocalToGlobalMap(const int i) const override;
 
-    virtual int v_GetGlobalToUniversalMap(const int i) const;
+    virtual int v_GetGlobalToUniversalMap(const int i) const override;
 
-    virtual int v_GetGlobalToUniversalMapUnique(const int i) const;
+    virtual int v_GetGlobalToUniversalMapUnique(const int i) const override;
 
-    virtual const Array<OneD, const int> &v_GetLocalToGlobalMap();
+    virtual const Array<OneD, const int> &v_GetLocalToGlobalMap() override;
 
-    virtual const Array<OneD, const int> &v_GetGlobalToUniversalMap();
+    virtual const Array<OneD, const int> &v_GetGlobalToUniversalMap() override;
 
-    virtual const Array<OneD, const int> &v_GetGlobalToUniversalMapUnique();
+    virtual const Array<OneD, const int> &v_GetGlobalToUniversalMapUnique()
+        override;
 
-    virtual NekDouble v_GetLocalToGlobalSign(const int i) const;
+    virtual NekDouble v_GetLocalToGlobalSign(const int i) const override;
 
     virtual void v_LocalToGlobal(const Array<OneD, const NekDouble> &loc,
                                  Array<OneD, NekDouble> &global,
-                                 bool useComm = false) const;
+                                 bool useComm = false) const override;
 
     virtual void v_GlobalToLocal(const Array<OneD, const NekDouble> &global,
-                                 Array<OneD, NekDouble> &loc) const;
+                                 Array<OneD, NekDouble> &loc) const override;
 
     virtual void v_GlobalToLocal(const NekVector<NekDouble> &global,
-                                 NekVector<NekDouble> &loc) const;
+                                 NekVector<NekDouble> &loc) const override;
 
     virtual void v_Assemble(const Array<OneD, const NekDouble> &loc,
-                            Array<OneD, NekDouble> &global) const;
+                            Array<OneD, NekDouble> &global) const override;
 
     virtual void v_Assemble(const NekVector<NekDouble> &loc,
-                            NekVector<NekDouble> &global) const;
+                            NekVector<NekDouble> &global) const override;
 
-    virtual void v_UniversalAssemble(Array<OneD, NekDouble> &pGlobal) const;
+    virtual void v_UniversalAssemble(
+        Array<OneD, NekDouble> &pGlobal) const override;
 
-    virtual void v_UniversalAssemble(NekVector<NekDouble> &pGlobal) const;
+    virtual void v_UniversalAssemble(
+        NekVector<NekDouble> &pGlobal) const override;
 
-    virtual int v_GetFullSystemBandWidth() const;
+    virtual int v_GetFullSystemBandWidth() const override;
 }; // class
 
 } // namespace MultiRegions

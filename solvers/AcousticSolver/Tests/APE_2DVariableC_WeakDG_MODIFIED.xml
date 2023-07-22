@@ -76,69 +76,69 @@
             <C ID="3"> E[2,6,9,12,15,18,21,24,27,30,28,25,22,19,16,13,10,7,4,0] </C>
             <C ID="0"> Q[0-9] </C>
         </COMPOSITE>
-    <DOMAIN> C[0] </DOMAIN>
+        <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
     <EXPANSIONS>
-    <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="p" TYPE="MODIFIED"/>
-    <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="u" TYPE="MODIFIED"/>
-    <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="v" TYPE="MODIFIED"/>
+        <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="p" TYPE="MODIFIED"/>
+        <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="u" TYPE="MODIFIED"/>
+        <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="v" TYPE="MODIFIED"/>
     </EXPANSIONS>
-  <CONDITIONS>
-    <SOLVERINFO>
-      <I PROPERTY="EQType"                VALUE="APE"                 />
-      <I PROPERTY="Projection"            VALUE="DisContinuous"       />
-      <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
-      <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"/>
-      <I PROPERTY="UpwindType"            VALUE="Upwind"              />
-    </SOLVERINFO>
-    <PARAMETERS>
-      <P> TimeStep      = 0.00002           </P>
-      <P> NumSteps      = 500               </P>
-      <P> FinTime       = TimeStep*NumSteps </P>
-      <P> IO_CheckSteps = 500             </P>
-      <P> IO_InfoSteps  = 100               </P>
-      <P> Gravity       = 1.0               </P> <!-- Not used for APE -->
-      <P> Rho0          = 1.204             </P> <!-- Incompressible density -->
-      <P> Gamma         = 1.4               </P> <!-- Ratio of specific heats -->
-      <P> Omega         = 1000              </P> <!-- Angular frequency -->
-      <P> Pinfinity     = 100000            </P> <!-- Ambient pressure -->
-    </PARAMETERS>
-    <VARIABLES>
-      <V ID="0"> p  </V>
-      <V ID="1"> u </V>
-      <V ID="2"> v </V>
-    </VARIABLES>
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[1]  </B>
-      <B ID="1"> C[2,3]  </B>
-    </BOUNDARYREGIONS>
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0"> <!-- Excitation at the inflow boundary -->
-        <D VAR="p" USERDEFINEDTYPE="TimeDependent" VALUE="100*(sin(Omega*t))^2" />
-        <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="100*((sin(Omega*t))^2)/Rho0/((Gamma*Pinfinity/Rho0)^0.5)" />
-        <D VAR="v" VALUE="0" />
-      </REGION>
-      <REGION REF="1"> <!-- Problem homogeneous in y-direction -->
-        <D VAR="p" USERDEFINEDTYPE="RiemannInvariantBC"/>
-        <D VAR="u" USERDEFINEDTYPE="RiemannInvariantBC"/>
-        <D VAR="v" USERDEFINEDTYPE="RiemannInvariantBC"/>
-      </REGION>
-    </BOUNDARYCONDITIONS>
-    <FUNCTION NAME="Baseflow"> <!-- Incompressible base flow -->
-      <E VAR="c0sq" VALUE="(1 + 0.25 * tanh(3*(x-5))) * 1.4 * Pinfinity / Rho0"/>
-      <E VAR="rho0" VALUE="Rho0"/>
-      <E VAR="u0"   VALUE="100" />
-      <E VAR="v0"   VALUE="0" />
-    </FUNCTION>
-    <FUNCTION NAME="ExactSolution"> <!-- Not really the exact solution -->
-      <E VAR="p" VALUE="0"/>
-      <E VAR="u" VALUE="0"/>
-      <E VAR="v" VALUE="0"/>
-    </FUNCTION>
-    <FUNCTION NAME="InitialConditions">
-      <E VAR="p" VALUE="0"/>
-      <E VAR="u" VALUE="0"/>
-      <E VAR="v" VALUE="0"/>
-    </FUNCTION>
-  </CONDITIONS>
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="EQType"                VALUE="APE"                 />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"       />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"/>
+            <I PROPERTY="UpwindType"            VALUE="Upwind"              />
+        </SOLVERINFO>
+        <PARAMETERS>
+            <P> TimeStep      = 0.00002           </P>
+            <P> NumSteps      = 500               </P>
+            <P> FinTime       = TimeStep*NumSteps </P>
+            <P> IO_CheckSteps = 500             </P>
+            <P> IO_InfoSteps  = 100               </P>
+            <P> Gravity       = 1.0               </P> <!-- Not used for APE -->
+            <P> Rho0          = 1.204             </P> <!-- Incompressible density -->
+            <P> Gamma         = 1.4               </P> <!-- Ratio of specific heats -->
+            <P> Omega         = 1000              </P> <!-- Angular frequency -->
+            <P> Pinfinity     = 100000            </P> <!-- Ambient pressure -->
+        </PARAMETERS>
+        <VARIABLES>
+            <V ID="0"> p  </V>
+            <V ID="1"> u </V>
+            <V ID="2"> v </V>
+        </VARIABLES>
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1]  </B>
+            <B ID="1"> C[2,3]  </B>
+        </BOUNDARYREGIONS>
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0"> <!-- Excitation at the inflow boundary -->
+                <D VAR="p" USERDEFINEDTYPE="TimeDependent" VALUE="100*(sin(Omega*t))^2" />
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="100*((sin(Omega*t))^2)/Rho0/((Gamma*Pinfinity/Rho0)^0.5)" />
+                <D VAR="v" VALUE="0" />
+            </REGION>
+            <REGION REF="1"> <!-- Problem homogeneous in y-direction -->
+                <D VAR="p" USERDEFINEDTYPE="RiemannInvariantBC"/>
+                <D VAR="u" USERDEFINEDTYPE="RiemannInvariantBC"/>
+                <D VAR="v" USERDEFINEDTYPE="RiemannInvariantBC"/>
+            </REGION>
+        </BOUNDARYCONDITIONS>
+        <FUNCTION NAME="Baseflow"> <!-- Incompressible base flow -->
+            <E VAR="c0sq" VALUE="(1 + 0.25 * tanh(3*(x-5))) * 1.4 * Pinfinity / Rho0"/>
+            <E VAR="rho0" VALUE="Rho0"/>
+            <E VAR="u0"   VALUE="100" />
+            <E VAR="v0"   VALUE="0" />
+        </FUNCTION>
+        <FUNCTION NAME="ExactSolution"> <!-- Not really the exact solution -->
+            <E VAR="p" VALUE="0"/>
+            <E VAR="u" VALUE="0"/>
+            <E VAR="v" VALUE="0"/>
+        </FUNCTION>
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="p" VALUE="0"/>
+            <E VAR="u" VALUE="0"/>
+            <E VAR="v" VALUE="0"/>
+        </FUNCTION>
+    </CONDITIONS>
 </NEKTAR>

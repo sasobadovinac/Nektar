@@ -56,10 +56,10 @@ struct MetricRegexFieldValue
 
     std::string m_value = "";
     bool m_useTolerance = false;
-    double m_tolerance = 0.0;
+    double m_tolerance  = 0.0;
 
     bool m_useIntTolerance = false;
-    int m_intTolerance = 0;
+    int m_intTolerance     = 0;
 };
 
 class MetricRegex : public Metric

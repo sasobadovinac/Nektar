@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdExpansion2D.h
+// File: StdExpansion2D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -217,11 +217,6 @@ protected:
 private:
     // Virtual Functions ----------------------------------------
     virtual int v_GetShapeDimension() const final
-    {
-        return 2;
-    }
-
-    virtual int v_GetCoordim(void) override
     {
         return 2;
     }

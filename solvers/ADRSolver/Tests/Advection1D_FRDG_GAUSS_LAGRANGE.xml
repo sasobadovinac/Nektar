@@ -13,8 +13,8 @@
             <V ID="8">  0.6  0.0  0.0</V>
             <V ID="9">  0.8  0.0  0.0</V>
             <V ID="10"> 1.0  0.0  0.0</V>
-        </VERTEX> 
-        
+        </VERTEX>
+
         <ELEMENT>
             <S ID="0">    0     1 </S>
             <S ID="1">    1     2 </S>
@@ -27,22 +27,22 @@
             <S ID="8">    8     9 </S>
             <S ID="9">    9    10 </S>
         </ELEMENT>
-        
+
         <COMPOSITE>
             <C ID="0"> S[0-9] </C>
             <C ID="1"> V[0]   </C>
             <C ID="2"> V[10]  </C>
         </COMPOSITE>
-        
+
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
-    
+
     <EXPANSIONS>
         <E COMPOSITE="C[0]" FIELDS="u" TYPE="GAUSS_LAGRANGE" NUMMODES="4"/>
     </EXPANSIONS>
-    
+
     <CONDITIONS>
-    
+
         <PARAMETERS>
             <P> FinTime         = 20                     </P>
             <P> TimeStep        = 0.01                 </P>
@@ -52,7 +52,7 @@
             <P> advx            = 1                     </P>
             <P> advy            = 0                     </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
@@ -82,7 +82,7 @@
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="Vx" VALUE="advx" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="InitialConditions">
             <E VAR="u" VALUE="exp(-20.0*x*x)" />
         </FUNCTION>
@@ -92,5 +92,5 @@
         </FUNCTION>
 
     </CONDITIONS>
-    
+
 </NEKTAR>

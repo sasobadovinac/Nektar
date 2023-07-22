@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CsvIO.h
+// File: CsvIO.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -68,16 +68,13 @@ public:
 protected:
     LIB_UTILITIES_EXPORT virtual void v_ImportFieldData(
         const std::string inFile, PtsFieldSharedPtr &ptsField,
-        DomainRangeShPtr &Range);
+        DomainRangeShPtr &Range) override;
 
     // LIB_UTILITIES_EXPORT virtual void v_ImportFieldData(
     //     const std::string inFile,
     //     PtsFieldSharedPtr &ptsField);
 
-    LIB_UTILITIES_EXPORT virtual std::string GetFileEnding() const
-    {
-        return "csv";
-    };
+    LIB_UTILITIES_EXPORT virtual std::string v_GetFileEnding() const override;
 };
 
 typedef std::shared_ptr<CsvIO> CsvIOSharedPtr;

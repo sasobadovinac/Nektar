@@ -188,14 +188,6 @@ SET(InterpreterSources
 ./Interpreter/Interpreter.cpp
 )
 
-SET(KernelHeaders
-./Kernel/kernel.h
-)
-
-SET(KernelSources
-./Kernel/kernel.cpp
-)
-
 SET(LinearAlgebraHeaders
 ./LinearAlgebra/Arpack.hpp
 ./LinearAlgebra/BlasArray.hpp
@@ -287,11 +279,15 @@ SET(TimeIntegrationHeaders
         ./TimeIntegration/IMEXTimeIntegrationSchemes.h
         ./TimeIntegration/IMEXdirkTimeIntegrationSchemes.h
         ./TimeIntegration/IMEXGearTimeIntegrationScheme.h
+        ./TimeIntegration/IMEXTimeIntegrationSchemeSDC.h
+        ./TimeIntegration/ImplicitTimeIntegrationSchemeSDC.h
         ./TimeIntegration/MCNABTimeIntegrationScheme.h
         ./TimeIntegration/RungeKuttaTimeIntegrationSchemes.h
         ./TimeIntegration/TimeIntegrationScheme.h
         ./TimeIntegration/TimeIntegrationSchemeFIT.h
+        ./TimeIntegration/TimeIntegrationSchemeGEM.h
         ./TimeIntegration/TimeIntegrationSchemeGLM.h
+        ./TimeIntegration/TimeIntegrationSchemeSDC.h
         ./TimeIntegration/TimeIntegrationAlgorithmGLM.h
         ./TimeIntegration/TimeIntegrationSolutionGLM.h
 )
@@ -300,7 +296,9 @@ SET(TimeIntegrationSources
         ./TimeIntegration/SchemeInitializer.cpp
         ./TimeIntegration/TimeIntegrationScheme.cpp
         ./TimeIntegration/TimeIntegrationSchemeFIT.cpp
+        ./TimeIntegration/TimeIntegrationSchemeGEM.cpp
         ./TimeIntegration/TimeIntegrationSchemeGLM.cpp
+        ./TimeIntegration/TimeIntegrationSchemeSDC.cpp
         ./TimeIntegration/TimeIntegrationAlgorithmGLM.cpp
         ./TimeIntegration/TimeIntegrationSolutionGLM.cpp
 )

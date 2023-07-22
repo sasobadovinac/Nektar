@@ -83,7 +83,7 @@
             <E VAR="Vp" VALUE="0" />
         </FUNCTION>
     </CONDITIONS>
-    
+
     <FILTERS>
         <FILTER TYPE="AeroForcesSPM">
             <PARAM NAME="OutputFile">Aerodynamic_Forces.fce</PARAM>

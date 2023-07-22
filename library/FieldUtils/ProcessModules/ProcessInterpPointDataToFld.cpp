@@ -34,7 +34,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include <string>
-using namespace std;
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/geometry.hpp>
@@ -47,6 +46,8 @@ using namespace std;
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include "ProcessInterpPointDataToFld.h"
+
+using namespace std;
 
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
@@ -77,7 +78,7 @@ ProcessInterpPointDataToFld::~ProcessInterpPointDataToFld()
 {
 }
 
-void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
+void ProcessInterpPointDataToFld::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -170,7 +171,8 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
     ASSERTL0(coord_id <= static_cast<int>(outPts->GetDim()) - 1,
              "interpcoord is bigger than the Pts files dimension");
 
-    Interpolator interp(LibUtilities::eNoMethod, coord_id);
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>> interp(
+        LibUtilities::eNoMethod, coord_id);
 
     if (m_f->m_verbose && m_f->m_comm->TreatAsRankZero())
     {
@@ -190,7 +192,6 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
             m_f->m_exp[j]->SetPhys(i, outPts->GetPointVal(3 + j, i));
         }
     }
-
     // forward transform fields
     for (i = 0; i < nFields; ++i)
     {

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationScheme.cpp
+// File: TimeIntegrationScheme.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,8 +29,9 @@
 // DEALINGS IN THE SOFTWARE.
 //
 // Description: implementation of time integration scheme class
-// this class is the parent class for the TimeIntegrationSchemeGLM and
-// TimeIntegrationSchemeFIT classes.
+// this class is the parent class for the TimeIntegrationSchemeGLM,
+// TimeIntegrationSchemeFIT, TimeIntegrationSchemeGEM, and
+// TimeIntegrationSchemeSDC classes.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -50,7 +51,7 @@ TimeIntegrationSchemeFactory &GetTimeIntegrationSchemeFactory()
 }
 
 // Access Methods
-std::string TimeIntegrationScheme::GetFullName() const
+std::string TimeIntegrationScheme::v_GetFullName() const
 {
     return GetName() + GetVariant() + "Order" + std::to_string(GetOrder());
 }

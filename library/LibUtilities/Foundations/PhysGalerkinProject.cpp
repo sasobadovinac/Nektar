@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PhysGalerkinProject.cpp
+// File: PhysGalerkinProject.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

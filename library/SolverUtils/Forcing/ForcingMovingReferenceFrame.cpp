@@ -498,7 +498,7 @@ void ForcingMovingReferenceFrame::v_PreApply(
             {
                 Array<OneD, NekDouble> tmpphys(npoints, -m_velxyz[i]);
                 Array<OneD, NekDouble> tmpcoef(npoints);
-                fields[0]->HomogeneousFwdTrans(tmpphys, tmpcoef);
+                fields[0]->HomogeneousFwdTrans(npoints, tmpphys, tmpcoef);
                 Vmath::Vadd(npoints, tmpcoef, 1, inarray[i], 1, outarray[i], 1);
             }
             else if (&inarray != &outarray)

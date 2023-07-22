@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 #include <LibUtilities/TimeIntegration/IMEXGearTimeIntegrationScheme.h>
@@ -60,7 +59,7 @@ namespace LibUtilities
 class IMEXTimeIntegrationScheme : public TimeIntegrationSchemeGLM
 {
 public:
-    IMEXTimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXTimeIntegrationScheme(std::string variant, size_t order,
                               std::vector<NekDouble> freeParams)
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
@@ -72,8 +71,8 @@ public:
                      "<implicit stages, explicit stages>, received " +
                          std::to_string(freeParams.size()));
 
-            int s     = freeParams[0];
-            int sigma = freeParams[1];
+            size_t s     = freeParams[0];
+            size_t sigma = freeParams[1];
 
             m_integration_phases    = TimeIntegrationAlgorithmGLMVector(1);
             m_integration_phases[0] = TimeIntegrationAlgorithmGLMSharedPtr(
@@ -113,7 +112,7 @@ public:
 
             m_integration_phases = TimeIntegrationAlgorithmGLMVector(order);
 
-            for (unsigned int n = 0; n < order; ++n)
+            for (size_t n = 0; n < order; ++n)
             {
                 m_integration_phases[n] = TimeIntegrationAlgorithmGLMSharedPtr(
                     new TimeIntegrationAlgorithmGLM(this));
@@ -133,9 +132,6 @@ public:
                 case 2:
                     IMEXTimeIntegrationScheme::SetupSchemeData(
                         m_integration_phases[0], 1);
-                    // IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-                    //     m_integration_phases[0], 2, std::vector<NekDouble>
-                    //     {2, 3});
                     break;
 
                 case 3:
@@ -150,12 +146,13 @@ public:
                 case 4:
                     IMEXdirkTimeIntegrationScheme::SetupSchemeData(
                         m_integration_phases[0], 3,
-                        std::vector<NekDouble>{2, 3});
+                        std::vector<NekDouble>{3, 4});
                     IMEXdirkTimeIntegrationScheme::SetupSchemeData(
                         m_integration_phases[1], 3,
-                        std::vector<NekDouble>{2, 3});
-                    IMEXTimeIntegrationScheme::SetupSchemeData(
-                        m_integration_phases[2], 3);
+                        std::vector<NekDouble>{3, 4});
+                    IMEXdirkTimeIntegrationScheme::SetupSchemeData(
+                        m_integration_phases[2], 3,
+                        std::vector<NekDouble>{3, 4});
                     break;
 
                 default:
@@ -175,8 +172,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         TimeIntegrationSchemeSharedPtr p =
             MemoryManager<IMEXTimeIntegrationScheme>::AllocateSharedPtr(
@@ -187,34 +183,19 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetFullName() const
-    {
-        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
-    }
-
-    LUE virtual std::string GetName() const
-    {
-        return std::string("IMEX");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
-                                    int order)
+                                    size_t order)
     {
-        const NekDouble ABcoefficients[5] = {0.,
-                                             1.,         // 1st Order
-                                             2. / 3.,    // 2nd Order
-                                             6. / 11.,   // 3rd Order
-                                             12. / 25.}; // 4th Order
+        constexpr NekDouble ABcoefficients[5] = {0.,
+                                                 1.,         // 1st Order
+                                                 2. / 3.,    // 2nd Order
+                                                 6. / 11.,   // 3rd Order
+                                                 12. / 25.}; // 4th Order
 
         // Nsteps = 2 * order
 
         // clang-format off
-        const NekDouble UVcoefficients[5][8] =
+        constexpr NekDouble UVcoefficients[5][8] =
             { {         0.,    0.,     0.,        0.,
                         0.,    0.,     0.,        0. },
               // 1st Order
@@ -261,32 +242,49 @@ public:
         phase->m_A[0][0][0] = ABcoefficients[phase->m_order];
         phase->m_B[0][0][0] = ABcoefficients[phase->m_order];
 
-        for (int n = 0; n < 2 * phase->m_order; ++n)
+        for (size_t n = 0; n < 2 * phase->m_order; ++n)
         {
             phase->m_U[0][n] = UVcoefficients[phase->m_order][n];
             phase->m_V[0][n] = UVcoefficients[phase->m_order][n];
         }
 
         // V evaluation value shuffling row n column n-1
-        for (int n = 1; n < 2 * phase->m_order; ++n)
+        for (size_t n = 1; n < 2 * phase->m_order; ++n)
         {
             if (n != phase->m_order)
                 phase->m_V[n][n - 1] = 1.0; // constant 1
         }
 
-        phase->m_numMultiStepValues = phase->m_order;
-        phase->m_numMultiStepDerivs = phase->m_order;
+        phase->m_numMultiStepValues         = phase->m_order;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepExplicitDerivs = phase->m_order;
 
-        phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
+        phase->m_timeLevelOffset = Array<OneD, size_t>(phase->m_numsteps);
 
         // Values and derivatives needed.
-        for (int n = 0; n < phase->m_order; ++n)
+        for (size_t n = 0; n < phase->m_order; ++n)
         {
             phase->m_timeLevelOffset[n]                  = n;
             phase->m_timeLevelOffset[phase->m_order + n] = n;
         }
 
         phase->CheckAndVerify();
+    }
+
+protected:
+    LUE virtual std::string v_GetFullName() const override
+    {
+        return m_integration_phases.back()->m_name;
+    }
+
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("IMEX");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
     }
 
 }; // end class IMEXTimeIntegrationScheme
@@ -296,7 +294,7 @@ public:
 class IMEXOrder1TimeIntegrationScheme : public IMEXTimeIntegrationScheme
 {
 public:
-    IMEXOrder1TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXOrder1TimeIntegrationScheme(std::string variant, size_t order,
                                     std::vector<NekDouble> freeParams)
         : IMEXTimeIntegrationScheme("", 1, freeParams)
     {
@@ -305,8 +303,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -319,12 +316,15 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXOrder1TimeIntegrationScheme
 
 class IMEXOrder2TimeIntegrationScheme : public IMEXTimeIntegrationScheme
 {
 public:
-    IMEXOrder2TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXOrder2TimeIntegrationScheme(std::string variant, size_t order,
                                     std::vector<NekDouble> freeParams)
         : IMEXTimeIntegrationScheme("", 2, freeParams)
     {
@@ -333,8 +333,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -347,12 +346,15 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXOrder2TimeIntegrationScheme
 
 class IMEXOrder3TimeIntegrationScheme : public IMEXTimeIntegrationScheme
 {
 public:
-    IMEXOrder3TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXOrder3TimeIntegrationScheme(std::string variant, size_t order,
                                     std::vector<NekDouble> freeParams)
         : IMEXTimeIntegrationScheme("", 3, freeParams)
     {
@@ -361,8 +363,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -375,12 +376,15 @@ public:
 
     static std::string className;
 
+protected:
+    static std::string TimeIntegrationMethodLookupId;
+
 }; // end class IMEXOrder3TimeIntegrationScheme
 
 class IMEXOrder4TimeIntegrationScheme : public IMEXTimeIntegrationScheme
 {
 public:
-    IMEXOrder4TimeIntegrationScheme(std::string variant, unsigned int order,
+    IMEXOrder4TimeIntegrationScheme(std::string variant, size_t order,
                                     std::vector<NekDouble> freeParams)
         : IMEXTimeIntegrationScheme("", 4, freeParams)
     {
@@ -389,8 +393,7 @@ public:
     }
 
     static TimeIntegrationSchemeSharedPtr create(
-        std::string variant, unsigned int order,
-        std::vector<NekDouble> freeParams)
+        std::string variant, size_t order, std::vector<NekDouble> freeParams)
     {
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
@@ -402,6 +405,9 @@ public:
     }
 
     static std::string className;
+
+protected:
+    static std::string TimeIntegrationMethodLookupId;
 
 }; // end class IMEXOrder4TimeIntegrationScheme
 

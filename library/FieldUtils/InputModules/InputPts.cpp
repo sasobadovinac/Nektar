@@ -82,7 +82,7 @@ InputPts::~InputPts()
 /**
  *
  */
-void InputPts::Process(po::variables_map &vm)
+void InputPts::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

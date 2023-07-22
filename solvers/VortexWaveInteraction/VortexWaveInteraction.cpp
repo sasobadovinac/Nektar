@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// File VortexWaveInteraction.cpp
+// File: VortexWaveInteraction.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -603,11 +603,9 @@ void VortexWaveInteraction::CalcNonLinearWaveForce(void)
         string wavefile   = m_sessionName + ".fld";
         string movedmesh  = m_sessionName + "_advPost_moved.xml";
         string filestreak = m_sessionName + "_streak.fld";
-        char c[16]        = "";
-        snprintf(c, 16, "%d", cnt);
-        char c_alpha[16] = "";
-        snprintf(c_alpha, 16, "%f", m_alpha[0]);
-        string syscall;
+        string syscall    = "";
+        string c          = std::to_string(cnt);
+        string c_alpha    = std::to_string(m_alpha[0]);
         if (m_sessionVWI->GetSolverInfo("INTERFACE") == "phase")
         {
             string filePost = m_sessionName + "_advPost.xml";
@@ -1233,7 +1231,6 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
         }
 
         string syscall;
-        char c[16]             = "";
         string movedmesh       = m_sessionName + "_advPost_moved.xml";
         string movedinterpmesh = m_sessionName + "_interp_moved.xml";
         // rewrite the Rollsessionfile (we start from the waleffe forcing)
@@ -1244,7 +1241,8 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
         // the rolls session file
         //}
 
-        snprintf(c, 16, "%d", cnt);
+        string c = std::to_string(cnt);
+
         // save old roll solution
         string oldroll = m_sessionName + "_roll_" + c + ".fld";
         syscall = "cp -f " + m_sessionName + "-Base.fld" + "  " + oldroll;
@@ -1262,9 +1260,8 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
         string interpstreak     = m_sessionName + "_interpstreak_" + c + ".fld";
         string interwavepressure =
             m_sessionName + "_wave_p_split_interp_" + c + ".fld";
-        char alpchar[16] = "";
+        string c_alpha = std::to_string(m_alpha[0]);
         cout << "alpha = " << m_alpha[0] << endl;
-        snprintf(alpchar, 16, "%f", m_alpha[0]);
 
         if (m_sessionVWI->GetSolverInfo("INTERFACE") != "phase")
         {
@@ -1272,7 +1269,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
 
             syscall = "../../utilities/PostProcessing/Extras/MoveMesh  " +
                       filePost + "  " + filestreak + "  " + fileinterp + "   " +
-                      alpchar;
+                      c_alpha;
 
             cout << syscall.c_str() << endl;
             if (system(syscall.c_str()))
@@ -1283,7 +1280,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
             // move the advPost mesh (remark update alpha!!!)
             syscall = "../../utilities/PostProcessing/Extras/MoveMesh  " +
                       filePost + "  " + filestreak + "  " + filePost + "    " +
-                      alpchar;
+                      c_alpha;
             cout << syscall.c_str() << endl;
             if (system(syscall.c_str()))
             {
@@ -1370,6 +1367,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
                 ASSERTL0(false, syscall.c_str());
             }
             cnt++;
+            c = std::to_string(cnt);
 
             // use relaxation
             if (GetVWIIterationType() !=
@@ -1379,13 +1377,11 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
                 // int reg =3;
                 // FileRelaxation(reg);
             }
-            char c1[16] = "";
-            snprintf(c1, 16, "%d", cnt);
             // calculate the jump conditions
             string wavefile = m_sessionName + ".fld";
             syscall = "../../utilities/PostProcessing/Extras/FldCalcBCs  " +
                       movedmesh + "  " + wavefile + "  " + interpstreak +
-                      ">  data" + c1;
+                      ">  data" + c;
             cout << syscall.c_str() << endl;
             if (system(syscall.c_str()))
             {
@@ -1479,7 +1475,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
             // move the mesh around the critical layer
             syscall = "../../utilities/PostProcessing/Extras/MoveMesh  " +
                       filePost + "  " + filestreak + "  " + fileinterp + "   " +
-                      alpchar + "      " + cr_str;
+                      c_alpha + "      " + cr_str;
 
             cout << syscall.c_str() << endl;
             if (system(syscall.c_str()))
@@ -1490,7 +1486,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
             // move the advPost mesh (remark update alpha!!!)
             syscall = "../../utilities/PostProcessing/Extras/MoveMesh  " +
                       filePost + "  " + filestreak + "  " + filePost + "    " +
-                      alpchar + "      " + cr_str;
+                      c_alpha + "      " + cr_str;
             cout << syscall.c_str() << endl;
             if (system(syscall.c_str()))
             {
@@ -1536,8 +1532,6 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
                 // int reg =3;
                 // FileRelaxation(reg);
             }
-            char c1[16] = "";
-            snprintf(c1, 16, "%d", cnt);
 
             // cp wavepressure to m_sessionName.fld(to get
             // the right bcs names using FldCalcBCs)
@@ -1553,7 +1547,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
             // NB -g or NOT!!!
             syscall = "../../utilities/PostProcessing/Extras/FldCalcBCs  " +
                       movedmesh + "  " + m_sessionName + ".fld" + "  " +
-                      interpstreak + ">  data" + c1;
+                      interpstreak + ">  data" + c;
             cout << syscall.c_str() << endl;
             if (system(syscall.c_str()))
             {
@@ -2058,9 +2052,7 @@ Array<OneD, int> VortexWaveInteraction::GetReflectionIndex(void)
     //-> Dermine the point which is on coordinate (x -> -x + Lx/2, y-> -y)
     m_waveVelocities[0]->GetPlane(0)->GetCoords(coord_x, coord_y);
     NekDouble xmax = Vmath::Vmax(npts, coord_x, 1);
-    // NekDouble tol =
-    // NekConstants::kGeomFactorsTol*NekConstants::kGeomFactorsTol;
-    NekDouble tol = 1e-5;
+    NekDouble tol  = 1e-5;
     NekDouble xnew, ynew;
 
     int start = npts - 1;

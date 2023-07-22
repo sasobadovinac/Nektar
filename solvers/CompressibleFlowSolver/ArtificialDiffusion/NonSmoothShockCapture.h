@@ -67,7 +67,7 @@ public:
 protected:
     virtual void v_GetArtificialViscosity(
         const Array<OneD, Array<OneD, NekDouble>> &physfield,
-        Array<OneD, NekDouble> &mu);
+        Array<OneD, NekDouble> &mu) override;
 
 private:
     NonSmoothShockCapture(

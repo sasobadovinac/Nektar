@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Laplace.h
+// File: Laplace.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -69,12 +69,12 @@ protected:
 
     virtual ~Laplace();
 
-    virtual void v_InitObject(bool DeclareFields = true);
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
-    virtual void v_DoSolve();
+    virtual void v_InitObject(bool DeclareFields = true) override;
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
+    virtual void v_DoSolve() override;
 
 private:
-    virtual Array<OneD, bool> v_GetSystemSingularChecks();
+    virtual Array<OneD, bool> v_GetSystemSingularChecks() override;
 };
 } // namespace Nektar
 
