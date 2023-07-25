@@ -104,31 +104,20 @@ void AdvectionWeakDG::v_Advect(
     timer.Stop();
     timer.AccumulateRegion("AdvectCoeffs", 2);
 
-    // Multiply by inverse mass matrix
-    LibUtilities::Timer timer2;
-    for (int i = 0; i < nConvectiveFields; ++i)
-    {
-        timer2.Start();
-        fields[i]->MultiplyByElmtInvMass(tmp[i], tmp[i]);
-        timer2.Stop();
-        timer2.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass", 1);
-    }
+    // why was this broken in many loops over convective fields?
+    // this is terrible for locality
 
-    LibUtilities::Timer timer3;
-    timer3.Start();
+    timer.Start();
     for (int i = 0; i < nConvectiveFields; ++i)
     {
         fields[i]->BwdTrans(tmp[i], outarray[i]);
     }
-    timer3.Stop();
-    timer3.AccumulateRegion("AdvWeakDG:_BwdTrans", 1);
+    timer.Stop();
+    timer.AccumulateRegion("AdvWeakDG:_BwdTrans", 10);
     timer1.Stop();
     timer1.AccumulateRegion("AdvWeakDG:All", 10);
 }
 
-/**
- *
- */
 void AdvectionWeakDG::v_AdvectCoeffs(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
@@ -191,7 +180,17 @@ void AdvectionWeakDG::v_AdvectCoeffs(
         timer.Start();
         fields[i]->AddTraceIntegral(numflux[i], outarray[i]);
         timer.Stop();
-        timer.AccumulateRegion("AdvWeakDG:_AddTraceIntegral", 1);
+        timer.AccumulateRegion("AdvWeakDG:_AddTraceIntegral", 10);
+    }
+    if (!fields[0]->GetGraph()->GetMovement()->GetMoveFlag())
+    {
+        for (int i = 0; i < nConvectiveFields; ++i)
+        {
+            timer.Start();
+            fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
+            timer.Stop();
+            timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass", 10);
+        }
     }
 
     timer1.Stop();

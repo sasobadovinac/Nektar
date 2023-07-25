@@ -71,7 +71,7 @@ class StdExpansion : public std::enable_shared_from_this<StdExpansion>
 {
 public:
     /** \brief Default Constructor */
-    STD_REGIONS_EXPORT StdExpansion() = default;
+    STD_REGIONS_EXPORT StdExpansion();
 
     /** \brief Constructor */
     STD_REGIONS_EXPORT StdExpansion(
@@ -84,7 +84,7 @@ public:
     STD_REGIONS_EXPORT StdExpansion(const StdExpansion &T);
 
     /** \brief Destructor */
-    STD_REGIONS_EXPORT virtual ~StdExpansion() = default;
+    STD_REGIONS_EXPORT virtual ~StdExpansion();
 
     // Standard Expansion Routines Applicable Regardless of Region
 
@@ -818,6 +818,13 @@ public:
         v_MassLevelCurvatureMatrixOp(inarray, outarray, mkey);
     }
 
+    void LinearAdvectionMatrixOp(const Array<OneD, const NekDouble> &inarray,
+                                 Array<OneD, NekDouble> &outarray,
+                                 const StdMatrixKey &mkey)
+    {
+        v_LinearAdvectionMatrixOp(inarray, outarray, mkey);
+    }
+
     void LinearAdvectionDiffusionReactionMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey,
@@ -1268,6 +1275,10 @@ protected:
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey);
 
     STD_REGIONS_EXPORT void MassLevelCurvatureMatrixOp_MatFree(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey);
+
+    STD_REGIONS_EXPORT void LinearAdvectionMatrixOp_MatFree(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey);
 
@@ -1726,6 +1737,10 @@ private:
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey);
 
     STD_REGIONS_EXPORT virtual void v_MassLevelCurvatureMatrixOp(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey);
+
+    STD_REGIONS_EXPORT virtual void v_LinearAdvectionMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey);
 

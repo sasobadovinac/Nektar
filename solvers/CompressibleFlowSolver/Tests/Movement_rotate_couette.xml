@@ -321,6 +321,19 @@
         <E COMPOSITE="C[409]" NUMMODES="6" TYPE="MODIFIED" FIELDS="rho,rhou,rhov,E" />
         <E COMPOSITE="C[410]" NUMMODES="6" TYPE="MODIFIED" FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
+    <MOVEMENT>
+        <ZONES>
+            <FIXED ID="0" DOMAIN="D[0]" />
+            <ROTATE ID="1" DOMAIN="D[1]" ORIGIN="0,0.5,0" AXIS="0,0,1" ANGVEL="100"/>
+        </ZONES>
+        <INTERFACES>
+            <INTERFACE NAME="Circle">
+                <LEFT  ID="0" BOUNDARY="C[405]" />
+                <RIGHT ID="1" BOUNDARY="C[406]"  />
+            </INTERFACE>
+        </INTERFACES>
+    </MOVEMENT>
+
 
     <CONDITIONS>
         <PARAMETERS>
@@ -356,19 +369,6 @@
             <V ID="2"> rhov </V>
             <V ID="3"> E    </V>
         </VARIABLES>
-
-        <MOVEMENT>
-            <ZONES>
-                <FIXED ID="0" DOMAIN="D[0]" />
-                <ROTATE ID="1" DOMAIN="D[1]" ORIGIN="0,0.5,0" AXIS="0,0,1" ANGVEL="1"/>/>
-            </ZONES>
-            <INTERFACES>
-                <INTERFACE NAME="Circle">
-                    <LEFT  ID="0" BOUNDARY="C[405]" />
-                    <RIGHT ID="1" BOUNDARY="C[406]"  />
-                </INTERFACE>
-            </INTERFACES>
-        </MOVEMENT>
 
         <BOUNDARYREGIONS>
             <B ID="0"> C[404] </B>

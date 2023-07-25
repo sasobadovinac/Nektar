@@ -92,17 +92,6 @@ void DiffusionLDG::v_Diffuse(
     DiffusionLDG::v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp, pFwd,
                                   pBwd);
 
-    // Multiply by inverse mass matrix     // @TODO: We don't want
-    // MultiplyByElmtInvMassfor ALE so we moved out of the diffusecoeffs method
-    LibUtilities::Timer timer;
-    for (int i = 0; i < nConvectiveFields; ++i)
-    {
-        timer.Start();
-        fields[i]->MultiplyByElmtInvMass(tmp[i], tmp[i]);
-        timer.Stop();
-        timer.AccumulateRegion("MultiplyByElmtInvMass");
-    }
-
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
         fields[i]->BwdTrans(tmp[i], outarray[i]);
@@ -172,6 +161,15 @@ void DiffusionLDG::v_DiffuseCoeffs(
         Vmath::Neg(nCoeffs, outarray[i], 1);
         fields[i]->AddTraceIntegral(traceflux[i], outarray[i]);
         fields[i]->SetPhysState(false);
+    }
+
+    if (!fields[0]->GetGraph()->GetMovement()->GetMoveFlag()) // i.e. if
+                                                              // m_ALESolver
+    {
+        for (std::size_t i = 0; i < nConvectiveFields; ++i)
+        {
+            fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
+        }
     }
 }
 

@@ -8,16 +8,16 @@
     </files>
     <metrics>
         <metric type="L2" id="1">
-            <value variable="rho" tolerance="1e-6">7.01766e-08</value>
-            <value variable="rhou" tolerance="1e-6">1.79732e-05</value>
-            <value variable="rhov" tolerance="1e-6">1.55277e-05</value>
-            <value variable="E" tolerance="1e-5">0.0173705</value>
+            <value variable="rho" tolerance="1e-6">1.39834e-08</value>
+            <value variable="rhou" tolerance="1e-6">1.79132e-05</value>
+            <value variable="rhov" tolerance="1e-6">1.38303e-05</value>
+            <value variable="E" tolerance="1e-5">0.00433813</value>
         </metric>
         <metric type="Linf" id="2">
-            <value variable="rho" tolerance="1e-6">7.14624e-07</value>
-            <value variable="rhou" tolerance="1e-5">0.000131629</value>
-            <value variable="rhov" tolerance="1e-6">8.52884e-05</value>
-            <value variable="E" tolerance="1e-3">0.0579378</value>
+            <value variable="rho" tolerance="1e-6">2.60889e-07</value>
+            <value variable="rhou" tolerance="1e-5">0.000781472</value>
+            <value variable="rhov" tolerance="1e-6">0.000391911</value>
+            <value variable="E" tolerance="1e-3"> 0.0716392</value>
         </metric>
     </metrics>
 </test>

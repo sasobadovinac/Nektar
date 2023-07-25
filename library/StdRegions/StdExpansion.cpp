@@ -42,6 +42,11 @@ namespace Nektar
 {
 namespace StdRegions
 {
+/** \brief Default constructor */
+StdExpansion::StdExpansion()
+{
+}
+
 StdExpansion::StdExpansion(const int numcoeffs, const int numbases,
                            const LibUtilities::BasisKey &Ba,
                            const LibUtilities::BasisKey &Bb,
@@ -84,6 +89,11 @@ StdExpansion::StdExpansion(const StdExpansion &T)
       m_elmt_id(T.m_elmt_id), m_ncoeffs(T.m_ncoeffs),
       m_stdMatrixManager(T.m_stdMatrixManager),
       m_stdStaticCondMatrixManager(T.m_stdStaticCondMatrixManager)
+{
+}
+
+// Destructor
+StdExpansion::~StdExpansion()
 {
 }
 
@@ -462,14 +472,18 @@ DNekMatSharedPtr StdExpansion::CreateGeneralMatrix(const StdMatrixKey &mkey)
         case eLaplacian00:
         case eLaplacian01:
         case eLaplacian02:
+        case eLaplacian10:
         case eLaplacian11:
         case eLaplacian12:
+        case eLaplacian20:
+        case eLaplacian21:
         case eLaplacian22:
         case eWeakDeriv0:
         case eWeakDeriv1:
         case eWeakDeriv2:
         case eWeakDirectionalDeriv:
         case eMassLevelCurvature:
+        case eLinearAdvection:
         case eLinearAdvectionReaction:
         case eLinearAdvectionDiffusionReaction:
         {
@@ -527,6 +541,9 @@ void StdExpansion::GeneralMatrixOp(const Array<OneD, const NekDouble> &inarray,
             break;
         case eMassLevelCurvature:
             MassLevelCurvatureMatrixOp(inarray, outarray, mkey);
+            break;
+        case eLinearAdvection:
+            LinearAdvectionMatrixOp(inarray, outarray, mkey);
             break;
         case eLinearAdvectionReaction:
             LinearAdvectionDiffusionReactionMatrixOp(inarray, outarray, mkey,
@@ -598,6 +615,9 @@ void StdExpansion::GeneralMatrixOp_MatFree(
             break;
         case eMassLevelCurvature:
             MassLevelCurvatureMatrixOp_MatFree(inarray, outarray, mkey);
+            break;
+        case eLinearAdvection:
+            LinearAdvectionMatrixOp_MatFree(inarray, outarray, mkey);
             break;
         case eLinearAdvectionReaction:
             LinearAdvectionDiffusionReactionMatrixOp_MatFree(inarray, outarray,
@@ -676,8 +696,8 @@ void StdExpansion::LaplacianMatrixOp_MatFree(
     Array<OneD, NekDouble> dtmp(nq);
     VarCoeffType varcoefftypes[3][3] = {
         {eVarCoeffD00, eVarCoeffD01, eVarCoeffD02},
-        {eVarCoeffD01, eVarCoeffD11, eVarCoeffD12},
-        {eVarCoeffD02, eVarCoeffD12, eVarCoeffD22}};
+        {eVarCoeffD10, eVarCoeffD11, eVarCoeffD12},
+        {eVarCoeffD20, eVarCoeffD21, eVarCoeffD22}};
 
     ConstFactorType constcoefftypes[3][3] = {
         {eFactorCoeffD00, eFactorCoeffD01, eFactorCoeffD02},
@@ -704,6 +724,13 @@ void StdExpansion::LaplacianMatrixOp_MatFree(
             if (mkey.HasVarCoeff(varcoefftypes[k1][k2]))
             {
                 Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k2]), 1,
+                            dtmp, 1, dtmp, 1);
+                v_IProductWRTDerivBase_SumFac(k1, dtmp, outarray);
+            }
+            else if (mkey.HasVarCoeff(
+                         varcoefftypes[k2][k1])) // Check symmetric varcoeff
+            {
+                Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k2][k1]), 1,
                             dtmp, 1, dtmp, 1);
                 v_IProductWRTDerivBase_SumFac(k1, dtmp, outarray);
             }
@@ -780,8 +807,8 @@ void StdExpansion::LaplacianMatrixOp_MatFree_GenericImpl(
     {
         const MatrixType mtype[3][3] = {
             {eLaplacian00, eLaplacian01, eLaplacian02},
-            {eLaplacian01, eLaplacian11, eLaplacian12},
-            {eLaplacian02, eLaplacian12, eLaplacian22}};
+            {eLaplacian10, eLaplacian11, eLaplacian12},
+            {eLaplacian20, eLaplacian21, eLaplacian22}};
         StdMatrixKeySharedPtr mkeyij;
 
         for (i = 0; i < dim; i++)
@@ -850,32 +877,35 @@ void StdExpansion::MassLevelCurvatureMatrixOp_MatFree(
     boost::ignore_unused(inarray, outarray, mkey);
 }
 
-void StdExpansion::LinearAdvectionDiffusionReactionMatrixOp_MatFree(
+void StdExpansion::LinearAdvectionMatrixOp_MatFree(
     const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey,
-    bool addDiffusionTerm)
+    Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey)
 {
+    int i, ndir = 0;
 
-    int i;
-    int ndir =
-        mkey.GetNVarCoeff(); // assume num.r consts corresponds to directions
+    VarCoeffType varcoefftypes[] = {eVarCoeffVelX, eVarCoeffVelY,
+                                    eVarCoeffVelZ};
+    // Count advection velocities
+    for (auto &x : varcoefftypes)
+    {
+        if (mkey.HasVarCoeff(x))
+        {
+            ndir++;
+        }
+    }
+
     ASSERTL0(ndir, "Must define at least one advection velocity");
+    ASSERTL1(ndir <= GetCoordim(),
+             "Number of constants is larger than coordinate dimensions");
 
-    NekDouble lambda = mkey.GetConstFactor(eFactorLambda);
-    int totpts       = GetTotPoints();
+    int totpts = GetTotPoints();
     Array<OneD, NekDouble> tmp(3 * totpts);
     Array<OneD, NekDouble> tmp_deriv = tmp + totpts;
     Array<OneD, NekDouble> tmp_adv   = tmp_deriv + totpts;
 
-    ASSERTL1(ndir <= GetCoordim(),
-             "Number of constants is larger than coordinate dimensions");
+    v_BwdTrans(inarray, tmp); // transform to PhysSpace
 
-    v_BwdTrans(inarray, tmp);
-
-    VarCoeffType varcoefftypes[] = {eVarCoeffVelX, eVarCoeffVelY,
-                                    eVarCoeffVelZ};
-
-    // calculate u dx + v dy + ..
+    // Evaluate advection (u dx + v dy + w dz)
     Vmath::Zero(totpts, tmp_adv, 1);
     for (i = 0; i < ndir; ++i)
     {
@@ -884,11 +914,59 @@ void StdExpansion::LinearAdvectionDiffusionReactionMatrixOp_MatFree(
                      1, tmp_adv, 1, tmp_adv, 1);
     }
 
-    if (lambda) // add -lambda*u
+    v_IProductWRTBase(tmp_adv, outarray);
+}
+
+void StdExpansion::LinearAdvectionDiffusionReactionMatrixOp_MatFree(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey,
+    bool addDiffusionTerm)
+{
+    int i, ndir = 0;
+
+    VarCoeffType varcoefftypes[] = {eVarCoeffVelX, eVarCoeffVelY,
+                                    eVarCoeffVelZ};
+    // Count advection velocities
+    for (auto &x : varcoefftypes)
+    {
+        if (mkey.HasVarCoeff(x))
+        {
+            ndir++;
+        }
+    }
+
+    ASSERTL0(ndir, "Must define at least one advection velocity");
+    ASSERTL1(ndir <= GetCoordim(),
+             "Number of constants is larger than coordinate dimensions");
+
+    NekDouble lambda = mkey.GetConstFactor(eFactorLambda);
+    int totpts       = GetTotPoints();
+    Array<OneD, NekDouble> tmp(3 * totpts);
+    Array<OneD, NekDouble> tmp_deriv = tmp + totpts;
+    Array<OneD, NekDouble> tmp_adv   = tmp_deriv + totpts;
+
+    v_BwdTrans(inarray, tmp); // transform this mode \phi_i into PhysSpace
+
+    // calculate advection u dx + v dy + ..
+    Vmath::Zero(totpts, tmp_adv, 1);
+    for (i = 0; i < ndir; ++i)
+    {
+        v_PhysDeriv(i, tmp, tmp_deriv);
+        Vmath::Vvtvp(totpts, mkey.GetVarCoeff(varcoefftypes[i]), 1, tmp_deriv,
+                     1, tmp_adv, 1, tmp_adv, 1);
+    }
+
+    // Add reaction term if lambda != 0.0
+    if (lambda)
     {
         Vmath::Svtvp(totpts, -lambda, tmp, 1, tmp_adv, 1, tmp_adv, 1);
     }
 
+    // Create mass matrix = Advection - Reaction
+    v_IProductWRTBase(tmp_adv,
+                      outarray); // Create mass matrix of Advection - Reaction
+
+    // Add Laplacian matrix
     if (addDiffusionTerm)
     {
         Array<OneD, NekDouble> lap(m_ncoeffs);
@@ -897,14 +975,8 @@ void StdExpansion::LinearAdvectionDiffusionReactionMatrixOp_MatFree(
                              mkey.GetNodalPointsType());
         LaplacianMatrixOp(inarray, lap, mkeylap);
 
-        v_IProductWRTBase(tmp_adv, outarray);
-        // Lap v - u.grad v + lambda*u
-        // => (grad u, grad v) + u.grad v - lambda*u
-        Vmath::Vadd(m_ncoeffs, lap, 1, outarray, 1, outarray, 1);
-    }
-    else
-    {
-        v_IProductWRTBase(tmp_adv, outarray);
+        Vmath::Vadd(m_ncoeffs, lap, 1, outarray, 1, outarray,
+                    1); // += Laplacian
     }
 }
 
@@ -1490,6 +1562,15 @@ void StdExpansion::v_MassLevelCurvatureMatrixOp(
     // If this function is not reimplemented on shape level, the function
     // below will be called
     MassLevelCurvatureMatrixOp_MatFree(inarray, outarray, mkey);
+}
+
+void StdExpansion::v_LinearAdvectionMatrixOp(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey)
+{
+    // If this function is not reimplemented on shape level, the function
+    // below will be called
+    LinearAdvectionMatrixOp_MatFree(inarray, outarray, mkey);
 }
 
 void StdExpansion::v_LinearAdvectionDiffusionReactionMatrixOp(
