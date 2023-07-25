@@ -49,11 +49,11 @@ class StdExpansion1D : virtual public StdExpansion
 {
 
 public:
-    STD_REGIONS_EXPORT StdExpansion1D() = default;
+    STD_REGIONS_EXPORT StdExpansion1D();
     STD_REGIONS_EXPORT StdExpansion1D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba);
     STD_REGIONS_EXPORT StdExpansion1D(const StdExpansion1D &T);
-    STD_REGIONS_EXPORT virtual ~StdExpansion1D() override = default;
+    STD_REGIONS_EXPORT virtual ~StdExpansion1D() override;
 
     /** \brief Evaluate the derivative \f$ d/d{\xi_1} \f$ at the
      *  physical quadrature points given by \a inarray and return in
@@ -108,7 +108,8 @@ protected:
 
 private:
     // Virtual Functions ----------------------------------------
-    int v_GetShapeDimension() const final
+
+    virtual int v_GetShapeDimension() const final override
     {
         return 1;
     }

@@ -199,17 +199,7 @@ private:
     LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess>
         m_staticCondMatrixManager;
 
-    // virtual StdRegions::ExpansionType v_DetExpansionType() const
-    //{
-    //   return DetExpansionType();
-    //}
-
-    virtual DNekMatSharedPtr v_GenNBasisTransMatrix()
-    {
-        return StdNodalTriExp::GenNBasisTransMatrix();
-    }
-
-    void v_GetCoords(
+    virtual void v_GetCoords(
         Array<OneD, NekDouble> &coords_0,
         Array<OneD, NekDouble> &coords_1 = NullNekDouble1DArray,
         Array<OneD, NekDouble> &coords_2 = NullNekDouble1DArray) override
@@ -222,11 +212,7 @@ private:
     {
         GetCoord(lcoord, coord);
     }
-    virtual void v_GetNodalPoints(Array<OneD, const NekDouble> &x,
-                                  Array<OneD, const NekDouble> &y)
-    {
-        return StdNodalTriExp::GetNodalPoints(x, y);
-    }
+
     /** \brief Virtual call to integrate the physical point list \a inarray
         over region (see SegExp::Integral) */
     virtual NekDouble v_Integral(

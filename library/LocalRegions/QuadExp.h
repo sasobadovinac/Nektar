@@ -47,8 +47,8 @@ namespace Nektar
 namespace LocalRegions
 {
 
-class QuadExp final : virtual public StdRegions::StdQuadExp,
-                      virtual public Expansion2D
+class QuadExp : virtual public StdRegions::StdQuadExp,
+                virtual public Expansion2D
 {
 public:
     /**
@@ -185,6 +185,7 @@ protected:
 
     LOCAL_REGIONS_EXPORT virtual DNekScalMatSharedPtr v_GetLocMatrix(
         const MatrixKey &mkey) override;
+
     LOCAL_REGIONS_EXPORT void v_DropLocMatrix(const MatrixKey &mkey) override;
 
     LOCAL_REGIONS_EXPORT virtual DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(

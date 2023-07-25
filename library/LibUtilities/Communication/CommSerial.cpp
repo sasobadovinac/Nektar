@@ -92,6 +92,9 @@ bool CommSerial::v_IsSerial()
     return true;
 }
 
+/**
+ *
+ */
 std::tuple<int, int, int> CommSerial::v_GetVersion()
 {
     return std::make_tuple(0, 0, 0);
@@ -142,15 +145,6 @@ void CommSerial::v_SendRecv(void *sendbuf, int sendcount, CommDataType sendtype,
 /**
  *
  */
-// void CommSerial::v_SendRecvReplace(void *buf, int count, CommDataType dt,
-//                                    int pSendProc, int pRecvProc)
-// {
-//     boost::ignore_unused(buf, count, dt, pSendProc, pRecvProc);
-// }
-
-/**
- *
- */
 void CommSerial::v_AllReduce(void *buf, int count, CommDataType dt,
                              enum ReduceOperator pOp)
 {
@@ -190,6 +184,9 @@ void CommSerial::v_AllGather(void *sendbuf, int sendcount,
                          recvtype);
 }
 
+/**
+ *
+ */
 void CommSerial::v_AllGatherv(void *sendbuf, int sendcount,
                               CommDataType sendtype, void *recvbuf,
                               int recvcounts[], int rdispls[],
@@ -199,17 +196,26 @@ void CommSerial::v_AllGatherv(void *sendbuf, int sendcount,
                          rdispls, recvtype);
 }
 
+/**
+ *
+ */
 void CommSerial::v_AllGatherv(void *recvbuf, int recvcounts[], int rdispls[],
                               CommDataType recvtype)
 {
     boost::ignore_unused(recvbuf, recvcounts, rdispls, recvtype);
 }
 
+/**
+ *
+ */
 void CommSerial::v_Bcast(void *buffer, int count, CommDataType dt, int root)
 {
     boost::ignore_unused(buffer, count, dt, root);
 }
 
+/**
+ *
+ */
 void CommSerial::v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
                           void *recvbuf, int recvcount, CommDataType recvtype,
                           int root)
@@ -218,6 +224,9 @@ void CommSerial::v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
     std::memcpy(recvbuf, sendbuf, sendcount * CommDataTypeGetSize(sendtype));
 }
 
+/**
+ *
+ */
 void CommSerial::v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
                            void *recvbuf, int recvcount, CommDataType recvtype,
                            int root)
@@ -226,6 +235,9 @@ void CommSerial::v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
     std::memcpy(recvbuf, sendbuf, sendcount * CommDataTypeGetSize(sendtype));
 }
 
+/**
+ *
+ */
 void CommSerial::v_DistGraphCreateAdjacent(int indegree, const int sources[],
                                            const int sourceweights[],
                                            int reorder)
@@ -233,6 +245,9 @@ void CommSerial::v_DistGraphCreateAdjacent(int indegree, const int sources[],
     boost::ignore_unused(indegree, sources, sourceweights, reorder);
 }
 
+/**
+ *
+ */
 void CommSerial::v_NeighborAlltoAllv(void *sendbuf, int sendcounts[],
                                      int senddispls[], CommDataType sendtype,
                                      void *recvbuf, int recvcounts[],
@@ -242,46 +257,70 @@ void CommSerial::v_NeighborAlltoAllv(void *sendbuf, int sendcounts[],
                          recvcounts, rdispls, recvtype);
 }
 
+/**
+ *
+ */
 void CommSerial::v_Irsend(void *buf, int count, CommDataType dt, int dest,
                           CommRequestSharedPtr request, int loc)
 {
     boost::ignore_unused(buf, count, dt, dest, request, loc);
 }
 
+/**
+ *
+ */
 void CommSerial::v_Isend(void *buf, int count, CommDataType dt, int dest,
                          CommRequestSharedPtr request, int loc)
 {
     boost::ignore_unused(buf, count, dt, dest, request, loc);
 }
 
+/**
+ *
+ */
 void CommSerial::v_SendInit(void *buf, int count, CommDataType dt, int dest,
                             CommRequestSharedPtr request, int loc)
 {
     boost::ignore_unused(buf, count, dt, dest, request, loc);
 }
 
+/**
+ *
+ */
 void CommSerial::v_Irecv(void *buf, int count, CommDataType dt, int source,
                          CommRequestSharedPtr request, int loc)
 {
     boost::ignore_unused(buf, count, dt, source, request, loc);
 }
 
+/**
+ *
+ */
 void CommSerial::v_RecvInit(void *buf, int count, CommDataType dt, int source,
                             CommRequestSharedPtr request, int loc)
 {
     boost::ignore_unused(buf, count, dt, source, request, loc);
 }
 
-void CommSerial::v_WaitAll(CommRequestSharedPtr request)
-{
-    boost::ignore_unused(request);
-}
-
+/**
+ *
+ */
 void CommSerial::v_StartAll(CommRequestSharedPtr request)
 {
     boost::ignore_unused(request);
 }
 
+/**
+ *
+ */
+void CommSerial::v_WaitAll(CommRequestSharedPtr request)
+{
+    boost::ignore_unused(request);
+}
+
+/**
+ *
+ */
 CommRequestSharedPtr CommSerial::v_CreateRequest(int num)
 {
     boost::ignore_unused(num);
@@ -313,5 +352,6 @@ CommSharedPtr CommSerial::v_CommCreateIf(int flag)
         return shared_from_this();
     }
 }
+
 } // namespace LibUtilities
 } // namespace Nektar

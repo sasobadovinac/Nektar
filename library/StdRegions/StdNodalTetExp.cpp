@@ -41,6 +41,10 @@ namespace Nektar
 {
 namespace StdRegions
 {
+StdNodalTetExp::StdNodalTetExp()
+{
+}
+
 StdNodalTetExp::StdNodalTetExp(const LibUtilities::BasisKey &Ba,
                                const LibUtilities::BasisKey &Bb,
                                const LibUtilities::BasisKey &Bc,
@@ -67,6 +71,10 @@ StdNodalTetExp::StdNodalTetExp(const LibUtilities::BasisKey &Ba,
 StdNodalTetExp::StdNodalTetExp(const StdNodalTetExp &T)
     : StdExpansion(T), StdExpansion3D(T), StdTetExp(T),
       m_nodalPointsKey(T.m_nodalPointsKey)
+{
+}
+
+StdNodalTetExp::~StdNodalTetExp()
 {
 }
 

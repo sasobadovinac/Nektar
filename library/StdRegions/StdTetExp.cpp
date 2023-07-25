@@ -43,6 +43,10 @@ namespace Nektar
 {
 namespace StdRegions
 {
+StdTetExp::StdTetExp()
+{
+}
+
 StdTetExp::StdTetExp(const LibUtilities::BasisKey &Ba,
                      const LibUtilities::BasisKey &Bb,
                      const LibUtilities::BasisKey &Bc)
@@ -65,6 +69,10 @@ StdTetExp::StdTetExp(const LibUtilities::BasisKey &Ba,
 }
 
 StdTetExp::StdTetExp(const StdTetExp &T) : StdExpansion(T), StdExpansion3D(T)
+{
+}
+
+StdTetExp::~StdTetExp()
 {
 }
 

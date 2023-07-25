@@ -114,7 +114,6 @@ protected:
     LOCAL_REGIONS_EXPORT virtual void v_AlignVectorToCollapsedDir(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray) override;
-
     LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDirectionalDerivBase(
         const Array<OneD, const NekDouble> &direction,
         const Array<OneD, const NekDouble> &inarray,
@@ -167,7 +166,8 @@ protected:
         StdRegions::Orientation orient) override;
     LOCAL_REGIONS_EXPORT virtual void v_GetTraceQFactors(
         const int edge, Array<OneD, NekDouble> &outarray) override;
-    LOCAL_REGIONS_EXPORT void v_ComputeTraceNormal(const int edge) override;
+    LOCAL_REGIONS_EXPORT virtual void v_ComputeTraceNormal(
+        const int edge) override;
 
     //---------------------------------------
     // Helper functions
@@ -225,7 +225,7 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         const StdRegions::StdMatrixKey &mkey) override;
-    LOCAL_REGIONS_EXPORT void v_LaplacianMatrixOp_MatFree_Kernel(
+    LOCAL_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree_Kernel(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, Array<OneD, NekDouble> &wsp) override;
     LOCAL_REGIONS_EXPORT virtual void v_ReduceOrderCoeffs(
@@ -238,7 +238,7 @@ protected:
         Array<OneD, NekDouble> &array,
         const StdRegions::StdMatrixKey &mkey) override;
 
-    LOCAL_REGIONS_EXPORT void v_NormalTraceDerivFactors(
+    LOCAL_REGIONS_EXPORT virtual void v_NormalTraceDerivFactors(
         Array<OneD, Array<OneD, NekDouble>> &factors,
         Array<OneD, Array<OneD, NekDouble>> &d0factors,
         Array<OneD, Array<OneD, NekDouble>> &d1factors) override;

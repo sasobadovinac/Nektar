@@ -48,11 +48,11 @@ class StdMatrixKey;
 class StdTriExp : virtual public StdExpansion2D
 {
 public:
-    STD_REGIONS_EXPORT StdTriExp() = default;
+    STD_REGIONS_EXPORT StdTriExp();
     STD_REGIONS_EXPORT StdTriExp(const LibUtilities::BasisKey &Ba,
                                  const LibUtilities::BasisKey &Bb);
     STD_REGIONS_EXPORT StdTriExp(const StdTriExp &T);
-    STD_REGIONS_EXPORT virtual ~StdTriExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdTriExp() override;
 
 protected:
     //-------------------------------
@@ -142,6 +142,7 @@ protected:
     v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
                    const Array<OneD, const NekDouble> &inarray,
                    std::array<NekDouble, 3> &firstOrderDerivs) override;
+
     //---------------------------
     // Helper functions
     //---------------------------
@@ -181,15 +182,6 @@ protected:
     STD_REGIONS_EXPORT virtual void v_GetTraceCoeffMap(
         const unsigned int traceid,
         Array<OneD, unsigned int> &maparray) override;
-#if 0 
-            STD_REGIONS_EXPORT  virtual void v_GetTraceToElementMap(
-                const int                  eid,
-                Array<OneD, unsigned int>& maparray,
-                Array<OneD,          int>& signarray,
-                Orientation          edgeOrient = eForwards,
-                int P = -1,
-                int Q = -1);
-#endif
 
     STD_REGIONS_EXPORT void v_GetTraceInteriorToElementMap(
         const int eid, Array<OneD, unsigned int> &maparray,
@@ -227,7 +219,6 @@ protected:
     STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey) override;
-
     STD_REGIONS_EXPORT virtual void v_MultiplyByStdQuadratureMetric(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;

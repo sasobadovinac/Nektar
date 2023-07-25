@@ -44,8 +44,8 @@ namespace Nektar
 {
 namespace LocalRegions
 {
-class PointExp final : virtual public StdRegions::StdPointExp,
-                       virtual public Expansion0D
+class PointExp : virtual public StdRegions::StdPointExp,
+                 virtual public Expansion0D
 {
 public:
     LOCAL_REGIONS_EXPORT PointExp(

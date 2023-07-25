@@ -50,7 +50,7 @@ class StdTetExp : virtual public StdExpansion3D
 {
 
 public:
-    STD_REGIONS_EXPORT StdTetExp() = default;
+    STD_REGIONS_EXPORT StdTetExp();
     STD_REGIONS_EXPORT StdTetExp(const LibUtilities::BasisKey &Ba,
                                  const LibUtilities::BasisKey &Bb,
                                  const LibUtilities::BasisKey &Bc);
@@ -59,7 +59,7 @@ public:
                                  const LibUtilities::BasisKey &Bc,
                                  NekDouble *coeffs, NekDouble *phys);
     STD_REGIONS_EXPORT StdTetExp(const StdTetExp &T);
-    STD_REGIONS_EXPORT virtual ~StdTetExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdTetExp() override;
 
     LibUtilities::ShapeType DetShapeType() const
     {
@@ -117,9 +117,6 @@ protected:
     STD_REGIONS_EXPORT void v_IProductWRTBase(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
-    STD_REGIONS_EXPORT void v_IProductWRTBase_MatOp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
     STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFac(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
@@ -135,9 +132,6 @@ protected:
     STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
-    STD_REGIONS_EXPORT void v_IProductWRTDerivBase_MatOp(
-        const int dir, const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
     STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_SumFac(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;

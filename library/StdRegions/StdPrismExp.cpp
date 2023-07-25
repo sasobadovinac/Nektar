@@ -43,6 +43,11 @@ namespace Nektar
 {
 namespace StdRegions
 {
+
+StdPrismExp::StdPrismExp()
+{
+}
+
 StdPrismExp::StdPrismExp(const LibUtilities::BasisKey &Ba,
                          const LibUtilities::BasisKey &Bb,
                          const LibUtilities::BasisKey &Bc)
@@ -59,6 +64,11 @@ StdPrismExp::StdPrismExp(const LibUtilities::BasisKey &Ba,
 
 StdPrismExp::StdPrismExp(const StdPrismExp &T)
     : StdExpansion(T), StdExpansion3D(T)
+{
+}
+
+// Destructor
+StdPrismExp::~StdPrismExp()
 {
 }
 

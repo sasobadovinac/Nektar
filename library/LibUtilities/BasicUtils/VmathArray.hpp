@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Wrappers around Vmath routines using Array<OneD,T> as arugments
+// Description: Wrappers around Vmath routines using Array<OneD,T> as arguments
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -96,7 +96,7 @@ void Vmul(int n, const Array<TwoD, NekDouble>::const_reference &x,
     Vmul(n, x.origin(), incx, &y[0], incy, &z[0], incz);
 }
 
-/// \brief Scalar multiply  y = alpha*y
+/// \brief Scalar multiply  y = alpha*x
 
 template <class T>
 void Smul(int n, const T alpha, const Array<OneD, const T> &x, const int incx,
@@ -126,7 +126,7 @@ void Vdiv(int n, const Array<OneD, const T> &x, const int incx,
     Vdiv(n, &x[0], incx, &y[0], incy, &z[0], incz);
 }
 
-/// \brief Scalar multiply  y = alpha/y
+/// \brief Scalar multiply  y = alpha/x
 template <class T>
 void Sdiv(int n, const T alpha, const Array<OneD, const T> &x, const int incx,
           Array<OneD, T> &y, const int incy)
@@ -216,6 +216,7 @@ template <class T> void Neg(int n, Array<OneD, T> &x, const int incx)
     Neg(n, &x[0], incx);
 }
 
+/// \brief log y = log(x)
 template <class T>
 void Vlog(int n, const Array<OneD, const T> &x, const int incx,
           Array<OneD, T> &y, const int incy)
@@ -226,6 +227,7 @@ void Vlog(int n, const Array<OneD, const T> &x, const int incx,
     Vlog(n, &x[0], incx, &y[0], incy);
 }
 
+/// \brief exp y = exp(x)
 template <class T>
 void Vexp(int n, const Array<OneD, const T> &x, const int incx,
           Array<OneD, T> &y, const int incy)
@@ -236,6 +238,7 @@ void Vexp(int n, const Array<OneD, const T> &x, const int incx,
     Vexp(n, &x[0], incx, &y[0], incy);
 }
 
+/// \brief pow y = pow(x, f)
 template <class T>
 void Vpow(int n, const Array<OneD, const T> &x, const int incx, const T f,
           Array<OneD, T> &y, const int incy)
@@ -294,6 +297,7 @@ void Vvtvp(int n, const Array<OneD, const T> &w, const int incw,
 #endif
 }
 
+/// \brief  Vvtvp (vector times vector plus vector): z = w*x + y
 template <class T>
 void Vvtvp(int n, const Array<TwoD, NekDouble>::const_reference &w,
            const int incw, const Array<OneD, const T> &x, const int incx,
@@ -306,32 +310,6 @@ void Vvtvp(int n, const Array<TwoD, NekDouble>::const_reference &w,
     ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
 
     Vvtvp(n, w.origin(), incw, &x[0], incx, &y[0], incy, &z[0], incz);
-}
-
-/// \brief  svtvp (scalar times vector plus vector): z = alpha*x + y
-template <class T>
-void Svtvp(int n, const T alpha, const Array<OneD, const T> &x, const int incx,
-           const Array<OneD, const T> &y, const int incy, Array<OneD, T> &z,
-           const int incz)
-{
-    ASSERTL1(n * incx <= x.size() + x.GetOffset(), "Array out of bounds");
-    ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
-    ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
-
-    Svtvp(n, alpha, &x[0], incx, &y[0], incy, &z[0], incz);
-}
-
-/// \brief  svtvp (scalar times vector plus vector): z = alpha*x + y
-template <class T>
-void Svtvm(int n, const T alpha, const Array<OneD, const T> &x, const int incx,
-           const Array<OneD, const T> &y, const int incy, Array<OneD, T> &z,
-           const int incz)
-{
-    ASSERTL1(n * incx <= x.size() + x.GetOffset(), "Array out of bounds");
-    ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
-    ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
-
-    Svtvm(n, alpha, &x[0], incx, &y[0], incy, &z[0], incz);
 }
 
 /// \brief vvtvm (vector times vector minus vector): z = w*x - y
@@ -358,7 +336,33 @@ void Vvtvm(int n, const Array<OneD, const T> &w, const int incw,
 #endif
 }
 
-/// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + y*z
+/// \brief  svtvp (scalar times vector plus vector): z = alpha*x + y
+template <class T>
+void Svtvp(int n, const T alpha, const Array<OneD, const T> &x, const int incx,
+           const Array<OneD, const T> &y, const int incy, Array<OneD, T> &z,
+           const int incz)
+{
+    ASSERTL1(n * incx <= x.size() + x.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
+
+    Svtvp(n, alpha, &x[0], incx, &y[0], incy, &z[0], incz);
+}
+
+/// \brief  svtvm (scalar times vector minus vector): z = alpha*x - y
+template <class T>
+void Svtvm(int n, const T alpha, const Array<OneD, const T> &x, const int incx,
+           const Array<OneD, const T> &y, const int incy, Array<OneD, T> &z,
+           const int incz)
+{
+    ASSERTL1(n * incx <= x.size() + x.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
+
+    Svtvm(n, alpha, &x[0], incx, &y[0], incy, &z[0], incz);
+}
+
+/// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + x*y
 template <class T>
 void Vvtvvtp(int n, const Array<OneD, const T> &v, int incv,
              const Array<OneD, const T> &w, int incw,
@@ -539,7 +543,7 @@ int Nnan(int n, const Array<OneD, const T> &x, const int incx)
     return Nnan(n, &x[0], incx);
 }
 
-/// \brief
+/// \brief dot product
 template <class T>
 T Dot(int n, const Array<OneD, const T> &w, const Array<OneD, const T> &x)
 {
@@ -549,7 +553,7 @@ T Dot(int n, const Array<OneD, const T> &w, const Array<OneD, const T> &x)
     return Dot(n, &w[0], &x[0]);
 }
 
-/// \brief
+/// \brief dot product
 template <class T>
 T Dot(int n, const Array<OneD, const T> &w, const int incw,
       const Array<OneD, const T> &x, const int incx)
@@ -560,7 +564,7 @@ T Dot(int n, const Array<OneD, const T> &w, const int incw,
     return Dot(n, &w[0], incw, &x[0], incx);
 }
 
-/// \brief
+/// \brief dot product
 template <class T>
 T Dot2(int n, const Array<OneD, const T> &w, const Array<OneD, const T> &x,
        const Array<OneD, const int> &y)
@@ -572,7 +576,7 @@ T Dot2(int n, const Array<OneD, const T> &w, const Array<OneD, const T> &x,
     return Dot2(n, &w[0], &x[0], &y[0]);
 }
 
-/// \brief
+/// \brief dot product
 template <class T>
 T Ddot(int n, const Array<OneD, const T> &w, const int incw,
        const Array<OneD, const T> &x, const int incx,
@@ -587,6 +591,7 @@ T Ddot(int n, const Array<OneD, const T> &w, const int incw,
 
 /********** Memory routines  ***********************/
 
+// \brief copy one vector to another
 template <class T>
 void Vcopy(int n, const Array<OneD, const T> &x, int incx, Array<OneD, T> &y,
            int const incy)
@@ -601,6 +606,7 @@ void Vcopy(int n, const Array<OneD, const T> &x, int incx, Array<OneD, T> &y,
     Vcopy(n, &x[0], incx, &y[0], incy);
 }
 
+// \brief reverse the ordering of  vector to another
 template <class T>
 void Reverse(int n, const Array<OneD, const T> &x, int incx, Array<OneD, T> &y,
              int const incy)

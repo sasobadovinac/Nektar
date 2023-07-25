@@ -45,6 +45,10 @@ namespace Nektar
 {
 namespace StdRegions
 {
+StdTriExp::StdTriExp()
+{
+}
+
 StdTriExp::StdTriExp(const LibUtilities::BasisKey &Ba,
                      const LibUtilities::BasisKey &Bb)
     : StdExpansion(LibUtilities::StdTriData::getNumberOfCoefficients(
@@ -60,6 +64,11 @@ StdTriExp::StdTriExp(const LibUtilities::BasisKey &Ba,
 }
 
 StdTriExp::StdTriExp(const StdTriExp &T) : StdExpansion(T), StdExpansion2D(T)
+{
+}
+
+// Destructor
+StdTriExp::~StdTriExp()
 {
 }
 

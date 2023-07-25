@@ -44,7 +44,7 @@ namespace Nektar
 namespace LocalRegions
 {
 
-class NodalTetExp final : virtual public TetExp
+class NodalTetExp : public TetExp
 {
     /** \brief Constructor using BasisKey class for quadrature
     points and order definition */

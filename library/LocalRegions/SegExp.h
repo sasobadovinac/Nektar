@@ -48,8 +48,7 @@ namespace Nektar
 namespace LocalRegions
 {
 
-class SegExp final : virtual public StdRegions::StdSegExp,
-                     virtual public Expansion1D
+class SegExp : virtual public StdRegions::StdSegExp, virtual public Expansion1D
 {
 
 public:
@@ -159,10 +158,6 @@ protected:
         const int vertex, const Array<OneD, const NekDouble> &inarray,
         NekDouble &outarray) override;
 
-    LOCAL_REGIONS_EXPORT void v_AddVertexPhysVals(
-        const int vertex, const NekDouble &inarray,
-        Array<OneD, NekDouble> &outarray);
-
     LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysVals(
         const int edge, const StdRegions::StdExpansionSharedPtr &EdgeExp,
         const Array<OneD, const NekDouble> &inarray,
@@ -190,8 +185,6 @@ protected:
 
     LOCAL_REGIONS_EXPORT virtual void v_ComputeTraceNormal(
         const int vertex) override;
-
-    LOCAL_REGIONS_EXPORT SpatialDomains::GeomType v_MetricInfoType();
 
     LOCAL_REGIONS_EXPORT virtual void v_ExtractDataToCoeffs(
         const NekDouble *data, const std::vector<unsigned int> &nummodes,

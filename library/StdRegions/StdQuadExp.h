@@ -53,11 +53,11 @@ class StdQuadExp : virtual public StdExpansion2D
     typedef std::shared_ptr<StdExpansion1D> StdExpansion1DSharedPtr;
 
 public:
-    STD_REGIONS_EXPORT StdQuadExp() = default;
+    STD_REGIONS_EXPORT StdQuadExp();
     STD_REGIONS_EXPORT StdQuadExp(const LibUtilities::BasisKey &Ba,
                                   const LibUtilities::BasisKey &Bb);
     STD_REGIONS_EXPORT StdQuadExp(const StdQuadExp &T);
-    STD_REGIONS_EXPORT virtual ~StdQuadExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdQuadExp() override;
 
 protected:
     //-------------------------------

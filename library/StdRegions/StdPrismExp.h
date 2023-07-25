@@ -49,7 +49,7 @@ class StdPrismExp : virtual public StdExpansion3D
 {
 
 public:
-    STD_REGIONS_EXPORT StdPrismExp() = default;
+    STD_REGIONS_EXPORT StdPrismExp();
 
     STD_REGIONS_EXPORT StdPrismExp(const LibUtilities::BasisKey &Ba,
                                    const LibUtilities::BasisKey &Bb,
@@ -62,7 +62,7 @@ public:
 
     STD_REGIONS_EXPORT StdPrismExp(const StdPrismExp &T);
 
-    STD_REGIONS_EXPORT virtual ~StdPrismExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdPrismExp() override;
 
 protected:
     //---------------------------------------
@@ -114,7 +114,7 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         bool multiplybyweights = true) override;
-    STD_REGIONS_EXPORT void v_IProductWRTBase_SumFacKernel(
+    STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFacKernel(
         const Array<OneD, const NekDouble> &base0,
         const Array<OneD, const NekDouble> &base1,
         const Array<OneD, const NekDouble> &base2,

@@ -40,12 +40,20 @@ namespace Nektar
 {
 namespace StdRegions
 {
+StdExpansion1D::StdExpansion1D()
+{
+}
+
 StdExpansion1D::StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba)
     : StdExpansion(numcoeffs, 1, Ba)
 {
 }
 
 StdExpansion1D::StdExpansion1D(const StdExpansion1D &T) : StdExpansion(T)
+{
+}
+
+StdExpansion1D::~StdExpansion1D()
 {
 }
 

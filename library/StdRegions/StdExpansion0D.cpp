@@ -53,6 +53,10 @@ StdExpansion0D::StdExpansion0D(const StdExpansion0D &T) : StdExpansion(T)
 {
 }
 
+StdExpansion0D::~StdExpansion0D()
+{
+}
+
 //----------------------------
 // Differentiation Methods
 //-----------------------------
@@ -88,17 +92,17 @@ NekDouble StdExpansion0D::v_PhysEvaluate(
     return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
 }
 
-NekDouble StdExpansion0D::v_PhysEvaluate(
-    const Array<OneD, DNekMatSharedPtr> &I,
-    const Array<OneD, const NekDouble> &physvals)
-{
-    NekDouble val;
-    int nquad = GetTotPoints();
-
-    val = Blas::Ddot(nquad, I[0]->GetPtr(), 1, physvals, 1);
-
-    return val;
-}
+// NekDouble StdExpansion0D::v_PhysEvaluate(
+//    const Array<OneD, DNekMatSharedPtr> &I,
+//    const Array<OneD, const NekDouble> &physvals)
+//{
+//    NekDouble val;
+//    int nquad = GetTotPoints();
+//
+//    val = Blas::Ddot(nquad, I[0]->GetPtr(), 1, physvals, 1);
+//
+//    return val;
+//}
 
 } // namespace StdRegions
 } // namespace Nektar

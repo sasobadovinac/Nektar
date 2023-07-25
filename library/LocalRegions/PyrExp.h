@@ -47,8 +47,7 @@ namespace Nektar
 namespace LocalRegions
 {
 
-class PyrExp final : virtual public StdRegions::StdPyrExp,
-                     virtual public Expansion3D
+class PyrExp : virtual public StdRegions::StdPyrExp, virtual public Expansion3D
 {
 public:
     /** \brief Constructor using BasisKey class for quadrature points and order

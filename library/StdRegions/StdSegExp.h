@@ -47,13 +47,13 @@ namespace StdRegions
 class StdSegExp : virtual public StdExpansion1D
 {
 public:
-    STD_REGIONS_EXPORT StdSegExp() = default;
+    STD_REGIONS_EXPORT StdSegExp();
 
     STD_REGIONS_EXPORT StdSegExp(const LibUtilities::BasisKey &Ba);
 
     STD_REGIONS_EXPORT StdSegExp(const StdSegExp &T);
 
-    STD_REGIONS_EXPORT virtual ~StdSegExp() override = default;
+    STD_REGIONS_EXPORT virtual ~StdSegExp() override;
 
 protected:
     //----------------------------
@@ -177,18 +177,18 @@ protected:
     STD_REGIONS_EXPORT virtual void v_SVVLaplacianFilter(
         Array<OneD, NekDouble> &array, const StdMatrixKey &mkey) override;
 
-    STD_REGIONS_EXPORT void v_ExponentialFilter(
+    STD_REGIONS_EXPORT virtual void v_ExponentialFilter(
         Array<OneD, NekDouble> &array, const NekDouble alpha,
         const NekDouble exponent, const NekDouble cutoff) override;
 
-    STD_REGIONS_EXPORT void v_MultiplyByStdQuadratureMetric(
+    STD_REGIONS_EXPORT virtual void v_MultiplyByStdQuadratureMetric(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
     STD_REGIONS_EXPORT virtual void v_FillMode(
         const int mode, Array<OneD, NekDouble> &outarray) override;
 
-    STD_REGIONS_EXPORT void v_GetCoords(
+    STD_REGIONS_EXPORT virtual void v_GetCoords(
         Array<OneD, NekDouble> &coords_0, Array<OneD, NekDouble> &coords_1,
         Array<OneD, NekDouble> &coords_2) override;
 

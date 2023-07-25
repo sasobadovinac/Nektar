@@ -52,13 +52,13 @@ class StdExpansion3D : virtual public StdExpansion
 {
 
 public:
-    STD_REGIONS_EXPORT StdExpansion3D() = default;
+    STD_REGIONS_EXPORT StdExpansion3D();
     STD_REGIONS_EXPORT StdExpansion3D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba,
                                       const LibUtilities::BasisKey &Bb,
                                       const LibUtilities::BasisKey &Bc);
     STD_REGIONS_EXPORT StdExpansion3D(const StdExpansion3D &T);
-    STD_REGIONS_EXPORT virtual ~StdExpansion3D() override = default;
+    STD_REGIONS_EXPORT virtual ~StdExpansion3D() override;
 
     // Differentiation
 
@@ -284,7 +284,7 @@ protected:
         const int dir, DNekMatSharedPtr &mat) override;
 
 private:
-    virtual int v_GetShapeDimension() const final
+    virtual int v_GetShapeDimension() const override final
     {
         return 3;
     }

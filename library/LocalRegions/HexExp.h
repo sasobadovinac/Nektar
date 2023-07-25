@@ -168,8 +168,6 @@ protected:
         const int mode_offset, NekDouble *coeffs,
         std::vector<LibUtilities::BasisType> &fromType) override;
 
-    LOCAL_REGIONS_EXPORT bool v_GetFaceDGForwards(const int i) const;
-
     LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysMap(
         const int face, Array<OneD, int> &outarray) override;
 

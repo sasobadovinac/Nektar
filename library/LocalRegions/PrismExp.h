@@ -46,8 +46,8 @@ namespace Nektar
 {
 namespace LocalRegions
 {
-class PrismExp final : virtual public StdRegions::StdPrismExp,
-                       virtual public Expansion3D
+class PrismExp : virtual public StdRegions::StdPrismExp,
+                 virtual public Expansion3D
 {
 public:
     /// \brief Constructor using BasisKey class for quadrature
@@ -130,6 +130,7 @@ protected:
     //---------------------------------------
     // Helper functions
     //---------------------------------------
+
     LOCAL_REGIONS_EXPORT virtual StdRegions::StdExpansionSharedPtr v_GetStdExp(
         void) const override;
 

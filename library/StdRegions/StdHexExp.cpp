@@ -44,6 +44,10 @@ namespace Nektar
 {
 namespace StdRegions
 {
+StdHexExp::StdHexExp()
+{
+}
+
 StdHexExp::StdHexExp(const LibUtilities::BasisKey &Ba,
                      const LibUtilities::BasisKey &Bb,
                      const LibUtilities::BasisKey &Bc)
@@ -55,6 +59,10 @@ StdHexExp::StdHexExp(const LibUtilities::BasisKey &Ba,
 }
 
 StdHexExp::StdHexExp(const StdHexExp &T) : StdExpansion(T), StdExpansion3D(T)
+{
+}
+
+StdHexExp::~StdHexExp()
 {
 }
 

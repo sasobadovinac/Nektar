@@ -36,7 +36,6 @@
 #include "petscsys.h"
 #endif
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Communication/CommMpi.h>
 
 namespace Nektar
@@ -153,6 +152,9 @@ bool CommMpi::v_IsSerial()
     return m_size == 1;
 }
 
+/**
+ *
+ */
 std::tuple<int, int, int> CommMpi::v_GetVersion()
 {
     int version, subversion;
@@ -200,8 +202,6 @@ void CommMpi::v_Send(void *buf, int count, CommDataType dt, int dest)
 void CommMpi::v_Recv(void *buf, int count, CommDataType dt, int source)
 {
     MPI_Recv(buf, count, dt, source, 0, m_comm, MPI_STATUS_IGNORE);
-    // ASSERTL0(status.MPI_ERROR == MPI_SUCCESS,
-    //         "MPI error receiving data.");
 }
 
 /**
@@ -287,6 +287,9 @@ void CommMpi::v_AllGather(void *sendbuf, int sendcount, CommDataType sendtype,
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Allgather.");
 }
 
+/**
+ *
+ */
 void CommMpi::v_AllGatherv(void *sendbuf, int sendcount, CommDataType sendtype,
                            void *recvbuf, int recvcounts[], int rdispls[],
                            CommDataType recvtype)
@@ -294,9 +297,12 @@ void CommMpi::v_AllGatherv(void *sendbuf, int sendcount, CommDataType sendtype,
     int retval = MPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf,
                                 recvcounts, rdispls, recvtype, m_comm);
 
-    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Allgather.");
+    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Allgatherv.");
 }
 
+/**
+ *
+ */
 void CommMpi::v_AllGatherv(void *recvbuf, int recvcounts[], int rdispls[],
                            CommDataType recvtype)
 {
@@ -306,12 +312,19 @@ void CommMpi::v_AllGatherv(void *recvbuf, int recvcounts[], int rdispls[],
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Allgatherv.");
 }
 
+/**
+ *
+ */
 void CommMpi::v_Bcast(void *buffer, int count, CommDataType dt, int root)
 {
     int retval = MPI_Bcast(buffer, count, dt, root, m_comm);
+
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Bcast-v.");
 }
 
+/**
+ *
+ */
 void CommMpi::v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
                        void *recvbuf, int recvcount, CommDataType recvtype,
                        int root)
@@ -322,20 +335,28 @@ void CommMpi::v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Gather.");
 }
 
+/**
+ *
+ */
 void CommMpi::v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
                         void *recvbuf, int recvcount, CommDataType recvtype,
                         int root)
 {
     int retval = MPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
                              recvtype, root, m_comm);
+
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Scatter.");
 }
 
+/**
+ *
+ */
 void CommMpi::v_DistGraphCreateAdjacent(int indegree, const int sources[],
                                         const int sourceweights[], int reorder)
 {
 #if MPI_VERSION < 3
     boost::ignore_unused(indegree, sources, sourceweights, reorder);
+
     ASSERTL0(false, "MPI_Dist_graph_create_adjacent is not supported in your "
                     "installed MPI version.");
 #else
@@ -348,6 +369,9 @@ void CommMpi::v_DistGraphCreateAdjacent(int indegree, const int sources[],
 #endif
 }
 
+/**
+ *
+ */
 void CommMpi::v_NeighborAlltoAllv(void *sendbuf, int sendcounts[],
                                   int sdispls[], CommDataType sendtype,
                                   void *recvbuf, int recvcounts[],
@@ -367,6 +391,9 @@ void CommMpi::v_NeighborAlltoAllv(void *sendbuf, int sendcounts[],
 #endif
 }
 
+/**
+ *
+ */
 void CommMpi::v_Irsend(void *buf, int count, CommDataType dt, int dest,
                        CommRequestSharedPtr request, int loc)
 {
@@ -375,6 +402,9 @@ void CommMpi::v_Irsend(void *buf, int count, CommDataType dt, int dest,
     MPI_Irsend(buf, count, dt, dest, 0, m_comm, req->GetRequest(loc));
 }
 
+/**
+ *
+ */
 void CommMpi::v_Isend(void *buf, int count, CommDataType dt, int dest,
                       CommRequestSharedPtr request, int loc)
 {
@@ -383,6 +413,9 @@ void CommMpi::v_Isend(void *buf, int count, CommDataType dt, int dest,
     MPI_Isend(buf, count, dt, dest, 0, m_comm, req->GetRequest(loc));
 }
 
+/**
+ *
+ */
 void CommMpi::v_SendInit(void *buf, int count, CommDataType dt, int dest,
                          CommRequestSharedPtr request, int loc)
 {
@@ -391,6 +424,9 @@ void CommMpi::v_SendInit(void *buf, int count, CommDataType dt, int dest,
     MPI_Send_init(buf, count, dt, dest, 0, m_comm, req->GetRequest(loc));
 }
 
+/**
+ *
+ */
 void CommMpi::v_Irecv(void *buf, int count, CommDataType dt, int source,
                       CommRequestSharedPtr request, int loc)
 {
@@ -399,6 +435,9 @@ void CommMpi::v_Irecv(void *buf, int count, CommDataType dt, int source,
     MPI_Irecv(buf, count, dt, source, 0, m_comm, req->GetRequest(loc));
 }
 
+/**
+ *
+ */
 void CommMpi::v_RecvInit(void *buf, int count, CommDataType dt, int source,
                          CommRequestSharedPtr request, int loc)
 {
@@ -407,6 +446,9 @@ void CommMpi::v_RecvInit(void *buf, int count, CommDataType dt, int source,
     MPI_Recv_init(buf, count, dt, source, 0, m_comm, req->GetRequest(loc));
 }
 
+/**
+ *
+ */
 void CommMpi::v_StartAll(CommRequestSharedPtr request)
 {
     CommRequestMpiSharedPtr req =
@@ -417,6 +459,9 @@ void CommMpi::v_StartAll(CommRequestSharedPtr request)
     }
 }
 
+/**
+ *
+ */
 void CommMpi::v_WaitAll(CommRequestSharedPtr request)
 {
     CommRequestMpiSharedPtr req =
@@ -428,6 +473,9 @@ void CommMpi::v_WaitAll(CommRequestSharedPtr request)
     }
 }
 
+/**
+ *
+ */
 CommRequestSharedPtr CommMpi::v_CreateRequest(int num)
 {
     return std::shared_ptr<CommRequest>(new CommRequestMpi(num));
@@ -442,7 +490,7 @@ CommRequestSharedPtr CommMpi::v_CreateRequest(int num)
 void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
 {
     ASSERTL0(pRows * pColumns * pTime == m_size,
-             "Rows/Columns do not match comm size.");
+             "Rows/Columns/Time do not match comm size.");
 
     MPI_Comm newComm;
     MPI_Comm gridComm;
@@ -522,6 +570,9 @@ CommSharedPtr CommMpi::v_CommCreateIf(int flag)
     }
 }
 
+/**
+ *
+ */
 std::pair<CommSharedPtr, CommSharedPtr> CommMpi::v_SplitCommNode()
 {
     std::pair<CommSharedPtr, CommSharedPtr> ret;

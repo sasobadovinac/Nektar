@@ -45,6 +45,11 @@ namespace Nektar
 {
 namespace StdRegions
 {
+
+StdQuadExp::StdQuadExp()
+{
+}
+
 /** \brief Constructor using BasisKey class for quadrature
  *  points and order definition
  */
@@ -57,6 +62,11 @@ StdQuadExp::StdQuadExp(const LibUtilities::BasisKey &Ba,
 
 /** \brief Copy Constructor */
 StdQuadExp::StdQuadExp(const StdQuadExp &T) : StdExpansion(T), StdExpansion2D(T)
+{
+}
+
+/** \brief Destructor */
+StdQuadExp::~StdQuadExp()
 {
 }
 
