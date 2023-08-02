@@ -55,8 +55,14 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" NUMMODES="12" FIELDS="u" TYPE="MODIFIED" />
-        <E COMPOSITE="C[1]" NUMMODES="12" FIELDS="u" TYPE="MODIFIED" />
+        <TIMELEVEL VALUE="0">
+            <E COMPOSITE="C[0]" NUMMODES="12" FIELDS="u" TYPE="MODIFIED" />
+            <E COMPOSITE="C[1]" NUMMODES="12" FIELDS="u" TYPE="MODIFIED" />
+        </TIMELEVEL>
+        <TIMELEVEL VALUE="1">
+            <E COMPOSITE="C[0]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
+            <E COMPOSITE="C[1]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
+        </TIMELEVEL>
     </EXPANSIONS>
     <CONDITIONS>
         <SOLVERINFO>
@@ -68,15 +74,25 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep        = 0.0001           </P>
-            <P> NumSteps        = 2000             </P>
-            <P> IO_CheckSteps   = 0                </P>
-            <P> IO_InfoSteps    = 0                </P>
-            <P> wavefreq        = PI               </P>
-            <P> epsilon         = 1.0              </P>
-            <P> PITIterMax      = 2                </P>
-            <P> PITToler        = 1e-15            </P>
-            <P> NumWindows      = 2                </P>
+            <TIMELEVEL VALUE="0">
+                <P> TimeStep        = 0.0001           </P>
+                <P> NumSteps        = 2000             </P>
+                <P> IO_CheckSteps   = 0                </P>
+                <P> IO_InfoSteps    = 0                </P>
+                <P> wavefreq        = PI               </P>
+                <P> epsilon         = 1.0              </P>
+                <P> PITIterMax      = 2                </P>
+                <P> PITToler        = 1e-15            </P>
+                <P> NumWindows      = 2                </P>
+            </TIMELEVEL>
+            <TIMELEVEL VALUE="1">
+                <P> TimeStep        = 0.01             </P>
+                <P> NumSteps        = 20               </P>
+                <P> IO_CheckSteps   = 0                </P>
+                <P> IO_InfoSteps    = 0                </P>
+                <P> wavefreq        = PI               </P>
+                <P> epsilon         = 1.0              </P>
+            </TIMELEVEL>
         </PARAMETERS>
 
         <VARIABLES>

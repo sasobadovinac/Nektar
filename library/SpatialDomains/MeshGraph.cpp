@@ -3081,6 +3081,10 @@ void MeshGraph::ReadExpansionInfo()
 {
     // Find the Expansions tag
     TiXmlElement *expansionTypes = m_session->GetElement("NEKTAR/EXPANSIONS");
+
+    LibUtilities::SessionReader::GetXMLElementTimeLevel(
+        expansionTypes, m_session->GetTimeLevel());
+
     ASSERTL0(expansionTypes, "Unable to find EXPANSIONS tag in file.");
 
     if (expansionTypes)

@@ -153,17 +153,17 @@ public:
      */
     LIB_UTILITIES_EXPORT static SessionReaderSharedPtr CreateInstance(
         int argc, char *argv[], std::vector<std::string> &pFilenames,
-        const CommSharedPtr &pComm = CommSharedPtr())
+        const CommSharedPtr &pComm = CommSharedPtr(), const int &timelevel = 0)
     {
         SessionReaderSharedPtr p =
             MemoryManager<LibUtilities::SessionReader>::AllocateSharedPtr(
-                argc, argv, pFilenames, pComm);
+                argc, argv, pFilenames, pComm, timelevel);
         return p;
     }
 
     LIB_UTILITIES_EXPORT SessionReader(
         int argc, char *argv[], const std::vector<std::string> &pFilenames,
-        const CommSharedPtr &pComm);
+        const CommSharedPtr &pComm, const int &timelevel);
 
     /// Destructor
     LIB_UTILITIES_EXPORT ~SessionReader();
@@ -398,6 +398,16 @@ public:
         m_updateOptFile = flag;
     }
 
+    /// Get time level (Parallel-in-Time)
+    LIB_UTILITIES_EXPORT int GetTimeLevel(void)
+    {
+        return m_timeLevel;
+    }
+
+    /// Get XML elment time level (Parallel-in-Time)
+    LIB_UTILITIES_EXPORT static void GetXMLElementTimeLevel(
+        TiXmlElement *&element, const int timeLevel);
+
 private:
     boost::program_options::variables_map m_cmdLineOptions;
 
@@ -429,6 +439,8 @@ private:
     FilterMap m_filters;
     /// Time integration scheme information.
     TimeIntScheme m_timeIntScheme;
+    /// Time leven
+    int m_timeLevel = 0;
     /// Be verbose
     bool m_verbose;
     /// Running on a shared filesystem
@@ -649,6 +661,9 @@ inline std::string SessionReader::RegisterCmdLineFlag(
     return pName;
 }
 
+/**
+ *
+ */
 TiXmlElement *GetChildElementOrThrow(const std::string &filename,
                                      std::string childElementName,
                                      const TiXmlHandle &docHandle);

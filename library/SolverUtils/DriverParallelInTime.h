@@ -83,7 +83,7 @@ protected:
         NekDouble restTime, NekDouble interTime, NekDouble commTime,
         NekDouble predictorTime, NekDouble overheadTime);
 
-    void SetParallelInTimeSessionFile(void);
+    void SetParallelInTimeEquationSystem(std::string AdvectiveType);
 
     void GetParametersFromSession(void);
 
@@ -154,12 +154,6 @@ protected:
     NekDouble EstimateCommunicationTime(
         Array<OneD, Array<OneD, NekDouble>> &buffer1,
         Array<OneD, Array<OneD, NekDouble>> &buffer2);
-
-    /// ParallelInTime (coarse solver) session reader object
-    LibUtilities::SessionReaderSharedPtr m_sessionCoarse;
-
-    /// ParallelInTime (coarse solver) MeshGraph object
-    SpatialDomains::MeshGraphSharedPtr m_graphCoarse;
 
     /// Timestep for fine solver.
     NekDouble m_fineTimeStep;

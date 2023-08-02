@@ -216,7 +216,7 @@ SessionReader::SessionReader(int argc, char *argv[])
  */
 SessionReader::SessionReader(int argc, char *argv[],
                              const std::vector<std::string> &pFilenames,
-                             const CommSharedPtr &pComm)
+                             const CommSharedPtr &pComm, const int &timelevel)
 {
     ASSERTL0(pFilenames.size() > 0, "No filenames specified.");
 
@@ -251,6 +251,9 @@ SessionReader::SessionReader(int argc, char *argv[],
 
     // Split up the communicator
     PartitionComm();
+
+    // Set time level (Parallel-in-Time)
+    m_timeLevel = timelevel;
 }
 
 /**
@@ -1474,6 +1477,42 @@ void SessionReader::SubstituteExpressions(std::string &pExpr)
 /**
  *
  */
+void SessionReader::GetXMLElementTimeLevel(TiXmlElement *&Element,
+                                           const int timeLevel)
+{
+    if (Element->FirstChildElement("TIMELEVEL"))
+    {
+        Element = Element->FirstChildElement("TIMELEVEL");
+        std::string timeLevelStr;
+        while (Element)
+        {
+            std::stringstream tagcontent;
+            tagcontent << *Element;
+            ASSERTL0(Element->Attribute("VALUE"),
+                     "Missing LEVEL attribute in solver info "
+                     "XML element: \n\t'" +
+                         tagcontent.str() + "'");
+            timeLevelStr = Element->Attribute("VALUE");
+            ASSERTL0(!timeLevelStr.empty(),
+                     "LEVEL attribute must be non-empty in XML "
+                     "element: \n\t'" +
+                         tagcontent.str() + "'");
+            if (stoi(timeLevelStr) == timeLevel)
+            {
+                break;
+            }
+            Element = Element->NextSiblingElement("TIMELEVEL");
+        }
+        ASSERTL0(stoi(timeLevelStr) == timeLevel,
+                 "TIMELEVEL value " + std::to_string(timeLevel) +
+                     " not found in solver info "
+                     "XML element: \n\t'");
+    }
+}
+
+/**
+ *
+ */
 void SessionReader::LoadDoc(const std::string &pFilename,
                             TiXmlDocument *pDoc) const
 {
@@ -1724,6 +1763,8 @@ void SessionReader::ReadParameters(TiXmlElement *conditions)
     // if not.
     if (parametersElement)
     {
+        GetXMLElementTimeLevel(parametersElement, m_timeLevel);
+
         TiXmlElement *parameter = parametersElement->FirstChildElement("P");
 
         ParameterMap caseSensitiveParameters;
@@ -1807,6 +1848,8 @@ void SessionReader::ReadSolverInfo(TiXmlElement *conditions)
 
     if (solverInfoElement)
     {
+        GetXMLElementTimeLevel(solverInfoElement, m_timeLevel);
+
         TiXmlElement *solverInfo = solverInfoElement->FirstChildElement("I");
 
         while (solverInfo)
@@ -1880,6 +1923,10 @@ void SessionReader::ReadGlobalSysSolnInfo(TiXmlElement *conditions)
     if (!GlobalSys)
     {
         return;
+    }
+    else
+    {
+        GetXMLElementTimeLevel(GlobalSys, m_timeLevel);
     }
 
     TiXmlElement *VarInfo = GlobalSys->FirstChildElement("V");
@@ -2005,6 +2052,10 @@ void SessionReader::ReadTimeIntScheme(TiXmlElement *conditions)
     if (!timeInt)
     {
         return;
+    }
+    else
+    {
+        GetXMLElementTimeLevel(timeInt, m_timeLevel);
     }
 
     TiXmlElement *method  = timeInt->FirstChildElement("METHOD");

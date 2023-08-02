@@ -130,9 +130,13 @@ void MeshPartition::ReadExpansions()
     // Find the Expansions tag
     TiXmlElement *expansionTypes = m_session->GetElement("Nektar/Expansions");
 
+    // Use fine-level expansion for mesh partition (Parallel-in-Time)
+    LibUtilities::SessionReader::GetXMLElementTimeLevel(expansionTypes, 0);
+
     // Find the Expansion type
     TiXmlElement *expansion = expansionTypes->FirstChildElement();
-    std::string expType     = expansion->Value();
+
+    std::string expType = expansion->Value();
 
     // Expansiontypes will contain plenty of data, where relevant at this stage
     // are composite ID(s) that this expansion type describes, nummodes and a
@@ -386,6 +390,9 @@ void MeshPartition::ReadConditions()
 
     TiXmlElement *solverInfoElement =
         m_session->GetElement("Nektar/Conditions/SolverInfo");
+
+    // Use fine-level solver info for mesh partition (Parallel-in-Time)
+    LibUtilities::SessionReader::GetXMLElementTimeLevel(solverInfoElement, 0);
 
     TiXmlElement *solverInfo = solverInfoElement->FirstChildElement("I");
     ASSERTL0(solverInfo, "Cannot read SolverInfo tags");
