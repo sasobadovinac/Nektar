@@ -33,6 +33,7 @@ v5.4.0
 - Tidy-up Advection class (!1580)
 - Tidy-up diffusion class and subclasses (!1581)
 - Tidy-up NekNonlinSys and fix some issues (!1563)
+- Avoid pre-allocating memory in GMRES (!1591)
 - Added a local space version of GMRES and ConjugateGradient (!1575)
 - Added a jacobi preconditioner building on diagonal impelemtation (!1575)
 - Add a priori convergence and null-input check to GMRES (!1590)
