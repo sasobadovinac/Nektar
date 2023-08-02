@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <GEOMETRY DIM="2" SPACE="2" PARTITION="0">
+        <VERTEX>
+            <V ID="0">-1.00000000e+00 -1.00000000e+00 0.00000000e+00</V>
+            <V ID="1">0.00000000e+00 -1.00000000e+00 0.00000000e+00</V>
+            <V ID="2">1.00000000e+00 -1.00000000e+00 0.00000000e+00</V>
+            <V ID="4">0.00000000e+00 0.00000000e+00 0.00000000e+00</V>
+            <V ID="5">1.00000000e+00 0.00000000e+00 0.00000000e+00</V>
+        </VERTEX>
+        <EDGE>
+            <E ID="0">0 1</E>
+            <E ID="1">1 2</E>
+            <E ID="3">1 4</E>
+            <E ID="4">2 5</E>
+            <E ID="6">4 5</E>
+            <E ID="12">0 4</E>
+            <E ID="13">1 5</E>
+        </EDGE>
+        <ELEMENT>
+            <T ID="0">0 3 12</T>
+            <T ID="2">1 4 13</T>
+            <T ID="3">3 13 6</T>
+        </ELEMENT>
+        <CURVED />
+        <COMPOSITE>
+            <C ID="0"> T[0,2-3] </C>
+            <C ID="2"> E[4] </C>
+            <C ID="3"> E[0-1] </C>
+        </COMPOSITE>
+        <DOMAIN>
+            <D ID="0"> C[0] </D>
+        </DOMAIN>
+    </GEOMETRY>
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE" VALUE="UnsteadyDiffusion" />
+            <I PROPERTY="Projection" VALUE="Continuous" />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler" />
+            <I PROPERTY="DiffusionAdvancement" VALUE="Implicit" />
+            <I PROPERTY="Driver" VALUE="Parareal" />
+        </SOLVERINFO>
+        <PARAMETERS>
+            <TIMELEVEL VALUE="0">
+                <P>TimeStep = 0.0001</P>
+                <P>NumSteps = 2000</P>
+                <P>IO_CheckSteps = 0</P>
+                <P>IO_InfoSteps = 0</P>
+                <P>wavefreq = PI</P>
+                <P>epsilon = 1.0</P>
+                <P>PITIterMax = 0</P>
+                <P>PITToler = 1e-15</P>
+                <P>NumWindows = 2</P>
+            </TIMELEVEL>
+            <TIMELEVEL VALUE="1">
+                <P>TimeStep = 0.01</P>
+                <P>NumSteps = 20</P>
+                <P>IO_CheckSteps = 0</P>
+                <P>IO_InfoSteps = 0</P>
+                <P>wavefreq = PI</P>
+                <P>epsilon = 1.0</P>
+            </TIMELEVEL>
+        </PARAMETERS>
+        <VARIABLES>
+            <V ID="0">u</V>
+        </VARIABLES>
+        <BOUNDARYREGIONS>
+            <B ID="0">C[2]</B>
+            <B ID="1">C[3]</B>
+        </BOUNDARYREGIONS>
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="0" />
+            </REGION>
+            <REGION REF="1">
+                <N VAR="u" VALUE="0" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="sin(wavefreq*x)*cos(wavefreq*y)" />
+        </FUNCTION>
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*x)*cos(wavefreq*y)" />
+        </FUNCTION>
+    </CONDITIONS>
+    <EXPANSIONS>
+        <TIMELEVEL VALUE="0">
+            <E COMPOSITE="C[0]" NUMMODES="12" FIELDS="u" TYPE="MODIFIED" />
+            <E COMPOSITE="C[1]" NUMMODES="12" FIELDS="u" TYPE="MODIFIED" />
+        </TIMELEVEL>
+        <TIMELEVEL VALUE="1">
+            <E COMPOSITE="C[0]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
+            <E COMPOSITE="C[1]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
+        </TIMELEVEL>
+    </EXPANSIONS>
+</NEKTAR>

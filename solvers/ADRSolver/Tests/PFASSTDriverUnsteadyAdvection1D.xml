@@ -289,10 +289,18 @@
         </SOLVERINFO>
 
         <TIMEINTEGRATIONSCHEME>
-            <METHOD> ExplicitSDC </METHOD>
-            <VARIANT> Equidistant </VARIANT>
-            <ORDER> 1 </ORDER>
-            <FREEPARAMETERS> 1.0 5 </FREEPARAMETERS>
+            <TIMELEVEL VALUE="0">
+                <METHOD> ExplicitSDC </METHOD>
+                <VARIANT> Equidistant </VARIANT>
+                <ORDER> 1 </ORDER>
+                <FREEPARAMETERS> 1.0 5 </FREEPARAMETERS>
+            </TIMELEVEL>
+            <TIMELEVEL VALUE="1">
+                <METHOD> ExplicitSDC </METHOD>
+                <VARIANT> Equidistant </VARIANT>
+                <ORDER> 2 </ORDER>
+                <FREEPARAMETERS> 1.0 3 </FREEPARAMETERS>
+            </TIMELEVEL>
         </TIMEINTEGRATIONSCHEME>
 
         <PARAMETERS>

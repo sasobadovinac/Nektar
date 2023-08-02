@@ -6,7 +6,6 @@
     <processes>8</processes>
     <files>
         <file description="Session File"> PFASSTDriverUnsteadyAdvection1D.xml </file>
-        <file description="Session File"> PFASSTDriverUnsteadyAdvection1D_coarseSolver.xml </file>
     </files>
     <metrics>
         <metric type="L2" id="1">

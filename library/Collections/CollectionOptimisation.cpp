@@ -542,11 +542,6 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
 void CollectionOptimisation::UpdateOptFile(std::string sessName,
                                            LibUtilities::CommSharedPtr &comm)
 {
-    if (comm->GetSize() != comm->GetSpaceComm()->GetSize())
-    {
-        return; // FIXME: Parareal
-    }
-
     std::string outname = sessName + ".opt";
 
     TiXmlDocument doc;
