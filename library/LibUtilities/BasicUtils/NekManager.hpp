@@ -82,7 +82,6 @@ public:
 
     NekManager(std::string whichPool = "")
         : m_values(), m_globalCreateFunc(), m_keySpecificCreateFuncs()
-
     {
         if (!whichPool.empty())
         {
@@ -133,7 +132,7 @@ public:
             {
 #ifdef NEKTAR_USE_THREAD_SAFETY
                 v_rlock.unlock();
-                // now writing static members.  Apparently
+                // Now writing static members.  Apparently
                 // upgrade_lock has less desirable properties than
                 // just dropping read lock, grabbing write lock.
                 // write will block until all reads are done, but
@@ -183,18 +182,6 @@ public:
         return true;
     }
 
-    bool AlreadyCreated(const KeyType &key)
-    {
-        bool value = false;
-        auto found = m_values->find(key);
-        if (found != m_values->end())
-        {
-            value = true;
-        }
-
-        return value;
-    }
-
     ValueType operator[](const KeyType &key)
     {
         auto found = m_values->find(key);
@@ -206,12 +193,10 @@ public:
         else
         {
             // No object, create a new one.
-            CreateFuncType f = m_globalCreateFunc;
-            auto keyFound    = m_keySpecificCreateFuncs.find(key);
-            if (keyFound != m_keySpecificCreateFuncs.end())
-            {
-                f = (*keyFound).second;
-            }
+            auto keyFound = m_keySpecificCreateFuncs.find(key);
+            bool isfound  = keyFound != m_keySpecificCreateFuncs.end();
+            CreateFuncType f =
+                isfound ? (*keyFound).second : m_globalCreateFunc;
 
             if (f)
             {
@@ -247,11 +232,12 @@ public:
 
     static void ClearManager(std::string whichPool = "")
     {
+#ifdef NEKTAR_USE_THREAD_SAFETY
+        WriteLock v_wlock(m_mutex);
+#endif
+
         if (!whichPool.empty())
         {
-#ifdef NEKTAR_USE_THREAD_SAFETY
-            WriteLock v_wlock(m_mutex);
-#endif
             auto x = m_ValueContainerPool.find(whichPool);
             ASSERTL1(x != m_ValueContainerPool.end(),
                      "Could not find pool " + whichPool);
@@ -259,10 +245,6 @@ public:
         }
         else
         {
-#ifdef NEKTAR_USE_THREAD_SAFETY
-            WriteLock v_wlock(m_mutex);
-#endif
-
             for (auto &x : m_ValueContainerPool)
             {
                 x.second->clear();
@@ -272,13 +254,8 @@ public:
 
     static bool PoolCreated(std::string whichPool)
     {
-        bool value = false;
-        auto x     = m_ValueContainerPool.find(whichPool);
-        if (x != m_ValueContainerPool.end())
-        {
-            value = true;
-        }
-        return value;
+        return m_ValueContainerPool.find(whichPool) !=
+               m_ValueContainerPool.end();
     }
 
     size_t PoolCount(std::string whichPool)
@@ -345,6 +322,7 @@ private:
     static boost::shared_mutex m_mutex;
 #endif
 };
+
 template <typename KeyType, typename ValueT, typename opLessCreator>
 typename NekManager<KeyType, ValueT, opLessCreator>::ValueContainerPool
     NekManager<KeyType, ValueT, opLessCreator>::m_ValueContainerPool;

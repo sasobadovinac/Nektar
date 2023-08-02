@@ -29,6 +29,7 @@ v5.4.0
 - Tidy-up Nektar tolerances (!1570)
 - Tidy-up UnsteadySystem (!1579)
 - Fix StaticCond approach + GMRES when restarting (!1583)
+- Tidy-up NekManager (!1587)
 - Slightly reduce memory allocation in GMRES (!1586)
 - Tidy-up Advection class (!1580)
 - Tidy-up diffusion class and subclasses (!1581)
