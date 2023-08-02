@@ -50,9 +50,9 @@ static const NekDouble kVertexTheSameDouble = 1.0e-08;
 static const NekDouble kGeomFactorsTol      = 1.0e-08;
 static const NekDouble kNekZeroTol          = 1.0e-12;
 static const NekDouble kNekIterativeTol     = 1.0e-09;
-static const NekDouble kNekSparseNonZeroTol = 1.0e-16;
 static const NekDouble kNekMachineEpsilon =
     std::numeric_limits<NekDouble>::epsilon();
+static const NekDouble kNekSparseNonZeroTol = kNekMachineEpsilon;
 
 // Tolerances for mesh generation and CAD handling
 static const NekDouble GeomTol = 1.0e-02;

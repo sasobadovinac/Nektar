@@ -236,22 +236,10 @@ NekDouble NekLinSysIterGMRESLoc::DoGmresRestart(
     // Allocate array storage of coefficients
     // Hessenburg matrix
     Array<OneD, Array<OneD, NekDouble>> hes(m_LinSysMaxStorage);
-    for (int i = 0; i < m_LinSysMaxStorage; ++i)
-    {
-        hes[i] = Array<OneD, NekDouble>(m_LinSysMaxStorage + 1, 0.0);
-    }
     // Hesseburg matrix after rotation
     Array<OneD, Array<OneD, NekDouble>> Upper(m_LinSysMaxStorage);
-    for (int i = 0; i < m_LinSysMaxStorage; ++i)
-    {
-        Upper[i] = Array<OneD, NekDouble>(m_LinSysMaxStorage + 1, 0.0);
-    }
     // Total search directions
     Array<OneD, Array<OneD, NekDouble>> V_total(m_LinSysMaxStorage + 1);
-    for (int i = 0; i < m_LinSysMaxStorage + 1; ++i)
-    {
-        V_total[i] = Array<OneD, NekDouble>(nLocal, 0.0);
-    }
     // Residual
     Array<OneD, NekDouble> eta(m_LinSysMaxStorage + 1, 0.0);
     // Givens rotation c
@@ -352,7 +340,8 @@ NekDouble NekLinSysIterGMRESLoc::DoGmresRestart(
     }
 
     // Normlized by r0 norm V(:,1)=r0/norm(r0)
-    alpha = 1.0 / eta[0];
+    alpha      = 1.0 / eta[0];
+    V_total[0] = Array<OneD, NekDouble>(nLocal, 0.0);
     Vmath::Smul(nLocal, alpha, r0, 1, V_total[0], 1);
 
     // restarted Gmres(m) process
@@ -364,8 +353,11 @@ NekDouble NekLinSysIterGMRESLoc::DoGmresRestart(
 
     for (int nd = 0; nd < m_LinSysMaxStorage; ++nd)
     {
-        V2 = V_total[nd + 1];
-        h1 = hes[nd];
+        hes[nd]         = Array<OneD, NekDouble>(m_LinSysMaxStorage + 1, 0.0);
+        Upper[nd]       = Array<OneD, NekDouble>(m_LinSysMaxStorage + 1, 0.0);
+        V_total[nd + 1] = Array<OneD, NekDouble>(nLocal, 0.0);
+        V2              = V_total[nd + 1];
+        h1              = hes[nd];
 
         if (m_NekLinSysRightPrecon)
         {

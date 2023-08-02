@@ -235,22 +235,10 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
     // Allocate array storage of coefficients
     // Hessenburg matrix
     Array<OneD, Array<OneD, NekDouble>> hes(m_LinSysMaxStorage);
-    for (int i = 0; i < m_LinSysMaxStorage; ++i)
-    {
-        hes[i] = Array<OneD, NekDouble>(m_LinSysMaxStorage + 1, 0.0);
-    }
     // Hesseburg matrix after rotation
     Array<OneD, Array<OneD, NekDouble>> Upper(m_LinSysMaxStorage);
-    for (int i = 0; i < m_LinSysMaxStorage; ++i)
-    {
-        Upper[i] = Array<OneD, NekDouble>(m_LinSysMaxStorage + 1, 0.0);
-    }
     // Total search directions
     Array<OneD, Array<OneD, NekDouble>> V_total(m_LinSysMaxStorage + 1);
-    for (int i = 0; i < m_LinSysMaxStorage + 1; ++i)
-    {
-        V_total[i] = Array<OneD, NekDouble>(nGlobal, 0.0);
-    }
     // Residual
     Array<OneD, NekDouble> eta(m_LinSysMaxStorage + 1, 0.0);
     // Givens rotation c
@@ -367,6 +355,7 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
     alpha = 1.0 / eta[0];
 
     // Scalar multiplication
+    V_total[0] = Array<OneD, NekDouble>(nGlobal, 0.0);
     Vmath::Smul(nNonDir, alpha, &r0[0] + nDir, 1, &V_total[0][0] + nDir, 1);
 
     // Restarted Gmres(m) process
@@ -378,8 +367,11 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
     int nswp = 0;
     for (int nd = 0; nd < m_LinSysMaxStorage; ++nd)
     {
-        Vsingle2 = V_total[nd + 1];
-        hsingle1 = hes[nd];
+        hes[nd]         = Array<OneD, NekDouble>(m_LinSysMaxStorage + 1, 0.0);
+        Upper[nd]       = Array<OneD, NekDouble>(m_LinSysMaxStorage + 1, 0.0);
+        V_total[nd + 1] = Array<OneD, NekDouble>(nGlobal, 0.0);
+        Vsingle2        = V_total[nd + 1];
+        hsingle1        = hes[nd];
 
         if (m_NekLinSysRightPrecon)
         {
