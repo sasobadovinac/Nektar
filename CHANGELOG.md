@@ -43,6 +43,7 @@ v5.4.0
 - Accelerate interpolation for regular and straight-edge elements (!1283)
 - Fix an indexing error in MatrixFreeOps (!1602)
 - Update Session File for Parallel-in-Time (!1516)
+- New version of CreateCollection using basisKey (!1603)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
