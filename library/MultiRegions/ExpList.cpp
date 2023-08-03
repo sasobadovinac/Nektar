@@ -5216,6 +5216,8 @@ void ExpList::CreateCollections(Collections::ImplementationType ImpType)
     }
     bool verbose = (m_session->DefinesCmdLineArgument("verbose")) &&
                    (m_session->GetComm()->GetRank() == 0);
+    // the maximum size is either explicitly specified, or set to very large
+    // value which will not affect the actual collection size
     int collmax =
         (colOpt.GetMaxCollectionSize() > 0 ? colOpt.GetMaxCollectionSize()
                                            : 2 * m_exp->size());
@@ -5225,33 +5227,93 @@ void ExpList::CreateCollections(Collections::ImplementationType ImpType)
     m_coll_coeff_offset.clear();
     m_coll_phys_offset.clear();
 
-    // Loop over expansions, and create collections for each element type
-    for (int i = 0; i < m_exp->size(); ++i)
-    {
-        collections[(*m_exp)[i]->DetShapeType()].push_back(
-            std::pair<LocalRegions::ExpansionSharedPtr, int>((*m_exp)[i], i));
-    }
+    /*-------------------------------------------------------------------------
+      Dividing m_exp into sub groups (collections): original exp order is kept.
+      Use 3 basiskey + deformed flag to determine if two exp belong to the same
+      collection or not.
+    -------------------------------------------------------------------------*/
+    vector<StdRegions::StdExpansionSharedPtr> collExp;
+    // initialize the basisKeys to NullBasisKey
+    std::vector<LibUtilities::BasisKey> prevbasisKeys(
+        3, LibUtilities::NullBasisKey);
+    std::vector<LibUtilities::BasisKey> thisbasisKeys(
+        3, LibUtilities::NullBasisKey);
+    // initialize the deformed flag to false
+    bool prevDef = false;
+    // collcnt is the number of elements in current collection
+    int collcnt = 0;
+    // collsize is the maximum size among all collections
+    int collsize = 0;
 
-    for (auto &it : collections)
+    for (int i = 0; i < (*m_exp).size(); i++)
     {
-        LocalRegions::ExpansionSharedPtr exp = it.second[0].first;
-
+        LocalRegions::ExpansionSharedPtr exp = (*m_exp)[i];
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(exp);
 
-        vector<StdRegions::StdExpansionSharedPtr> collExp;
-
-        int prevCoeffOffset = m_coeff_offset[it.second[0].second];
-        int prevPhysOffset  = m_phys_offset[it.second[0].second];
-        int collcnt;
-
-        m_coll_coeff_offset.push_back(prevCoeffOffset);
-        m_coll_phys_offset.push_back(prevPhysOffset);
-
-        int collsize = 0;
-
-        if (it.second.size() == 1) // single element case
+        // fetch basiskeys of current element
+        for (int d = 0; d < exp->GetNumBases(); d++)
         {
-            collExp.push_back(it.second[0].first);
+            thisbasisKeys[d] = exp->GetBasis(d)->GetBasisKey();
+        }
+        // fetch deformed flag of current element
+        bool Deformed =
+            (exp->GetMetricInfo()->GetGtype() == SpatialDomains::eDeformed);
+
+        // Check if this element is the same type as the previous one or
+        // if we have reached the maximum collection size
+        if (thisbasisKeys != prevbasisKeys || prevDef != Deformed ||
+            collcnt >= collmax)
+        {
+            // if previous one is not empty (i==0), create new collection
+            // according to the previous collExp and push it back.
+            if (i > 0)
+            {
+                Collections::Collection tmp(collExp, impTypes);
+                m_collections.push_back(tmp);
+
+                // if no Imp Type provided and No
+                // setting in xml file. reset
+                // impTypes using timings
+                if (autotuning)
+                {
+                    // if current collection is larger than previous one
+                    // update impTypes; otherwise, use previous impTypes
+                    if (collExp.size() > collsize)
+                    {
+                        impTypes =
+                            colOpt.SetWithTimings(collExp, impTypes, verbose);
+                        collsize = collExp.size();
+                    }
+                }
+
+                // start new geom list
+                collExp.clear();
+            }
+
+            // set up initial offset of this collection
+            m_coll_coeff_offset.push_back(m_coeff_offset[i]);
+            m_coll_phys_offset.push_back(m_phys_offset[i]);
+            // insert exp and reset count to 1
+            collExp.push_back(exp);
+            collcnt = 1;
+            // update previous info
+            prevbasisKeys = thisbasisKeys;
+            prevDef       = Deformed;
+        }
+        else // The current exp is the same as the previous one
+        {
+            // insert exp and increment count
+            collExp.push_back(exp);
+            collcnt++;
+            // No need to update previous info
+        }
+
+        // check if we have reached the end of m_exp
+        if (i == (*m_exp).size() - 1)
+        {
+            // Then create and push back the last collection
+            Collections::Collection tmp(collExp, impTypes);
+            m_collections.push_back(tmp);
 
             // if no Imp Type provided and No
             // setting in xml file. reset
@@ -5265,99 +5327,7 @@ void ExpList::CreateCollections(Collections::ImplementationType ImpType)
                     collsize = collExp.size();
                 }
             }
-
-            Collections::Collection tmp(collExp, impTypes);
-            m_collections.push_back(tmp);
-        }
-        else
-        {
-            // set up first geometry
-            collExp.push_back(it.second[0].first);
-            int prevnCoeff = it.second[0].first->GetNcoeffs();
-            int prevnPhys  = it.second[0].first->GetTotPoints();
-            bool prevDeformed =
-                it.second[0].first->GetMetricInfo()->GetGtype() ==
-                SpatialDomains::eDeformed;
-            collcnt = 1;
-
-            for (int i = 1; i < it.second.size(); ++i)
-            {
-                int nCoeffs = it.second[i].first->GetNcoeffs();
-                int nPhys   = it.second[i].first->GetTotPoints();
-                bool Deformed =
-                    it.second[i].first->GetMetricInfo()->GetGtype() ==
-                    SpatialDomains::eDeformed;
-                int coeffOffset = m_coeff_offset[it.second[i].second];
-                int physOffset  = m_phys_offset[it.second[i].second];
-
-                // check to see if next elmt is different or
-                // collmax reached and if so end collection
-                // and start new one
-                if (prevCoeffOffset + nCoeffs != coeffOffset ||
-                    prevnCoeff != nCoeffs ||
-                    prevPhysOffset + nPhys != physOffset ||
-                    prevDeformed != Deformed || prevnPhys != nPhys ||
-                    collcnt >= collmax)
-                {
-
-                    // if no Imp Type provided and No
-                    // settign in xml file. reset
-                    // impTypes using timings
-                    if (autotuning)
-                    {
-                        if (collExp.size() > collsize)
-                        {
-                            impTypes = colOpt.SetWithTimings(collExp, impTypes,
-                                                             verbose);
-                            collsize = collExp.size();
-                        }
-                    }
-
-                    Collections::Collection tmp(collExp, impTypes);
-                    m_collections.push_back(tmp);
-
-                    // start new geom list
-                    collExp.clear();
-
-                    m_coll_coeff_offset.push_back(coeffOffset);
-                    m_coll_phys_offset.push_back(physOffset);
-                    collExp.push_back(it.second[i].first);
-                    collcnt = 1;
-                }
-                else // add to list of collections
-                {
-                    collExp.push_back(it.second[i].first);
-                    collcnt++;
-                }
-
-                // if end of list finish up collection
-                if (i == it.second.size() - 1)
-                {
-                    // if no Imp Type provided and No
-                    // settign in xml file.
-                    if (autotuning)
-                    {
-                        if (collExp.size() > collsize)
-                        {
-                            impTypes = colOpt.SetWithTimings(collExp, impTypes,
-                                                             verbose);
-                            collsize = collExp.size();
-                        }
-                    }
-
-                    Collections::Collection tmp(collExp, impTypes);
-                    m_collections.push_back(tmp);
-
-                    collExp.clear();
-                    collcnt = 0;
-                }
-
-                prevCoeffOffset = coeffOffset;
-                prevPhysOffset  = physOffset;
-                prevDeformed    = Deformed;
-                prevnCoeff      = nCoeffs;
-                prevnPhys       = nPhys;
-            }
+            collExp.clear();
         }
     }
 
