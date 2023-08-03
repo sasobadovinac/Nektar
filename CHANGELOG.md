@@ -40,6 +40,7 @@ v5.4.0
 - Some Tidy-up in MatrixFreeOps (!1599)
 - Accelerate interpolation for regular and straight-edge elements (!1283)
 - Fix an indexing error in MatrixFreeOps (!1602)
+- Remove unused Domain.cpp and Domain.h file (!1609)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
