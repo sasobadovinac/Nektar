@@ -95,7 +95,6 @@ void ForcingBody::v_InitObject(
                  "Expression must be given in BODYFORCETIMEFCN or "
                  "FIELDFORCETIMEFCN.");
 
-        m_session->SubstituteExpressions(funcNameTime);
         m_timeFcnEqn = MemoryManager<LibUtilities::Equation>::AllocateSharedPtr(
             m_session->GetInterpreter(), funcNameTime);
 

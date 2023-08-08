@@ -1466,17 +1466,6 @@ bool SessionReader::DefinesCmdLineArgument(const std::string &pName) const
 /**
  *
  */
-void SessionReader::SubstituteExpressions(std::string &pExpr)
-{
-    for (auto &exprIter : m_expressions)
-    {
-        boost::replace_all(pExpr, exprIter.first, exprIter.second);
-    }
-}
-
-/**
- *
- */
 void SessionReader::GetXMLElementTimeLevel(TiXmlElement *&Element,
                                            const int timeLevel)
 {
@@ -1646,7 +1635,6 @@ void SessionReader::ParseDocument()
     ReadSolverInfo(e);
     ReadGlobalSysSolnInfo(e);
     ReadTimeIntScheme(e);
-    ReadExpressions(e);
     ReadVariables(e);
     ReadFunctions(e);
 
@@ -2148,58 +2136,6 @@ void SessionReader::ReadTimeIntScheme(TiXmlElement *conditions)
 /**
  *
  */
-void SessionReader::ReadExpressions(TiXmlElement *conditions)
-{
-    m_expressions.clear();
-
-    if (!conditions)
-    {
-        return;
-    }
-
-    TiXmlElement *expressionsElement =
-        conditions->FirstChildElement("EXPRESSIONS");
-
-    if (expressionsElement)
-    {
-        TiXmlElement *expr = expressionsElement->FirstChildElement("E");
-
-        while (expr)
-        {
-            stringstream tagcontent;
-            tagcontent << *expr;
-            ASSERTL0(expr->Attribute("NAME"),
-                     "Missing NAME attribute in expression "
-                     "definition: \n\t'" +
-                         tagcontent.str() + "'");
-            std::string nameString = expr->Attribute("NAME");
-            ASSERTL0(!nameString.empty(),
-                     "Expressions must have a non-empty name: \n\t'" +
-                         tagcontent.str() + "'");
-
-            ASSERTL0(expr->Attribute("VALUE"),
-                     "Missing VALUE attribute in expression "
-                     "definition: \n\t'" +
-                         tagcontent.str() + "'");
-            std::string valString = expr->Attribute("VALUE");
-            ASSERTL0(!valString.empty(),
-                     "Expressions must have a non-empty value: \n\t'" +
-                         tagcontent.str() + "'");
-
-            auto exprIter = m_expressions.find(nameString);
-            ASSERTL0(exprIter == m_expressions.end(),
-                     std::string("Expression '") + nameString +
-                         std::string("' already specified."));
-
-            m_expressions[nameString] = valString;
-            expr                      = expr->NextSiblingElement("E");
-        }
-    }
-}
-
-/**
- *
- */
 void SessionReader::ReadVariables(TiXmlElement *conditions)
 {
     m_variables.clear();
@@ -2375,8 +2311,6 @@ void SessionReader::ReadFunctions(TiXmlElement *conditions)
                          (std::string("Expression for var: ") + variableStr +
                           std::string(" must be specified."))
                              .c_str());
-
-                SubstituteExpressions(fcnStr);
 
                 // set expression
                 funcDef.m_expression =

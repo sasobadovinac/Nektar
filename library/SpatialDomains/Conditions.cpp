@@ -432,9 +432,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                          "USERDEFINEDTYPE attribute must have "
                                          "associated value.");
 
-                                // Suppose to go here?
-                                m_session->SubstituteExpressions(attrData);
-
                                 userDefined = attrData;
                                 isTimeDependent =
                                     boost::iequals(attrData, "TimeDependent");
@@ -450,8 +447,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                 ASSERTL0(!attrData.empty(),
                                          "VALUE attribute must be specified.");
 
-                                m_session->SubstituteExpressions(attrData);
-
                                 equation = attrData;
                             }
                             else if (attrName == "FILE")
@@ -464,8 +459,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                 attrData = attr->Value();
                                 ASSERTL0(!attrData.empty(),
                                          "FILE attribute must be specified.");
-
-                                m_session->SubstituteExpressions(attrData);
 
                                 filename = attrData;
                             }
@@ -535,8 +528,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                          "USERDEFINEDTYPE attribute must have "
                                          "associated value.");
 
-                                m_session->SubstituteExpressions(attrData);
-
                                 userDefined = attrData;
                                 isTimeDependent =
                                     boost::iequals(attrData, "TimeDependent");
@@ -552,8 +543,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                 ASSERTL0(!attrData.empty(),
                                          "VALUE attribute must have associated "
                                          "value.");
-
-                                m_session->SubstituteExpressions(attrData);
 
                                 equation = attrData;
 
@@ -576,8 +565,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                 attrData = attr->Value();
                                 ASSERTL0(!attrData.empty(),
                                          "FILE attribute must be specified.");
-
-                                m_session->SubstituteExpressions(attrData);
 
                                 filename = attrData;
                             }
@@ -651,7 +638,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                          "USERDEFINEDTYPE attribute must have "
                                          "associated value.");
 
-                                m_session->SubstituteExpressions(attrData);
                                 userDefined = attrData;
                                 isTimeDependent =
                                     boost::iequals(attrData, "TimeDependent");
@@ -664,8 +650,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                          "VALUE attributes must have "
                                          "associated values.");
 
-                                m_session->SubstituteExpressions(attrData);
-
                                 equation1 = attrData;
                             }
                             else if (attrName == "PRIMCOEFF")
@@ -676,8 +660,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                          "PRIMCOEFF attributes must have "
                                          "associated values.");
 
-                                m_session->SubstituteExpressions(attrData);
-
                                 equation2 = attrData;
 
                                 primcoeffset = true;
@@ -687,8 +669,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                 attrData = attr->Value();
                                 ASSERTL0(!attrData.empty(),
                                          "FILE attribute must be specified.");
-
-                                m_session->SubstituteExpressions(attrData);
 
                                 filename = attrData;
                             }
@@ -756,7 +736,6 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                                          "USERDEFINEDTYPE attribute must have "
                                          "associated value.");
 
-                                m_session->SubstituteExpressions(attrData);
                                 userDefined = attrData;
                                 isTimeDependent =
                                     boost::iequals(attrData, "TimeDependent");
