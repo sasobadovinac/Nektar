@@ -1133,11 +1133,12 @@
         </PARAMETERS>
 
         <SOLVERINFO>
-            <I PROPERTY="EQType"                VALUE="IsentropicVortex"                    />
+            <I PROPERTY="EQType"                VALUE="EulerCFE"            />
+            <I PROPERTY="ICType"                VALUE="IsentropicVortex"    />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
             <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-            <I PROPERTY="UpwindType"            VALUE="ExactToro"               />
+            <I PROPERTY="UpwindType"            VALUE="ExactToro"           />
         </SOLVERINFO>
 
         <VARIABLES>
@@ -1159,15 +1160,6 @@
                 <D VAR="E"      USERDEFINEDTYPE="IsentropicVortex" VALUE="0"/>
             </REGION>
         </BOUNDARYCONDITIONS>
-
-        <!-- Initial conditions not necessary
-            since they are imposed analitically -->
-        <!--FUNCTION NAME="InitialConditions">
-            <E VAR="rho"    VALUE="1"/>
-            <E VAR="rhou"   VALUE="1"/>
-            <E VAR="rhov"   VALUE="1"/>
-            <E VAR="E"      VALUE="1"/>
-        </FUNCTION-->
 
     </CONDITIONS>
 

@@ -44,18 +44,18 @@ string EulerCFE::className =
         "EulerCFE", EulerCFE::create,
         "Euler equations in conservative variables.");
 
-string EulerCFE::className2 =
-    SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-        "EulerADCFE", EulerCFE::create,
-        "Euler equations in conservative variables with "
-        "artificial diffusion (deprecated).");
-
+/**
+ *
+ */
 EulerCFE::EulerCFE(const LibUtilities::SessionReaderSharedPtr &pSession,
                    const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : UnsteadySystem(pSession, pGraph), CompressibleFlowSystem(pSession, pGraph)
 {
 }
 
+/**
+ *
+ */
 void EulerCFE::v_InitObject(bool DeclareFields)
 {
     CompressibleFlowSystem::v_InitObject(DeclareFields);
@@ -83,6 +83,9 @@ void EulerCFE::v_DoDiffusion(const Array<OneD, Array<OneD, NekDouble>> &inarray,
     }
 }
 
+/**
+ *
+ */
 bool EulerCFE::v_SupportsShockCaptType(const std::string type) const
 {
     if (type == "NonSmooth" || type == "Off")

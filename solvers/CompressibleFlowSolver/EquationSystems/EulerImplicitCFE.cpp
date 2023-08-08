@@ -44,6 +44,9 @@ string EulerImplicitCFE::className =
         "EulerImplicitCFE", EulerImplicitCFE::create,
         "Euler Implicit equations in conservative variables.");
 
+/**
+ *
+ */
 EulerImplicitCFE::EulerImplicitCFE(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const SpatialDomains::MeshGraphSharedPtr &pGraph)
@@ -52,6 +55,9 @@ EulerImplicitCFE::EulerImplicitCFE(
 {
 }
 
+/**
+ *
+ */
 void EulerImplicitCFE::v_InitObject(bool DeclareFields)
 {
     CFSImplicit::v_InitObject(DeclareFields);
@@ -65,6 +71,9 @@ EulerImplicitCFE::~EulerImplicitCFE()
 {
 }
 
+/**
+ *
+ */
 bool EulerImplicitCFE::v_SupportsShockCaptType(const std::string type) const
 {
     if (type == "Off")

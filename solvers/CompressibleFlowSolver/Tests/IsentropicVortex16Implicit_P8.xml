@@ -1113,43 +1113,40 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="rho,rhou,rhov,rhow,E" TYPE="GLL_LAGRANGE" />
+        <E COMPOSITE="C[0]" NUMMODES="8" FIELDS="rho,rhou,rhov,E" TYPE="MODIFIED" />
     </EXPANSIONS>
 
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> TimeStep        = 0.0001        </P>
-            <P> NumSteps        = 5            </P>
-            <P> IO_CheckSteps   = 1000          </P>
-            <P> IO_InfoSteps    = 100           </P>
-            <P> Gamma           = 1.4           </P>
-            <P> pInf            = 101325        </P>
-            <P> rhoInf          = 1.225         </P>
-            <P> uInf            = 0.1           </P>
-            <P> vInf            = 0.0           </P>
-            <P> wInf            = 0.0           </P>
-            <P> HomModesZ       = 6             </P>
-            <P> LZ              = 1.0           </P>
+            <P> FinTime         = 0         </P>
+            <P> TimeStep        = 0         </P>
+            <P> NumSteps        = 5         </P>
+            <P> IO_CheckSteps   = 1000      </P>
+            <P> IO_InfoSteps    = 100       </P>
+            <P> Gamma           = 1.4       </P>
+            <P> pInf            = 101325    </P>
+            <P> rhoInf          = 1.225     </P>
+            <P> uInf            = 0.1       </P>
+            <P> vInf            = 0.0       </P>
+            <P> CFL             = 2.0       </P>
         </PARAMETERS>
 
         <SOLVERINFO>
-            <I PROPERTY="EQType"                VALUE="EulerCFE"            />
+            <I PROPERTY="EQType"                VALUE="EulerImplicitCFE"    />
             <I PROPERTY="ICType"                VALUE="IsentropicVortex"    />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
-            <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                  />
-            <I PROPERTY="AdvectionType"         VALUE="FRDG3DHomogeneous1D" />
-            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-            <I PROPERTY="UpwindType"            VALUE="ExactToro"           />
-            <I PROPERTY="USEFFT"                VALUE="FFTW"                />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="DIRKOrder3"          />
+            <I PROPERTY="UpwindType"            VALUE="Roe"                 />
+            <I PROPERTY="LinSysIterSolverTypeInNonlin" VALUE="GMRES"        />
         </SOLVERINFO>
 
         <VARIABLES>
             <V ID="0"> rho  </V>
             <V ID="1"> rhou </V>
             <V ID="2"> rhov </V>
-            <V ID="3"> rhow </V>
-            <V ID="4"> E    </V>
+            <V ID="3"> E    </V>
         </VARIABLES>
 
         <BOUNDARYREGIONS>
@@ -1161,19 +1158,9 @@
                 <D VAR="rho"    USERDEFINEDTYPE="IsentropicVortex" VALUE="0"/>
                 <D VAR="rhou"   USERDEFINEDTYPE="IsentropicVortex" VALUE="0"/>
                 <D VAR="rhov"   USERDEFINEDTYPE="IsentropicVortex" VALUE="0"/>
-                <D VAR="rhow"   USERDEFINEDTYPE="IsentropicVortex" VALUE="0"/>
                 <D VAR="E"      USERDEFINEDTYPE="IsentropicVortex" VALUE="0"/>
             </REGION>
         </BOUNDARYCONDITIONS>
-
-        <!-- Initial conditions not necessary
-            since they are imposed analitically -->
-        <!--FUNCTION NAME="InitialConditions">
-            <E VAR="rho"    VALUE="1"/>
-            <E VAR="rhou"   VALUE="1"/>
-            <E VAR="rhov"   VALUE="1"/>
-            <E VAR="E"      VALUE="1"/>
-        </FUNCTION-->
 
     </CONDITIONS>
 

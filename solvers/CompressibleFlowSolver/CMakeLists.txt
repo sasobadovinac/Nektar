@@ -30,11 +30,9 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         EquationSystems/CompressibleFlowSystemImplicit.cpp
         EquationSystems/EulerCFE.cpp
         EquationSystems/EulerImplicitCFE.cpp
-        EquationSystems/IsentropicVortex.cpp
         EquationSystems/NavierStokesCFE.cpp
         EquationSystems/NavierStokesCFEAxisym.cpp
         EquationSystems/NavierStokesImplicitCFE.cpp
-        EquationSystems/RinglebFlow.cpp
         Forcing/ForcingAxiSymmetric.cpp
         Forcing/ForcingQuasi1D.cpp
        )
@@ -82,6 +80,9 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_NEKTAR_TEST(IsentropicVortex_FRSD_SEM LENGTHY)
     ADD_NEKTAR_TEST(IsentropicVortex_FRHU_SEM LENGTHY)
     ADD_NEKTAR_TEST(IsentropicVortex16_P8 LENGTHY)
+    IF (NOT APPLE OR CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+        ADD_NEKTAR_TEST(IsentropicVortex16Implicit_P8 LENGTHY)
+    ENDIF()
     ADD_NEKTAR_TEST(IsentropicVortex16_P3_GAUSS LENGTHY)
     ADD_NEKTAR_TEST(IsentropicVortex16_P8_GAUSS LENGTHY)
     ADD_NEKTAR_TEST(IsentropicVortex_WeakDG_HexDeformed)

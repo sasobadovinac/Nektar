@@ -57,7 +57,7 @@ public:
         return p;
     }
     /// Name of class.
-    static std::string className, className2;
+    static std::string className;
 
     virtual ~EulerCFE();
 
