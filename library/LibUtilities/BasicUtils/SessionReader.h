@@ -58,7 +58,6 @@ namespace LibUtilities
 typedef std::map<std::string, std::string> SolverInfoMap;
 typedef std::map<std::string, NekDouble> ParameterMap;
 typedef std::map<std::string, std::string> GeometricInfoMap;
-typedef std::map<std::string, std::string> ExpressionMap;
 typedef std::vector<std::string> VariableList;
 typedef std::map<std::string, std::string> TagMap;
 typedef std::map<std::string, std::string> FilterParams;
@@ -383,9 +382,6 @@ public:
         const std::string &pName, const std::string &pShortName,
         const std::string &pDescription);
 
-    /// Substitutes expressions defined in the XML document.
-    LIB_UTILITIES_EXPORT void SubstituteExpressions(std::string &expr);
-
     /// Get bool to update optimisation file
     LIB_UTILITIES_EXPORT bool GetUpdateOptFile() const
     {
@@ -425,8 +421,6 @@ private:
     SolverInfoMap m_solverInfo;
     /// Geometric information properties.
     GeometricInfoMap m_geometricInfo;
-    /// Expressions.
-    ExpressionMap m_expressions;
     /// Interpreter instance.
     InterpreterSharedPtr m_interpreter;
     /// Functions.
@@ -492,8 +486,6 @@ private:
     LIB_UTILITIES_EXPORT void ReadGlobalSysSolnInfo(TiXmlElement *conditions);
     /// Reads the TIMEINTEGRATIONSCHEME section of the XML document.
     LIB_UTILITIES_EXPORT void ReadTimeIntScheme(TiXmlElement *conditions);
-    /// Reads the EXPRESSIONS section of the XML document.
-    LIB_UTILITIES_EXPORT void ReadExpressions(TiXmlElement *conditions);
     /// Reads the VARIABLES section of the XML document.
     LIB_UTILITIES_EXPORT void ReadVariables(TiXmlElement *conditions);
     /// Reads the FUNCTIONS section of the XML document.

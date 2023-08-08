@@ -240,7 +240,6 @@ void Movement::ReadZones(TiXmlElement *zonesTag, MeshGraph *meshGraph,
             err = zonesElement->QueryStringAttribute("ANGVEL", &angularVelStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read angular velocity.");
 
-            pSession->SubstituteExpressions(angularVelStr);
             LibUtilities::EquationSharedPtr angularVelEqn =
                 MemoryManager<LibUtilities::Equation>::AllocateSharedPtr(
                     pSession->GetInterpreter(), angularVelStr);
