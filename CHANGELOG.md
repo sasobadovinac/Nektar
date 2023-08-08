@@ -46,6 +46,7 @@ v5.4.0
 - New version of CreateCollection using basisKey (!1603)
 - Remove unused Domain.cpp and Domain.h file (!1609)
 - Remove useless ReadExpressions and SubstituteExpressions function in sessionReader (!1608)
+- Corrected workspace size in triangle BwdTrans (!1610)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)

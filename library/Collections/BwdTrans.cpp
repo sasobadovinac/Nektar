@@ -707,7 +707,7 @@ private:
           m_base0(m_stdExp->GetBasis(0)->GetBdata()),
           m_base1(m_stdExp->GetBasis(1)->GetBdata())
     {
-        m_wspSize = m_nquad0 * m_nmodes1 * m_numElmt;
+        m_wspSize = m_nquad1 * m_nmodes0 * m_numElmt;
         if (m_stdExp->GetBasis(0)->GetBasisType() == LibUtilities::eModified_A)
         {
             m_sortTopVertex = true;
