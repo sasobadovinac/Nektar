@@ -246,8 +246,8 @@ void StdTriExp::v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
 void StdTriExp::v_BwdTrans_SumFac(const Array<OneD, const NekDouble> &inarray,
                                   Array<OneD, NekDouble> &outarray)
 {
-    Array<OneD, NekDouble> wsp(m_base[0]->GetNumPoints() *
-                               m_base[1]->GetNumModes());
+    Array<OneD, NekDouble> wsp(m_base[1]->GetNumPoints() *
+                               m_base[0]->GetNumModes());
 
     BwdTrans_SumFacKernel(m_base[0]->GetBdata(), m_base[1]->GetBdata(), inarray,
                           outarray, wsp);
@@ -269,7 +269,7 @@ void StdTriExp::v_BwdTrans_SumFacKernel(
     int nmodes0 = m_base[0]->GetNumModes();
     int nmodes1 = m_base[1]->GetNumModes();
 
-    ASSERTL1(wsp.size() >= nquad0 * nmodes1,
+    ASSERTL1(wsp.size() >= nquad1 * nmodes0,
              "Workspace size is not sufficient");
     ASSERTL2((m_base[1]->GetBasisType() != LibUtilities::eOrtho_B) ||
                  (m_base[1]->GetBasisType() != LibUtilities::eModified_B),
