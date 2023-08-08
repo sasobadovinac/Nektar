@@ -170,10 +170,16 @@ protected:
     virtual NekDouble v_GetTimeStep(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray) override;
 
+    /// Print a summary of time stepping parameters.
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
+
     virtual void v_SetInitialConditions(NekDouble initialtime      = 0.0,
                                         bool dumpInitialConditions = true,
                                         const int domain = 0) override;
 
+    virtual void v_EvaluateExactSolution(unsigned int field,
+                                         Array<OneD, NekDouble> &outfield,
+                                         const NekDouble time = 0.0) override;
     NekDouble GetGamma()
     {
         return m_gamma;
@@ -215,6 +221,15 @@ protected:
     // Virtual function that returns true if derived class supports a given
     // shock capturing method
     virtual bool v_SupportsShockCaptType(const std::string type) const = 0;
+
+private:
+    /// Isentropic Vortex Test Case.
+    void EvaluateIsentropicVortex(unsigned int field,
+                                  Array<OneD, NekDouble> &outfield,
+                                  NekDouble time, const int o = 0);
+
+    /// Ringleb Flow Test Case.
+    void GetExactRinglebFlow(int field, Array<OneD, NekDouble> &outarray);
 };
 } // namespace Nektar
 #endif

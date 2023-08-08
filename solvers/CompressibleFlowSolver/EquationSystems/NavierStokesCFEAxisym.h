@@ -84,6 +84,7 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         TensorOfArray3D<NekDouble> &derivatives,
         TensorOfArray3D<NekDouble> &viscousTensor) override;
+
     virtual void v_GetViscousFluxVectorDeAlias(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         TensorOfArray3D<NekDouble> &derivatives,

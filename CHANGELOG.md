@@ -50,6 +50,7 @@ v5.4.0
 - Prevent file overwrite with restart for the Compressible flow solver (!1540)
 - Register Projection and GJPStabilisation in SessionReader (!1542)
 - Redesign of AUSM Riemann solver class (!1577)
+- Redesign of the compressible flow solver. Removal of RinglebFlow and IsentropicVortex subclasses (!1584)
 - Redesign of PreconCfs class (!1578)
 
 **IncNavierStokesSolver**
