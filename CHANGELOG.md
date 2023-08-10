@@ -44,6 +44,7 @@ v5.4.0
 - Fix an indexing error in MatrixFreeOps (!1602)
 - Update Session File for Parallel-in-Time (!1516)
 - New version of CreateCollection using basisKey (!1603)
+- Reactivate Reactivate Movement_fixed_3D_stacked_cylinders_curved_hdf5_par test except on ARM MacOS (!1536)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
