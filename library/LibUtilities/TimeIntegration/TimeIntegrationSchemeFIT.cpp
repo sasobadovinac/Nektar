@@ -62,7 +62,7 @@ FractionalInTimeIntegrationScheme::FractionalInTimeIntegrationScheme(
     m_freeParams = freeParams;
 
     // Currently up to 4th order is implemented.
-    ASSERTL1(0 < order && order <= 4,
+    ASSERTL1(1 <= order && order <= 4,
              "FractionalInTime Time integration scheme bad order: " +
                  std::to_string(order));
 
@@ -118,9 +118,10 @@ void FractionalInTimeIntegrationScheme::v_InitializeScheme(
     m_Lmax = computeL(m_base, m_maxTimeSteps) + 2;
 
     // Demarcation integers - one array that is re-used
-    m_qml = Array<OneD, int>(m_Lmax - 1, 0);
+    m_qml = Array<OneD, size_t>(m_Lmax - 1, size_t(0));
+
     // Demarcation interval markers - one array that is re-used
-    m_taus = Array<OneD, int>(m_Lmax + 1, 0);
+    m_taus = Array<OneD, size_t>(m_Lmax + 1, size_t(0));
 
     // Storage of the initial values.
     m_u0 = y_0;
@@ -341,22 +342,6 @@ ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
             m_uNext[i][j] = 0; // Zero out for the next itereation.
         }
     }
-
-    // Dump the current solution.
-    // std::cout << "timeStep  " << timeStep << std::endl;
-    // for( size_t j=0; j<m_npoints; ++j )
-    // {
-    //     for( size_t i=0; i<m_nvars; ++i )
-    //     {
-    //         for( size_t m=0; m<m_order+1; ++m )
-    //         {
-    //             std::cout << m_u[m][i][j] << "  ";
-    //         }
-    //         std::cout << std::endl;
-    //     }
-    //     std::cout << std::endl;
-    // }
-    // std::cout << std::endl;
 
     // Update the storage and counters for integral classes to
     // time timeStep * m_deltaT. Also time-steps the sandboxes and stashes.
@@ -730,18 +715,6 @@ void FractionalInTimeIntegrationScheme::integralClassInitialize(
                 // scenarios.
             default:
                 ASSERTL1(false, "No matrix inverse.");
-
-                // Ainv = zeros(counter);
-                // Ainv(1,:) = 1;
-                // Ainv(2,1) = 1;
-
-                // for( size_t j = 3; j<=counter; ++j )
-                // {
-                //          Ainv(j,:) = pow((j-2)., (0:counter));
-                //          Ainv(j,:) = Ainv(j,:). * pow((-1)., (0:counter));
-                // }
-
-                // As[m] = inv(Ainv);
                 break;
         }
     }

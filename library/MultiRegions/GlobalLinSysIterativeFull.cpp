@@ -136,8 +136,6 @@ void GlobalLinSysIterativeFull::v_Solve(
     Array<OneD, NekDouble> tmp(nLocDofs);
     Array<OneD, NekDouble> tmp1(nLocDofs);
 
-    Array<OneD, NekDouble> global(nGlobDofs, 0.0);
-
     if (nDirTotal)
     {
         // calculate the Dirichlet forcing
@@ -175,12 +173,8 @@ void GlobalLinSysIterativeFull::v_Solve(
         }
         if (vCG)
         {
-            pLocToGloMap->Assemble(tmp1, tmp);
-
             // solve for perturbation from initial guess in pOutput
-            SolveLinearSystem(nGlobDofs, tmp, global, pLocToGloMap, nDirDofs);
-
-            pLocToGloMap->GlobalToLocal(global, tmp);
+            SolveLinearSystem(nGlobDofs, tmp1, tmp, pLocToGloMap, nDirDofs);
 
             // Add back initial condition
             Vmath::Vadd(nLocDofs, tmp, 1, pLocOutput, 1, pLocOutput, 1);
@@ -192,9 +186,8 @@ void GlobalLinSysIterativeFull::v_Solve(
     }
     else
     {
-        pLocToGloMap->Assemble(pLocInput, tmp);
-        SolveLinearSystem(nGlobDofs, tmp, global, pLocToGloMap, nDirDofs);
-        pLocToGloMap->GlobalToLocal(global, pLocOutput);
+        SolveLinearSystem(nGlobDofs, pLocInput, pLocOutput, pLocToGloMap,
+                          nDirDofs);
     }
 }
 
@@ -204,18 +197,32 @@ void GlobalLinSysIterativeFull::v_Solve(
 void GlobalLinSysIterativeFull::v_DoMatrixMultiply(
     const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
 {
+    bool isLocal = m_linsol->IsLocal();
+
     std::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
 
     AssemblyMapSharedPtr asmMap = m_locToGloMap.lock();
 
     int ncoeffs = expList->GetNcoeffs();
+    Array<OneD, NekDouble> InputLoc, OutputLoc;
 
-    Array<OneD, NekDouble> InputLoc(ncoeffs);
-    Array<OneD, NekDouble> OutputLoc(ncoeffs);
-    asmMap->GlobalToLocal(pInput, InputLoc);
+    if (isLocal)
+    {
+        InputLoc  = pInput;
+        OutputLoc = pOutput;
 
-    // Perform matrix-vector operation A*d_i
-    expList->GeneralMatrixOp(m_linSysKey, InputLoc, OutputLoc);
+        // Perform matrix-vector operation A*d_i
+        expList->GeneralMatrixOp(m_linSysKey, InputLoc, OutputLoc);
+    }
+    else
+    {
+        InputLoc  = Array<OneD, NekDouble>(ncoeffs);
+        OutputLoc = Array<OneD, NekDouble>(ncoeffs);
+
+        asmMap->GlobalToLocal(pInput, InputLoc);
+        // Perform matrix-vector operation A*d_i
+        expList->GeneralMatrixOp(m_linSysKey, InputLoc, OutputLoc);
+    }
 
     // Apply robin boundary conditions to the solution.
     for (auto &r : m_robinBCInfo) // add robin mass matrix
@@ -238,7 +245,10 @@ void GlobalLinSysIterativeFull::v_DoMatrixMultiply(
     }
 
     // put back in global coeffs
-    asmMap->Assemble(OutputLoc, pOutput);
+    if (isLocal == false)
+    {
+        asmMap->Assemble(OutputLoc, pOutput);
+    }
 }
 
 /**
@@ -249,5 +259,69 @@ void GlobalLinSysIterativeFull::v_UniqueMap()
     m_map = m_locToGloMap.lock()->GetGlobalToUniversalMapUnique();
 }
 
+/**
+ *
+ */
+void GlobalLinSysIterativeFull::v_SolveLinearSystem(
+    const int nGlobal, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &plocToGloMap,
+    const int nDir)
+{
+
+    if (!m_linsol)
+    {
+        LibUtilities::CommSharedPtr vComm =
+            m_expList.lock()->GetComm()->GetRowComm();
+        LibUtilities::SessionReaderSharedPtr pSession =
+            m_expList.lock()->GetSession();
+
+        // Check such a module exists for this equation.
+        ASSERTL0(LibUtilities::GetNekLinSysIterFactory().ModuleExists(
+                     m_linSysIterSolver),
+                 "NekLinSysIter '" + m_linSysIterSolver +
+                     "' is not defined.\n");
+        m_linsol = LibUtilities::GetNekLinSysIterFactory().CreateInstance(
+            m_linSysIterSolver, pSession, vComm, nGlobal - nDir,
+            LibUtilities::NekSysKey());
+
+        m_linsol->SetSysOperators(m_NekSysOp);
+        v_UniqueMap();
+        m_linsol->setUniversalUniqueMap(m_map);
+    }
+
+    if (!m_precon)
+    {
+        m_precon = CreatePrecon(plocToGloMap);
+        m_precon->BuildPreconditioner();
+    }
+
+    m_linsol->setRhsMagnitude(m_rhs_magnitude);
+
+    if (m_useProjection)
+    {
+        Array<OneD, NekDouble> gloIn(nGlobal);
+        Array<OneD, NekDouble> gloOut(nGlobal, 0.0);
+        plocToGloMap->Assemble(pInput, gloIn);
+        DoProjection(nGlobal, gloIn, gloOut, nDir, m_tolerance, m_isAconjugate);
+        plocToGloMap->GlobalToLocal(gloOut, pOutput);
+    }
+    else
+    {
+        if (m_linsol->IsLocal())
+        {
+            int nLocDofs = plocToGloMap->GetNumLocalCoeffs();
+            Vmath::Zero(nLocDofs, pOutput, 1);
+            m_linsol->SolveSystem(nLocDofs, pInput, pOutput, nDir, m_tolerance);
+        }
+        else
+        {
+            Array<OneD, NekDouble> gloIn(nGlobal);
+            Array<OneD, NekDouble> gloOut(nGlobal, 0.0);
+            plocToGloMap->Assemble(pInput, gloIn);
+            m_linsol->SolveSystem(nGlobal, gloIn, gloOut, nDir, m_tolerance);
+            plocToGloMap->GlobalToLocal(gloOut, pOutput);
+        }
+    }
+}
 } // namespace MultiRegions
 } // namespace Nektar

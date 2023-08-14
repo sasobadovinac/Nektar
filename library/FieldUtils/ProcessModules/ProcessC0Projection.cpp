@@ -84,7 +84,7 @@ void ProcessC0Projection::v_Process(po::variables_map &vm)
         return;
     }
 
-    // ensure not using diagonal preconditioner since tends not to converge fo
+    // ensure not using diagonal preconditioner since tends not to converge for
     // mass matrix
     if (m_f->m_graph->GetMeshDimension() == 3)
     {

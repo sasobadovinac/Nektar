@@ -4,22 +4,43 @@ v5.4.0
 ------
 **Library**
 - Add unit tests for Polylib (!1533)
+- Add the absolution tolerance for the iterative linear system solver (!1549)
 - Redesign of Parareal driver (!1509) 
-- Add local p-refinement functionality (!508)
-- Fix compilation against TetGen 1.6 (!1547)
+- Add local p-refinement functionality (!1508)
 - Tidy-up SDC schemes (!1550)
 - Add min/max and fmin/fmax function to the interpretor registry (!1552)
 - Fix a _m128d to _m128i conversion bug in sse2.hpp (!1551)
 - Register TimeIntegrationMethod to SessionReader (!1539)
 - Remove unecessary for loop in NekLinSysIterGMRES (!1554)
 - Generalize the use of size_t in TimeIntegration (!1555)
+- Fix convergence error in Fixed-point Jacobi algorithm (!1561)
+- Tidy-up NekLinSys (!1562)
+- Tidy-up TimeIntegration (!1505)
+- Fix Adams-Bashforth time integration scheme (!1558)
 - Remove unused Kernel directory (!1560)
+- Remove unused files in BasicUtils (!1564)
+- Fix convergence error in Fixed-point Jacobi algorithm (!1561)
+- Update parallel-in-time code base in fieldconvert (!1565)
+- Remove unused function GetKey in NekFactory (!1567)
+- Fix v_Exscan compilation bug (!1566)
+- Tidy-up of comm class (!1572)
+- Tidy-up Nektar tolerances (!1570)
+- Fix StaticCond approach + GMRES when restarting (!1583)
+- Slightly reduce memory allocation in GMRES (!1586)
+- Tidy-up Advection class (!1580)
+- Tidy-up diffusion class and subclasses (!1581)
+- Tidy-up NekNonlinSys and fix some issues (!1563)
+- Added a local space version of GMRES and ConjugateGradient (!1575)
+- Added a jacobi preconditioner building on diagonal impelemtation (!1575)
+- Add a priori convergence and null-input check to GMRES (!1590)
 
 **CompressibleFlowSolver**
 - Fix AUSM3 Riemann solver and add tests to the CI (!1537)
 - Set initial condition check points files to zero (0) (!1535) 
 - Prevent file overwrite with restart for the Compressible flow solver (!1540)
 - Register Projection and GJPStabilisation in SessionReader (!1542)
+- Redesign of AUSM Riemann solver class (!1577)
+- Redesign of PreconCfs class (!1578)
 
 **FieldConvert**
 - Add option to use .csv files in pointdatatofld module (!1545)
@@ -27,11 +48,16 @@ v5.4.0
 **IncNavierStokesSolver**
 - Register SolverType in SessionReader (!1541)
 - Prevent file overwrite with restart for the IsentropicVortex solver (!1543)
+- Fix GJP stabilisation for curved 3D elements (!1593)
 
 **Miscellaneous**
 - Fix compilation against TetGen 1.6 (!1547)
 - Tidy-up Parareal initial condition output (!1534)
 - Remove double entry in documentation and slightly tidy-up code (!1530)
+- Fixed deadlock problem for the LowEnergyBlock preconditioner which appeared for specific combinations of meshes and boundary conditions (!1553)
+- Add a check to avoid unnecessary copy in DoOdoProjecton function (!1582)
+- Update user guide and developer guide (!1598)
+- Some various tidy-up (!1585)
 
 **NekMesh**
 - Changed CMake to set NEKTAR_USE_THREAD_SAFETY to ON when MeshGen is set to ON (!1546)
@@ -79,6 +105,11 @@ v5.3.0
 - Add missing override keyword to virtual functions in LibUtilities (!1459)
 - Enable ARM macOS runner, fixes for SCOTCH allocation and PETSc detection on macOS (!1462)
 - Add FieldConvert module and filter to project velocity into body-fitted coordinate system (!1467)
+- Add Curl operator to ExpList (!1475)
+- Changed LinearAdvectionDiffusionReactionSolve arguments to be equivalent to HelmSolve (!1475)
+- Added detection for advection matrices in GlobalLinSysIterative with silent switch from CG to GMRES (!1475)
+- Added non-symmetric laplacian matrices via varcoeffs (!1475)
+- Added matrix-free operator for LinearAdvection (!1475)
 - Fix uninitialized coordinates in the Bodyforcing (!1472)
 - Fix body-fitted velocity filter and also record the max/min for density,pressure, and temperature field (!1490)
 - Fix typos in Vmath and VDmath (!1480)
@@ -144,6 +175,7 @@ v5.3.0
 **IncNavierStokesSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 - Extended Reynolds Stresses filter to passive scalars (!1430)
+- Added Implicit Solver (!1475)
 - Fixed Taylor-Hood expansion for VCSWeakPressure (!1444)
 - Fix filename in LinearisedAdvection (!1479)
 - Added scalar advection terms to AdjointSolver (!1466)

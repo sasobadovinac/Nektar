@@ -69,7 +69,7 @@ DNekScalMatSharedPtr Expansion2D::CreateMatrix(const MatrixKey &mkey)
         case StdRegions::eMass:
         {
             if ((m_metricinfo->GetGtype() == SpatialDomains::eDeformed) ||
-                (mkey.GetNVarCoeff()))
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffMass)))
             {
                 NekDouble one        = 1.0;
                 DNekMatSharedPtr mat = GenMatrix(mkey);
@@ -141,7 +141,13 @@ DNekScalMatSharedPtr Expansion2D::CreateMatrix(const MatrixKey &mkey)
         case StdRegions::eWeakDeriv2:
         {
             if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
-                mkey.GetNVarCoeff())
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffLaplacian)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD00)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD01)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD02)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD11)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD12)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD22)))
             {
                 NekDouble one        = 1.0;
                 DNekMatSharedPtr mat = GenMatrix(mkey);
@@ -269,8 +275,17 @@ DNekScalMatSharedPtr Expansion2D::CreateMatrix(const MatrixKey &mkey)
         }
         case StdRegions::eLaplacian:
         {
-            if ((m_metricinfo->GetGtype() == SpatialDomains::eDeformed) ||
-                (mkey.GetNVarCoeff() > 0) ||
+            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffLaplacian)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD00)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD01)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD10)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD02)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD20)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD11)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD12)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD21)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD22)) ||
                 (mkey.ConstFactorExists(StdRegions::eFactorSVVCutoffRatio)))
             {
                 NekDouble one        = 1.0;
@@ -365,6 +380,74 @@ DNekScalMatSharedPtr Expansion2D::CreateMatrix(const MatrixKey &mkey)
 
             returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(
                 HelmMat.Scale(), NDTraceMat);
+        }
+        break;
+        case StdRegions::eLinearAdvectionDiffusionReaction:
+        {
+            NekDouble lambda = mkey.GetConstFactor(StdRegions::eFactorLambda);
+
+            // Construct mass matrix (Check for varcoeffs)
+            MatrixKey masskey(StdRegions::eMass, mkey.GetShapeType(), *this);
+            if (mkey.HasVarCoeff(StdRegions::eVarCoeffMass))
+            {
+                masskey = MatrixKey(mkey, StdRegions::eMass);
+            }
+            DNekScalMat &MassMat = *GetLocMatrix(masskey);
+
+            // Construct laplacian matrix (Check for varcoeffs)
+            MatrixKey lapkey(StdRegions::eLaplacian, mkey.GetShapeType(),
+                             *this);
+            if ((mkey.HasVarCoeff(StdRegions::eVarCoeffLaplacian)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD00)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD01)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD10)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD02)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD20)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD11)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD12)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD21)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD22)))
+            {
+                lapkey = MatrixKey(mkey, StdRegions::eLaplacian);
+            }
+            DNekScalMat &LapMat = *GetLocMatrix(lapkey);
+
+            // Construct advection matrix
+            // (assume advection velocity defined and non-zero)
+            // Could check L2(AdvectionVelocity) or HasVarCoeff
+            MatrixKey advkey(mkey, StdRegions::eLinearAdvection);
+            DNekScalMat &AdvMat = *GetLocMatrix(advkey);
+
+            int rows = LapMat.GetRows();
+            int cols = LapMat.GetColumns();
+
+            DNekMatSharedPtr adr =
+                MemoryManager<DNekMat>::AllocateSharedPtr(rows, cols);
+
+            NekDouble one = 1.0;
+            (*adr)        = LapMat - lambda * MassMat + AdvMat;
+
+            returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one, adr);
+
+            // Clear memory (Repeat varcoeff checks)
+            DropLocMatrix(advkey);
+            if (mkey.HasVarCoeff(StdRegions::eVarCoeffMass))
+            {
+                DropLocMatrix(masskey);
+            }
+            if ((mkey.HasVarCoeff(StdRegions::eVarCoeffLaplacian)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD00)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD01)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD10)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD02)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD20)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD11)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD12)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD21)) ||
+                (mkey.HasVarCoeff(StdRegions::eVarCoeffD22)))
+            {
+                DropLocMatrix(lapkey);
+            }
         }
         break;
         case StdRegions::eIProductWRTBase:

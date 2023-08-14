@@ -32,13 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-/*
- * GlobalLinSysXxt.h
- *
- *  Created on: 19 Oct 2012
- *      Author: cc
- */
-
 #ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSXXT_H
 #define NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSXXT_H
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
@@ -75,23 +68,6 @@ protected:
     Array<OneD, unsigned int> m_Ai;
     Array<OneD, unsigned int> m_Aj;
     Array<OneD, double> m_Ar;
-
-    Array<OneD, NekDouble> m_locToGloSignMult;
-
-    Array<OneD, int> m_map;
-
-    /// Solve the linear system for given input and output vectors.
-    virtual void v_SolveLinearSystem(const int pNumRows,
-                                     const Array<OneD, const NekDouble> &pInput,
-                                     Array<OneD, NekDouble> &pOutput,
-                                     const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir = 0) override;
-
-    void GlobalToLocalNoSign(const Array<OneD, const NekDouble> &global,
-                             Array<OneD, NekDouble> &local);
-
-    void LocalToGlobalNoSign(const Array<OneD, const NekDouble> &local,
-                             Array<OneD, NekDouble> &global);
 };
 } // namespace MultiRegions
 } // namespace Nektar

@@ -41,7 +41,7 @@ std::string AUSM3Solver::solverName =
         "AUSM3", AUSM3Solver::create, "AUSM3 Riemann solver");
 
 AUSM3Solver::AUSM3Solver(const LibUtilities::SessionReaderSharedPtr &pSession)
-    : CompressibleSolver(pSession)
+    : AUSM0Solver(pSession)
 {
     pSession->LoadParameter("Mco", m_Mco, 0.01);
 }
@@ -136,85 +136,4 @@ void AUSM3Solver::v_PointSolve(double rhoL, double rhouL, double rhovL,
     }
 }
 
-double AUSM3Solver::M1Function(int A, double M)
-{
-    double out;
-
-    if (A == 0)
-    {
-        out = 0.5 * (M + fabs(M));
-    }
-    else
-    {
-        out = 0.5 * (M - fabs(M));
-    }
-
-    return out;
-}
-
-double AUSM3Solver::M2Function(int A, double M)
-{
-    double out;
-
-    if (A == 0)
-    {
-        out = 0.25 * (M + 1.0) * (M + 1.0);
-    }
-    else
-    {
-        out = -0.25 * (M - 1.0) * (M - 1.0);
-    }
-
-    return out;
-}
-
-double AUSM3Solver::M4Function(int A, double beta, double M)
-{
-    double out;
-
-    if (fabs(M) >= 1.0)
-    {
-        out = M1Function(A, M);
-    }
-    else
-    {
-        out = M2Function(A, M);
-
-        if (A == 0)
-        {
-            out *= 1.0 - 16.0 * beta * M2Function(1, M);
-        }
-        else
-        {
-            out *= 1.0 + 16.0 * beta * M2Function(0, M);
-        }
-    }
-
-    return out;
-}
-
-double AUSM3Solver::P5Function(int A, double alpha, double M)
-{
-    double out;
-
-    if (fabs(M) >= 1.0)
-    {
-        out = (1.0 / M) * M1Function(A, M);
-    }
-    else
-    {
-        out = M2Function(A, M);
-
-        if (A == 0)
-        {
-            out *= (2.0 - M) - 16.0 * alpha * M * M2Function(1, M);
-        }
-        else
-        {
-            out *= (-2.0 - M) + 16.0 * alpha * M * M2Function(0, M);
-        }
-    }
-
-    return out;
-}
 } // namespace Nektar

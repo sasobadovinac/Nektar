@@ -120,6 +120,9 @@ void AUSM0Solver::v_PointSolve(double rhoL, double rhouL, double rhovL,
     }
 }
 
+/**
+ *
+ */
 double AUSM0Solver::M1Function(int A, double M)
 {
     double out;
@@ -152,6 +155,9 @@ double AUSM0Solver::M2Function(int A, double M)
     return out;
 }
 
+/**
+ *
+ */
 double AUSM0Solver::M4Function(int A, double beta, double M)
 {
     double out;
@@ -177,6 +183,9 @@ double AUSM0Solver::M4Function(int A, double beta, double M)
     return out;
 }
 
+/**
+ *
+ */
 double AUSM0Solver::P5Function(int A, double alpha, double M)
 {
     double out;

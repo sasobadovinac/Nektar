@@ -158,11 +158,14 @@ void CFLtester::DoOdeProjection(
         case MultiRegions::eDiscontinuous:
         {
             // Just copy over array
-            int npoints = GetNpoints();
-
-            for (int j = 0; j < nvariables; ++j)
+            if (inarray != outarray)
             {
-                Vmath::Vcopy(npoints, inarray[j], 1, outarray[j], 1);
+                int npoints = GetNpoints();
+
+                for (int j = 0; j < nvariables; ++j)
+                {
+                    Vmath::Vcopy(npoints, inarray[j], 1, outarray[j], 1);
+                }
             }
         }
         break;
@@ -239,10 +242,6 @@ NekDouble CFLtester::v_GetTimeStep(const Array<OneD, int> ExpOrder,
 
     int n_element = m_fields[0]->GetExpSize();
 
-    // const NekDouble minLengthStdTri  = 1.414213;
-    // const NekDouble minLengthStdQuad = 2.0;
-    // const NekDouble cLambda          = 0.2; // Spencer book pag. 317
-
     Array<OneD, NekDouble> tstep(n_element, 0.0);
     Array<OneD, NekDouble> stdVelocity(n_element, 0.0);
     stdVelocity = GetStdVelocity(m_velocity);
@@ -251,23 +250,14 @@ NekDouble CFLtester::v_GetTimeStep(const Array<OneD, int> ExpOrder,
     {
         int npoints = m_fields[0]->GetExp(el)->GetTotPoints();
         Array<OneD, NekDouble> one2D(npoints, 1.0);
-        // NekDouble Area = m_fields[0]->GetExp(el)->Integral(one2D);
         if (std::dynamic_pointer_cast<LocalRegions::TriExp>(
                 m_fields[0]->GetExp(el)))
         {
-            // tstep[el] =
-            // timeCFL/(stdVelocity[el]*cLambda*(ExpOrder[el]-1)*(ExpOrder[el]-1));
-            // tstep[el] =
-            // timeCFL*minLengthStdTri/(stdVelocity[el]*cLambda*(ExpOrder[el]-1)*(ExpOrder[el]-1));
             tstep[el] = CFL[el] / (stdVelocity[el]);
         }
         else if (std::dynamic_pointer_cast<LocalRegions::QuadExp>(
                      m_fields[0]->GetExp(el)))
         {
-            // tstep[el] =
-            // timeCFL/(stdVelocity[el]*cLambda*(ExpOrder[el]-1)*(ExpOrder[el]-1));
-            // tstep[el] =
-            // timeCFL*minLengthStdQuad/(stdVelocity[el]*cLambda*(ExpOrder[el]-1)*(ExpOrder[el]-1));
             tstep[el] = CFL[el] / (stdVelocity[el]);
         }
     }

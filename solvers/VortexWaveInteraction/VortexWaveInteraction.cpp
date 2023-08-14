@@ -2052,9 +2052,7 @@ Array<OneD, int> VortexWaveInteraction::GetReflectionIndex(void)
     //-> Dermine the point which is on coordinate (x -> -x + Lx/2, y-> -y)
     m_waveVelocities[0]->GetPlane(0)->GetCoords(coord_x, coord_y);
     NekDouble xmax = Vmath::Vmax(npts, coord_x, 1);
-    // NekDouble tol =
-    // NekConstants::kGeomFactorsTol*NekConstants::kGeomFactorsTol;
-    NekDouble tol = 1e-5;
+    NekDouble tol  = 1e-5;
     NekDouble xnew, ynew;
 
     int start = npts - 1;

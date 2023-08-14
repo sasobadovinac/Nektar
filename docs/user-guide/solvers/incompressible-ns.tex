@@ -162,7 +162,7 @@ parts to arrive at a weak pressure system of the form:
   \int_{\Omega} \nabla q \cdot \nabla p^{n+1} +& \frac{\gamma_0}{\Delta t} \int_{\partial \Omega_0} q { \tilde{\mathbf{u}}}^{n+1} \cdot \mathbf{n}  = 
   \int_{\Omega} \nabla q \cdot (\frac{\hat{u}}{\Delta t}
    - {\mathbf{N}}^{\star,n+1})  \nonumber \\
-  & - \int_{\partial \Omega_d \bigcup \partial \Omega_0} q\, \nu (\nabla \times \nabla \times {\mathbf{u})}^{*,n+1} \cdot \mathbf{n} + \frac{\gamma_0}{\Delta t} \int_{\partial \Omega_d} q {\mathbf{w}}^{n+1} \cdot \mathbf{n}
+  & - \int_{\partial \Omega_d \bigcup \partial \Omega_0} q\, \nu (\nabla \times \nabla \times {\mathbf{u})}^{*,n+1} \cdot \mathbf{n} + \frac{\gamma_0}{\Delta t} \int_{\partial \Omega_d} q {\mathbf{w}}^{n+1} \cdot \mathbf{n} \label{eqn.weakpforcing}
 \end{align}
 where $\partial \Omega_d$ is the Dirichlet boundary conditions for the velocity and $\partial \Omega_0$ is the outflow boundary. 
 
@@ -172,6 +172,65 @@ This scheme is activated in the SolverInfo section with the
 \begin{lstlisting}[style=XMLStyle]
 <I PROPERTY="SolverType"  VALUE="VCSWeakPressure"/>
 \end{lstlisting}
+
+
+\subsubsection{Implicit Velocity Correction Scheme}
+
+The implicit solver is based on the work of \cite{Dong2010}. Following the 
+previous subsections, the implicit solver handles the
+advection terms implicitly. Effectively, it uses the same formulation
+as the Semi-Implicit scheme presented above, but brings the advection
+operator on the left-hand side. 
+
+Note that the advection matrix needs to be
+updated for every time-step, this potentially leads to increased
+computational cost when compared to the Semi-Implicit scheme.
+Also, consider that the solver is linearly-implicit instead of fully-implicit.
+This means that there, still, is a time-step restriction on complex geometries
+and large-scale simulations.
+
+The advection operator is linearised
+using the approximation $[\mathbf{u} \cdot \nabla \mathbf{u}]^{n+1} \approx 
+[\tilde{\mathbf{u}} \cdot \nabla \mathbf{u}]^{n+1}$ where $\tilde{\mathbf{u}}$
+is an approximate advection velocity defined as
+\begin{equation}
+    \tilde{\mathbf{u}}^{n+1} =
+    \sum_q \frac{\alpha_q}{\gamma} \mathbf{u}^{n-q} 
+    - \frac{\Delta t}{\gamma} \left(
+    \nabla p^{n+1}
+    - [\mathbf{u} \cdot \nabla \mathbf{u}]^{n} 
+    - \nu \nabla \times \mathbf{\omega}^{n}
+    + \mathbf{f}^{n+1} \right).
+\end{equation}
+
+The final operator for the velocity solve in weak form and with Neumann boundary condition is
+\begin{align}
+	\int_\Omega 
+    \frac{\gamma}{\nu \Delta t} \psi \mathbf{u}^{n+1} 
+    +\int_\Omega \nabla \psi \cdot \nabla \mathbf{u}^{n+1} 
+    &+\int_\Omega \frac{1}{\nu} \psi \tilde{\mathbf{u}}^{n+1} \cdot \nabla \mathbf{u}^{n+1} \nonumber\\
+    &= 
+    \frac{1}{\nu} \int_\Omega \psi \left( 
+    - \frac{1}{\Delta t} \sum_q \alpha_q \mathbf{u}^{n-q}
+    + \nabla p^{n+1} 
+    - \mathbf{f}^{n+1} 
+\right) \nonumber\\
+    &- \int_\Gamma \mathbf{n} \cdot \psi \nabla \mathbf{u}^{n+1}
+    , \\
+	& \forall \psi \in H_0^1(\Omega)^d. \nonumber
+\end{align}
+where $\psi$ represents the test function.
+
+The pressure solve for the implicit solver uses the weak form 
+pressure equation which is defined in the previous section.
+
+This scheme is activated in the SolverInfo section with the
+\inltt{SolverType} specification:
+
+\begin{lstlisting}[style=XMLStyle]
+<I PROPERTY="SolverType"  VALUE="VCSImplicit"/>
+\end{lstlisting}
+
 
 \subsubsection{Specifying pressure boundary conditions}
 
@@ -1918,7 +1977,7 @@ modified Legendre basis and therefore require the following expansion
 definition.
 \begin{lstlisting}[style=XMLStyle]
 <EXPANSIONS>
-  <E COMPOSITE="C[0]" NUMMODES="6" FIELDS="u,v,p" TYPE="MODIFIED" />
+  <E COMPOSITE="C[0]" NUMMODES="8" FIELDS="u,v,p" TYPE="MODIFIED" />
 </EXPANSIONS>
 \end{lstlisting}
 

@@ -57,6 +57,12 @@ public:
 
     MULTI_REGIONS_EXPORT virtual ~GlobalLinSysIterative();
 
+    void DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
+                          Array<OneD, NekDouble> &pOutput)
+    {
+        v_DoMatrixMultiply(pInput, pOutput);
+    }
+
 protected:
     /// Global to universal unique map
     Array<OneD, int> m_map;
@@ -75,7 +81,7 @@ protected:
 
     PreconditionerSharedPtr m_precon;
 
-    MultiRegions::PreconditionerType m_precontype;
+    std::string m_precontype;
 
     int m_totalIterations;
 
@@ -96,7 +102,10 @@ protected:
     Array<OneD, int> m_ipivot;
     int m_numSuccessiveRHS;
     bool m_isAconjugate;
+    std::string m_matrixType;
+    bool m_isNonSymmetricLinSys;
     int m_numPrevSols;
+    bool m_isAbsoluteTolerance;
 
     LibUtilities::NekSysOperators m_NekSysOp;
 
@@ -115,13 +124,6 @@ protected:
 
     virtual void v_UniqueMap() = 0;
 
-    /// Solve the matrix system
-    virtual void v_SolveLinearSystem(const int pNumRows,
-                                     const Array<OneD, const NekDouble> &pInput,
-                                     Array<OneD, NekDouble> &pOutput,
-                                     const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir) override;
-
     virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
                                     Array<OneD, NekDouble> &pOutput) = 0;
 
@@ -133,6 +135,13 @@ private:
 
     int ResetKnownSolutionsToLatestOne();
 
+    void DoPreconditionerFlag(const Array<OneD, NekDouble> &pInput,
+                              Array<OneD, NekDouble> &pOutput,
+                              const bool &isLocal = false)
+    {
+        m_precon->DoPreconditioner(pInput, pOutput, isLocal);
+    }
+
     void DoMatrixMultiplyFlag(const Array<OneD, NekDouble> &pInput,
                               Array<OneD, NekDouble> &pOutput,
                               const bool &controlFlag)
@@ -142,13 +151,10 @@ private:
         v_DoMatrixMultiply(pInput, pOutput);
     }
 
-    void DoPreconditionerFlag(const Array<OneD, NekDouble> &pInput,
-                              Array<OneD, NekDouble> &pOutput,
-                              const bool &controlFlag)
+    void DoAssembleLocFlag(const Array<OneD, NekDouble> &pInput,
+                           Array<OneD, NekDouble> &pOutput, const bool &ZeroDir)
     {
-        boost::ignore_unused(controlFlag);
-
-        m_precon->DoPreconditioner(pInput, pOutput);
+        m_precon->DoAssembleLoc(pInput, pOutput, ZeroDir);
     }
 };
 } // namespace MultiRegions

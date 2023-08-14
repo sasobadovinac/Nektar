@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 #include <NekMesh/Module/ProcessModules/ProcessVarOpti/Evaluator.hxx>
@@ -68,7 +67,6 @@ public:
     {
         // Currently up to 4th order is implemented because the number
         // of steps is the same as the order.
-        // Currently up to 4th order is implemented.
         ASSERTL1(variant == "Lawson" || variant == "Norsett",
                  "EulerExponential Time integration scheme unknown variant: " +
                      variant + ". Must be 'Lawson' or 'Norsett'.");
@@ -137,9 +135,6 @@ public:
 
         // Coefficients
 
-        // When multiple steps are taken B[0][0] and V[0][1...s] must be
-        // weighted so the time contribution is correct.
-
         // B Phi function for first row first column
         phase->m_B[0][0][0] = 1.0 / phase->m_order; // phi_func(0 or 1)
 
@@ -169,7 +164,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = phase->m_order - 1;
+        phase->m_numMultiStepExplicitDerivs = phase->m_order - 1;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 

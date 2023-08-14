@@ -114,11 +114,12 @@ protected:
 
     virtual void v_Finalise() override;
     virtual int v_GetRank() override final;
-    virtual void v_Block() override final;
-    virtual double v_Wtime() override final;
     virtual bool v_TreatAsRankZero() override final;
     virtual bool v_IsSerial() override final;
     virtual std::tuple<int, int, int> v_GetVersion() override final;
+    virtual void v_Block() override final;
+    virtual double v_Wtime() override final;
+
     virtual void v_Send(void *buf, int count, CommDataType dt,
                         int dest) override final;
     virtual void v_Recv(void *buf, int count, CommDataType dt,
@@ -126,10 +127,10 @@ protected:
     virtual void v_SendRecv(void *sendbuf, int sendcount, CommDataType sendtype,
                             int dest, void *recvbuf, int recvcount,
                             CommDataType recvtype, int source) override final;
-    virtual void v_SendRecvReplace(void *buf, int count, CommDataType dt,
-                                   int pSendProc, int pRecvProc) override final;
+
     virtual void v_AllReduce(void *buf, int count, CommDataType dt,
                              enum ReduceOperator pOp) override final;
+
     virtual void v_AlltoAll(void *sendbuf, int sendcount, CommDataType sendtype,
                             void *recvbuf, int recvcount,
                             CommDataType recvtype) override final;
@@ -137,6 +138,7 @@ protected:
                              CommDataType sendtype, void *recvbuf,
                              int recvcounts[], int rdispls[],
                              CommDataType recvtype) override final;
+
     virtual void v_AllGather(void *sendbuf, int sendcount,
                              CommDataType sendtype, void *recvbuf,
                              int recvcount,
@@ -147,12 +149,9 @@ protected:
                               CommDataType recvtype) override final;
     virtual void v_AllGatherv(void *recvbuf, int recvcounts[], int rdispls[],
                               CommDataType recvtype) override final;
+
     virtual void v_Bcast(void *buffer, int count, CommDataType dt,
                          int root) override final;
-    virtual void v_Exscan(Array<OneD, unsigned long long> &pData,
-                          enum ReduceOperator pOp,
-                          Array<OneD, unsigned long long> &ans) override final;
-
     virtual void v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
                           void *recvbuf, int recvcount, CommDataType recvtype,
                           int root) override final;
@@ -168,6 +167,7 @@ protected:
                                      void *recvbuf, int recvcounts[],
                                      int rdispls[],
                                      CommDataType recvtype) override final;
+
     virtual void v_Irsend(void *buf, int count, CommDataType dt, int dest,
                           CommRequestSharedPtr request, int loc) override final;
     virtual void v_Isend(void *buf, int count, CommDataType dt, int dest,
@@ -180,13 +180,13 @@ protected:
     virtual void v_RecvInit(void *buf, int count, CommDataType dt, int source,
                             CommRequestSharedPtr request,
                             int loc) override final;
+
     virtual void v_StartAll(CommRequestSharedPtr request) override final;
     virtual void v_WaitAll(CommRequestSharedPtr request) override final;
-    virtual CommRequestSharedPtr v_CreateRequest(int num) override final;
 
+    virtual CommRequestSharedPtr v_CreateRequest(int num) override final;
     virtual void v_SplitComm(int pRows, int pColumns, int pTime) override;
     virtual CommSharedPtr v_CommCreateIf(int flag) override final;
-
     virtual std::pair<CommSharedPtr, CommSharedPtr> v_SplitCommNode()
         override final;
 };

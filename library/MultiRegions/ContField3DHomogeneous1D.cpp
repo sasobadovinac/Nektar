@@ -285,7 +285,6 @@ GlobalLinSysKey ContField3DHomogeneous1D::v_HelmSolve(
     {
         if (n != 1 || m_transposition->GetK(n) != 0 || smode)
         {
-
             beta        = 2 * M_PI * (m_transposition->GetK(n)) / m_lhom;
             new_factors = factors;
             // add in Homogeneous Fourier direction and SVV if turned on
@@ -301,7 +300,6 @@ GlobalLinSysKey ContField3DHomogeneous1D::v_HelmSolve(
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }
-
     return gkey;
 }
 

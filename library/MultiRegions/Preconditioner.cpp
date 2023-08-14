@@ -43,29 +43,11 @@ namespace Nektar
 {
 namespace MultiRegions
 {
-std::string Preconditioner::lookupIds[8] = {
-    LibUtilities::SessionReader::RegisterEnumValue("Preconditioner", "Null",
-                                                   eNull),
-    LibUtilities::SessionReader::RegisterEnumValue("Preconditioner", "Diagonal",
-                                                   eDiagonal),
-    LibUtilities::SessionReader::RegisterEnumValue(
-        "Preconditioner", "FullLinearSpaceWithDiagonal", eLinearWithDiagonal),
-    LibUtilities::SessionReader::RegisterEnumValue("Preconditioner",
-                                                   "FullLinearSpace", eLinear),
-    LibUtilities::SessionReader::RegisterEnumValue(
-        "Preconditioner", "LowEnergyBlock", eLowEnergy),
-    LibUtilities::SessionReader::RegisterEnumValue(
-        "Preconditioner", "FullLinearSpaceWithLowEnergyBlock",
-        eLinearWithLowEnergy),
-    LibUtilities::SessionReader::RegisterEnumValue("Preconditioner", "Block",
-                                                   eBlock),
-    LibUtilities::SessionReader::RegisterEnumValue(
-        "Preconditioner", "FullLinearSpaceWithBlock", eLinearWithBlock),
-};
+
+// register default solver value as diagonal
 std::string Preconditioner::def =
     LibUtilities::SessionReader::RegisterDefaultSolverInfo("Preconditioner",
                                                            "Diagonal");
-
 /**
  * @class Preconditioner
  *
@@ -98,10 +80,43 @@ void Preconditioner::v_InitObject()
  * \brief Apply a preconditioner to the conjugate gradient method
  */
 void Preconditioner::v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                        Array<OneD, NekDouble> &pOutput)
+                                        Array<OneD, NekDouble> &pOutput,
+                                        const bool &IsLocal)
 {
-    boost::ignore_unused(pInput, pOutput);
+    boost::ignore_unused(pInput, pOutput, IsLocal);
     NEKERROR(ErrorUtil::efatal, "Method does not exist");
+}
+
+/**
+ * \brief Apply an assembly and scatter back to lcoal array
+ */
+void Preconditioner::DoAssembleLoc(const Array<OneD, NekDouble> &pInput,
+                                   Array<OneD, NekDouble> &pOutput,
+                                   const bool &ZeroDir)
+{
+    auto assMap                  = m_locToGloMap.lock();
+    GlobalSysSolnType solvertype = assMap->GetGlobalSysSolnType();
+
+    if (solvertype == eIterativeFull)
+    {
+        assMap->Assemble(pInput, pOutput);
+        if (ZeroDir)
+        {
+            int nDir = assMap->GetNumGlobalDirBndCoeffs();
+            Vmath::Zero(nDir, pOutput, 1);
+        }
+        assMap->GlobalToLocal(pOutput, pOutput);
+    }
+    else // bnd version.
+    {
+        assMap->AssembleBnd(pInput, pOutput);
+        if (ZeroDir)
+        {
+            int nDir = assMap->GetNumGlobalDirBndCoeffs();
+            Vmath::Zero(nDir, pOutput, 1);
+        }
+        assMap->GlobalToLocalBnd(pOutput, pOutput);
+    }
 }
 
 /**

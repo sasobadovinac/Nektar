@@ -165,6 +165,13 @@ more expensive \texttt{FullLinearSpaceWithLowEnergyBlock} preconditioner and a
 larger residual of $10^{-6}$. We now outline the choices that one can use for
 each of these parameters and give a brief description of what they mean.
 
+By default, iterative linear solvers uses a relative tolerance specified in the
+above exmaple. Setting the property \texttt{<I PROPERTY="AbsoluteTolerance" VALUE="True">}
+will override the default and force the solver to use the absolute tolerance.
+Note that the value of tolerance is still
+controlled by setting \texttt{<I PROPERTY=IterativeSolverTolerance" VALUE="1.e-8"/>}
+and if not set the default tolerance will be used.
+
 Defaults for all fields can be defined by setting the equivalent property in
 the \texttt{SOLVERINFO} section. Parameters defined in this section will
 override any options specified there.
@@ -223,6 +230,21 @@ The \texttt{GlobalSysSoln} option is formed by combining the method of solution
 with the approach: for example \texttt{IterativeStaticCond} or
 \texttt{PETScMultiLevelStaticCond}.
 
+\subsubsection{Iterative  options}
+\begin{itemize}
+\item \textbf{LinSysIterSolver} which specifies which iterative solver
+  strategy to use and includes values of \textbf{ConjugateGradient} or
+  \textbf{GMRES}. The default option is to solve this in a global
+  degree of freedom array for continuous Galerkin discretisations but
+  there are also options of \textbf{ConjugateGradientLoc} and
+  \textbf{GMRESLoc} which solve the array in local element format. For
+  DG discretisations these should be the same.
+\item \textbf{NekLinSysMaxIterations} specifies the maximum number of
+  iterations and has a default value of 5000.
+\item \textbf{IterativeSolverTolerance} specifies the relative
+    stopping tolerances for the iterative solver. Default is $1e-9$.
+\end{itemize} 
+
 \subsubsection{Preconditioner options}
 
 Preconditioners can be used in the iterative and PETSc solvers to reduce the
@@ -240,6 +262,7 @@ and dimension-dependent:
     \inltt{Null}                              & All  & All \\
     \inltt{Diagonal}                          & All  & All \\
     \inltt{FullLinearSpace}                   & 2/3D & CG  \\
+    \inltt{Jacobi}                            & 2/3D & All  \\
     \inltt{LowEnergyBlock}                    & 3D   & CG  \\
     \inltt{Block}                             & 2/3D & All \\
     \midrule

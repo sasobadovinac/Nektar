@@ -32,7 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VDmathArray.hpp>
 #include <LocalRegions/MatrixKey.h>
 #include <LocalRegions/SegExp.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
@@ -782,7 +781,8 @@ void PreconditionerBlock::BlockPreconditionerHDG()
  * pOutput.
  */
 void PreconditionerBlock::v_DoPreconditioner(
-    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &isLocal)
 {
     // Get assembly map and solver type
     auto asmMap = m_locToGloMap.lock();
@@ -795,9 +795,27 @@ void PreconditionerBlock::v_DoPreconditioner(
 
     // Apply preconditioner
     DNekBlkMat &M = (*m_blkMat);
-    NekVector<NekDouble> r(nNonDir, pInput, eWrapper);
-    NekVector<NekDouble> z(nNonDir, pOutput, eWrapper);
-    z = M * r;
+
+    if (isLocal)
+    {
+        Array<OneD, NekDouble> wk(nGlobal);
+        Array<OneD, NekDouble> wk1(nGlobal);
+        asmMap->Assemble(pInput, wk);
+
+        NekVector<NekDouble> r(nNonDir, wk + nDir, eWrapper);
+        NekVector<NekDouble> z(nNonDir, wk1 + nDir, eWrapper);
+
+        z = M * r;
+        Vmath::Zero(nDir, wk1, 1);
+
+        asmMap->GlobalToLocal(wk1, pOutput);
+    }
+    else
+    {
+        NekVector<NekDouble> r(nNonDir, pInput, eWrapper);
+        NekVector<NekDouble> z(nNonDir, pOutput, eWrapper);
+        z = M * r;
+    }
 }
 } // namespace MultiRegions
 } // namespace Nektar

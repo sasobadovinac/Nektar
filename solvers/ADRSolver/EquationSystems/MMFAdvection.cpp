@@ -105,7 +105,6 @@ void MMFAdvection::v_InitObject(bool DeclareFields)
     vel.resize(m_spacedim);
 
     // Store in the global variable m_velocity the advection velocities
-
     m_velocity = Array<OneD, Array<OneD, NekDouble>>(m_spacedim);
     for (int k = 0; k < m_spacedim; ++k)
     {
@@ -424,11 +423,6 @@ void MMFAdvection::DoOdeRhs(
                 {
                     m_fields[i]->MultiplyByElmtInvMass(WeakAdv[i], WeakAdv[i]);
                     m_fields[i]->BwdTrans(WeakAdv[i], outarray[i]);
-
-                    // Add  m_vellc * inarray[i] = \nabla v^m \cdot e^m to
-                    // outarray[i]
-                    // Vmath::Vvtvp(npoints, &m_vellc[0], 1, &inarray[i][0], 1,
-                    // &outarray[i][0], 1, &outarray[i][0], 1);
                     Vmath::Neg(npoints, outarray[i], 1);
                 }
             }
@@ -452,6 +446,7 @@ void MMFAdvection::DoOdeRhs(
         break;
     }
 }
+
 /**
  * @brief Compute the projection for the linear advection equation.
  *
@@ -482,9 +477,12 @@ void MMFAdvection::DoOdeProjection(
             int nQuadraturePts = GetNpoints();
 
             // Just copy over array
-            for (i = 0; i < nVariables; ++i)
+            if (inarray != outarray)
             {
-                Vmath::Vcopy(nQuadraturePts, inarray[i], 1, outarray[i], 1);
+                for (i = 0; i < nVariables; ++i)
+                {
+                    Vmath::Vcopy(nQuadraturePts, inarray[i], 1, outarray[i], 1);
+                }
             }
             break;
         }
@@ -686,181 +684,6 @@ void MMFAdvection::EvaluateAdvectionVelocity(
         }
     }
 }
-
-/*
-void MMFAdvection::EvaluateAdvectionVelocity(Array<OneD, Array<OneD, NekDouble>
-> &velocity)
-  {
-    int nq = m_fields[0]->GetNpoints();
-
-    NekDouble vel_phi, sin_phi, cos_phi;
-    NekDouble vel_theta, sin_theta, cos_theta;
-    NekDouble radius, xyrad, Tol = 0.00001;
-
-    Array<OneD,NekDouble> x0(nq);
-    Array<OneD,NekDouble> x1(nq);
-    Array<OneD,NekDouble> x2(nq);
-
-    m_fields[0]->GetCoords(x0,x1,x2);
-
-    // theta = a*sin(z/r),  phi = a*tan(y/x);
-    for (int j = 0; j < nq; j++)
-      {
-        switch(m_surfaceType)
-          {
-          case SolverUtils::eSphere:
-          case SolverUtils::eTRSphere:
-            {
-              radius = sqrt( x0[j]*x0[j] + x1[j]*x1[j] + x2[j]*x2[j] );
-            }
-            break;
-
-          case SolverUtils::eIrregular:
-            {
-              radius = sqrt( 2.0*x0[j]*x0[j] + x1[j]*x1[j]*x1[j]*x1[j] +
-x1[j]*x1[j]
-                             + x2[j]*x2[j]*x2[j]*x2[j] + x2[j]*x2[j] );
-            }
-            break;
-
-            // 2 x^2 + 2(y^4 - y ) + z^4 + z^2 = 2.0
-          case SolverUtils::eNonconvex:
-            {
-              radius = sqrt( 2.0*x0[j]*x0[j] + 2.0*( x1[j]*x1[j]*x1[j]*x1[j] -
-x1[j]*x1[j] )
-                             + x2[j]*x2[j]*x2[j]*x2[j] + x2[j]*x2[j] );
-            }
-            break;
-
-          default:
-            break;
-          }
-
-            // At North and South poles, (ax,ay,ax) = (0, Omega_f*sin(alpha),0)
-            if( fabs(fabs(x2[j]) - radius) < Tol )
-              {
-                sin_theta = x2[j]/radius;
-
-                velocity[0][j] = 0.0;
-                velocity[1][j] = 0.0;
-                velocity[2][j] = 0.0;
-              }
-            else
-              {
-                // Compute the arc length of the trajectory
-                NekDouble zp, velmag0, velmag, length0, zcutoff=0.0, zmax;
-
-                zp = fabs(x2[j]);
-
-                zmax = Vmath::Vmax(nq, x2, 1);
-                velmag = ComputeCirculatingArclength(x2[j], radius*radius);
-
-                switch(m_surfaceType)
-                  {
-
-                  case SolverUtils::eSphere:
-                  case SolverUtils::eTRSphere:
-                    {
-                      zcutoff = 0.7;
-                      velmag0 = velmag;
-                    }
-                    break;
-
-                  case SolverUtils::eIrregular:
-                    {
-                      zcutoff = 0.7;
-                      length0 = 0.88;
-                      //   velmag0 = length0*( 1.0 - (zp -
-zcutoff)/(1.0-zcutoff) );
-                      velmag0 = (length0/(zcutoff*zcutoff-zmax*zmax))*( zp*zp -
-zmax*zmax);
-                    }
-                    break;
-
-                  case SolverUtils::eNonconvex:
-                    {
-                      zcutoff = 0.7;
-                      length0 = 1.21;
-                      //   velmag0 = length0*( 1.0 - (zp -
-zcutoff)/(1.0-zcutoff) );
-                      velmag0 = (length0/(zcutoff*zcutoff - 1.0))*( zp*zp -
-1.0);
-                    }
-                    break;
-
-                  default:
-                    break;
-                  }
-
-                if( zp > zcutoff )
-                  {
-                    velmag = velmag0;
-                  }
-
-                vel_phi = m_waveFreq*velmag;
-                vel_theta = 0.0;
-
-                xyrad = sqrt( x0[j]*x0[j] + x1[j]*x1[j] );
-                if(xyrad<Tol)
-                  {
-                    sin_phi = 0.0;
-                    cos_phi = 0.0;
-                  }
-
-                else
-                  {
-                    sin_phi = x1[j]/xyrad;
-                    cos_phi = x0[j]/xyrad;
-                  }
-
-                // sin_theta = x2[j]/radius;
-                cos_theta = sqrt( x0[j]*x0[j] + x1[j]*x1[j] )/radius;
-
-                if(fabs(velmag) < 0.001)
-                  {
-                    velocity[0][j] = 0.0 ;
-                    velocity[1][j] = 0.0  ;
-                    velocity[2][j] = 0.0;
-                  }
-
-                else
-                  {
-                    velocity[0][j] = -1.0*vel_phi*sin_phi ;
-                    velocity[1][j] = vel_phi*cos_phi  ;
-                    velocity[2][j] = 0.0;
-                  }
-
-              } // else-loop
-      }
-
-    // Project the veloicty on the tangent plane
-      int nq = m_fields[0]->GetNpoints();
-
-      // Check MovingFrames \cdot SurfaceNormals = 0
-      Array<OneD, NekDouble> temp0(nq,0.0);
-      Array<OneD, NekDouble> temp1(nq,0.0);
-      Array<OneD, Array<OneD, NekDouble> > newvelocity(m_spacedim);
-
-      for(int k=0; k<m_spacedim; ++k)
-        {
-          newvelocity[k] = Array<OneD, NekDouble>(nq);
-        }
-
-        std::cout <<"=====================================================" <<
-std::endl;
-        std::cout << "Velocity vector is projected onto the tangent plane " <<
-std::endl;
-        std::cout <<"=====================================================" <<
-std::endl;
-        GramSchumitz(m_surfaceNormal, m_velocity, newvelocity);
-
-      for(int k=0; k<m_spacedim; ++k)
-        {
-          Vmath::Vcopy(nq, &newvelocity[k][0], 1, &m_velocity[k][0], 1);
-        }
-  }
-
-*/
 
 NekDouble MMFAdvection::ComputeCirculatingArclength(const NekDouble zlevel,
                                                     const NekDouble Rhs)

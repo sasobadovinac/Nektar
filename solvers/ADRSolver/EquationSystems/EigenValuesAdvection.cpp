@@ -218,7 +218,6 @@ void EigenValuesAdvection::v_DoSolve()
             {
                 for (int i = 0; i < nvariables; ++i)
                 {
-                    // m_fields[i]->MultiplyByInvMassMatrix(WeakAdv[i],WeakAdv[i]);
                     // Projection
                     m_fields[i]->FwdTrans(outarray[i], WeakAdv[i]);
 

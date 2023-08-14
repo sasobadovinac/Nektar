@@ -100,6 +100,7 @@ public:
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
+
     SOLVER_UTILS_EXPORT static std::vector<ForcingSharedPtr> Load(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<EquationSystem> &pEquation,
@@ -148,6 +149,7 @@ protected:
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
+
     /// Get a SessionFunction by name
     SOLVER_UTILS_EXPORT SessionFunctionSharedPtr
     GetFunction(const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,

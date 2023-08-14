@@ -42,9 +42,9 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/IMEXdirkTimeIntegrationSchemes.h>
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
+
+#include <LibUtilities/TimeIntegration/IMEXdirkTimeIntegrationSchemes.h>
 
 namespace Nektar
 {
@@ -67,10 +67,11 @@ public:
         m_integration_phases[1] = TimeIntegrationAlgorithmGLMSharedPtr(
             new TimeIntegrationAlgorithmGLM(this));
 
+        // IMEX dirk 2 2 2
         IMEXdirkTimeIntegrationScheme::SetupSchemeData(m_integration_phases[0],
-                                                       2, {2, 2}); // dirk 2 2 2
-        CNABTimeIntegrationScheme::SetupSchemeData(
-            m_integration_phases[1]); // CNAB
+                                                       2, {2, 2});
+        // CNAB
+        CNABTimeIntegrationScheme::SetupSchemeData(m_integration_phases[1]);
     }
 
     virtual ~CNABTimeIntegrationScheme()
@@ -119,6 +120,7 @@ public:
         phase->m_V =
             Array<TwoD, NekDouble>(phase->m_numsteps, phase->m_numsteps, 0.0);
 
+        // Coefficients
         phase->m_A[0][0][0] = 1.0 / 2.0;
         phase->m_B[0][0][0] = 1.0 / 2.0;
         phase->m_B[0][1][0] = 1.0;
@@ -139,7 +141,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 1;
-        phase->m_numMultiStepDerivs         = 2;
+        phase->m_numMultiStepExplicitDerivs = 2;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
         phase->m_timeLevelOffset[1] = 0;

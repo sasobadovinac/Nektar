@@ -1563,7 +1563,7 @@ or
 mpirun -np <nprocs> FieldConvert test.xml test.fld test.vtu
 \end{lstlisting}
 replacing \inltt{<nprocs>} with the number of processors. For the
-\inltt{.dat} and \inltt{.plt} outputs the current version will proudce
+\inltt{.dat} and \inltt{.plt} outputs the current version will produce
 a single output file.  However it is also sometimes useful to produce
 multiple output files, one for each partition, and this
 can be done by using the \inltt{writemultiplefiles} option, i.e.
@@ -1587,6 +1587,24 @@ also be created when running in parallel. In this case when producing
 a .fld file a directory called \inltt{test.fld} (or the specified
 output name) is created with the standard parallel field files placed
 within the directory.
+%
+%
+%
+\section{FieldConvert for parallel-in-time}
+To run FieldConvert in parallel the user needs to compile
+\nekpp with MPI support and can employ the following
+command
+\begin{lstlisting}[style=BashInputStyle]
+  mpirun -np <nprocs> FieldConvert --npt <nprocs> test.xml \
+                 in/test\_<n>.fld out/test\_<n>.vtu
+\end{lstlisting}
+\begin{lstlisting}[style=BashInputStyle]
+  mpirun -np <nprocs> FieldConvert --npt <nprocs> test.xml \
+                 in/test\_<n>.fld out/test\_<n>.dat
+\end{lstlisting}
+replacing \inltt{<nprocs>} with the number of processors and \inltt{<n>} 
+by the starting time index. FieldConvert will then process in parallel 
+time solutions \inltt{test\_<n>}.dat to \inltt{test\_<n>+<nprocs>}.dat.
 %
 %
 %
@@ -1670,7 +1688,7 @@ take a while for many partitions. You can however run this option in
 parallel using a smaller number of cores than the nparts.
 
 For the example of creating a vtu file above you can use 4 processor
-concurrently wiht the command line:
+concurrently with the command line:
 \begin{lstlisting}[style=BashInputStyle]
 mpirun -n 4 FieldConvert --nparts 10   file1\_xml:xml file1.fld file1.vtu
 \end{lstlisting}

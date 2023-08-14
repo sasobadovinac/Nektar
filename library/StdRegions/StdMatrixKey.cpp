@@ -88,6 +88,11 @@ bool StdMatrixKey::opLess::operator()(const StdMatrixKey &lhs,
     return (lhs.m_matrixType < rhs.m_matrixType);
 }
 
+StdMatrixKey StdMatrixKey::operator=(const StdMatrixKey &inKey)
+{
+    return StdMatrixKey(inKey);
+}
+
 bool operator<(const StdMatrixKey &lhs, const StdMatrixKey &rhs)
 {
     if (lhs.m_matrixType < rhs.m_matrixType)

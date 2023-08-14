@@ -40,12 +40,17 @@ namespace Nektar
 {
 namespace MultiRegions
 {
-std::string GlobalLinSysIterative::IteratSolverlookupIds[2] = {
+std::string GlobalLinSysIterative::IteratSolverlookupIds[4] = {
     LibUtilities::SessionReader::RegisterEnumValue(
         "LinSysIterSolver", "ConjugateGradient",
         MultiRegions::eConjugateGradient),
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "LinSysIterSolver", "ConjugateGradientLoc",
+        MultiRegions::eConjugateGradient),
     LibUtilities::SessionReader::RegisterEnumValue("LinSysIterSolver", "GMRES",
                                                    MultiRegions::eGMRES),
+    LibUtilities::SessionReader::RegisterEnumValue(
+        "LinSysIterSolver", "GMRESLoc", MultiRegions::eGMRESLoc),
 };
 
 std::string GlobalLinSysIterative::IteratSolverdef =
@@ -58,7 +63,7 @@ std::string GlobalLinSysIterative::IteratSolverdef =
  * Solves a linear system using iterative methods.
  */
 
-/// Constructor for full direct matrix solve.
+/// Constructor for full iterative matrix solve.
 GlobalLinSysIterative::GlobalLinSysIterative(
     const GlobalLinSysKey &pKey, const std::weak_ptr<ExpList> &pExpList,
     const std::shared_ptr<AssemblyMap> &pLocToGloMap)
@@ -67,9 +72,10 @@ GlobalLinSysIterative::GlobalLinSysIterative(
       m_precon(NullPreconditionerSharedPtr), m_totalIterations(0),
       m_useProjection(false), m_numPrevSols(0)
 {
-    m_tolerance        = pLocToGloMap->GetIterativeTolerance();
-    m_maxiter          = pLocToGloMap->GetMaxIterations();
-    m_linSysIterSolver = pLocToGloMap->GetLinSysIterSolver();
+    m_tolerance           = pLocToGloMap->GetIterativeTolerance();
+    m_isAbsoluteTolerance = pLocToGloMap->IsAbsoluteTolerance();
+    m_maxiter             = pLocToGloMap->GetMaxIterations();
+    m_linSysIterSolver    = pLocToGloMap->GetLinSysIterSolver();
 
     LibUtilities::CommSharedPtr vComm =
         m_expList.lock()->GetComm()->GetRowComm();
@@ -80,66 +86,41 @@ GlobalLinSysIterative::GlobalLinSysIterative(
     m_numSuccessiveRHS = std::abs(m_numSuccessiveRHS);
     m_useProjection    = m_numSuccessiveRHS > 0;
 
-    if (m_isAconjugate && 0 == m_linSysIterSolver.compare("GMRES"))
+    // Check for advection matrix and switch to GMRES, if not already used
+    m_matrixType = StdRegions::MatrixTypeMap[pKey.GetMatrixType()];
+    m_isNonSymmetricLinSys =
+        m_matrixType.find("AdvectionDiffusionReaction") != string::npos;
+
+    if (m_isNonSymmetricLinSys &&
+        !m_linSysIterSolver.compare("ConjugateGradient"))
     {
-        WARNINGL0(false, "To use A-conjugate projection, the matrix should be "
-                         "symmetric positive definite.");
+        m_linSysIterSolver = "GMRES";
+        WARNINGL0(
+            false,
+            "Detected ConjugateGradient solver and a "
+            "Advection-Diffusion-Reaction matrix. "
+            "Switchted to a GMRES solver for this non-symmetric matrix type. "
+            "Change LinSysIterSolver to GMRES in the session file to suppress "
+            "this warning.");
     }
+
+    if (m_isAconjugate && m_linSysIterSolver.compare("GMRES") == 0 &&
+        m_linSysIterSolver.compare("GMRESLoc") == 0)
+    {
+        WARNINGL0(false, "To use A-conjugate projection, the matrix "
+                         "should be symmetric positive definite.");
+    }
+
+    m_NekSysOp.DefineNekSysLhsEval(&GlobalLinSysIterative::DoMatrixMultiplyFlag,
+                                   this);
+    m_NekSysOp.DefineNekSysPrecon(&GlobalLinSysIterative::DoPreconditionerFlag,
+                                  this);
+    m_NekSysOp.DefineAssembleLoc(&GlobalLinSysIterative::DoAssembleLocFlag,
+                                 this);
 }
 
 GlobalLinSysIterative::~GlobalLinSysIterative()
 {
-}
-
-/**
- *
- */
-void GlobalLinSysIterative::v_SolveLinearSystem(
-    const int nGlobal, const Array<OneD, const NekDouble> &pInput,
-    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &plocToGloMap,
-    const int nDir)
-{
-    if (!m_linsol)
-    {
-        LibUtilities::CommSharedPtr v_Comm =
-            m_expList.lock()->GetComm()->GetRowComm();
-        LibUtilities::SessionReaderSharedPtr pSession =
-            m_expList.lock()->GetSession();
-
-        // Check such a module exists for this equation.
-        ASSERTL0(LibUtilities::GetNekLinSysIterFactory().ModuleExists(
-                     m_linSysIterSolver),
-                 "NekLinSysIter '" + m_linSysIterSolver +
-                     "' is not defined.\n");
-        m_linsol = LibUtilities::GetNekLinSysIterFactory().CreateInstance(
-            m_linSysIterSolver, pSession, v_Comm, nGlobal - nDir,
-            LibUtilities::NekSysKey());
-
-        m_NekSysOp.DefineNekSysLhsEval(
-            &GlobalLinSysIterative::DoMatrixMultiplyFlag, this);
-        m_NekSysOp.DefineNekSysPrecon(
-            &GlobalLinSysIterative::DoPreconditionerFlag, this);
-        m_linsol->SetSysOperators(m_NekSysOp);
-        v_UniqueMap();
-        m_linsol->setUniversalUniqueMap(m_map);
-    }
-
-    if (!m_precon)
-    {
-        m_precon = CreatePrecon(plocToGloMap);
-        m_precon->BuildPreconditioner();
-    }
-
-    m_linsol->setRhsMagnitude(m_rhs_magnitude);
-    if (m_useProjection)
-    {
-        DoProjection(nGlobal, pInput, pOutput, nDir, m_tolerance,
-                     m_isAconjugate);
-    }
-    else
-    {
-        m_linsol->SolveSystem(nGlobal, pInput, pOutput, nDir, m_tolerance);
-    }
 }
 
 /**
@@ -481,10 +462,16 @@ void GlobalLinSysIterative::UpdateKnownSolutions(
 
 void GlobalLinSysIterative::Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn)
 {
-    Array<OneD, NekDouble> vExchange(1, 0.0);
+    if (m_isAbsoluteTolerance)
+    {
+        m_rhs_magnitude = 1.;
+        return;
+    }
+
+    NekDouble vExchange(0.0);
     if (m_map.size() > 0)
     {
-        vExchange[0] =
+        vExchange =
             Vmath::Dot2(pIn.GetDimension(), &pIn[0], &pIn[0], &m_map[0]);
     }
 
@@ -495,7 +482,7 @@ void GlobalLinSysIterative::Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn)
     // used in subsequent solvers such as the velocit solve in
     // INC NS. If this works we then need to work out a better
     // way to control this.
-    NekDouble new_rhs_mag = (vExchange[0] > 1e-6) ? vExchange[0] : 1.0;
+    NekDouble new_rhs_mag = (vExchange > 1e-6) ? vExchange : 1.0;
 
     if (m_rhs_magnitude == NekConstants::kNekUnsetDouble)
     {

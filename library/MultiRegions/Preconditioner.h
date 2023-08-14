@@ -75,7 +75,11 @@ public:
     }
 
     inline void DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                 Array<OneD, NekDouble> &pOutput);
+                                 Array<OneD, NekDouble> &pOutput,
+                                 const bool &IsLocal = false);
+
+    void DoAssembleLoc(const Array<OneD, NekDouble> &pInput,
+                       Array<OneD, NekDouble> &pOutput, const bool &ZeroDir);
 
     inline void DoPreconditionerWithNonVertOutput(
         const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
@@ -116,7 +120,7 @@ public:
 
 protected:
     const std::weak_ptr<GlobalLinSys> m_linsys;
-    PreconditionerType m_preconType;
+    std::string m_preconType;
     DNekMatSharedPtr m_preconditioner;
     std::weak_ptr<AssemblyMap> m_locToGloMap;
     LibUtilities::CommSharedPtr m_comm;
@@ -127,7 +131,8 @@ protected:
     virtual void v_InitObject();
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
+                                    Array<OneD, NekDouble> &pOutput,
+                                    const bool &isLocal = false);
 
     virtual void v_DoPreconditionerWithNonVertOutput(
         const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
@@ -176,9 +181,10 @@ inline DNekScalMatSharedPtr Preconditioner::TransformedSchurCompl(
  *
  */
 inline void Preconditioner::DoPreconditioner(
-    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &ZeroDir)
 {
-    v_DoPreconditioner(pInput, pOutput);
+    v_DoPreconditioner(pInput, pOutput, ZeroDir);
 }
 
 /**

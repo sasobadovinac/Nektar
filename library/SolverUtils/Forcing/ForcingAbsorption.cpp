@@ -37,7 +37,6 @@
 
 #include <SolverUtils/Forcing/ForcingAbsorption.h>
 
-#include <LibUtilities/BasicUtils/Equation.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 
 using namespace std;

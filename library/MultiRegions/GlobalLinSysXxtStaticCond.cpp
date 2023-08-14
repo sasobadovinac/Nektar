@@ -32,7 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VDmathArray.hpp>
 #include <LibUtilities/Communication/Xxt.hpp>
 #include <MultiRegions/GlobalLinSysXxtStaticCond.h>
 
@@ -126,38 +125,6 @@ GlobalLinSysXxtStaticCond::~GlobalLinSysXxtStaticCond()
 }
 
 /**
- * Create the inverse multiplicity map.
- * @param   locToGloMap Local to global mapping information.
- */
-void GlobalLinSysXxtStaticCond::CreateMap(
-    const std::shared_ptr<AssemblyMap> &pLocToGloMap)
-{
-    const Array<OneD, const int> &vMap = pLocToGloMap->GetLocalToGlobalBndMap();
-    unsigned int nGlo                  = pLocToGloMap->GetNumGlobalBndCoeffs();
-    unsigned int nEntries              = pLocToGloMap->GetNumLocalBndCoeffs();
-    unsigned int i;
-
-    // Count the multiplicity of each global DOF on this process
-    Array<OneD, NekDouble> vCounts(nGlo, 0.0);
-    for (i = 0; i < nEntries; ++i)
-    {
-        vCounts[vMap[i]] += 1.0;
-    }
-
-    // Get universal multiplicity by globally assembling counts
-    pLocToGloMap->UniversalAssembleBnd(vCounts);
-
-    // Construct a map of 1/multiplicity for use in XXT solve
-    m_locToGloSignMult = Array<OneD, NekDouble>(nEntries);
-    for (i = 0; i < nEntries; ++i)
-    {
-        m_locToGloSignMult[i] = 1.0 / vCounts[vMap[i]];
-    }
-
-    m_map = pLocToGloMap->GetLocalToGlobalBndMap();
-}
-
-/**
  * Construct the local matrix row index, column index and value index
  * arrays and initialize the XXT data structure with this information.
  * @param   locToGloMap Local to global mapping information.
@@ -165,8 +132,6 @@ void GlobalLinSysXxtStaticCond::CreateMap(
 void GlobalLinSysXxtStaticCond::v_AssembleSchurComplement(
     std::shared_ptr<AssemblyMap> pLocToGloMap)
 {
-    CreateMap(pLocToGloMap);
-
     ExpListSharedPtr vExp = m_expList.lock();
     unsigned int nElmt    = m_schurCompl->GetNumberOfBlockRows();
     DNekScalMatSharedPtr loc_mat;
@@ -259,6 +224,34 @@ GlobalLinSysStaticCondSharedPtr GlobalLinSysXxtStaticCond::v_Recurse(
             mkey, pExpList, pSchurCompl, pBinvD, pC, pInvD, l2gMap);
     sys->Initialise(l2gMap);
     return sys;
+}
+
+/// Solve the linear system for given input and output vectors.
+void GlobalLinSysXxtStaticCond::v_SolveLinearSystem(
+    const int pNumRows, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &pLocToGloMap,
+    const int pNumDir)
+{
+    boost::ignore_unused(pNumRows, pNumDir);
+
+    int nLocal = pLocToGloMap->GetLocalToGlobalBndSign().size();
+    Vmath::Zero(nLocal, pOutput, 1);
+
+    if (pLocToGloMap->GetSignChange())
+    {
+        Array<OneD, NekDouble> vlocal(nLocal);
+        Vmath::Vmul(nLocal, pLocToGloMap->GetLocalToGlobalBndSign(), 1, pInput,
+                    1, vlocal, 1);
+
+        Xxt::Solve(pOutput, m_crsData, vlocal);
+
+        Vmath::Vmul(nLocal, pLocToGloMap->GetLocalToGlobalBndSign(), 1, pOutput,
+                    1, pOutput, 1);
+    }
+    else
+    {
+        Xxt::Solve(pOutput, m_crsData, pInput);
+    }
 }
 } // namespace MultiRegions
 } // namespace Nektar

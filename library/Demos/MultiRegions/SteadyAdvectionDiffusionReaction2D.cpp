@@ -139,6 +139,19 @@ int main(int argc, char *argv[])
     Array<OneD, Array<OneD, NekDouble>> Vel(2);
     Vel[0] = Array<OneD, NekDouble>(nq, ax);
     Vel[1] = Array<OneD, NekDouble>(nq, ay);
+
+    StdRegions::ConstFactorMap factors;
+    StdRegions::VarCoeffMap varcoeffs;
+
+    factors[StdRegions::eFactorLambda] = lambda;
+
+    // Set advection velocities
+    StdRegions::VarCoeffType varcoefftypes[] = {StdRegions::eVarCoeffVelX,
+                                                StdRegions::eVarCoeffVelY};
+    for (int i = 0; i < 2; i++)
+    {
+        varcoeffs[varcoefftypes[i]] = Vel[i];
+    }
     //----------------------------------------------
 
     //----------------------------------------------
@@ -158,11 +171,9 @@ int main(int argc, char *argv[])
     Timing("Define forcing ..");
 
     //----------------------------------------------
-    // Helmholtz solution taking physical forcing
-    Exp->LinearAdvectionDiffusionReactionSolve(Vel, Fce->GetPhys(),
-                                               Exp->UpdateCoeffs(), lambda);
-    // Exp->LinearAdvectionDiffusionReactionSolve(Vel, Fce->GetPhys(),
-    // Exp->UpdateContCoeffs(), lambda, true);
+    // ADR solution taking physical forcing
+    Exp->LinearAdvectionDiffusionReactionSolve(
+        Fce->GetPhys(), Exp->UpdateCoeffs(), factors, varcoeffs);
     //----------------------------------------------
     Timing("Linear Advection Solve ..");
 

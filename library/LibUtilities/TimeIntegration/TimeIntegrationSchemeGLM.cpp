@@ -34,7 +34,6 @@
 
 #include <iostream>
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 namespace Nektar
@@ -47,21 +46,21 @@ std::string TimeIntegrationSchemeGLM::v_GetVariant() const
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
 
-    return m_integration_phases[m_integration_phases.size() - 1]->m_variant;
+    return m_integration_phases.back()->m_variant;
 }
 
 size_t TimeIntegrationSchemeGLM::v_GetOrder() const
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
 
-    return m_integration_phases[m_integration_phases.size() - 1]->m_order;
+    return m_integration_phases.back()->m_order;
 }
 
 std::vector<NekDouble> TimeIntegrationSchemeGLM::v_GetFreeParams() const
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
 
-    return m_integration_phases[m_integration_phases.size() - 1]->m_freeParams;
+    return m_integration_phases.back()->m_freeParams;
 }
 
 TimeIntegrationSchemeType TimeIntegrationSchemeGLM::v_GetIntegrationSchemeType()
@@ -69,7 +68,7 @@ TimeIntegrationSchemeType TimeIntegrationSchemeGLM::v_GetIntegrationSchemeType()
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
 
-    return m_integration_phases[m_integration_phases.size() - 1]->m_schemeType;
+    return m_integration_phases.back()->m_schemeType;
 }
 
 size_t TimeIntegrationSchemeGLM::v_GetNumIntegrationPhases() const

@@ -2,7 +2,7 @@
 <test>
     <description>Helmholtz 3D CG, hexes, mixed BCs, iterative ML</description>
     <executable>Helmholtz3D</executable>
-    <parameters>-I GlobalSysSoln=IterativeMultiLevelStaticCond Helmholtz3D_Hex_AllBCs_P6.xml</parameters>
+    <parameters>-I GlobalSysSoln=IterativeMultiLevelStaticCond -I LinSysIterSolver=ConjugateGradientLoc Helmholtz3D_Hex_AllBCs_P6.xml</parameters>
     <files>
         <file description="Session File">Helmholtz3D_Hex_AllBCs_P6.xml</file>
     </files>

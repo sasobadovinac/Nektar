@@ -35,7 +35,6 @@
 #ifndef NEKTAR_SOLVERUTILS_DIFFUSION3DHOMOGENEOUS1D
 #define NEKTAR_SOLVERUTILS_DIFFUSION3DHOMOGENEOUS1D
 
-#include <SolverUtils/Advection/Advection3DHomogeneous1D.h>
 #include <SolverUtils/Diffusion/Diffusion.h>
 
 namespace Nektar
@@ -54,28 +53,14 @@ public:
 protected:
     Diffusion3DHomogeneous1D(std::string diffType);
 
-    LibUtilities::TranspositionSharedPtr m_trans;
     std::string m_diffType;
-    SolverUtils::DiffusionSharedPtr m_planeDiff;
-    NekDouble m_homoLen;
-    std::size_t m_numPoints;
-    std::size_t m_numPointsPlane;
-    std::size_t m_numPlanes;
-    std::size_t m_planeCounter;
-    Array<OneD, unsigned int> m_planes;
-    Array<OneD, unsigned int> m_planePos;
-    Array<OneD, Array<OneD, NekDouble>> m_homoDerivStore;
-    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_homoDerivPlane;
-    Array<OneD, Array<OneD, NekDouble>> m_inarrayPlane;
-    Array<OneD, Array<OneD, NekDouble>> m_outarrayPlane;
-    Array<OneD, MultiRegions::ExpListSharedPtr> m_fieldsPlane;
-    Array<OneD, Array<OneD, NekDouble>> m_advVelPlane;
 
     virtual void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,
         Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
+
     virtual void v_Diffuse(
-        const std::size_t nConvective,
+        const size_t nConvective,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
@@ -83,6 +68,21 @@ protected:
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
             NullNekDoubleArrayOfArray) override;
+
+private:
+    LibUtilities::TranspositionSharedPtr m_trans;
+    SolverUtils::DiffusionSharedPtr m_planeDiff;
+    NekDouble m_homoLen;
+    size_t m_numPoints;
+    size_t m_numPointsPlane;
+    size_t m_numPlanes;
+    size_t m_planeCounter;
+    Array<OneD, unsigned int> m_planePos;
+    Array<OneD, Array<OneD, NekDouble>> m_homoDerivStore;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_homoDerivPlane;
+    Array<OneD, Array<OneD, NekDouble>> m_inarrayPlane;
+    Array<OneD, Array<OneD, NekDouble>> m_outarrayPlane;
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_fieldsPlane;
 };
 } // namespace SolverUtils
 } // namespace Nektar

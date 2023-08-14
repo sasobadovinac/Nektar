@@ -32,6 +32,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <boost/algorithm/string.hpp>
 #include <boost/core/ignore_unused.hpp>
 
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
@@ -90,16 +91,15 @@ AssemblyMap::AssemblyMap()
 AssemblyMap::AssemblyMap(const LibUtilities::SessionReaderSharedPtr &pSession,
                          const LibUtilities::CommSharedPtr &comm,
                          const std::string variable)
-    : m_session(pSession), m_comm(comm), m_hash(0), m_numLocalBndCoeffs(0),
-      m_numGlobalBndCoeffs(0), m_numLocalDirBndCoeffs(0),
-      m_numGlobalDirBndCoeffs(0), m_bndSystemBandWidth(0), m_successiveRHS(0),
+    : m_session(pSession), m_comm(comm), m_variable(variable), m_hash(0),
+      m_numLocalBndCoeffs(0), m_numGlobalBndCoeffs(0),
+      m_numLocalDirBndCoeffs(0), m_numGlobalDirBndCoeffs(0),
+      m_bndSystemBandWidth(0), m_successiveRHS(0),
       m_linSysIterSolver("ConjugateGradient"), m_gsh(0), m_bndGsh(0)
 {
     // Default value from Solver Info
     m_solnType =
         pSession->GetSolverInfoAsEnum<GlobalSysSolnType>("GlobalSysSoln");
-    m_preconType =
-        pSession->GetSolverInfoAsEnum<PreconditionerType>("Preconditioner");
 
     // Override values with data from GlobalSysSolnInfo section
     if (pSession->DefinesGlobalSysSolnInfo(variable, "GlobalSysSoln"))
@@ -110,12 +110,21 @@ AssemblyMap::AssemblyMap(const LibUtilities::SessionReaderSharedPtr &pSession,
             "GlobalSysSoln", sysSoln);
     }
 
+    // Set up preconditioner with SysSoln as override then solverinfo otherwise
+    // set a default as diagonal
     if (pSession->DefinesGlobalSysSolnInfo(variable, "Preconditioner"))
     {
-        std::string precon =
+        m_preconType =
             pSession->GetGlobalSysSolnInfo(variable, "Preconditioner");
-        m_preconType = pSession->GetValueAsEnum<PreconditionerType>(
-            "Preconditioner", precon);
+    }
+    else if (pSession->DefinesSolverInfo("Preconditioner"))
+    {
+        m_preconType = pSession->GetSolverInfo("Preconditioner");
+    }
+    else
+    { // Possibly preconditioner is default registered in
+      // GlobLinSysIterative.cpp
+        m_preconType = "Diagonal";
     }
 
     if (pSession->DefinesGlobalSysSolnInfo(variable,
@@ -130,6 +139,18 @@ AssemblyMap::AssemblyMap(const LibUtilities::SessionReaderSharedPtr &pSession,
         pSession->LoadParameter("IterativeSolverTolerance",
                                 m_iterativeTolerance,
                                 NekConstants::kNekIterativeTol);
+    }
+
+    if (pSession->DefinesGlobalSysSolnInfo(variable, "AbsoluteTolerance"))
+    {
+        std::string abstol =
+            pSession->GetGlobalSysSolnInfo(variable, "AbsoluteTolerance");
+        m_isAbsoluteTolerance =
+            boost::iequals(boost::to_upper_copy(abstol), "TRUE");
+    }
+    else
+    {
+        m_isAbsoluteTolerance = false;
     }
 
     if (pSession->DefinesGlobalSysSolnInfo(variable, "MaxIterations"))
@@ -720,6 +741,11 @@ LibUtilities::CommSharedPtr AssemblyMap::GetComm()
     return m_comm;
 }
 
+std::string AssemblyMap::GetVariable()
+{
+    return m_variable;
+}
+
 size_t AssemblyMap::GetHash() const
 {
     return m_hash;
@@ -1083,14 +1109,24 @@ void AssemblyMap::GlobalToLocalBnd(const Array<OneD, const NekDouble> &global,
     ASSERTL1(global.size() >= m_numGlobalBndCoeffs,
              "Global vector is not of correct dimension");
 
-    if (m_signChange)
+    Array<OneD, const NekDouble> glo;
+    if (global.data() == loc.data())
     {
-        Vmath::Gathr(m_numLocalBndCoeffs, m_localToGlobalBndSign.get(),
-                     global.get(), m_localToGlobalBndMap.get(), loc.get());
+        glo = Array<OneD, NekDouble>(m_numLocalBndCoeffs, global.data());
     }
     else
     {
-        Vmath::Gathr(m_numLocalBndCoeffs, global.get(),
+        glo = global; // create reference
+    }
+
+    if (m_signChange)
+    {
+        Vmath::Gathr(m_numLocalBndCoeffs, m_localToGlobalBndSign.get(),
+                     glo.get(), m_localToGlobalBndMap.get(), loc.get());
+    }
+    else
+    {
+        Vmath::Gathr(m_numLocalBndCoeffs, glo.get(),
                      m_localToGlobalBndMap.get(), loc.get());
     }
 }
@@ -1333,7 +1369,7 @@ GlobalSysSolnType AssemblyMap::GetGlobalSysSolnType() const
     return m_solnType;
 }
 
-PreconditionerType AssemblyMap::GetPreconType() const
+std::string AssemblyMap::GetPreconType() const
 {
     return m_preconType;
 }
@@ -1341,6 +1377,11 @@ PreconditionerType AssemblyMap::GetPreconType() const
 NekDouble AssemblyMap::GetIterativeTolerance() const
 {
     return m_iterativeTolerance;
+}
+
+bool AssemblyMap::IsAbsoluteTolerance() const
+{
+    return m_isAbsoluteTolerance;
 }
 
 int AssemblyMap::GetMaxIterations() const

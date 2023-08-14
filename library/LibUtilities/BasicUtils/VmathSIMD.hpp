@@ -45,7 +45,7 @@ namespace Vmath
 {
 namespace SIMD
 {
-/// \brief Multiply vector z = x + y
+/// \brief Add vector z = x + y
 template <class T, typename = typename std::enable_if<
                        std::is_floating_point<T>::value>::type>
 void Vadd(const size_t n, const T *x, const T *y, T *z)
@@ -305,7 +305,7 @@ void Vvtvp(const size_t n, const T *w, const T *x, const T *y, T *z)
     }
 }
 
-/// \brief  vvtvm (vector times vector plus vector): z = w*x - y
+/// \brief  vvtvm (vector times vector minus vector): z = w*x - y
 template <class T, typename = typename std::enable_if<
                        std::is_floating_point<T>::value>::type>
 void Vvtvm(const size_t n, const T *w, const T *x, const T *y, T *z)

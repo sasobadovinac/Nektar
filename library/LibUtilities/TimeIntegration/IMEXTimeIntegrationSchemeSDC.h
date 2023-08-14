@@ -39,7 +39,6 @@
 
 #include <string>
 
-#include <LibUtilities/BasicUtils/VmathArray.hpp>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeSDC.h>
 
 namespace Nektar

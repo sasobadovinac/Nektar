@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 #include <LibUtilities/TimeIntegration/RungeKuttaTimeIntegrationSchemes.h>
@@ -78,8 +77,10 @@ public:
 
         // Next to last phase
         if (order > 1)
+        {
             AdamsBashforthTimeIntegrationScheme::SetupSchemeData(
                 m_integration_phases[order - 2], order - 1);
+        }
 
         // Last phase
         AdamsBashforthTimeIntegrationScheme::SetupSchemeData(
@@ -93,7 +94,7 @@ public:
                 break;
 
             case 2:
-                // Done above.
+                // Intial phase set above
                 break;
 
             case 3:
@@ -141,7 +142,7 @@ public:
                                     size_t order)
     {
         // clang-format off
-        const NekDouble coefficients[5][4] =
+        constexpr NekDouble coefficients[5][4] =
             { {      0.,       0.,      0.,      0. },
               // 1st Order
               {      1.,       0.,      0.,      0. },
@@ -175,16 +176,13 @@ public:
 
         // Coefficients
 
-        // When multiple steps are taken B[0][0] and V[0][1...s] must be
-        // weighted so the time contribution is correct.
-
         // B Coefficient for first row first column
         phase->m_B[0][0][0] = coefficients[phase->m_order][0];
 
         // B evaluation value shuffling second row first column
         if (phase->m_order > 1)
         {
-            phase->m_B[0][1][0] = 1.0; // constant 1
+            phase->m_B[0][1][0] = 1.0;
         }
 
         // U Curent time step evaluation first row first column
@@ -205,7 +203,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = phase->m_order - 1;
+        phase->m_numMultiStepExplicitDerivs = phase->m_order - 1;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
@@ -226,7 +224,26 @@ protected:
 
     LUE virtual NekDouble v_GetTimeStability() const override
     {
-        return 1.0;
+        if (GetOrder() == 1)
+        {
+            return 2.0;
+        }
+        else if (GetOrder() == 2)
+        {
+            return 1.0;
+        }
+        else if (GetOrder() == 3)
+        {
+            return 0.545454545454545;
+        }
+        else if (GetOrder() == 4)
+        {
+            return 0.3;
+        }
+        else
+        {
+            return 2.0;
+        }
     }
 
 }; // end class AdamsBashforthTimeIntegrationScheme

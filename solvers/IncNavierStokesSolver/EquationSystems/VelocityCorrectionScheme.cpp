@@ -728,7 +728,7 @@ void VelocityCorrectionScheme::v_EvaluateAdvection_SetPressureBCs(
 /**
  * Implicit part of the method - Poisson + nConv*Helmholtz
  */
-void VelocityCorrectionScheme::SolveUnsteadyStokesSystem(
+void VelocityCorrectionScheme::v_SolveUnsteadyStokesSystem(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
     const NekDouble aii_Dt)

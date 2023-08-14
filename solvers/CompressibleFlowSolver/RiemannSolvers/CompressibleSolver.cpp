@@ -58,6 +58,9 @@ CompressibleSolver::CompressibleSolver()
     m_requiresRotation = true;
 }
 
+/**
+ *
+ */
 void CompressibleSolver::v_Solve(
     const int nDim, const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
     const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
@@ -104,6 +107,9 @@ void CompressibleSolver::v_Solve(
     }
 }
 
+/**
+ *
+ */
 NekDouble CompressibleSolver::GetRoeSoundSpeed(
     NekDouble rhoL, NekDouble pL, NekDouble eL, NekDouble HL, NekDouble srL,
     NekDouble rhoR, NekDouble pR, NekDouble eR, NekDouble HR, NekDouble srR,

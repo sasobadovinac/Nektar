@@ -122,12 +122,14 @@ void GlobalLinSysStaticCond::v_Solve(
     }
 
     Array<OneD, NekDouble> F_bnd, F_bnd1, F_int, V_bnd;
-    Array<OneD, NekDouble> tmp;
+    Array<OneD, NekDouble> tmp, unused;
 
-    F_bnd  = m_wsp;
-    F_bnd1 = m_wsp + nLocBndDofs;
-    V_bnd  = m_wsp + 2 * nLocBndDofs;
-    F_int  = m_wsp + 3 * nLocBndDofs;
+    F_bnd = m_wsp;
+    // unsued = Temporary storage required for DoMatrixMultiply, not used here
+    unused = m_wsp + 1 * nLocBndDofs;
+    F_bnd1 = m_wsp + 2 * nLocBndDofs;
+    V_bnd  = m_wsp + 3 * nLocBndDofs;
+    F_int  = m_wsp + 4 * nLocBndDofs;
 
     pLocToGloMap->LocalToLocalBnd(pLocOutput, V_bnd);
 
@@ -174,19 +176,14 @@ void GlobalLinSysStaticCond::v_Solve(
 
             Vmath::Vsub(nLocBndDofs, F_bnd, 1, F_bnd1, 1, F_bnd, 1);
 
-            Array<OneD, NekDouble> F_hom, pert(nGlobBndDofs, 0.0);
-
-            pLocToGloMap->AssembleBnd(F_bnd, F_bnd1);
+            Array<OneD, NekDouble> F_hom;
 
             // Solve for difference from initial solution given inout;
-            SolveLinearSystem(nGlobBndDofs, F_bnd1, pert, pLocToGloMap,
+            SolveLinearSystem(nGlobBndDofs, F_bnd, F_bnd1, pLocToGloMap,
                               nDirBndDofs);
 
-            Array<OneD, NekDouble> outloc = F_bnd;
-            pLocToGloMap->GlobalToLocalBnd(pert, outloc);
-
             // Add back initial conditions onto difference
-            Vmath::Vadd(nLocBndDofs, V_bnd, 1, outloc, 1, V_bnd, 1);
+            Vmath::Vadd(nLocBndDofs, V_bnd, 1, F_bnd1, 1, V_bnd, 1);
 
             // Transform back to original basis
             v_CoeffsBwdTransform(V_bnd);
@@ -244,7 +241,7 @@ void GlobalLinSysStaticCond::v_Initialise(
 {
     int nLocalBnd = m_locToGloMap.lock()->GetNumLocalBndCoeffs();
     int nIntDofs  = m_locToGloMap.lock()->GetNumLocalCoeffs() - nLocalBnd;
-    m_wsp         = Array<OneD, NekDouble>(3 * nLocalBnd + nIntDofs, 0.0);
+    m_wsp         = Array<OneD, NekDouble>(4 * nLocalBnd + nIntDofs, 0.0);
 
     if (pLocToGloMap->AtLastLevel())
     {

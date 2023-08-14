@@ -37,18 +37,15 @@
 #include <LibUtilities/TimeIntegration/AdamsBashforthTimeIntegrationSchemes.h>
 #include <LibUtilities/TimeIntegration/AdamsMoultonTimeIntegrationSchemes.h>
 #include <LibUtilities/TimeIntegration/BDFImplicitTimeIntegrationSchemes.h>
-#include <LibUtilities/TimeIntegration/EulerTimeIntegrationSchemes.h>
-
 #include <LibUtilities/TimeIntegration/CNABTimeIntegrationScheme.h>
 #include <LibUtilities/TimeIntegration/DIRKTimeIntegrationSchemes.h>
+#include <LibUtilities/TimeIntegration/EulerExponentialTimeIntegrationSchemes.h>
+#include <LibUtilities/TimeIntegration/EulerTimeIntegrationSchemes.h>
 #include <LibUtilities/TimeIntegration/IMEXGearTimeIntegrationScheme.h>
 #include <LibUtilities/TimeIntegration/IMEXTimeIntegrationSchemes.h>
 #include <LibUtilities/TimeIntegration/IMEXdirkTimeIntegrationSchemes.h>
 #include <LibUtilities/TimeIntegration/MCNABTimeIntegrationScheme.h>
-
 #include <LibUtilities/TimeIntegration/RungeKuttaTimeIntegrationSchemes.h>
-
-#include <LibUtilities/TimeIntegration/EulerExponentialTimeIntegrationSchemes.h>
 
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeFIT.h>
 
@@ -115,7 +112,7 @@ SESSIONREGISTER(BackwardEuler);
 FACTORYREGISTER(ForwardEuler);
 SESSIONREGISTER(ForwardEuler);
 
-// FITTimeIntegrationSchemes.h
+// EulerExponentialTimeIntegrationSchemes.h
 FACTORYREGISTER(EulerExponential);
 
 // TimeIntegrationSchemesFIT.h

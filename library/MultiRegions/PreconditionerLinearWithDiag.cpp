@@ -32,7 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VDmathArray.hpp>
 #include <LocalRegions/MatrixKey.h>
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <MultiRegions/PreconditionerLinearWithDiag.h>
@@ -91,9 +90,11 @@ void PreconditionerLinearWithDiag::v_BuildPreconditioner()
  *
  */
 void PreconditionerLinearWithDiag::v_DoPreconditioner(
-    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &isLocal)
 {
-
+    ASSERTL0(isLocal == false, "PreconditionerLinearWithDiag is only set up "
+                               "for Global iteratives sovles");
     Array<OneD, NekDouble> OutputDiag(pOutput.size());
     m_diagonalPrecon->DoPreconditioner(pInput, OutputDiag);
 

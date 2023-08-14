@@ -53,7 +53,6 @@ namespace MultiRegions
  * constructors include additional parameters for customising the
  * global operator matrix.
  */
-
 GlobalLinSysKey::GlobalLinSysKey(const StdRegions::MatrixType matrixType,
                                  const AssemblyMapSharedPtr &locToGloMap,
                                  const StdRegions::ConstFactorMap &factors,
@@ -73,6 +72,7 @@ GlobalLinSysKey::GlobalLinSysKey(const StdRegions::MatrixType matrixType,
         boost::hash_combine(m_varFactors_hashes[i], (int)x->first);
         i++;
     }
+
     // Check AssemblyMapSharedPtr == Null
     if (locToGloMap != NullAssemblyMapSharedPtr)
     {

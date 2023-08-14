@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <EXPANSIONS>
+        <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="u, v, w" TYPE="MODIFIED" />
+        <E COMPOSITE="C[0]" NUMMODES="4" TYPE="MODIFIEDQUADPLUS1" FIELDS="p" />
+    </EXPANSIONS>
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="SolverType"             VALUE="VelocityCorrectionScheme"/>
+            <I PROPERTY="EQTYPE"                     VALUE="UnsteadyNavierStokes"/>
+            <I PROPERTY="Projection"                 VALUE="Continuous"/>
+            <I PROPERTY="GlobalSysSoln"              VALUE="IterativeStaticCond"/>
+            <I PROPERTY="TimeIntegrationMethod"      VALUE="IMEXOrder2"/>
+            <I PROPERTY="Driver"                     VALUE="Standard"/>
+            <I PROPERTY="SpectralVanishingViscosity" VALUE="DGKernel"/>
+        </SOLVERINFO>
+        <PARAMETERS>
+            <P>    IO_InfoSteps    =  1          </P>
+            <P>    TimeStep        =  1e-05      </P>
+            <P>    NumSteps        =  5          </P>
+            <P>    Kinvis          =  1          </P>
+        </PARAMETERS>
+        <VARIABLES>
+            <V ID="0"> u </V>
+            <V ID="1"> v </V>
+            <V ID="2"> w </V>
+            <V ID="3"> p </V>
+        </VARIABLES>
+        <GLOBALSYSSOLNINFO>
+            <V VAR="u">
+                <I PROPERTY="Preconditioner"        VALUE="LowEnergyBlock"/>
+            </V>
+            <V VAR="v">
+                <I PROPERTY="Preconditioner"        VALUE="LowEnergyBlock"/>
+            </V>
+            <V VAR="w">
+                <I PROPERTY="Preconditioner"        VALUE="LowEnergyBlock"/>
+            </V>
+            <V VAR="p">
+                <I PROPERTY="Preconditioner"        VALUE="Diagonal"/>
+            </V>
+        </GLOBALSYSSOLNINFO>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1] </B> <!-- Floor  -->
+            <B ID="1"> C[2] </B> <!-- Wall   -->
+            <B ID="2"> C[3] </B> <!-- Inlet  -->
+            <B ID="3"> C[4] </B> <!-- Wall   -->
+            <B ID="4"> C[5] </B> <!-- Outlet -->
+            <B ID="5"> C[6] </B> <!-- Roof   -->
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <N VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <N VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="1">
+                <N VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <N VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="3">
+                <N VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <N VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" VALUE="1" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="4">
+                <N  VAR="u"   USERDEFINEDTYPE="HOutflow"   VALUE="0" />
+                <N  VAR="v"   USERDEFINEDTYPE="HOutflow"   VALUE="0" />
+                <N  VAR="w"   USERDEFINEDTYPE="HOutflow"   VALUE="0" />
+                <D  VAR="p"   USERDEFINEDTYPE="HOutflow"   VALUE="0" />
+            </REGION>
+            <REGION REF="5">
+                <N VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <N VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <!--        <FUNCTION NAME="ExactSolution">
+            <E VAR="u"
+                VALUE="exp(-3.0*wavefreq*wavefreq*FinTime)*cos(wavefreq*x)*sin(wavefreq*y)*cos(wavefreq*z)" />
+        </FUNCTION> -->
+
+        <FUNCTION NAME="InitialConditions">
+            <!--     <E VAR="u" VALUE="cos(wavefreq*x)*sin(wavefreq*y)*cos(wavefreq*z)" /> -->
+            <E VAR="u" VALUE="1.0"/>
+            <E VAR="v" VALUE="0.0"/>
+            <E VAR="w" VALUE="0.0"/>
+            <E VAR="p" VALUE="0"/>
+        </FUNCTION>
+    </CONDITIONS>
+    <GEOMETRY DIM="3" SPACE="3">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx9jscRAzEMA885+5xTM+i/C5SAEvzSaOyRli8JSy45DFyTn5/1z6dNXvtmyK05brcWuN9aoj9aoT9aoz/adO4qry1ya4c82nfykhyQW0fk0djcX/0n5NYZeXTpeEtdO96S3JBbd/RbD5yPnjgfvZq89r2RWx/k0ReA7T+a</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1lMVWA0EQRYcEAiQEJ7i7u7u7u8P//wSbugvuOZnNO33n9Uv1pKuS5P9TUkRT0kTrtDjrUuXAy4rszxTZV659vK8Qx18pH/lZ+eE5+XmqxKkvrxx4tXLhNaqX89QWOUedfPB6cfIblANvlJ9zNCX/H75XITQl3qw137FFOfBW5cDbVAe8PdT/U4f8/E+d8sG7lAPvDi0X7wnNiPeGcl7uQV9oSrxfa+7HgHLgg8qBD4VmxYdD0+IjWnP/RpUDH1MOfDw0Jz4R6vs9Gcp5ud9ToZXi0/Jz72fkg88qBz4XmhefD82KL2hNXy0qB76kHPhyaLX4SmhOfDWUeUTfrmlN367LD98Qp583lQPf0n74dih9z76dUM+XXfl5vydO/r588AP5mS+H8sOPtB9+HMocYs6daI3/VH74mTh1nSsHfhHK96RfL8XppyvVD78Wp59uVB/8VvnM2Ttx5uy9fPAH1c37R3H8T6oT/hyaFn/Rmvn+qhz4m3Lg76EF8Y/QjPhnKOdhrnyJ09/fqhP+I05//+r34H8r2Bul</EDGE>
+        <FACE>
+            <T COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJyFlllTk1EQREH4RJagIAZj2EQIoAKCoqAQluCuCQgu7KiAGwqy6N/3Zc6DpypFXrrudPfMfDO34FZU/P+rDDynM7/qwKoyuuQMXaI4uvOBNYEXpIevPcNXJ53zwVcrzq++TL16nemffNRpCEzJR7xReayHr1P8YuClwCbp4S8HNpfxpaRzPvhmxVt0rpGuRWe+izpXArkHafngrwa2lvFlpEsL4VuF7AHfNZ3BbCD7zUgPX6t4Rnyic5v07YqD5O2QDsyKBzsDmWeb4iD76RKib1D8us7cN+p2S5dW/Ib4HsU54+tVnHO3zvhzinNmH33iObOffvmy0g2oH3Tcq5vKMyDdLfHoyX9bvqx0g8qDvitwSDw+9jMsX6N0d+TnntHPiPqgHvscFU8+6t6Vb0S6e8oHj39McfZA3fvi2Qt1H0ifEz+ueui4XxPqE56+HoonL309kj4nflJ9sgf6mhLPXvDnpW8XPy0/fXAfZwL5Tr6HvmfF0w99z8mXl66gfPD459Un/VD3sXjyUveJfAXpniofPP5ngXwf7wHyPVccP/2/0He475fi3fcr6QviX+s76Je+iuKpR18l+ealW1A+ePyL8tMn74Y3yjcrfimQ/fO9vBeXxfO9vM/eypdI9y6QuTEP3k/vAyfFk/9DYF48+VeUn/cRc13Vmb+v5FkLZH7Mm3fReiBzTUm3Ech9KInfDGRP7IO5b4lnjsx9Wz7P+6PyweP/JD9zZC+fxTNX9rIjfVH8ruom4vcC2SN52NsX8fjY21fpi+K/Ba5Jxz6+i2ef7OeHfCXp9nXm/lD/ZyD3gHcQ8/8lnv9b3IsD6XvFHwYy3y3pfivOu4U5HgVyPzalPw7cDuwXfyKedwn5TwO5h8yJ98wf8cyNPH/FU4f78A/kgF2h</T>
+        </FACE>
+        <ELEMENT>
+            <A COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxd1Ns/lFEUh3FCZFBJSEZKFKqJpKLS2VknpCgjh0rnA/59N89z0W9uvp95373Wu/fae+2Kiv9/lXgEq+J5NdbgUayNuLqIOxZx5q2PPAVsiO81YhMexxOR9yQ2x/v8zilswdPYiq6nLebfjmfQdRrvujpivPFnsTPyFGOeXXgOXU83FuK/+c7He+t4AXvwIvai9e3DS3gZXY/1N956GdeP7s8ADuKVyOv+XMVrWELX475ej3HWzbzWaQiH8QaOoPt/E0dj/rfQ82Gc9bsd8e7/HRyLPONove7iPXRd99FzNxHjzGNdPV8P8CE+wsfoOXuCT/EZTqL7PBX5pmO853gGZyPPHHou53EBn+MLLMbzl5H/FdoXr3ERl9D7x75x3vbzMr7BbrROi/F+BT2HbyOP/fUO7TPnv4praF94jubi/fv4jn32AdexjBtoH3/EzZj/Ftqn5Ri3jdbR/t/BT5HnM9rHX3AXv6Lr6Y/nxlu3b+i5/o4/0PX9RO+TXzH/3zF/7wXr9CfyGO/98xf/xXfM672zh/sx/1J4EOPMaz0PAUfDMFcA</A>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="0"> A[0-47] </C>
+            <C ID="1"> F[19,0,49,34,83,64,109,95] </C>
+            <C ID="2"> F[8,4,17,13,72,68,82,78] </C>
+            <C ID="3"> F[69,66,80,75,98,94,105,102] </C>
+            <C ID="4"> F[50,56-57,63,110,114-115,119] </C>
+            <C ID="5"> F[23,20,30,27,54,51,62,58] </C>
+            <C ID="6"> F[14,31,45,60,77,91,106,117] </C>
+        </COMPOSITE>
+        <DOMAIN>
+            <D ID="0"> C[0] </D>
+        </DOMAIN>
+    </GEOMETRY>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/master</GitBranch>
+            <GitSHA1>4a8334eacf1a75fb299bf096f484da1755e36d2b</GitSHA1>
+            <Hostname>kingscross</Hostname>
+            <NektarVersion>5.3.0</NektarVersion>
+            <Timestamp>07-Feb-2023 16:54:46</Timestamp>
+        </Provenance>
+        <NekMeshCommandLine>cube-tet.msh cube-tet.xml </NekMeshCommandLine>
+    </Metadata>
+</NEKTAR>

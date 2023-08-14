@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 namespace Nektar
@@ -132,7 +131,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = 0;
+        phase->m_numMultiStepExplicitDerivs = 0;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
@@ -142,7 +141,7 @@ public:
 protected:
     LUE virtual std::string v_GetFullName() const override
     {
-        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
+        return m_integration_phases.back()->m_name;
     }
 
     LUE virtual std::string v_GetName() const override
@@ -158,7 +157,7 @@ protected:
         }
         else
         {
-            return 2.784;
+            return 2.0;
         }
     }
 

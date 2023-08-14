@@ -187,20 +187,14 @@ void GlobalLinSysPETScFull::v_Solve(
             Vmath::Vsub(nLocDofs, pLocInput, 1, tmp, 1, tmp1, 1);
         }
 
-        pLocToGloMap->Assemble(tmp1, tmp);
-
-        SolveLinearSystem(nGlobDofs, tmp, global, pLocToGloMap, nDirDofs);
-
-        pLocToGloMap->GlobalToLocal(global, tmp);
+        SolveLinearSystem(nGlobDofs, tmp1, tmp, pLocToGloMap, nDirDofs);
 
         // Add back initial and boundary condition
         Vmath::Vadd(nLocDofs, tmp, 1, pLocOutput, 1, pLocOutput, 1);
     }
     else
     {
-        pLocToGloMap->Assemble(pLocInput, tmp);
-        SolveLinearSystem(nGlobDofs, tmp, global, pLocToGloMap);
-        pLocToGloMap->GlobalToLocal(global, pLocOutput);
+        SolveLinearSystem(nGlobDofs, pLocInput, pLocOutput, pLocToGloMap);
     }
 }
 

@@ -103,9 +103,6 @@ int main(int argc, char *argv[])
     po::options_description cmdline_options;
     cmdline_options.add(hidden).add(desc);
 
-    po::options_description visible("Allowed options");
-    visible.add(desc);
-
     po::positional_options_description p;
     p.add("input-file", -1);
 
@@ -156,7 +153,8 @@ int main(int argc, char *argv[])
 
         if (tmp1[0] != "in" && tmp1[0] != "out" && tmp1[0] != "proc")
         {
-            cerr << "ERROR: Invalid module type " << tmp1[0] << endl;
+            cerr << "ERROR: Invalid module type (in, out, or proc): " << tmp1[0]
+                 << endl;
             return 1;
         }
 
@@ -183,6 +181,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // Print help message.
     if (vm.count("help") || vm.count("input-file") != 1)
     {
         cerr << "Usage: FieldConvert [options] "
@@ -228,13 +227,13 @@ int main(int argc, char *argv[])
 
     if (LibUtilities::GetCommFactory().ModuleExists("ParallelMPI"))
     {
-        // get hold of parallel communicator first
+        // Get hold of parallel communicator first.
         MPIComm = LibUtilities::GetCommFactory().CreateInstance("ParallelMPI",
                                                                 argc, argv);
 
         if (vm.count("nparts"))
         {
-            // work out number of processors to run in serial over partitions
+            // Work out number of processors to run in serial over partitions.
             MPInprocs = MPIComm->GetSpaceComm()->GetSize();
             MPIrank   = MPIComm->GetSpaceComm()->GetRank();
 
@@ -259,25 +258,45 @@ int main(int argc, char *argv[])
             LibUtilities::GetCommFactory().CreateInstance("Serial", argc, argv);
     }
 
-    // For parallel-in-time
+    // For parallel-in-time.
     if (vm.count("npt"))
     {
-        for (auto &io : inout)
+        for (auto io = inout.end() - 2; io != inout.end(); io++)
         {
-            fs::path inpath  = io;
-            fs::path outpath = inpath.parent_path();
-            if (outpath.extension() == ".pit")
+            // First split each command by the colon separator.
+            vector<string> tmp;
+            boost::split(tmp, *io, boost::is_any_of(":"));
+
+            // Get original filename and extension.
+            fs::path path   = tmp[0];
+            fs::path dir    = path.parent_path();
+            string ftype    = path.extension().string();
+            string filename = path.stem().string();
+
+            // Determine original index from filename.
+            auto start = filename.find_last_of("_") + 1;
+            auto index = atoi(filename.substr(start, filename.size()).c_str());
+
+            // Create output directory if does not exit.
+            if (f->m_comm->TreatAsRankZero() && !fs::is_directory(dir) &&
+                io == inout.end() - 1)
             {
-                fs::path ftype  = inpath.extension();
-                string filename = inpath.stem().string();
-                size_t start    = filename.find_last_of("_") + 1;
-                int index =
-                    atoi(filename.substr(start, filename.size()).c_str());
-                outpath /= filename.substr(0, start) +
-                           std::to_string(index + f->m_comm->GetRank() %
-                                                      vm["npt"].as<int>()) +
-                           ftype.string();
-                io = outpath.string();
+                fs::create_directory(dir);
+            }
+
+            // Determine new index and filename for each processor for
+            // parallel-in-time processing.
+            auto index_new = index + f->m_comm->GetRank() % vm["npt"].as<int>();
+            fs::path path_new = dir;
+            path_new /=
+                filename.substr(0, start) + std::to_string(index_new) + ftype;
+
+            // Determine new command for each processor for parallel-in-time
+            // processing.
+            *io = path_new.string();
+            for (auto i = 1; i < tmp.size(); i++)
+            {
+                *io += ":" + tmp[i];
             }
         }
     }
@@ -299,7 +318,7 @@ int main(int argc, char *argv[])
 
     // Add input and output modules to beginning and end of this vector.
     modcmds.insert(modcmds.begin(), inout.begin(), inout.end() - 1);
-    modcmds.push_back(*(inout.end() - 1));
+    modcmds.push_back(inout.back());
 
     int nInput = inout.size() - 1;
 
@@ -325,7 +344,7 @@ int main(int argc, char *argv[])
 
         if (i < nInput || i == modcmds.size() - 1)
         {
-            // assume all modules are input unless last, or specified to be :out
+            // Assume all modules are input unless last, or specified to be :out
             module.first = (i < nInput ? eInputModule : eOutputModule);
             if (tmp1.size() > 1 && tmp1.back() == "out")
             {
@@ -419,11 +438,12 @@ int main(int argc, char *argv[])
             outfilename = tmp1[0];
             if (nParts > 1)
             {
-                // if nParts is specified then ensure output modules
-                // write out mutipile files
+                // If nParts is specified then ensure output modules
+                // write out mutipile files.
                 mod->RegisterConfig("writemultiplefiles");
             }
         }
+
         // Set options for this module.
         for (int j = offset; j < tmp1.size(); ++j)
         {
@@ -450,22 +470,28 @@ int main(int argc, char *argv[])
         mod->SetDefaults();
     }
 
-    // Loading modules prerequisites
-    for (int i = 0; i < modules.size(); ++i)
-    {
-        // Looping through prereqs and loading them
-        for (int j = 0; j < modules[i]->GetModulePrerequisites().size(); ++j)
-        {
-            mod = GetModuleFactory().CreateInstance(modules[i]->GetModulePrerequisites()[j], f);
-            modules.push_back(mod);
-            mod->SetDefaults();
-        }
-    }
-
     Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < modules.size(); ++i)
     {
         ++modulesCount[modules[i]->GetModulePriority()];
+    }
+
+    // Loading module prerequisites
+    for (int i = 0; i < modules.size(); ++i)
+    {
+        // Looping through listed prereqs and loading them
+        for (int j = 0; j < modules[i]->GetModulePrerequisites().size(); ++j)
+        {
+            mod = GetModuleFactory().CreateInstance(
+                modules[i]->GetModulePrerequisites()[j], f);
+            // Logic that prevents double loading
+            if (modulesCount[mod->GetModulePriority()] == 0)
+            {
+                ++modulesCount[mod->GetModulePriority()];
+                modules.push_back(mod);
+                mod->SetDefaults();
+            }
+        }
     }
 
     // Include equispacedoutput module if needed
@@ -479,9 +505,9 @@ int main(int argc, char *argv[])
         mod->SetDefaults();
     }
 
-    // Check if modules provided are compatible
+    // Check if modules provided are compatible.
     CheckModules(modules);
-    // Can't have ContField with range option (because of boundaries)
+    // Can't have ContField with range option (because of boundaries).
     if (vm.count("range") && f->m_declareExpansionAsContField)
     {
         ASSERTL0(false, "Can't use range option with module requiring "
@@ -494,13 +520,13 @@ int main(int argc, char *argv[])
         PrintExecutionSequence(modules);
     }
 
-    // Loop on partitions if required
+    // Loop on partitions if required.
     LibUtilities::CommSharedPtr defComm = f->m_comm;
     LibUtilities::CommSharedPtr partComm;
     for (int p = MPIrank; p < nParts; p += MPInprocs)
     {
-        // write out which partition is being processed and defined a
-        // new serial communicator
+        // Write out which partition is being processed and defined a
+        // new serial communicator.
         if (nParts > 1)
         {
             cout << endl << "Processing partition: " << p << endl;
@@ -538,11 +564,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    // write out Info file if required.
+    // Write out Info file if required.
     if (nParts > 1)
     {
         int i;
-        // check to see if we have created a fld file.
+        // Check to see if we have created a fld file.
         for (i = 0; i < modules.size(); ++i)
         {
             if (boost::iequals(modules[i]->GetModuleName(), "OutputFld"))
@@ -570,7 +596,7 @@ int main(int argc, char *argv[])
 
                 if (f->m_writeBndFld)
                 {
-                    // find ending of output file and insert _b1, _b2
+                    // Find ending of output file and insert _b1, _b2.
                     int dot = outfilename.find_last_of('.') + 1;
                     string ext =
                         outfilename.substr(dot, outfilename.length() - dot);
@@ -595,9 +621,10 @@ int main(int argc, char *argv[])
         }
     }
 
+    timer.Stop();
+
     if (verbose)
     {
-        timer.Stop();
         NekDouble cpuTime = timer.TimePerTest(1);
 
         stringstream ss;
@@ -617,14 +644,14 @@ int main(int argc, char *argv[])
 // This function checks validity conditions for the list of modules provided
 void CheckModules(vector<ModuleSharedPtr> &modules)
 {
-    // Count number of modules by priority
+    // Count number of modules by priority.
     Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < modules.size(); ++i)
     {
         ++modulesCount[modules[i]->GetModulePriority()];
     }
 
-    // Modules of type eModifyFieldData require a eCreateFieldData module
+    // Modules of type eModifyFieldData require a eCreateFieldData module.
     if (modulesCount[eModifyFieldData] != 0 &&
         modulesCount[eCreateFieldData] == 0)
     {
@@ -641,7 +668,7 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
         ASSERTL0(false, ss.str());
     }
 
-    // Modules of type eFillExp require eCreateGraph without eCreateFieldData
+    // Modules of type eFillExp require eCreateGraph without eCreateFieldData.
     if (modulesCount[eFillExp] != 0)
     {
         if (modulesCount[eCreateGraph] == 0 ||
@@ -661,8 +688,8 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
         }
     }
 
-    // Modules of type eModifyExp and eBndExtraction
-    //      require a eCreateGraph module
+    // Modules of type eModifyExp and eBndExtraction require a eCreateGraph
+    // module.
     if ((modulesCount[eModifyExp] != 0 || modulesCount[eBndExtraction] != 0) &&
         modulesCount[eCreateGraph] == 0)
     {
@@ -680,7 +707,7 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
         ASSERTL0(false, ss.str());
     }
 
-    // Modules of type eCreatePts should not be used with xml or fld inputs
+    // Modules of type eCreatePts should not be used with xml or fld inputs.
     if (modulesCount[eCreatePts] != 0)
     {
         if (modulesCount[eCreateGraph] != 0 ||
@@ -701,7 +728,7 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
     }
 
     // Modules of type eConvertExpToPts require eCreateGraph, but are not
-    //    compatible with eBndExtraction
+    //    compatible with eBndExtraction.
     if (modulesCount[eConvertExpToPts] != 0)
     {
         if (modulesCount[eCreateGraph] == 0)
@@ -743,6 +770,7 @@ void CheckModules(vector<ModuleSharedPtr> &modules)
     }
 }
 
+// This function print the execution sequence for the list of modules provided
 void PrintExecutionSequence(vector<ModuleSharedPtr> &modules)
 {
     bool first = true;
@@ -769,6 +797,7 @@ void PrintExecutionSequence(vector<ModuleSharedPtr> &modules)
     cout << endl;
 }
 
+// This function run the module provided
 void RunModule(ModuleSharedPtr module, po::variables_map &vm, bool verbose)
 {
     LibUtilities::Timer moduleTimer;

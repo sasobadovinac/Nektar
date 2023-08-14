@@ -78,8 +78,6 @@ int NekLinSysIterCG::v_SolveSystem(const int nGlobal,
                                    const int nDir, const NekDouble tol,
                                    const NekDouble factor)
 {
-    boost::ignore_unused(tol);
-
     m_tolerance   = max(tol, 1.0E-16);
     m_prec_factor = factor;
 
@@ -116,36 +114,26 @@ void NekLinSysIterCG::DoConjugateGradient(
     Array<OneD, NekDouble> q_A(nNonDir, 0.0);
     Array<OneD, NekDouble> tmp;
 
-    // Create NekVector wrappers for linear algebra operations
-    NekVector<NekDouble> in(nNonDir, pInput + nDir, eWrapper);
-    NekVector<NekDouble> out(nNonDir, tmp = pOutput + nDir, eWrapper);
-    NekVector<NekDouble> w(nNonDir, tmp = w_A + nDir, eWrapper);
-    NekVector<NekDouble> s(nNonDir, tmp = s_A + nDir, eWrapper);
-    NekVector<NekDouble> p(nNonDir, p_A, eWrapper);
-    NekVector<NekDouble> r(nNonDir, r_A, eWrapper);
-    NekVector<NekDouble> q(nNonDir, q_A, eWrapper);
-
-    int k;
     NekDouble alpha;
     NekDouble beta;
     NekDouble rho;
     NekDouble rho_new;
     NekDouble mu;
     NekDouble eps;
-    NekDouble min_resid;
     Array<OneD, NekDouble> vExchange(3, 0.0);
 
     // Copy initial residual from input
-    r = in;
-    // zero homogeneous out array ready for solution updates
+    Vmath::Vcopy(nNonDir, pInput + nDir, 1, r_A, 1);
+
+    // Zero homogeneous out array ready for solution updates
     // Should not be earlier in case input vector is same as
     // output and above copy has been peformed
     Vmath::Zero(nNonDir, tmp = pOutput + nDir, 1);
 
-    // evaluate initial residual error for exit check
+    // Evaluate initial residual error for exit check
     vExchange[2] = Vmath::Dot2(nNonDir, r_A, r_A, m_map + nDir);
 
-    m_Comm->AllReduce(vExchange, Nektar::LibUtilities::ReduceSum);
+    m_Comm->AllReduce(vExchange[2], Nektar::LibUtilities::ReduceSum);
 
     eps = vExchange[2];
 
@@ -174,8 +162,6 @@ void NekLinSysIterCG::DoConjugateGradient(
 
     m_operator.DoNekSysLhsEval(w_A, s_A);
 
-    k = 0;
-
     vExchange[0] = Vmath::Dot2(nNonDir, r_A, w_A + nDir, m_map + nDir);
 
     vExchange[1] = Vmath::Dot2(nNonDir, s_A + nDir, w_A + nDir, m_map + nDir);
@@ -184,7 +170,6 @@ void NekLinSysIterCG::DoConjugateGradient(
 
     rho               = vExchange[0];
     mu                = vExchange[1];
-    min_resid         = m_rhs_magnitude;
     beta              = 0.0;
     alpha             = rho / mu;
     m_totalIterations = 1;
@@ -192,7 +177,7 @@ void NekLinSysIterCG::DoConjugateGradient(
     // Continue until convergence
     while (true)
     {
-        if (k >= m_maxiter)
+        if (m_totalIterations > m_maxiter)
         {
             if (m_root)
             {
@@ -224,6 +209,7 @@ void NekLinSysIterCG::DoConjugateGradient(
 
         // <r_{k+1}, w_{k+1}>
         vExchange[0] = Vmath::Dot2(nNonDir, r_A, w_A + nDir, m_map + nDir);
+
         // <s_{k+1}, w_{k+1}>
         vExchange[1] =
             Vmath::Dot2(nNonDir, s_A + nDir, w_A + nDir, m_map + nDir);
@@ -252,13 +238,11 @@ void NekLinSysIterCG::DoConjugateGradient(
             }
             break;
         }
-        min_resid = min(min_resid, eps);
 
         // Compute search direction and solution coefficients
         beta  = rho_new / rho;
         alpha = rho_new / (mu - rho_new * beta / alpha);
         rho   = rho_new;
-        k++;
     }
 }
 } // namespace LibUtilities

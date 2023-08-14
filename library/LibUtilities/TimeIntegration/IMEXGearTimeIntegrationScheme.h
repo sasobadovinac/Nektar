@@ -42,7 +42,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 #include <LibUtilities/TimeIntegration/IMEXdirkTimeIntegrationSchemes.h>
@@ -106,7 +105,7 @@ public:
         phase->m_A = Array<OneD, Array<TwoD, NekDouble>>(2);
         phase->m_B = Array<OneD, Array<TwoD, NekDouble>>(2);
 
-        NekDouble twothirds = 2.0 / 3.0;
+        constexpr NekDouble twothirds = 2.0 / 3.0;
 
         phase->m_A[0] = Array<TwoD, NekDouble>(phase->m_numstages,
                                                phase->m_numstages, twothirds);
@@ -137,7 +136,7 @@ public:
 
         phase->m_numMultiStepValues         = 2;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = 2;
+        phase->m_numMultiStepExplicitDerivs = 2;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
         phase->m_timeLevelOffset[1] = 1;

@@ -323,12 +323,18 @@ public:
             MultiRegions::NullVarFactorsMap,
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray,
         const bool PhysSpaceForcing                    = true);
+
     /// Solve Advection Diffusion Reaction
     inline GlobalLinSysKey LinearAdvectionDiffusionReactionSolve(
-        const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray, const NekDouble lambda,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff = StdRegions::NullVarCoeffMap,
+        const MultiRegions::VarFactorsMap &varfactors =
+            MultiRegions::NullVarFactorsMap,
+        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray,
+        const bool PhysSpaceForcing                    = true);
+
     /// Solve Advection Diffusion Reaction
     inline void LinearAdvectionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
@@ -746,6 +752,10 @@ public:
     inline void PhysDeriv(const int dir,
                           const Array<OneD, const NekDouble> &inarray,
                           Array<OneD, NekDouble> &out_d);
+
+    inline void Curl(Array<OneD, Array<OneD, NekDouble>> &Vel,
+                     Array<OneD, Array<OneD, NekDouble>> &Q);
+
     inline void CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
                          Array<OneD, Array<OneD, NekDouble>> &Q);
     inline void PhysDirectionalDeriv(
@@ -1238,10 +1248,14 @@ protected:
         const bool PhysSpaceForcing);
 
     virtual GlobalLinSysKey v_LinearAdvectionDiffusionReactionSolve(
-        const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray, const NekDouble lambda,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing);
+
     virtual void v_LinearAdvectionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
@@ -1292,8 +1306,13 @@ protected:
     virtual void v_PhysDeriv(Direction edir,
                              const Array<OneD, const NekDouble> &inarray,
                              Array<OneD, NekDouble> &out_d);
+
+    virtual void v_Curl(Array<OneD, Array<OneD, NekDouble>> &Vel,
+                        Array<OneD, Array<OneD, NekDouble>> &Q);
+
     virtual void v_CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
                             Array<OneD, Array<OneD, NekDouble>> &Q);
+
     virtual void v_PhysDirectionalDeriv(
         const Array<OneD, const NekDouble> &direction,
         const Array<OneD, const NekDouble> &inarray,
@@ -1482,7 +1501,7 @@ private:
 static ExpList NullExpList;
 static ExpListSharedPtr NullExpListSharedPtr;
 
-// An empty GlobaLinSysManager object
+// An empty GlobaLinSysManager and GlobalLinSysKey object
 static LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
     NullGlobalLinSysManager;
 static GlobalLinSysKey NullGlobalLinSysKey(StdRegions::eNoMatrixType);
@@ -1709,13 +1728,15 @@ inline GlobalLinSysKey ExpList::HelmSolve(
  *
  */
 inline GlobalLinSysKey ExpList::LinearAdvectionDiffusionReactionSolve(
-    const Array<OneD, Array<OneD, NekDouble>> &velocity,
     const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const NekDouble lambda,
-    const Array<OneD, const NekDouble> &dirForcing)
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &varcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
-    return v_LinearAdvectionDiffusionReactionSolve(velocity, inarray, outarray,
-                                                   lambda, dirForcing);
+    return v_LinearAdvectionDiffusionReactionSolve(
+        inarray, outarray, factors, varcoeff, varfactors, dirForcing,
+        PhysSpaceForcing);
 }
 inline void ExpList::LinearAdvectionReactionSolve(
     const Array<OneD, Array<OneD, NekDouble>> &velocity,
@@ -1787,6 +1808,14 @@ inline void ExpList::PhysDirectionalDeriv(
     Array<OneD, NekDouble> &outarray)
 {
     v_PhysDirectionalDeriv(direction, inarray, outarray);
+}
+/**
+ *
+ */
+inline void ExpList::Curl(Array<OneD, Array<OneD, NekDouble>> &Vel,
+                          Array<OneD, Array<OneD, NekDouble>> &Q)
+{
+    v_Curl(Vel, Q);
 }
 /**
  *

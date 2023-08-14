@@ -92,6 +92,9 @@ void RoeSolver::v_PointSolve(double rhoL, double rhouL, double rhovL,
               rhof, rhouf, rhovf, rhowf, Ef, gamma);
 }
 
+/**
+ *
+ */
 void RoeSolver::v_ArraySolve(
     const Array<OneD, const Array<OneD, NekDouble>> &fwd,
     const Array<OneD, const Array<OneD, NekDouble>> &bwd,

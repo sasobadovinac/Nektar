@@ -33,8 +33,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
-#include <LibUtilities/TimeIntegration/TimeIntegrationSchemeOperators.h>
-#include <LibUtilities/TimeIntegration/TimeIntegrationSolutionGLM.h>
 
 namespace Nektar
 {
@@ -46,20 +44,17 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
     const NekDouble time, const NekDouble timestep)
     : m_schemeAlgorithm(schemeAlgorithm),
       m_solVector(m_schemeAlgorithm->m_numsteps),
-      m_t(m_schemeAlgorithm->m_numsteps)
+      m_t(m_schemeAlgorithm->m_numsteps),
+      m_setflag(m_schemeAlgorithm->m_numsteps)
 {
     m_solVector[0] = y;
     m_t[0]         = time;
+    m_setflag[0]   = true;
 
-    size_t nsteps = m_schemeAlgorithm->m_numsteps;
-
+    size_t nsteps         = m_schemeAlgorithm->m_numsteps;
     size_t nvar           = y.size();
     size_t npoints        = y[0].size();
     size_t nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
-
-    const Array<OneD, const size_t> &timeLevels =
-        m_schemeAlgorithm->GetTimeLevelOffset();
-
     for (size_t i = 1; i < nsteps; i++)
     {
         m_solVector[i] = Array<OneD, Array<OneD, NekDouble>>(nvar);
@@ -67,31 +62,27 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
         {
             m_solVector[i][j] = Array<OneD, NekDouble>(npoints, 0.0);
         }
+
         if (i < nMultiStepVals)
         {
-            m_t[i] = time - i * timestep * timeLevels[i];
+            m_t[i] = time - i * timestep;
         }
         else
         {
             m_t[i] = timestep;
         }
-    }
-}
 
-TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
-    const TimeIntegrationAlgorithmGLM *schemeAlgorithm, const TripleArray &y,
-    const Array<OneD, NekDouble> &t)
-    : m_schemeAlgorithm(schemeAlgorithm), m_solVector(y), m_t(t)
-{
-    ASSERTL1(y.size() == m_schemeAlgorithm->m_numsteps,
-             "Amount of Entries does not match number of (multi-) steps");
+        m_setflag[i] = false;
+    }
 }
 
 TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
     const TimeIntegrationAlgorithmGLM *schemeAlgorithm, const size_t nvar,
     const size_t npoints)
     : m_schemeAlgorithm(schemeAlgorithm),
-      m_solVector(schemeAlgorithm->m_numsteps), m_t(schemeAlgorithm->m_numsteps)
+      m_solVector(schemeAlgorithm->m_numsteps),
+      m_t(schemeAlgorithm->m_numsteps),
+      m_setflag(m_schemeAlgorithm->m_numsteps, true)
 {
     for (size_t i = 0; i < m_schemeAlgorithm->m_numsteps; i++)
     {
@@ -107,7 +98,8 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
     const TimeIntegrationAlgorithmGLM *schemeAlgorithm)
     : m_schemeAlgorithm(schemeAlgorithm),
       m_solVector(m_schemeAlgorithm->m_numsteps),
-      m_t(m_schemeAlgorithm->m_numsteps)
+      m_t(m_schemeAlgorithm->m_numsteps),
+      m_setflag(m_schemeAlgorithm->m_numsteps, false)
 {
 }
 

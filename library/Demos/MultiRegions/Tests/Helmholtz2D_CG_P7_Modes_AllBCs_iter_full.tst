@@ -2,7 +2,7 @@
 <test>
     <description>Helmholtz 2D CG with P=7, all BCs, iterative full</description>
     <executable>Helmholtz2D</executable>
-    <parameters>-I GlobalSysSoln=IterativeFull Helmholtz2D_P7_AllBCs.xml</parameters>
+    <parameters>-I GlobalSysSoln=IterativeFull -I LinSysIterSolver=ConjugateGradientLoc Helmholtz2D_P7_AllBCs.xml</parameters>
     <files>
         <file description="Session File">Helmholtz2D_P7_AllBCs.xml</file>
     </files>

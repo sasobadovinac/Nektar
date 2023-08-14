@@ -80,8 +80,8 @@ void SmoothedProfileMethod::v_InitObject(bool DeclareField)
     VelocityCorrectionScheme::v_InitObject(DeclareField);
 
     // Update implicit time-intregration class operators
-    m_ode.DefineImplicitSolve(&SmoothedProfileMethod::SolveUnsteadyStokesSystem,
-                              this);
+    m_ode.DefineImplicitSolve(
+        &SmoothedProfileMethod::v_SolveUnsteadyStokesSystem, this);
 
     // Number of dims as number of velocity vectors
     size_t nvel = m_velocity.size();
@@ -256,8 +256,8 @@ void SmoothedProfileMethod::v_SolveUnsteadyStokesSystem(
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
     const NekDouble a_iixDt)
 {
-    VelocityCorrectionScheme::SolveUnsteadyStokesSystem(inarray, outarray, time,
-                                                        a_iixDt);
+    VelocityCorrectionScheme::v_SolveUnsteadyStokesSystem(inarray, outarray,
+                                                          time, a_iixDt);
 
     size_t physTot = m_pressureP->GetNpoints();
 

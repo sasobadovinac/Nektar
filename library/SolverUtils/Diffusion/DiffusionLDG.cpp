@@ -210,6 +210,7 @@ void DiffusionLDG::v_DiffuseVolumeFlux(
     boost::ignore_unused(fields, nonZeroIndex);
     m_fluxVector(inarray, qfield, viscTensor);
 }
+
 void DiffusionLDG::v_DiffuseTraceFlux(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &inarray,

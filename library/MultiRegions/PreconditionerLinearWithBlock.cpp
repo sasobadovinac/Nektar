@@ -32,7 +32,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/VDmathArray.hpp>
 #include <LocalRegions/MatrixKey.h>
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <MultiRegions/PreconditionerLinearWithBlock.h>
@@ -91,8 +90,11 @@ void PreconditionerLinearWithBlock::v_BuildPreconditioner()
  *
  */
 void PreconditionerLinearWithBlock::v_DoPreconditioner(
-    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+    const bool &isLocal)
 {
+    ASSERTL0(isLocal == false, "PreconditionerLinearWithBlock is only set up "
+                               "for Global iteratives sovles");
     int nGlobal = pInput.size();
 
     Array<OneD, NekDouble> OutputBlock(nGlobal, 0.0);

@@ -99,6 +99,10 @@ public:
     LIB_UTILITIES_EXPORT inline int GetRank();
     LIB_UTILITIES_EXPORT inline const std::string &GetType() const;
 
+    LIB_UTILITIES_EXPORT inline bool TreatAsRankZero();
+    LIB_UTILITIES_EXPORT inline bool IsSerial();
+    LIB_UTILITIES_EXPORT inline std::tuple<int, int, int> GetVersion();
+
     /// Block execution until all processes reach this point
     LIB_UTILITIES_EXPORT inline void Block();
 
@@ -109,8 +113,6 @@ public:
     template <class T> void Recv(int pProc, T &pData);
     template <class T>
     void SendRecv(int pSendProc, T &pSendData, int pRecvProc, T &pRecvData);
-    template <class T>
-    void SendRecvReplace(int pSendProc, int pRecvProc, T &pData);
 
     template <class T> void AllReduce(T &pData, enum ReduceOperator pOp);
 
@@ -129,9 +131,6 @@ public:
                     Array<OneD, int> &pRecvDataOffsetMap);
 
     template <class T> void Bcast(T &pData, int pRoot);
-
-    template <class T> void Exscan(T &pData, enum ReduceOperator pOp, T &ans);
-
     template <class T> T Gather(int rootProc, T &val);
     template <class T> T Scatter(int rootProc, T &pData);
 
@@ -141,6 +140,7 @@ public:
     void NeighborAlltoAllv(T1 &pSendData, T2 &pSendDataSizeMap,
                            T2 &pSendDataOffsetMap, T1 &pRecvData,
                            T2 &pRecvDataSizeMap, T2 &pRecvDataOffsetMap);
+
     template <class T>
     void Irsend(int pProc, T &pData, int count,
                 const CommRequestSharedPtr &request, int loc);
@@ -156,24 +156,19 @@ public:
     template <class T>
     void RecvInit(int pProc, T &pData, int count,
                   const CommRequestSharedPtr &request, int loc);
+
     inline void StartAll(const CommRequestSharedPtr &request);
     inline void WaitAll(const CommRequestSharedPtr &request);
+
     inline CommRequestSharedPtr CreateRequest(int num);
-
     LIB_UTILITIES_EXPORT inline CommSharedPtr CommCreateIf(int flag);
-
     LIB_UTILITIES_EXPORT inline void SplitComm(int pRows, int pColumns,
                                                int pTime = 1);
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetRowComm();
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetColumnComm();
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetTimeComm();
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetSpaceComm();
-
-    LIB_UTILITIES_EXPORT inline bool TreatAsRankZero();
-    LIB_UTILITIES_EXPORT inline bool IsSerial();
-    LIB_UTILITIES_EXPORT inline std::tuple<int, int, int> GetVersion();
     LIB_UTILITIES_EXPORT inline bool RemoveExistingFiles();
-
     LIB_UTILITIES_EXPORT inline std::pair<CommSharedPtr, CommSharedPtr>
     SplitCommNode();
 
@@ -189,6 +184,9 @@ protected:
 
     virtual void v_Finalise()                                              = 0;
     virtual int v_GetRank()                                                = 0;
+    virtual bool v_TreatAsRankZero()                                       = 0;
+    virtual bool v_IsSerial()                                              = 0;
+    virtual std::tuple<int, int, int> v_GetVersion()                       = 0;
     virtual void v_Block()                                                 = 0;
     virtual NekDouble v_Wtime()                                            = 0;
     virtual void v_Send(void *buf, int count, CommDataType dt, int dest)   = 0;
@@ -196,8 +194,6 @@ protected:
     virtual void v_SendRecv(void *sendbuf, int sendcount, CommDataType sendtype,
                             int dest, void *recvbuf, int recvcount,
                             CommDataType recvtype, int source)             = 0;
-    virtual void v_SendRecvReplace(void *buf, int count, CommDataType dt,
-                                   int pSendProc, int pRecvProc)           = 0;
     virtual void v_AllReduce(void *buf, int count, CommDataType dt,
                              enum ReduceOperator pOp)                      = 0;
     virtual void v_AlltoAll(void *sendbuf, int sendcount, CommDataType sendtype,
@@ -218,19 +214,12 @@ protected:
                               CommDataType recvtype)                       = 0;
     virtual void v_Bcast(void *buffer, int count, CommDataType dt,
                          int root)                                         = 0;
-
-    virtual void v_Exscan(Array<OneD, unsigned long long> &pData,
-                          enum ReduceOperator pOp,
-                          Array<OneD, unsigned long long> &ans) = 0;
-
     virtual void v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
                           void *recvbuf, int recvcount, CommDataType recvtype,
-                          int root)  = 0;
+                          int root)                                        = 0;
     virtual void v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
                            void *recvbuf, int recvcount, CommDataType recvtype,
-                           int root) = 0;
-
-    virtual CommSharedPtr v_CommCreateIf(int flag) = 0;
+                           int root)                                       = 0;
 
     virtual void v_DistGraphCreateAdjacent(int indegree, const int sources[],
                                            const int sourceweights[],
@@ -256,11 +245,8 @@ protected:
     virtual CommRequestSharedPtr v_CreateRequest(int num)          = 0;
 
     virtual void v_SplitComm(int pRows, int pColumns, int pTime) = 0;
-    virtual bool v_TreatAsRankZero()                             = 0;
-    virtual bool v_IsSerial()                                    = 0;
-    virtual std::tuple<int, int, int> v_GetVersion()             = 0;
 
-    LIB_UTILITIES_EXPORT virtual bool v_RemoveExistingFiles();
+    virtual CommSharedPtr v_CommCreateIf(int flag) = 0;
     LIB_UTILITIES_EXPORT virtual std::pair<CommSharedPtr, CommSharedPtr>
     v_SplitCommNode();
 };
@@ -300,6 +286,30 @@ inline const std::string &Comm::GetType() const
 /**
  *
  */
+inline bool Comm::TreatAsRankZero()
+{
+    return v_TreatAsRankZero();
+}
+
+/**
+ *
+ */
+inline bool Comm::IsSerial()
+{
+    return v_IsSerial();
+}
+
+/**
+ * @return tuple of {major, minor, patch} version numbers
+ */
+inline std::tuple<int, int, int> Comm::GetVersion()
+{
+    return v_GetVersion();
+}
+
+/**
+ *
+ */
 inline void Comm::Block()
 {
     v_Block();
@@ -313,6 +323,9 @@ inline double Comm::Wtime()
     return v_Wtime();
 }
 
+/**
+ *
+ */
 template <class T> void Comm::Send(int pProc, T &pData)
 {
     v_Send(CommDataTypeTraits<T>::GetPointer(pData),
@@ -320,6 +333,9 @@ template <class T> void Comm::Send(int pProc, T &pData)
            CommDataTypeTraits<T>::GetDataType(), pProc);
 }
 
+/**
+ *
+ */
 template <class T> void Comm::Recv(int pProc, T &pData)
 {
     v_Recv(CommDataTypeTraits<T>::GetPointer(pData),
@@ -344,18 +360,6 @@ void Comm::SendRecv(int pSendProc, T &pSendData, int pRecvProc, T &pRecvData)
 /**
  *
  */
-template <class T>
-void Comm::SendRecvReplace(int pSendProc, int pRecvProc, T &pData)
-{
-    v_SendRecvReplace(CommDataTypeTraits<T>::GetPointer(pData),
-                      CommDataTypeTraits<T>::GetCount(pData),
-                      CommDataTypeTraits<T>::GetDataType(), pSendProc,
-                      pRecvProc);
-}
-
-/**
- *
- */
 template <class T> void Comm::AllReduce(T &pData, enum ReduceOperator pOp)
 {
     v_AllReduce(CommDataTypeTraits<T>::GetPointer(pData),
@@ -363,6 +367,9 @@ template <class T> void Comm::AllReduce(T &pData, enum ReduceOperator pOp)
                 CommDataTypeTraits<T>::GetDataType(), pOp);
 }
 
+/**
+ *
+ */
 template <class T> void Comm::AlltoAll(T &pSendData, T &pRecvData)
 {
     static_assert(CommDataTypeTraits<T>::IsVector,
@@ -405,6 +412,9 @@ void Comm::AlltoAllv(T1 &pSendData, T2 &pSendDataSizeMap,
                 CommDataTypeTraits<T1>::GetDataType());
 }
 
+/**
+ *
+ */
 template <class T> void Comm::AllGather(T &pSendData, T &pRecvData)
 {
     BOOST_STATIC_ASSERT_MSG(
@@ -469,18 +479,6 @@ template <class T> void Comm::Bcast(T &pData, int pRoot)
             CommDataTypeTraits<T>::GetDataType(), pRoot);
 }
 
-template <class T>
-void Comm::Exscan(T &pData, const enum ReduceOperator pOp, T &ans)
-{
-    ASSERTL0(CommDataTypeTraits<T>::GetCount(pData) ==
-                 CommDataTypeTraits<T>::GetCount(ans),
-             "Input and output array sizes don't match");
-    v_Exscan(CommDataTypeTraits<T>::GetPointer(pData),
-             CommDataTypeTraits<T>::GetPointer(ans),
-             CommDataTypeTraits<T>::GetCount(pData),
-             CommDataTypeTraits<T>::GetDataType(), pOp);
-}
-
 /**
  * Concatenate all the input arrays, in rank order, onto the process with rank
  * == rootProc
@@ -501,6 +499,7 @@ template <class T> T Comm::Gather(const int rootProc, T &val)
              CommDataTypeTraits<T>::GetDataType(), rootProc);
     return ans;
 }
+
 /**
  * Scatter pData across ranks in chunks of len(pData)/num_ranks
  */
@@ -791,29 +790,17 @@ inline CommSharedPtr Comm::GetSpaceComm()
     }
 }
 
-inline bool Comm::TreatAsRankZero()
+/**
+ *
+ */
+inline bool Comm::RemoveExistingFiles()
 {
-    return v_TreatAsRankZero();
-}
-
-inline bool Comm::IsSerial()
-{
-    return v_IsSerial();
+    return true;
 }
 
 /**
- * @return tuple of {major, minor, patch} version numbers
+ *
  */
-inline std::tuple<int, int, int> Comm::GetVersion()
-{
-    return v_GetVersion();
-}
-
-inline bool Comm::RemoveExistingFiles()
-{
-    return v_RemoveExistingFiles();
-}
-
 std::pair<CommSharedPtr, CommSharedPtr> Comm::SplitCommNode()
 {
     return v_SplitCommNode();

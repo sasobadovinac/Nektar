@@ -113,14 +113,14 @@ struct LinearSystemSolver
                 {
                     std::string message =
                         "ERROR: The " + std::to_string(-info) +
-                        "th parameter had an illegal parameter for dtrtrs";
+                        "th parameter had an illegal parameter for dtptrs";
                     ASSERTL0(false, message.c_str());
                 }
                 else if (info > 0)
                 {
                     std::string message =
                         "ERROR: The " + std::to_string(-info) +
-                        "th diagonal element of A is 0 for dtrtrs";
+                        "th diagonal element of A is 0 for dtptrs";
                     ASSERTL0(false, message.c_str());
                 }
             }
@@ -136,14 +136,14 @@ struct LinearSystemSolver
                 {
                     std::string message =
                         "ERROR: The " + std::to_string(-info) +
-                        "th parameter had an illegal parameter for dtrtrs";
+                        "th parameter had an illegal parameter for dtptrs";
                     ASSERTL0(false, message.c_str());
                 }
                 else if (info > 0)
                 {
                     std::string message =
                         "ERROR: The " + std::to_string(-info) +
-                        "th diagonal element of A is 0 for dtrtrs";
+                        "th diagonal element of A is 0 for dtptrs";
                     ASSERTL0(false, message.c_str());
                 }
             }
@@ -285,14 +285,14 @@ struct LinearSystemSolver
                 {
                     std::string message =
                         "ERROR: The " + std::to_string(-info) +
-                        "th parameter had an illegal parameter for dtrtrs";
+                        "th parameter had an illegal parameter for dtptrs";
                     ASSERTL0(false, message.c_str());
                 }
                 else if (info > 0)
                 {
                     std::string message =
                         "ERROR: The " + std::to_string(-info) +
-                        "th diagonal element of A is 0 for dtrtrs";
+                        "th diagonal element of A is 0 for dtptrs";
                     ASSERTL0(false, message.c_str());
                 }
             }
@@ -309,6 +309,7 @@ struct LinearSystemSolver
                 {
                     trans = 'N';
                 }
+
                 x        = b;
                 int info = 0;
                 Lapack::Dtptrs('L', trans, 'N', n, 1, A.get(), x.GetRawPtr(), n,
@@ -318,14 +319,14 @@ struct LinearSystemSolver
                 {
                     std::string message =
                         "ERROR: The " + std::to_string(-info) +
-                        "th parameter had an illegal parameter for dtrtrs";
+                        "th parameter had an illegal parameter for dtptrs";
                     ASSERTL0(false, message.c_str());
                 }
                 else if (info > 0)
                 {
                     std::string message =
                         "ERROR: The " + std::to_string(-info) +
-                        "th diagonal element of A is 0 for dtrtrs";
+                        "th diagonal element of A is 0 for dtptrs";
                     ASSERTL0(false, message.c_str());
                 }
             }

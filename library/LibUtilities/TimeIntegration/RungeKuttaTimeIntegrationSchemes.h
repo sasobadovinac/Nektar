@@ -43,7 +43,6 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 
 namespace Nektar
@@ -103,7 +102,7 @@ public:
     {
         boost::ignore_unused(freeParams);
 
-        const size_t nStages[6] = {0, 1, 2, 3, 4, 6};
+        constexpr size_t nStages[6] = {0, 1, 2, 3, 4, 6};
 
         // A Coefficients for the lower diagonal quadrant stored in a
         // contiguous fashion. For the fourth order, six coefficients
@@ -115,7 +114,7 @@ public:
         //                d e f 0               d e f 0 ... 0
 
         // clang-format off
-        const NekDouble Acoefficients[2][6][15] =
+        constexpr NekDouble Acoefficients[2][6][15] =
             { { {     0.,      0.,      0.,      0.,      0.,
                       0.,      0.,      0.,      0.,      0.,
                       0.,      0.,      0.,      0.,      0. },
@@ -190,7 +189,7 @@ public:
         // B Coefficients for the final summing.
 
         // clang-format off
-        const NekDouble Bcoefficients[2][6][6] =
+        constexpr NekDouble Bcoefficients[2][6][6] =
             { { {    0.,       0.,    0.,       0.,      0.,      0. },
                 // 1st Order
                 {    1.,       0.,    0.,       0.,      0.,      0. },
@@ -269,7 +268,7 @@ public:
 
         phase->m_numMultiStepValues         = 1;
         phase->m_numMultiStepImplicitDerivs = 0;
-        phase->m_numMultiStepDerivs         = 0;
+        phase->m_numMultiStepExplicitDerivs = 0;
         phase->m_timeLevelOffset    = Array<OneD, size_t>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
@@ -284,9 +283,22 @@ protected:
 
     LUE virtual NekDouble v_GetTimeStability() const override
     {
-        if (GetOrder() == 4 || GetOrder() == 5)
+        if (GetOrder() == 1 || GetOrder() == 2)
         {
+            return 2.0;
+        }
+        else if (GetOrder() == 3)
+        {
+            return 2.51274532661833;
+        }
+        else if (GetOrder() == 4)
+        {
+            // return 2.78529356340528;
             return 2.784;
+        }
+        else if (GetOrder() == 5)
+        {
+            return 3.21704786664011;
         }
         else
         {

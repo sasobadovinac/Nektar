@@ -73,9 +73,9 @@ protected:
     LIB_UTILITIES_EXPORT virtual bool v_IsSerial() override;
     LIB_UTILITIES_EXPORT virtual std::tuple<int, int, int> v_GetVersion()
         override final;
-
     LIB_UTILITIES_EXPORT virtual void v_Block() override final;
     LIB_UTILITIES_EXPORT virtual NekDouble v_Wtime() override final;
+
     LIB_UTILITIES_EXPORT virtual void v_Send(void *buf, int count,
                                              CommDataType dt,
                                              int dest) override final;
@@ -88,12 +88,11 @@ protected:
                                                  int recvcount,
                                                  CommDataType recvtype,
                                                  int source) override final;
-    LIB_UTILITIES_EXPORT virtual void v_SendRecvReplace(
-        void *buf, int count, CommDataType dt, int pSendProc,
-        int pRecvProc) override final;
+
     LIB_UTILITIES_EXPORT virtual void v_AllReduce(
         void *buf, int count, CommDataType dt,
         enum ReduceOperator pOp) override final;
+
     LIB_UTILITIES_EXPORT virtual void v_AlltoAll(
         void *sendbuf, int sendcount, CommDataType sendtype, void *recvbuf,
         int recvcount, CommDataType recvtype) override final;
@@ -101,6 +100,7 @@ protected:
         void *sendbuf, int sendcounts[], int sensdispls[],
         CommDataType sendtype, void *recvbuf, int recvcounts[], int rdispls[],
         CommDataType recvtype) override final;
+
     LIB_UTILITIES_EXPORT virtual void v_AllGather(
         void *sendbuf, int sendcount, CommDataType sendtype, void *recvbuf,
         int recvcount, CommDataType recvtype) override final;
@@ -110,12 +110,10 @@ protected:
     LIB_UTILITIES_EXPORT virtual void v_AllGatherv(
         void *recvbuf, int recvcounts[], int rdispls[],
         CommDataType recvtype) override final;
+
     LIB_UTILITIES_EXPORT virtual void v_Bcast(void *buffer, int count,
                                               CommDataType dt,
                                               int root) override final;
-    LIB_UTILITIES_EXPORT virtual void v_Exscan(
-        Array<OneD, unsigned long long> &pData, const enum ReduceOperator pOp,
-        Array<OneD, unsigned long long> &ans) override final;
     LIB_UTILITIES_EXPORT virtual void v_Gather(void *sendbuf, int sendcount,
                                                CommDataType sendtype,
                                                void *recvbuf, int recvcount,
@@ -130,7 +128,6 @@ protected:
     LIB_UTILITIES_EXPORT virtual void v_DistGraphCreateAdjacent(
         int indegree, const int sources[], const int sourceweights[],
         int reorder) override final;
-
     LIB_UTILITIES_EXPORT virtual void v_NeighborAlltoAllv(
         void *sendbuf, int sendcounts[], int sdispls[], CommDataType sendtype,
         void *recvbuf, int recvcounts[], int rdispls[],
@@ -140,22 +137,18 @@ protected:
                                                CommDataType dt, int dest,
                                                CommRequestSharedPtr request,
                                                int loc) override final;
-
     LIB_UTILITIES_EXPORT virtual void v_Isend(void *buf, int count,
                                               CommDataType dt, int dest,
                                               CommRequestSharedPtr request,
                                               int loc) final;
-
     LIB_UTILITIES_EXPORT virtual void v_SendInit(void *buf, int count,
                                                  CommDataType dt, int dest,
                                                  CommRequestSharedPtr request,
                                                  int loc) override final;
-
     LIB_UTILITIES_EXPORT virtual void v_Irecv(void *buf, int count,
                                               CommDataType dt, int source,
                                               CommRequestSharedPtr request,
                                               int loc) override final;
-
     LIB_UTILITIES_EXPORT virtual void v_RecvInit(void *buf, int count,
                                                  CommDataType dt, int source,
                                                  CommRequestSharedPtr request,
@@ -165,9 +158,9 @@ protected:
         CommRequestSharedPtr request) override final;
     LIB_UTILITIES_EXPORT virtual void v_WaitAll(
         CommRequestSharedPtr request) override final;
+
     LIB_UTILITIES_EXPORT virtual CommRequestSharedPtr v_CreateRequest(
         int num) override final;
-
     LIB_UTILITIES_EXPORT virtual void v_SplitComm(int pRows, int pColumns,
                                                   int pTime) override;
     LIB_UTILITIES_EXPORT virtual CommSharedPtr v_CommCreateIf(

@@ -111,7 +111,7 @@ protected:
 
     LibUtilities::NekNonlinSysSharedPtr m_nonlinsol;
 
-    PreconCfsOpSharedPtr m_preconCfs;
+    PreconCfsSharedPtr m_preconCfs;
 
     // flag to update shock capturing artificial viscosity. this flag is
     // switched on/off in DoImplicitSolve() to ensure that the AV is only

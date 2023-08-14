@@ -14,6 +14,7 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
         ./EquationSystems/CoupledLocalToGlobalC0ContMap.cpp
         ./EquationSystems/IncNavierStokes.cpp
         ./EquationSystems/VelocityCorrectionScheme.cpp
+        ./EquationSystems/VelocityCorrectionSchemeImplicit.cpp
         ./EquationSystems/VelocityCorrectionSchemeWeakPressure.cpp
         ./EquationSystems/SmoothedProfileMethod.cpp
         ./EquationSystems/VCSMapping.cpp
@@ -23,6 +24,7 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
         ./EquationSystems/SubSteppingExtrapolate.cpp
         ./EquationSystems/SubSteppingExtrapolateWeakPressure.cpp
         ./EquationSystems/WeakPressureExtrapolate.cpp
+        ./EquationSystems/ImplicitExtrapolate.cpp
         ./AdvectionTerms/AdjointAdvection.cpp
         ./AdvectionTerms/LinearisedAdvection.cpp
         ./AdvectionTerms/NavierStokesAdvection.cpp
@@ -57,6 +59,7 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
     ADD_NEKTAR_TEST(ChanFlow_m3_ConOBC)
     ADD_NEKTAR_TEST(ChanFlow_m3_VCSWeakPress)
     ADD_NEKTAR_TEST(ChanFlow_m3_VCSWeakPress_ConOBC)
+    ADD_NEKTAR_TEST(ChanFlow_m3_ConOBC_VCSImplicit)
     ADD_NEKTAR_TEST(ChanFlow_m3_SKS)
     ADD_NEKTAR_TEST(ChanFlow_m8)
     ADD_NEKTAR_TEST(ChanFlow_Accelerate)
@@ -86,11 +89,19 @@ IF( NEKTAR_SOLVER_INCNAVIERSTOKES )
     ADD_NEKTAR_TEST(SM_Adj_base_file)
     ADD_NEKTAR_TEST(KovaFlow_m3)
     ADD_NEKTAR_TEST(KovaFlow_m3_GJP)
+    ADD_NEKTAR_TEST(KovaFlow_m3_gmresZeroInputCheck)
+    ADD_NEKTAR_TEST(KovaFlow_Tet_Curved_GJP_SemiImplicit)
+    ADD_NEKTAR_TEST(KovaFlow_Tet_Curved_GJP_Explicit)
     ADD_NEKTAR_TEST(KovaFlow_m8)
     ADD_NEKTAR_TEST(KovaFlow_m8_short_ConOBC)
     ADD_NEKTAR_TEST(KovaFlow_m8_short_ConOBC_VCSWeakPress)
+    ADD_NEKTAR_TEST(KovaFlow_m8_short_ConOBC_VCSImplicit)
     ADD_NEKTAR_TEST(KovaFlow_m8_short_HOBC)
     ADD_NEKTAR_TEST(KovaFlow_m8_short_HOBC_VCSWeakPress)
+    ADD_NEKTAR_TEST(KovaFlow_m8_short_HOBC_VCSImplicit)
+    ADD_NEKTAR_TEST(KovaFlow_m10_VCSImplicit)
+    ADD_NEKTAR_TEST(KovaFlow_m10_taylorHood_VCSImplicit)
+    ADD_NEKTAR_TEST(KovaFlow_m10_QuadTri_VCSImplicit)
     ADD_NEKTAR_TEST(KovaFlow_varP)
     ADD_NEKTAR_TEST(KovaFlow_varP_per)
     #ADD_NEKTAR_TEST(KovaFlow_Oseen_m8)

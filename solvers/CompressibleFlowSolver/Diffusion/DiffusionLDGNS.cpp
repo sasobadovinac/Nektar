@@ -786,15 +786,6 @@ void DiffusionLDGNS::ApplyBCsO2(
                      SpatialDomains::eNeumann)
             {
                 ASSERTL0(false, "Neumann bcs not implemented for LDGNS");
-
-                /*
-                Vmath::Vmul(nBndEdgePts,
-                            &m_traceNormals[dir][id2], 1,
-                            &(fields[var]->
-                              GetBndCondExpansions()[i]->
-                              UpdatePhys())[id1], 1,
-                            &penaltyflux[id2], 1);
-                 */
             }
             else if (boost::iequals(
                          fields[var]->GetBndConditions()[i]->GetUserDefined(),
@@ -815,21 +806,4 @@ void DiffusionLDGNS::ApplyBCsO2(
     }
 }
 
-/**
- * @brief Compute primary variables
- *
- */
-void DiffusionLDGNS::v_GetPrimVar(
-    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const Array<OneD, Array<OneD, NekDouble>> &inarray,
-    Array<OneD, Array<OneD, NekDouble>> &primVar)
-{
-    int nDim = fields[0]->GetCoordim(0);
-    int nPts = fields[0]->GetTotPoints();
-    for (int i = 0; i < nDim; ++i)
-    {
-        primVar[i] = Array<OneD, NekDouble>(nPts, 0.0);
-        primVar[i] = inarray[i];
-    }
-}
 } // end of namespace Nektar
